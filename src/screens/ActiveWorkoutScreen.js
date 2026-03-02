@@ -1,0 +1,1096 @@
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import {
+    View, Text, TouchableOpacity, StyleSheet, Image,
+    Dimensions, StatusBar, ScrollView, Alert, Animated,
+    Modal, TextInput, KeyboardAvoidingView, Platform,
+} from "react-native";
+import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from "react-native-svg";
+import * as Haptics from "expo-haptics";
+import { activateKeepAwakeAsync, deactivateKeepAwake } from "expo-keep-awake";
+import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
+import { COLORS, FONTS, SPACING, RADIUS, FAMILY } from "../utils/theme";
+import { saveWorkoutComplete, formatDuration, tryUpdatePR } from "../utils/storage";
+import { getSettings, estimateCalories, displayWeight } from "../utils/settings";
+import {
+    setAudioSettings, announceWorkStart, announceSetDone,
+    announceRestOver, announceWorkoutDone,
+    announceSide, announceFinalCountdown,
+} from "../utils/audio";
+
+const { width } = Dimensions.get("window");
+const RING = 210;
+const STROKE = 12;
+const R = (RING - STROKE) / 2;
+const CIRC = 2 * Math.PI * R;
+
+// MET-based calorie burn (kcal) from elapsed seconds
+const liveCalories = (elapsedSec, bodyKg = 75) =>
+    Math.round((5.0 * bodyKg * elapsedSec) / 3600);
+
+// Motivational rest cues
+const REST_MINDSET = [
+    "Recovery is part of the work. 💪",
+    "Breathe. Your muscles are rebuilding.",
+    "Rest hard. Train harder.",
+    "Consistency beats intensity. Stay.",
+    "You showed up. That's already a win.",
+    "One more set. You've got this.",
+    "Champions rest too.",
+];
+
+function buildQueue(exercises) {
+    const q = [];
+    exercises.forEach((ex) => {
+        if (ex.unilateral) {
+            q.push({ ...ex, side: "LEFT" });
+            q.push({ ...ex, side: "RIGHT" });
+        } else {
+            q.push({ ...ex, side: null });
+        }
+    });
+    return q;
+}
+
+function buildPhases(queue, extraRest = 0) {
+    const phases = [];
+    queue.forEach((ex, exIdx) => {
+        const isReps = ex.type === "reps" || (ex.type !== "timer" && ex.name.toLowerCase() !== "plank");
+        for (let set = 1; set <= ex.sets; set++) {
+            phases.push({
+                type: "active",
+                exercise: ex,
+                set,
+                exIdx,
+                duration: ex.activeTimeSec,
+                isReps: isReps,
+                repRange: ex.repRange || "12-15"
+            });
+            if (set < ex.sets) {
+                phases.push({ type: "set_rest", exercise: ex, set, exIdx, duration: ex.restTimeSec + extraRest, nextExercise: null });
+            }
+        }
+        if (exIdx < queue.length - 1) {
+            phases.push({ type: "ex_rest", exercise: ex, exIdx, duration: ex.restTimeSec + extraRest, nextExercise: queue[exIdx + 1] });
+        }
+    });
+    return phases;
+}
+
+/* ── Animated Ring Timer ──────────────────────────────────── */
+function RingTimer({ progress, isWork, size, stroke, timeLeft }) {
+    const r = (size - stroke) / 2;
+    const circ = 2 * Math.PI * r;
+    const fill = circ * Math.max(0, Math.min(1, progress));
+    const isUrgent = timeLeft <= 5 && timeLeft > 0;
+
+    const activeColor = isWork ? COLORS.primary : COLORS.textMuted;
+
+    return (
+        <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
+            <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]}>
+                <LinearGradient
+                    colors={isWork ? ["rgba(227,30,36,0.1)", "transparent"] : ["rgba(255,255,255,0.05)", "transparent"]}
+                    style={{ width: size * 0.8, height: size * 0.8, borderRadius: size * 0.4 }}
+                />
+            </View>
+            <Svg width={size} height={size} style={{ position: "absolute" }}>
+                <Circle
+                    cx={size / 2} cy={size / 2} r={r}
+                    stroke="rgba(255,255,255,0.04)" strokeWidth={stroke} fill="none"
+                />
+                <Circle
+                    cx={size / 2} cy={size / 2} r={r}
+                    stroke={activeColor} strokeWidth={stroke} fill="none"
+                    strokeLinecap="round"
+                    strokeDasharray={`${fill} ${circ}`}
+                    rotation="-90" origin={`${size / 2}, ${size / 2}`}
+                />
+            </Svg>
+            {isUrgent && (
+                <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]}>
+                    <View style={{
+                        width: size + 20, height: size + 20, borderRadius: (size + 20) / 2,
+                        borderWidth: 1, borderColor: "rgba(227,30,36,0.2)",
+                        position: 'absolute'
+                    }} />
+                </View>
+            )}
+        </View>
+    );
+}
+
+/* ── PR Logging Modal ─────────────────────────────────────── */
+function PRModal({ visible, exerciseName, onClose, onSave, weightUnit = "kg" }) {
+    const [weight, setWeight] = useState("");
+    const [reps, setReps] = useState("");
+    const scaleAnim = useRef(new Animated.Value(0.92)).current;
+
+    useEffect(() => {
+        if (visible) {
+            Animated.spring(scaleAnim, { toValue: 1, tension: 80, friction: 9, useNativeDriver: true }).start();
+        } else {
+            scaleAnim.setValue(0.92);
+        }
+    }, [visible]);
+
+    const handleSave = () => {
+        const w = parseFloat(weight) || 0;
+        const r = parseInt(reps) || 0;
+        onSave(w, r);
+        setWeight(""); setReps("");
+    };
+
+    return (
+        <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+            <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+                <TouchableOpacity style={pm.backdrop} activeOpacity={1} onPress={onClose}>
+                    <TouchableOpacity activeOpacity={1} onPress={() => { }}>
+                        <Animated.View style={[pm.sheet, { transform: [{ scale: scaleAnim }] }]}>
+                            <View style={pm.handle} />
+                            <View style={pm.headerRow}>
+                                <View style={pm.trophyBadge}>
+                                    <Ionicons name="clipboard" size={20} color={COLORS.primary} />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={pm.title}>LOG YOUR SET</Text>
+                                    <Text style={pm.subtitle} numberOfLines={1}>{exerciseName.toUpperCase()}</Text>
+                                </View>
+                            </View>
+
+                            <View style={pm.row}>
+                                <View style={pm.inputGroup}>
+                                    <Text style={pm.inputLabel}>WEIGHT ({weightUnit.toUpperCase()})</Text>
+                                    <View style={pm.inputBox}>
+                                        <TextInput
+                                            style={pm.input}
+                                            value={weight}
+                                            onChangeText={setWeight}
+                                            keyboardType="decimal-pad"
+                                            placeholder="0"
+                                            placeholderTextColor={COLORS.textMuted}
+                                            returnKeyType="next"
+                                        />
+                                    </View>
+                                </View>
+                                <View style={pm.inputGroup}>
+                                    <Text style={pm.inputLabel}>REPETITIONS</Text>
+                                    <View style={pm.inputBox}>
+                                        <TextInput
+                                            style={pm.input}
+                                            value={reps}
+                                            onChangeText={setReps}
+                                            keyboardType="number-pad"
+                                            placeholder="0"
+                                            placeholderTextColor={COLORS.textMuted}
+                                            returnKeyType="done"
+                                        />
+                                    </View>
+                                </View>
+                            </View>
+
+                            <TouchableOpacity style={[pm.saveBtn, { backgroundColor: COLORS.primary }]} onPress={handleSave} activeOpacity={0.85}>
+                                <Text style={pm.saveBtnText}>SAVE PERFORMANCE</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={pm.skipBtn} onPress={onClose} activeOpacity={0.7}>
+                                <Text style={pm.skipText}>SKIP SET LOGGING</Text>
+                            </TouchableOpacity>
+                        </Animated.View>
+                    </TouchableOpacity>
+                </TouchableOpacity>
+            </KeyboardAvoidingView>
+        </Modal>
+    );
+}
+
+const pm = StyleSheet.create({
+    backdrop: {
+        flex: 1, backgroundColor: "rgba(0,0,0,0.85)",
+        justifyContent: "flex-end",
+    },
+    sheet: {
+        backgroundColor: COLORS.bgCard,
+        borderTopLeftRadius: 32, borderTopRightRadius: 32,
+        borderWidth: 1, borderColor: COLORS.border,
+        padding: 32, paddingBottom: 48,
+        alignItems: "center",
+        width: "100%",
+    },
+    handle: {
+        width: 40, height: 4, borderRadius: 2,
+        backgroundColor: COLORS.border, marginBottom: 32,
+    },
+    headerRow: {
+        flexDirection: "row", alignItems: "center", gap: 16,
+        width: "100%", marginBottom: 32,
+    },
+    trophyBadge: {
+        width: 48, height: 48, borderRadius: 14,
+        backgroundColor: "rgba(255,255,255,0.03)", borderWidth: 1, borderColor: COLORS.border,
+        alignItems: "center", justifyContent: "center",
+    },
+    title: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 1.5 },
+    subtitle: { fontSize: 18, fontFamily: FAMILY.display, color: COLORS.textSub, marginTop: 4 },
+    row: { flexDirection: "row", gap: 16, width: "100%", marginBottom: 32 },
+    inputGroup: { flex: 1 },
+    inputLabel: {
+        fontSize: 9, fontFamily: FAMILY.bold,
+        color: COLORS.textMuted, letterSpacing: 2, marginBottom: 12,
+    },
+    inputBox: {
+        flexDirection: "row", alignItems: "center",
+        backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 16,
+        paddingHorizontal: 16, paddingVertical: 12,
+        borderWidth: 1.5, borderColor: COLORS.border,
+    },
+    input: {
+        flex: 1, fontSize: 32, fontFamily: FAMILY.display,
+        color: COLORS.text, textAlign: "center", padding: 0,
+    },
+    saveBtn: {
+        width: "100%", backgroundColor: COLORS.text,
+        borderRadius: 16, paddingVertical: 20,
+        alignItems: "center", marginBottom: 16,
+    },
+    saveBtnText: { fontSize: 12, fontFamily: FAMILY.bold, color: "#000", letterSpacing: 2 },
+    skipBtn: { paddingVertical: 12 },
+    skipText: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1 },
+});
+
+/* ── PR Toast ─────────────────────────────────────────────── */
+function PRToast({ visible, exerciseName, weightKg, reps, weightUnit }) {
+    const slideAnim = useRef(new Animated.Value(-90)).current;
+    const opacityAnim = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        if (visible) {
+            Animated.parallel([
+                Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, tension: 80, friction: 10 }),
+                Animated.timing(opacityAnim, { toValue: 1, duration: 220, useNativeDriver: true }),
+            ]).start();
+        } else {
+            Animated.parallel([
+                Animated.timing(slideAnim, { toValue: -90, duration: 280, useNativeDriver: true }),
+                Animated.timing(opacityAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
+            ]).start();
+        }
+    }, [visible]);
+
+    return (
+        <Animated.View style={[pt.toast, { opacity: opacityAnim, transform: [{ translateY: slideAnim }] }]}>
+            <LinearGradient
+                colors={["rgba(255,255,255,0.05)", "rgba(255,255,255,0.01)"]}
+                style={StyleSheet.absoluteFill}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+            />
+            <Ionicons name="trophy" size={20} color={COLORS.primary} />
+            <View style={pt.info}>
+                <Text style={pt.label}>NEW PERFORMANCE RECORD</Text>
+                <Text style={pt.name} numberOfLines={1}>{exerciseName.toUpperCase()}</Text>
+            </View>
+            <View style={pt.valBox}>
+                <Text style={pt.val}>{displayWeight(weightKg, weightUnit)}</Text>
+            </View>
+        </Animated.View>
+    );
+}
+
+const pt = StyleSheet.create({
+    toast: {
+        position: "absolute", top: 12, left: 16, right: 16,
+        backgroundColor: COLORS.bgCard, borderRadius: 20,
+        flexDirection: "row", alignItems: "center", gap: 16,
+        padding: 16, borderWidth: 1, borderColor: COLORS.border,
+        elevation: 12, zIndex: 100, overflow: "hidden",
+    },
+    info: { flex: 1 },
+    label: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 1.5 },
+    name: { fontSize: 13, fontFamily: FAMILY.display, color: COLORS.text, marginTop: 4 },
+    valBox: {
+        backgroundColor: "rgba(255,255,255,0.05)",
+        paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8
+    },
+    val: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.text },
+});
+
+/* ── Rest Overlay ─────────────────────────────────────────── */
+function RestOverlay({ phase, timeLeft, onSkip, settings, mindsetTip }) {
+    const isUrgent = timeLeft <= 5 && timeLeft > 0;
+
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    const timeStr = minutes > 0
+        ? `${minutes}:${String(seconds).padStart(2, "0")}`
+        : String(timeLeft);
+
+    const isSetRest = phase?.type === "set_rest";
+
+    return (
+        <View style={ro.container}>
+            <View style={ro.topRow}>
+                <View style={ro.badge}>
+                    <Text style={ro.badgeText}>
+                        {isSetRest ? "RESTING" : "NEXT EXERCISE"}
+                    </Text>
+                </View>
+                <TouchableOpacity onPress={onSkip} style={ro.skipBtn} activeOpacity={0.7}>
+                    <Text style={[ro.skipText, { color: COLORS.primary }]}>SKIP REST</Text>
+                    <Ionicons name="chevron-forward" size={12} color={COLORS.primary} />
+                </TouchableOpacity>
+            </View>
+
+            <Text style={[ro.timer, isUrgent && { color: COLORS.primary }]}>
+                {timeStr}
+            </Text>
+            <Text style={ro.timerUnit}>{timeLeft >= 60 ? "MINUTES REMAINING" : "SECONDS REMAINING"}</Text>
+
+            {phase?.nextExercise && (
+                <View style={ro.nextCard}>
+                    <Text style={ro.nextLabel}>NEXT UP</Text>
+                    <Text style={ro.nextName} numberOfLines={2} adjustsFontSizeToFit>{phase.nextExercise.name.toUpperCase()}</Text>
+                    {phase.nextExercise.image && (
+                        <View style={ro.nextImgBox}>
+                            <Image source={phase.nextExercise.image} style={ro.nextImg} resizeMode="cover" />
+                        </View>
+                    )}
+                </View>
+            )}
+
+            {settings?.restMindset && mindsetTip ? (
+                <View style={ro.tipCard}>
+                    <Text style={ro.tipText}>“{mindsetTip.toUpperCase().replace(/ 💪|🔥|✅|⚡️/g, "")}”</Text>
+                </View>
+            ) : null}
+        </View>
+    );
+}
+
+const ro = StyleSheet.create({
+    container: {
+        flex: 1, alignItems: "center", paddingHorizontal: SPACING.base,
+        paddingTop: SPACING.lg,
+    },
+    topRow: {
+        flexDirection: "row", justifyContent: "space-between",
+        alignItems: "center", width: "100%", marginBottom: 40,
+    },
+    badge: {
+        paddingHorizontal: 12, paddingVertical: 6, borderRadius: 4,
+        backgroundColor: "rgba(255,255,255,0.05)",
+        borderWidth: 0.5, borderColor: "rgba(255,255,255,0.1)",
+    },
+    badgeText: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textSub, letterSpacing: 2 },
+    skipBtn: {
+        flexDirection: "row", alignItems: "center", gap: 4,
+    },
+    skipText: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1.5 },
+    timer: {
+        fontSize: 120, fontFamily: FAMILY.display, color: COLORS.text,
+        letterSpacing: -6, lineHeight: 120,
+    },
+    timerUnit: { fontSize: 10, color: COLORS.textMuted, fontFamily: FAMILY.bold, letterSpacing: 3, marginBottom: 48 },
+    nextCard: {
+        width: "100%", backgroundColor: COLORS.bgCard,
+        borderRadius: 24, borderWidth: 1, borderColor: COLORS.border,
+        padding: 24, alignItems: "center", marginBottom: 32,
+    },
+    nextLabel: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2.5, marginBottom: 16 },
+    nextName: { fontSize: 24, fontFamily: FAMILY.display, color: COLORS.text, textAlign: "center", marginBottom: 20, width: "100%" },
+    nextImgBox: { width: "100%", height: 140, borderRadius: 16, overflow: "hidden", backgroundColor: "rgba(255,255,255,0.03)" },
+    nextImg: { width: "100%", height: "100%", opacity: 0.5 },
+    tipCard: {
+        width: "100%", alignItems: "center", paddingVertical: 12,
+    },
+    tipText: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.textMuted, textAlign: "center", opacity: 0.4, letterSpacing: 0.5 },
+});
+
+/* ── MAIN SCREEN ──────────────────────────────────────────── */
+export default function ActiveWorkoutScreen({ navigation, route }) {
+    const { day } = route.params;
+    const insets = useSafeAreaInsets();
+    const [settings, setSettings] = useState({
+        soundEnabled: true, vibrationEnabled: true, extraRestSec: 0,
+        setLoggingEnabled: true, keepScreenOn: true, weightUnit: "kg",
+        showCalories: true, restMindset: true,
+    });
+    const [phaseIdx, setPhaseIdx] = useState(0);
+    const [timeLeft, setTimeLeft] = useState(0);
+    const [running, setRunning] = useState(false);
+    const [paused, setPaused] = useState(false);
+    const [workoutStart] = useState(Date.now());
+    const [elapsedSec, setElapsedSec] = useState(0);
+    const [phases, setPhases] = useState([]);
+    const [prModal, setPRModal] = useState({ visible: false, exerciseName: "" });
+    const [prToast, setPRToast] = useState({ visible: false, exerciseName: "", weightKg: 0, reps: 0 });
+    const [newPRsFound, setNewPRsFound] = useState([]);
+    const [mindsetTip] = useState(() => REST_MINDSET[Math.floor(Math.random() * REST_MINDSET.length)]);
+    const [jumpModal, setJumpModal] = useState(false);
+    const intervalRef = useRef(null);
+    const elapsedRef = useRef(null);
+    const phaseTimeRef = useRef(0);
+    const hasAnnouncedRef = useRef(false);
+    const fadeAnim = useRef(new Animated.Value(1)).current;
+    const toastTimer = useRef(null);
+    const setLoggingRef = useRef(true);
+    const autoStartRef = useRef(true);   // mirrors settings.autoStartRest
+    const settingsRef = useRef(settings);
+
+    useEffect(() => {
+        (async () => {
+            const s = await getSettings();
+            setSettings(s);
+            settingsRef.current = s;
+            setLoggingRef.current = s.setLoggingEnabled ?? true;
+            autoStartRef.current = s.autoStartRest ?? true;
+            setAudioSettings(s);
+            const q = buildQueue(day.exercises);
+            const p = buildPhases(q, s.extraRestSec || 0);
+            setPhases(p);
+            setTimeLeft(p[0]?.duration ?? 45);
+            phaseTimeRef.current = p[0]?.duration ?? 45;
+
+            // Keep screen awake during workout
+            if (s.keepScreenOn) {
+                try { await activateKeepAwakeAsync(); } catch { }
+            }
+        })();
+        return () => {
+            clearInterval(intervalRef.current);
+            clearInterval(elapsedRef.current);
+            clearTimeout(toastTimer.current);
+            try { deactivateKeepAwake(); } catch { }
+        };
+    }, []);
+
+    const currentPhase = phases[phaseIdx];
+    const isWork = currentPhase?.type === "active";
+    const isRest = !isWork;
+    const phaseDuration = currentPhase?.duration ?? 1;
+    const progress = timeLeft / phaseDuration;
+
+    // Workout progress stats
+    const totalActivePhases = phases.filter(p => p.type === "active").length;
+    const completedActivePhases = phases.slice(0, phaseIdx).filter(p => p.type === "active").length;
+    const pct = Math.round((phaseIdx / Math.max(phases.length, 1)) * 100);
+    const calories = settings.showCalories ? liveCalories(elapsedSec) : 0;
+
+    const vibrate = useCallback(async (style) => {
+        if (!settingsRef.current.vibrationEnabled) return;
+        try { await Haptics.impactAsync(style || Haptics.ImpactFeedbackStyle.Medium); } catch { }
+    }, []);
+
+    const hapticNotify = useCallback(async () => {
+        if (!settingsRef.current.vibrationEnabled) return;
+        try { await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch { }
+    }, []);
+
+    const showPRToast = useCallback((exerciseName, weightKg, reps) => {
+        setPRToast({ visible: true, exerciseName, weightKg, reps });
+        clearTimeout(toastTimer.current);
+        toastTimer.current = setTimeout(() => {
+            setPRToast(t => ({ ...t, visible: false }));
+        }, 3500);
+    }, []);
+
+    const fadeTransition = useCallback(() => {
+        hasAnnouncedRef.current = false;
+        Animated.sequence([
+            Animated.timing(fadeAnim, { toValue: 0, duration: 140, useNativeDriver: true }),
+            Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
+        ]).start();
+    }, []);
+
+    const advancePhase = useCallback((phasesArr, currentIdx) => {
+        const next = currentIdx + 1;
+        if (next >= phasesArr.length) {
+            completeWorkout();
+            return;
+        }
+        fadeTransition();
+        const nextPhase = phasesArr[next];
+        if (nextPhase.type === "active") {
+            if (nextPhase.exercise.side) announceSide(nextPhase.exercise.side);
+            else announceWorkStart();
+        } else {
+            announceSetDone();
+            const completedPhase = phasesArr[currentIdx];
+            if (completedPhase?.type === "active" && setLoggingRef.current) {
+                setTimeout(() => {
+                    setPRModal({ visible: true, exerciseName: completedPhase.exercise.name });
+                }, 600);
+            }
+        }
+        setPhaseIdx(next);
+        setTimeLeft(nextPhase.duration);
+        phaseTimeRef.current = nextPhase.duration;
+        // Auto-start rest if setting is on and we just finished a work phase
+        if (nextPhase.type !== "active" && autoStartRef.current) {
+            setRunning(true);
+            setPaused(false);
+        }
+    }, []);
+
+    const startElapsedTimer = useCallback(() => {
+        clearInterval(elapsedRef.current);
+        elapsedRef.current = setInterval(() => {
+            setElapsedSec(s => s + 1);
+        }, 1000);
+    }, []);
+
+    const startInterval = useCallback((initTime, phasesArr, curIdx) => {
+        clearInterval(intervalRef.current);
+        let t = initTime;
+        intervalRef.current = setInterval(() => {
+            t -= 1;
+            setTimeLeft(t);
+            if (t <= 3 && t > 0 && !hasAnnouncedRef.current) {
+                announceFinalCountdown(t);
+            }
+            const ph = phasesArr[curIdx];
+            if (ph?.type !== "active") {
+                if (t === 30 || t === 15 || t === 10) vibrate(Haptics.ImpactFeedbackStyle.Light);
+                if (t === 5) vibrate(Haptics.ImpactFeedbackStyle.Heavy);
+                if (t === 3 || t || t === 1) vibrate(Haptics.ImpactFeedbackStyle.Medium);
+            }
+
+            // Logic for regular timer-based phases
+            if (t <= 0) {
+                clearInterval(intervalRef.current);
+                hapticNotify();
+                hasAnnouncedRef.current = true;
+                advancePhase(phasesArr, curIdx);
+                const nextPh = phasesArr[curIdx + 1];
+                if (nextPh) {
+                    // For active-reps, we don't start the auto-countdown
+                    if (nextPh.type === "active" && nextPh.isReps) {
+                        setRunning(true);
+                        setPaused(false);
+                        setTimeLeft(nextPh.duration);
+                    } else {
+                        startInterval(nextPh.duration, phasesArr, curIdx + 1);
+                    }
+                }
+            }
+        }, 1000);
+    }, [advancePhase, vibrate, hapticNotify]);
+
+    const handlePlayPause = () => {
+        if (!running) {
+            setRunning(true); setPaused(false);
+            if (currentPhase?.type === "active") announceWorkStart();
+
+            // Only start interval if it's NOT a rep-based active set
+            if (!(currentPhase?.type === "active" && currentPhase?.isReps)) {
+                startInterval(timeLeft, phases, phaseIdx);
+            }
+            startElapsedTimer();
+        } else if (!paused) {
+            setPaused(true);
+            clearInterval(intervalRef.current);
+            clearInterval(elapsedRef.current);
+        } else {
+            setPaused(false);
+            if (!(currentPhase?.type === "active" && currentPhase?.isReps)) {
+                startInterval(timeLeft, phases, phaseIdx);
+            }
+            startElapsedTimer();
+        }
+    };
+
+    const handleSkip = () => {
+        clearInterval(intervalRef.current);
+        vibrate(Haptics.ImpactFeedbackStyle.Light);
+        advancePhase(phases, phaseIdx);
+        if (running && !paused && phaseIdx + 1 < phases.length) {
+            startInterval(phases[phaseIdx + 1].duration, phases, phaseIdx + 1);
+        }
+    };
+
+    const handlePrev = () => {
+        if (phaseIdx <= 0) return;
+        clearInterval(intervalRef.current);
+        const prev = phaseIdx - 1;
+        fadeTransition();
+        setPhaseIdx(prev);
+        setTimeLeft(phases[prev].duration);
+        phaseTimeRef.current = phases[prev].duration;
+        if (running && !paused) startInterval(phases[prev].duration, phases, prev);
+    };
+
+    const handleQuit = () => {
+        Alert.alert("QUIT WORKOUT?", "Your current progress won't be recorded.", [
+            { text: "KEEP GOING", style: "cancel" },
+            {
+                text: "QUIT", style: "destructive",
+                onPress: () => {
+                    clearInterval(intervalRef.current);
+                    clearInterval(elapsedRef.current);
+                    navigation.goBack();
+                }
+            },
+        ]);
+    };
+
+    const completeWorkout = async () => {
+        clearInterval(intervalRef.current);
+        clearInterval(elapsedRef.current);
+        announceWorkoutDone();
+        const dur = Math.floor((Date.now() - workoutStart) / 1000);
+        const result = await saveWorkoutComplete(day.day, day.target, dur, day.exercises);
+        navigation.replace("WorkoutComplete", {
+            day, durationSec: dur,
+            streak: result?.streak || 0, total: result?.total || 0,
+            newPRs: newPRsFound,
+            caloriesBurned: liveCalories(dur),
+            showCalories: settings.showCalories,
+        });
+    };
+
+    const jumpToExercise = (idx) => {
+        clearInterval(intervalRef.current);
+        fadeTransition();
+        setPhaseIdx(idx);
+        setTimeLeft(phases[idx].duration);
+        phaseTimeRef.current = phases[idx].duration;
+        setJumpModal(false);
+        if (running && !paused) {
+            if (!(phases[idx].type === "active" && phases[idx].isReps)) {
+                startInterval(phases[idx].duration, phases, idx);
+            }
+        }
+    };
+
+    const handlePRSave = async (weightKg, reps) => {
+        setPRModal({ visible: false, exerciseName: "" });
+        if ((weightKg === 0 && reps === 0) || !prModal.exerciseName) return;
+        const result = await tryUpdatePR(prModal.exerciseName, weightKg, reps);
+        if (result.isNewPR) {
+            hapticNotify();
+            setNewPRsFound(prev => [...prev, { name: prModal.exerciseName, weightKg, reps }]);
+            showPRToast(prModal.exerciseName, weightKg, reps);
+        }
+    };
+
+    if (!currentPhase || phases.length === 0) {
+        return (
+            <View style={[styles.container, { alignItems: "center", justifyContent: "center" }]}>
+                <Text style={{ color: COLORS.textSub }}>Loading…</Text>
+            </View>
+        );
+    }
+
+    const ex = currentPhase.exercise;
+    const activeSetPhases = phases.filter(p => p.type === "active" && p.exIdx === currentPhase.exIdx);
+    const currentSetPos = currentPhase.type === "active" ? currentPhase.set - 1 : -1;
+
+    const formatTime = (s) => {
+        if (s >= 60) return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+        return String(s);
+    };
+
+    return (
+        <View style={styles.container}>
+            <StatusBar barStyle="light-content" backgroundColor="#000" translucent />
+
+            {/* PR Toast */}
+            <PRToast
+                visible={prToast.visible}
+                exerciseName={prToast.exerciseName}
+                weightKg={prToast.weightKg}
+                reps={prToast.reps}
+                weightUnit={settings.weightUnit}
+            />
+
+            {/* PR Log Modal */}
+            <PRModal
+                visible={prModal.visible}
+                exerciseName={prModal.exerciseName}
+                onClose={() => setPRModal({ visible: false, exerciseName: "" })}
+                onSave={handlePRSave}
+                weightUnit={settings.weightUnit}
+            />
+
+            {/* Top bar */}
+            <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
+                <TouchableOpacity style={styles.quitBtn} onPress={handleQuit} activeOpacity={0.7}>
+                    <Ionicons name="close" size={20} color={COLORS.text} />
+                </TouchableOpacity>
+                <View style={styles.topCenter}>
+                    <Text style={styles.topTitle}>{day.target.toUpperCase()}</Text>
+                    <Text style={styles.topSub}>WORKOUT {pct}% COMPLETE</Text>
+                </View>
+                {/* Calorie counter */}
+                {settings.showCalories ? (
+                    <View style={styles.calBadge}>
+                        <Text style={styles.calValue}>{calories}</Text>
+                        <Text style={styles.calUnit}>KCAL</Text>
+                    </View>
+                ) : (
+                    <View style={{ width: 52 }} />
+                )}
+                <TouchableOpacity
+                    style={[styles.jumpBtn, { marginLeft: 12 }]}
+                    onPress={() => setJumpModal(true)}
+                    activeOpacity={0.7}
+                >
+                    <Ionicons name="list" size={20} color={COLORS.text} />
+                </TouchableOpacity>
+            </View>
+
+            {/* Segmented progress bar */}
+            <View style={styles.progressTrack}>
+                <View style={[styles.progressFill, {
+                    width: `${pct}%`,
+                    backgroundColor: isWork ? COLORS.primary : "#fff",
+                    shadowColor: isWork ? COLORS.primary : "#fff",
+                    shadowOffset: { width: 0, height: 0 },
+                    shadowOpacity: 0.5,
+                    shadowRadius: 10,
+                }]} />
+            </View>
+
+            {/* REST phase */}
+            {isRest ? (
+                <Animated.View style={[styles.restContainer, { opacity: fadeAnim }]}>
+                    <RestOverlay
+                        phase={currentPhase}
+                        timeLeft={timeLeft}
+                        onSkip={handleSkip}
+                        settings={settings}
+                        mindsetTip={mindsetTip}
+                    />
+                    <View style={styles.controls}>
+                        <TouchableOpacity
+                            style={[styles.ctrlSec, phaseIdx === 0 && styles.ctrlSecDisabled]}
+                            onPress={handlePrev} disabled={phaseIdx === 0} activeOpacity={0.7}>
+                            <Ionicons name="play-skip-back" size={20} color={COLORS.text} />
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.ctrlMain} onPress={handlePlayPause} activeOpacity={0.85}>
+                            <View style={[styles.ctrlMainInner, { backgroundColor: COLORS.primary }]}>
+                                <Ionicons
+                                    name={!running ? "play" : paused ? "play" : "pause"}
+                                    size={28} color="#fff"
+                                />
+                            </View>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.ctrlSec} onPress={handleSkip} activeOpacity={0.7}>
+                            <Ionicons name="play-skip-forward" size={20} color={COLORS.text} />
+                        </TouchableOpacity>
+                    </View>
+                </Animated.View>
+            ) : (
+                /* WORK phase */
+                <ScrollView showsVerticalScrollIndicator={false} overScrollMode="never" contentContainerStyle={styles.scroll}>
+                    <Animated.View style={{ opacity: fadeAnim, alignItems: "center" }}>
+
+                        {/* Phase tag */}
+                        <View style={[styles.phaseTag, { backgroundColor: "rgba(227,30,36,0.05)", borderColor: "rgba(227,30,36,0.15)" }]}>
+                            <View style={[styles.phaseTagDot, { backgroundColor: COLORS.primary }]} />
+                            <Text style={[styles.phaseTagText, { color: COLORS.primary }]}>WORKING</Text>
+                        </View>
+
+                        {/* Exercise name */}
+                        <Text style={styles.exName}>{ex.name.toUpperCase()}</Text>
+                        {ex.side && <Text style={styles.sideLabel}>{ex.side} SIDE</Text>}
+
+                        {/* Set indicator with tactical tracks */}
+                        {currentPhase.type === "active" && (
+                            <View style={styles.setIndicator}>
+                                <Text style={styles.setLabel}>SET 0{currentPhase.set} / 0{ex.sets}</Text>
+                                <View style={styles.setDots}>
+                                    {activeSetPhases.map((_, i) => (
+                                        <View key={i} style={[
+                                            styles.dot,
+                                            i < currentSetPos && styles.dotDone,
+                                            i === currentSetPos && styles.dotActive,
+                                        ]} />
+                                    ))}
+                                </View>
+                            </View>
+                        )}
+
+                        {/* Ring Timer / Rep Indicator */}
+                        <View style={styles.timerWrap}>
+                            <RingTimer
+                                progress={currentPhase.isReps ? (running ? 1 : 0) : progress}
+                                isWork={isWork} size={RING} stroke={STROKE}
+                                timeLeft={timeLeft}
+                            />
+                            <View style={styles.timerInner}>
+                                {currentPhase.isReps ? (
+                                    <>
+                                        <Text style={[styles.timerNum, { color: COLORS.text }]}>{currentPhase.repRange}</Text>
+                                        <Text style={styles.timerUnit}>TARGET REPS</Text>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Text style={[styles.timerNum, { color: timeLeft <= 5 ? COLORS.primary : COLORS.text }]}>
+                                            {formatTime(timeLeft)}
+                                        </Text>
+                                        <Text style={styles.timerUnit}>SECONDS</Text>
+                                    </>
+                                )}
+                            </View>
+                        </View>
+
+                        {/* Reference Image during work */}
+                        {ex.image && (
+                            <View style={styles.workImgBox}>
+                                <LinearGradient
+                                    colors={["transparent", "rgba(0,0,0,0.4)"]}
+                                    style={StyleSheet.absoluteFill}
+                                />
+                                <Image source={ex.image} style={styles.workImg} resizeMode="contain" />
+                            </View>
+                        )}
+
+                        {/* Controls */}
+                        <View style={styles.controls}>
+                            <TouchableOpacity
+                                style={[styles.ctrlSec, phaseIdx === 0 && styles.ctrlSecDisabled]}
+                                onPress={handlePrev} disabled={phaseIdx === 0} activeOpacity={0.7}>
+                                <Ionicons name="play-skip-back" size={20} color={COLORS.text} />
+                            </TouchableOpacity>
+
+                            {currentPhase.isReps && running && !paused ? (
+                                <TouchableOpacity style={styles.ctrlMainWide} onPress={handleSkip} activeOpacity={0.85}>
+                                    <LinearGradient
+                                        colors={[COLORS.primary, "#C41E24"]}
+                                        style={styles.ctrlMainWideInner}
+                                    >
+                                        <Text style={styles.ctrlMainWideText}>SET COMPLETE</Text>
+                                        <Ionicons name="checkmark-circle" size={20} color="#fff" />
+                                    </LinearGradient>
+                                </TouchableOpacity>
+                            ) : (
+                                <TouchableOpacity style={styles.ctrlMain} onPress={handlePlayPause} activeOpacity={0.85}>
+                                    <View style={[styles.ctrlMainInner, { backgroundColor: COLORS.primary }]}>
+                                        <Ionicons
+                                            name={!running ? "play" : paused ? "play" : "pause"}
+                                            size={28} color="#fff"
+                                        />
+                                    </View>
+                                </TouchableOpacity>
+                            )}
+
+                            <TouchableOpacity style={styles.ctrlSec} onPress={handleSkip} activeOpacity={0.7}>
+                                <Ionicons name="play-skip-forward" size={20} color={COLORS.text} />
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* Log PR button */}
+                        {settings.setLoggingEnabled && (
+                            <TouchableOpacity
+                                style={[styles.logPRBtn, { borderColor: COLORS.primaryDim, backgroundColor: "rgba(227,30,36,0.05)" }]}
+                                onPress={() => setPRModal({ visible: true, exerciseName: ex.name })}
+                                activeOpacity={0.8}
+                            >
+                                <Ionicons name="clipboard-outline" size={18} color={COLORS.primary} />
+                                <Text style={[styles.logPRText, { color: COLORS.primary }]}>LOG YOUR PERFORMANCE</Text>
+                            </TouchableOpacity>
+                        )}
+
+                        {/* Form Protocol */}
+                        {isWork && ex.tips?.length > 0 && (
+                            <View style={styles.formCard}>
+                                <View style={styles.formLabelRow}>
+                                    <Ionicons name="shield-checkmark" size={14} color={COLORS.textMuted} />
+                                    <Text style={styles.formLabel}>TECHNIQUE TIPS</Text>
+                                </View>
+                                {ex.tips.map((tip, i) => (
+                                    <View key={i} style={styles.tipRow}>
+                                        <View style={styles.tipDot} />
+                                        <Text style={styles.tipText}>{tip.toUpperCase()}</Text>
+                                    </View>
+                                ))}
+                            </View>
+                        )}
+
+                    </Animated.View>
+                </ScrollView>
+            )}
+
+            {/* Jump Modal */}
+            <Modal visible={jumpModal} transparent animationType="fade" onRequestClose={() => setJumpModal(false)}>
+                <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={() => setJumpModal(false)}>
+                    <View style={styles.jumpModal}>
+                        <View style={styles.jumpHeader}>
+                            <Text style={styles.jumpTitle}>WORKOUT NAVIGATOR</Text>
+                            <TouchableOpacity onPress={() => setJumpModal(false)}>
+                                <Ionicons name="close" size={24} color={COLORS.text} />
+                            </TouchableOpacity>
+                        </View>
+                        <ScrollView showsVerticalScrollIndicator={false}>
+                            {day.exercises.map((ex, i) => {
+                                const isCurrent = currentPhase.exIdx === i;
+                                return (
+                                    <TouchableOpacity
+                                        key={i}
+                                        style={[styles.jumpItem, isCurrent && styles.jumpItemActive]}
+                                        onPress={() => {
+                                            const firstPhase = phases.findIndex(p => p.exIdx === i);
+                                            if (firstPhase !== -1) jumpToExercise(firstPhase);
+                                        }}
+                                    >
+                                        <View style={styles.jumpIndex}>
+                                            <Text style={styles.jumpIndexText}>{i + 1}</Text>
+                                        </View>
+                                        <View style={{ flex: 1 }}>
+                                            <Text style={[styles.jumpName, isCurrent && { color: COLORS.primary }]}>{ex.name.toUpperCase()}</Text>
+                                            <Text style={styles.jumpMeta}>{ex.sets} SETS · {ex.type === 'reps' ? ex.repRange + ' REPS' : ex.activeTimeSec + ' SEC'}</Text>
+                                        </View>
+                                        {isCurrent && <Ionicons name="play" size={16} color={COLORS.primary} />}
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </ScrollView>
+                    </View>
+                </TouchableOpacity>
+            </Modal>
+        </View>
+    );
+}
+
+/* ── Styles ───────────────────────────────────────────────── */
+const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: COLORS.bg },
+    scroll: { paddingBottom: 60 },
+
+    topBar: {
+        flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+        paddingHorizontal: 20, paddingBottom: 16,
+    },
+    topCenter: { alignItems: "center", flex: 1 },
+    topTitle: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 2 },
+    topSub: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2.5, marginTop: 4 },
+    quitBtn: {
+        width: 36, height: 36, borderRadius: 10,
+        backgroundColor: "rgba(255,255,255,0.05)", alignItems: "center", justifyContent: "center",
+    },
+    calBadge: {
+        backgroundColor: "rgba(255,255,255,0.05)",
+        paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8,
+        alignItems: "center",
+    },
+    calValue: { fontSize: 13, color: COLORS.text, fontFamily: FAMILY.bold },
+    calUnit: { fontSize: 7, color: COLORS.textMuted, fontFamily: FAMILY.bold, letterSpacing: 1 },
+
+    progressTrack: { height: 3, backgroundColor: "rgba(255,255,255,0.05)", width: "100%" },
+    progressFill: { height: "100%", backgroundColor: COLORS.primary },
+
+    restContainer: { flex: 1, backgroundColor: COLORS.bg, justifyContent: "space-between", paddingBottom: 48 },
+
+    phaseTag: {
+        flexDirection: "row", alignItems: "center", gap: 8,
+        paddingHorizontal: 14, paddingVertical: 8, borderRadius: 6,
+        borderWidth: 1, marginTop: 40,
+    },
+    phaseTagDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: COLORS.accent },
+    phaseTagText: { fontSize: 9, fontFamily: FAMILY.bold, letterSpacing: 2 },
+
+    exName: {
+        fontSize: 36, fontFamily: FAMILY.display, color: COLORS.text,
+        textAlign: "center", marginTop: 24, paddingHorizontal: 40,
+        lineHeight: 40, letterSpacing: -0.5, width: "100%"
+    },
+    sideLabel: {
+        fontSize: 12, fontFamily: FAMILY.bold, color: COLORS.primary,
+        marginTop: 12, letterSpacing: 3,
+    },
+
+    setIndicator: { marginTop: 48, alignItems: "center" },
+    setLabel: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2, marginBottom: 16 },
+    setDots: { flexDirection: "row", gap: 6 },
+    dot: { width: 24, height: 3, borderRadius: 1.5, backgroundColor: "rgba(255,255,255,0.05)" },
+    dotActive: { backgroundColor: COLORS.primary, width: 32 },
+    dotDone: { backgroundColor: "rgba(255,255,255,0.2)" },
+
+    timerWrap: {
+        marginTop: 64, width: RING, height: RING,
+        alignItems: "center", justifyContent: "center",
+    },
+    timerInner: { position: "absolute", alignItems: "center" },
+    timerNum: { fontSize: 72, fontFamily: FAMILY.display, letterSpacing: -2 },
+    timerUnit: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 3, marginTop: -4 },
+
+    controls: {
+        flexDirection: "row", alignItems: "center", justifyContent: "center",
+        gap: 32, marginTop: 64,
+    },
+    ctrlMain: {
+        width: 88, height: 88, borderRadius: 44,
+        alignItems: "center", justifyContent: "center",
+    },
+    ctrlMainInner: {
+        width: 72, height: 72, borderRadius: 36,
+        alignItems: "center", justifyContent: "center",
+    },
+    ctrlMainWide: {
+        flex: 1, height: 72, marginHorizontal: 16,
+    },
+    ctrlMainWideInner: {
+        flex: 1, borderRadius: 18, flexDirection: "row",
+        alignItems: "center", justifyContent: "center", gap: 12,
+        shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.4, shadowRadius: 12, elevation: 8,
+    },
+    ctrlMainWideText: {
+        fontSize: 14, fontFamily: FAMILY.bold, color: "#fff", letterSpacing: 2.5,
+    },
+    ctrlSec: {
+        width: 48, height: 48, borderRadius: 24,
+        backgroundColor: "rgba(255,255,255,0.05)",
+        alignItems: "center", justifyContent: "center",
+    },
+    ctrlSecDisabled: { opacity: 0.2 },
+
+    logPRBtn: {
+        flexDirection: "row", alignItems: "center", gap: 10,
+        paddingVertical: 14, paddingHorizontal: 24, borderRadius: 14,
+        backgroundColor: "rgba(255,255,255,0.03)",
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
+        marginTop: 48,
+    },
+    logPRText: { fontSize: 10, color: COLORS.accent, fontFamily: FAMILY.bold, letterSpacing: 1.5 },
+
+    formCard: {
+        backgroundColor: COLORS.bgCard, margin: 24,
+        borderRadius: 24, padding: 24,
+        borderWidth: 1, borderColor: COLORS.border,
+        width: width - 48,
+    },
+    formLabelRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 20 },
+    formLabel: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2.5 },
+    tipRow: { flexDirection: "row", alignItems: "flex-start", gap: 16, marginBottom: 16 },
+    tipDot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: COLORS.primary, marginTop: 8 },
+    tipText: { fontSize: 13, color: COLORS.textSub, flex: 1, lineHeight: 22, fontFamily: FAMILY.regular },
+    workImgBox: {
+        width: width - 80, height: 180, borderRadius: 20,
+        backgroundColor: "rgba(255,255,255,0.02)",
+        marginTop: 32, overflow: "hidden",
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
+    },
+    workImg: { width: "100%", height: "100%", opacity: 0.8 },
+    jumpBtn: {
+        width: 40, height: 40, borderRadius: 12,
+        backgroundColor: "rgba(255,255,255,0.05)", alignItems: "center", justifyContent: "center",
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
+    },
+    modalBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.85)", justifyContent: "center", alignItems: "center" },
+    jumpModal: {
+        width: width - 40, maxHeight: "70%", backgroundColor: COLORS.bgCard,
+        borderRadius: 32, padding: 32, borderWidth: 1, borderColor: COLORS.border,
+    },
+    jumpHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 24 },
+    jumpTitle: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 3 },
+    jumpItem: {
+        flexDirection: "row", alignItems: "center", paddingVertical: 16, borderBottomWidth: 1,
+        borderBottomColor: "rgba(255,255,255,0.04)", gap: 16,
+    },
+    jumpItemActive: { backgroundColor: "rgba(227,30,36,0.05)", borderRadius: 16, paddingHorizontal: 12, marginHorizontal: -12 },
+    jumpIndex: { width: 28, height: 28, borderRadius: 8, backgroundColor: "rgba(255,255,255,0.05)", alignItems: "center", justifyContent: "center" },
+    jumpIndexText: { fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.textSub },
+    jumpName: { fontSize: 14, fontFamily: FAMILY.display, color: COLORS.textSub, letterSpacing: 0.5 },
+    jumpMeta: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, marginTop: 4, letterSpacing: 0.5 },
+});

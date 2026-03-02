@@ -1,29 +1,69 @@
 {
   "expo": {
-    "name": "workout-app",
-    "slug": "workout-app",
+    "name": "ConquerONE",
+    "slug": "conquer-one",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#0A0A0F"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.conquerone.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSHealthShareUsageDescription": "CONQUER ONE needs access to your health data to sync your workouts and track progress across devices.",
+        "NSHealthUpdateUsageDescription": "CONQUER ONE will archive your workout sessions in Apple Health for a unified performance overview."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#000000"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.conquerone.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-font",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#C8202A",
+          "sounds": []
+        }
+      ],
+      "@react-native-community/datetimepicker",
+      "react-native-health-connect",
+      "react-native-health",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26
+          }
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "fa539543-bc51-4677-8251-2e9ff8c7a17d"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/fa539543-bc51-4677-8251-2e9ff8c7a17d"
     }
   }
 }

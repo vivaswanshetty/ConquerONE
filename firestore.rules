@@ -1,0 +1,18 @@
+// Firestore Security Rules for ConquerOne
+// Paste these into: Firebase Console → Firestore → Rules tab
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Users can only read/write their OWN document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // All subcollections (history, prs, bodyStats, customWorkouts) inherit same rule
+      match /{subcollection}/{docId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+  }
+}

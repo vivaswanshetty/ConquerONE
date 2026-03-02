@@ -1,0 +1,826 @@
+import React, { useState, useEffect, useRef } from "react";
+import {
+    View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar, Alert, Platform, Animated, Modal,
+} from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { Ionicons } from "@expo/vector-icons";
+import * as Linking from "expo-linking";
+import * as Sharing from "expo-sharing";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as Updates from "expo-updates";
+import { COLORS, FONTS, SPACING, RADIUS, FAMILY } from "../utils/theme";
+import { getSettings, saveSettings, DEFAULT_SETTINGS } from "../utils/settings";
+import { clearHistory, clearAllData } from "../utils/storage";
+import {
+    getReminderSettings, scheduleReminder, disableReminder,
+    requestNotifPermission, sendStreakAtRiskNotif
+} from "../utils/notifications";
+import UpdateScreen from "./UpdateScreen";
+import { useAuth } from "../context/AuthContext";
+import { requestHealthPermissions, initHealthSync } from "../utils/health";
+
+/* --- Legal Content --- */
+const TERMS_CONTENT = `CONQUER ONE - TERMS OF USE
+
+1. ACCEPTANCE
+By using Conquer One, you agree to these terms. If you do not agree, do not use the application.
+
+2. LICENSE
+We grant you a personal, non-exclusive license to use the app for personal fitness tracking for the duration of its life cycle.
+
+3. DATA PRIVACY
+We respect your privacy. All workout data is stored locally on your device and synced with your private Firebase account as described in our Privacy Policy.
+
+4. UPDATES
+We may update the app at any time to improve performance or security.
+`;
+
+const DISCLAIMER_CONTENT = `HEALTH & SAFETY DISCLAIMER
+
+1. NO MEDICAL ADVICE
+The content in Conquer One is for informational purposes only. It is not medical advice and is not intended to replace professional consultation.
+
+2. PHYSICAL RISK
+Fitness training involves inherent risks of injury. Consult a physician before starting any new exercise program, especially if you have pre-existing conditions.
+
+3. ASSUMPTION OF RISK
+By using this app, you acknowledge and assume all risks associated with your physical activity. Conquer One is not responsible for any injuries sustained while training.
+
+4. EQUIPMENT SAFETY
+Ensure all equipment is properly maintained and used according to manufacturer instructions.
+`;
+
+const REST_OPTIONS = [
+    { label: "NONE", val: 0 },
+    { label: "+15S", val: 15 },
+    { label: "+30S", val: 30 },
+    { label: "+45S", val: 45 },
+];
+
+const WEIGHT_UNITS = [
+    { label: "KG", val: "kg" },
+    { label: "LBS", val: "lbs" },
+];
+
+const TIME_SLOTS = [
+    { label: "07:00 AM", hour: 7, minute: 0 },
+    { label: "12:00 PM", hour: 12, minute: 0 },
+    { label: "06:00 PM", hour: 18, minute: 0 },
+    { label: "09:00 PM", hour: 21, minute: 0 },
+];
+
+export default function SettingsScreen({ navigation, route }) {
+    const insets = useSafeAreaInsets();
+    const scrollRef = useRef(null);
+    const notificationsY = useRef(0);
+    const { user, profile = null } = useAuth();
+    const displayName = profile?.fullName || user?.displayName || "Athlete";
+    const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+    const [saved, setSaved] = useState(false);
+    const [reminder, setReminder] = useState({ enabled: false, hour: 18, minute: 0 });
+    const [updateStatus, setUpdateStatus] = useState("idle");
+    const [updateId, setUpdateId] = useState(null);
+    const [loaded, setLoaded] = useState(false);
+    const [showPicker, setShowPicker] = useState(false);
+    const [isDownloadingUpdate, setIsDownloadingUpdate] = useState(false);
+    const [legalModal, setLegalModal] = useState({ visible: false, title: "", content: "" });
+
+    useEffect(() => {
+        if (route?.params?.scrollTo === "notifications" && loaded) {
+            setTimeout(() => {
+                scrollRef.current?.scrollTo({ y: notificationsY.current, animated: true });
+            }, 400);
+        }
+    }, [route?.params?.scrollTo, loaded]);
+
+    useEffect(() => {
+        (async () => {
+            if (!__DEV__ && Updates.currentlyRunning?.updateId) {
+                setUpdateId(Updates.currentlyRunning.updateId);
+            }
+            setSettings(await getSettings());
+            setReminder(await getReminderSettings());
+            setLoaded(true);
+        })();
+    }, []);
+
+    const flash = () => { setSaved(true); setTimeout(() => setSaved(false), 1500); };
+
+    const update = async (key, val) => {
+        const next = { ...settings, [key]: val };
+        setSettings(next);
+        await saveSettings(next);
+        flash();
+    };
+
+    const toggleReminder = async (val) => {
+        if (val) {
+            const granted = await requestNotifPermission();
+            if (!granted) {
+                Alert.alert("PERMISSION GRANTED", "Enable notifications in tactical settings to activate reminders.");
+                return;
+            }
+            await scheduleReminder(reminder.hour, reminder.minute);
+        } else {
+            await disableReminder();
+        }
+        setReminder(r => ({ ...r, enabled: val }));
+        flash();
+    };
+
+    const handleHealthSync = async () => {
+        try {
+            const granted = await requestHealthPermissions();
+            if (granted) {
+                await update("healthSyncEnabled", true);
+                const platformName = Platform.OS === 'ios' ? "Apple Health" : "Google Fit";
+                Alert.alert("SYNC ACTIVATED", `CONQUER ONE is now linked to ${platformName}. Future sessions will be archived automatically.`);
+            }
+        } catch (e) {
+            const platformName = Platform.OS === 'ios' ? "HealthKit" : "Health Connect";
+            Alert.alert("SYNC ERROR", `Could not establish connection to ${platformName}.`);
+        }
+    };
+
+    if (isDownloadingUpdate) return <UpdateScreen />;
+    if (!loaded) return <View style={[styles.container, { backgroundColor: COLORS.bg }]} />;
+
+    return (
+        <View style={[styles.container, { paddingTop: insets.top }]}>
+            <StatusBar barStyle="light-content" backgroundColor="#000" translucent />
+
+            <View style={styles.header}>
+                <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+                    <Ionicons name="chevron-back" size={22} color={COLORS.text} />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>SETTINGS</Text>
+                <View style={{ width: 60, alignItems: "flex-end" }}>
+                    {saved && (
+                        <View style={[styles.savedBadge, { backgroundColor: "rgba(227,30,36,0.1)" }]}>
+                            <Text style={[styles.savedText, { color: COLORS.primary }]} adjustsFontSizeToFit numberOfLines={1}>SAVED</Text>
+                        </View>
+                    )}
+                </View>
+            </View>
+
+            <ScrollView ref={scrollRef} showsVerticalScrollIndicator={false} overScrollMode="never" contentContainerStyle={{ paddingBottom: 60 }}>
+
+                <SectionLabel title="MY PROFILE" icon="person-circle-outline" />
+                <TouchableOpacity
+                    style={[styles.card, { padding: 24, flexDirection: "row", alignItems: "center", gap: 16 }]}
+                    onPress={() => navigation.navigate("Profile")}
+                    activeOpacity={0.8}
+                >
+                    <View style={styles.profileIconWrap}>
+                        <Ionicons name="person-circle-outline" size={28} color={COLORS.primary} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                        <Text style={styles.profileTitle}>{displayName.toUpperCase()}</Text>
+                        <Text style={styles.profileSub}>VIEW & EDIT ACCOUNT DETAILS</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />
+                </TouchableOpacity>
+
+                <SectionLabel title="WORKOUT SETTINGS" icon="barbell-outline" />
+                <View style={styles.card}>
+                    <ToggleRow
+                        label="Persistent Display"
+                        sublabel="Prevent screen lockout during workouts"
+                        icon="phone-portrait-outline"
+                        value={settings.keepScreenOn}
+                        onToggle={(v) => update("keepScreenOn", v)}
+                    />
+                    <Divider />
+                    <ToggleRow
+                        label="Auto-Rest"
+                        sublabel="Rest timer starts on set completion"
+                        icon="timer-outline"
+                        value={settings.autoStartRest}
+                        onToggle={(v) => update("autoStartRest", v)}
+                    />
+                    <Divider />
+                    <ToggleRow
+                        label="Calorie Analytics"
+                        sublabel="Real-time estimate of energy burned"
+                        icon="flame-outline"
+                        value={settings.showCalories}
+                        onToggle={(v) => update("showCalories", v)}
+                    />
+                    <Divider />
+                    <ToggleRow
+                        label="Mindset Cues"
+                        sublabel="Motivational quotes during rest"
+                        icon="bulb-outline"
+                        value={settings.restMindset}
+                        onToggle={(v) => update("restMindset", v)}
+                    />
+                </View>
+
+                <SectionLabel title="LOGGING" icon="trophy-outline" />
+                <View style={styles.card}>
+                    <ToggleRow
+                        label="Set Logging"
+                        sublabel="Prompt for performance after every set"
+                        icon="create-outline"
+                        value={settings.setLoggingEnabled}
+                        onToggle={(v) => update("setLoggingEnabled", v)}
+                    />
+                    <Divider />
+                    <View style={styles.chipSection}>
+                        <View style={styles.chipLabelRow}>
+                            <Ionicons name="scale-outline" size={16} color={COLORS.textMuted} />
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.chipLabel}>MASS UNIT</Text>
+                                <Text style={styles.chipSub}>Metric system for logging & tracking</Text>
+                            </View>
+                        </View>
+                        <View style={styles.chipRow}>
+                            {WEIGHT_UNITS.map((u) => (
+                                <TouchableOpacity
+                                    key={u.val}
+                                    style={[styles.chip, settings.weightUnit === u.val && styles.chipActive]}
+                                    onPress={() => update("weightUnit", u.val)}
+                                    activeOpacity={0.75}
+                                >
+                                    <Text style={[styles.chipText, settings.weightUnit === u.val && styles.chipTextActive]}>
+                                        {u.label}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    </View>
+                </View>
+
+                <SectionLabel title="PREFERENCES" icon="pulse-outline" />
+                <View style={styles.card}>
+                    <ToggleRow
+                        label="Haptic Feedback"
+                        sublabel="Vibration cues during sessions"
+                        icon="finger-print-outline"
+                        value={settings.vibrationEnabled}
+                        onToggle={(v) => update("vibrationEnabled", v)}
+                    />
+                    <Divider />
+                    <ToggleRow
+                        label="Voice Guidance"
+                        sublabel="Exercise and rest audio cues"
+                        icon="mic-outline"
+                        value={settings.soundEnabled}
+                        onToggle={(v) => update("soundEnabled", v)}
+                    />
+                </View>
+
+                <SectionLabel title="CONNECTED SYSTEMS" icon="link-outline" />
+                <View style={styles.card}>
+                    <TouchableOpacity
+                        style={styles.toggleRow}
+                        activeOpacity={0.7}
+                        onPress={handleHealthSync}
+                    >
+                        <View style={styles.toggleIconWrap}>
+                            <Ionicons name="heart-outline" size={18} color={settings.healthSyncEnabled ? "#22c55e" : COLORS.primary} />
+                        </View>
+                        <View style={styles.toggleInfo}>
+                            <Text style={styles.toggleLabel}>HEALTH SYNC {settings.healthSyncEnabled ? "(ACTIVE)" : ""}</Text>
+                            <Text style={styles.toggleSub}>
+                                {settings.healthSyncEnabled
+                                    ? `Connected to ${Platform.OS === 'ios' ? 'Apple Health' : 'Google Fit'}`
+                                    : `Sync workouts to ${Platform.OS === 'ios' ? 'Apple Health' : 'Google Fit'}`}
+                            </Text>
+                        </View>
+                        {settings.healthSyncEnabled && (
+                            <Ionicons name="checkmark-circle" size={18} color="#22c55e" />
+                        )}
+                    </TouchableOpacity>
+                </View>
+
+                <SectionLabel title="REST ALLOCATION" icon="bed-outline" />
+                <View style={styles.card}>
+                    <View style={styles.chipSection}>
+                        <View style={styles.chipLabelRow}>
+                            <Ionicons name="add-circle-outline" size={16} color={COLORS.textMuted} />
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.chipLabel}>RECOVERY OFFSET</Text>
+                                <Text style={styles.chipSub}>Global extension for recovery phases</Text>
+                            </View>
+                        </View>
+                        <View style={styles.chipRow}>
+                            {REST_OPTIONS.map((opt) => (
+                                <TouchableOpacity
+                                    key={opt.val}
+                                    style={[styles.chip, settings.extraRestSec === opt.val && styles.chipActive]}
+                                    onPress={() => update("extraRestSec", opt.val)}
+                                    activeOpacity={0.75}
+                                >
+                                    <Text style={[styles.chipText, settings.extraRestSec === opt.val && styles.chipTextActive]}>
+                                        {opt.label}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    </View>
+                </View>
+
+                <SectionLabel title="REMINDERS" icon="notifications-outline" />
+                <View
+                    style={styles.card}
+                    onLayout={(e) => { notificationsY.current = e.nativeEvent.layout.y; }}
+                >
+                    <ToggleRow
+                        label="Daily Reminder"
+                        sublabel="Notification to stay on track"
+                        icon="alarm-outline"
+                        value={reminder.enabled}
+                        onToggle={toggleReminder}
+                    />
+                    {reminder.enabled && (
+                        <>
+                            <Divider />
+                            <View style={{ paddingHorizontal: 24, paddingBottom: 20, paddingTop: 12 }}>
+                                <Text style={styles.chipSub}>DEPLOYMENT SCHEDULE</Text>
+                                <View style={[styles.chipRow, { paddingTop: 16 }]}>
+                                    {TIME_SLOTS.map((slot) => {
+                                        const active = reminder.hour === slot.hour && reminder.minute === slot.minute;
+                                        return (
+                                            <TouchableOpacity
+                                                key={slot.label}
+                                                style={[styles.chip, active && styles.chipActive]}
+                                                activeOpacity={0.75}
+                                                onPress={async () => {
+                                                    await scheduleReminder(slot.hour, slot.minute);
+                                                    setReminder(r => ({ ...r, hour: slot.hour, minute: slot.minute }));
+                                                    flash();
+                                                }}
+                                            >
+                                                <Text style={[styles.chipText, active && styles.chipTextActive]}>
+                                                    {slot.label}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                    <TouchableOpacity
+                                        style={[styles.chip, styles.chipCustom]}
+                                        activeOpacity={0.75}
+                                        onPress={() => setShowPicker(true)}
+                                    >
+                                        <Ionicons name="time-outline" size={14} color={COLORS.textSub} style={{ marginRight: 6 }} />
+                                        <Text style={styles.chipText}>
+                                            {(() => {
+                                                const h = reminder.hour % 12 || 12;
+                                                const m = String(reminder.minute).padStart(2, "0");
+                                                const p = reminder.hour >= 12 ? "PM" : "AM";
+                                                const isPreset = TIME_SLOTS.some(s => s.hour === reminder.hour && s.minute === reminder.minute);
+                                                return isPreset ? "CUSTOM" : `${h}:${m} ${p}`;
+                                            })()}
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
+                                {showPicker && (
+                                    <DateTimePicker
+                                        value={(() => {
+                                            const d = new Date();
+                                            d.setHours(reminder.hour);
+                                            d.setMinutes(reminder.minute);
+                                            return d;
+                                        })()}
+                                        mode="time"
+                                        is24Hour={false}
+                                        display={Platform.OS === "ios" ? "spinner" : "default"}
+                                        onChange={async (event, selectedDate) => {
+                                            setShowPicker(false);
+                                            if (selectedDate) {
+                                                const h = selectedDate.getHours();
+                                                const m = selectedDate.getMinutes();
+                                                await scheduleReminder(h, m);
+                                                setReminder(r => ({ ...r, hour: h, minute: m }));
+                                                flash();
+                                            }
+                                        }}
+                                    />
+                                )}
+                            </View>
+                        </>
+                    )}
+                </View>
+
+                <SectionLabel title="ABOUT" icon="cloud-download-outline" />
+                <View style={styles.card}>
+                    <InfoRow
+                        label="App Version"
+                        value={__DEV__ ? "DEV" : updateId ? updateId.slice(0, 8).toUpperCase() : "1.0.0"}
+                        icon="layers-outline"
+                    />
+                    <Divider />
+                    <TouchableOpacity
+                        style={styles.toggleRow}
+                        activeOpacity={0.7}
+                        onPress={() => Sharing.shareAsync("https://conquer-one.app", { dialogTitle: "CONQUER ONE - ELITE TRAINING" })}
+                    >
+                        <View style={styles.toggleIconWrap}>
+                            <Ionicons name="share-social-outline" size={18} color={COLORS.textSub} />
+                        </View>
+                        <View style={styles.toggleInfo}>
+                            <Text style={styles.toggleLabel}>SHARE APP</Text>
+                            <Text style={styles.toggleSub}>Invite other athletes to the protocol</Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.1)" />
+                    </TouchableOpacity>
+                    <Divider />
+                    <TouchableOpacity
+                        style={styles.toggleRow}
+                        activeOpacity={0.7}
+                        onPress={() => Linking.openURL("mailto:support@conquer-one.app?subject=CONQUER ONE - SUPPORT REQUEST")}
+                    >
+                        <View style={styles.toggleIconWrap}>
+                            <Ionicons name="help-buoy-outline" size={18} color={COLORS.textSub} />
+                        </View>
+                        <View style={styles.toggleInfo}>
+                            <Text style={styles.toggleLabel}>CONTACT SUPPORT</Text>
+                            <Text style={styles.toggleSub}>Direct channel to the engineering team</Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.1)" />
+                    </TouchableOpacity>
+                    <Divider />
+                    <TouchableOpacity
+                        style={styles.toggleRow}
+                        activeOpacity={0.7}
+                        onPress={() => Linking.openURL("mailto:support@conquer-one.app?subject=BUG REPORT - v1.0.5")}
+                    >
+                        <View style={styles.toggleIconWrap}>
+                            <Ionicons name="bug-outline" size={18} color={COLORS.textSub} />
+                        </View>
+                        <View style={styles.toggleInfo}>
+                            <Text style={styles.toggleLabel}>BUG REPORT</Text>
+                            <Text style={styles.toggleSub}>Report technical anomalies in the system</Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.1)" />
+                    </TouchableOpacity>
+                    <Divider />
+                    <TouchableOpacity
+                        style={styles.updateCheckRow}
+                        activeOpacity={0.7}
+                        onPress={async () => {
+                            setUpdateStatus("checking");
+                            try {
+                                const result = await Updates.checkForUpdateAsync();
+                                if (result.isAvailable) {
+                                    setUpdateStatus("available");
+                                    setIsDownloadingUpdate(true);
+                                    await Updates.fetchUpdateAsync();
+                                    setTimeout(() => {
+                                        Updates.reloadAsync();
+                                    }, 2000);
+                                } else {
+                                    setUpdateStatus("latest");
+                                    setTimeout(() => setUpdateStatus("idle"), 3000);
+                                }
+                            } catch (e) {
+                                setUpdateStatus("error");
+                                setTimeout(() => setUpdateStatus("idle"), 3000);
+                            }
+                        }}
+                    >
+                        <Ionicons
+                            name={
+                                updateStatus === "checking" ? "sync-outline" :
+                                    updateStatus === "available" ? "download-outline" :
+                                        updateStatus === "latest" ? "checkmark-circle-outline" :
+                                            updateStatus === "error" ? "alert-circle-outline" :
+                                                "refresh-outline"
+                            }
+                            size={18}
+                            color={
+                                updateStatus === "latest" ? "#A0A0A0" :
+                                    updateStatus === "error" ? COLORS.accent :
+                                        COLORS.textSub
+                            }
+                        />
+                        <Text style={[
+                            styles.updateCheckText,
+                            updateStatus === "latest" && { color: "#A0A0A0" },
+                            updateStatus === "error" && { color: COLORS.accent },
+                        ]}>
+                            {updateStatus === "checking" ? "CHECKING..." :
+                                updateStatus === "available" ? "DOWNLOADING..." :
+                                    updateStatus === "latest" ? "UP TO DATE" :
+                                        updateStatus === "error" ? "CHECK FAILED" :
+                                            "CHECK FOR UPDATES"}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+
+                <SectionLabel title="LEGAL & SAFETY" icon="shield-checkmark-outline" />
+                <View style={styles.card}>
+                    <TouchableOpacity
+                        style={styles.toggleRow}
+                        activeOpacity={0.7}
+                        onPress={() => setLegalModal({ visible: true, title: "TERMS OF USE", content: TERMS_CONTENT })}
+                    >
+                        <View style={styles.toggleIconWrap}>
+                            <Ionicons name="document-text-outline" size={18} color={COLORS.textSub} />
+                        </View>
+                        <View style={styles.toggleInfo}>
+                            <Text style={styles.toggleLabel}>TERMS OF USE</Text>
+                            <Text style={styles.toggleSub}>Review our usage agreement</Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.1)" />
+                    </TouchableOpacity>
+
+                    <View style={styles.divider} />
+
+                    <TouchableOpacity
+                        style={styles.toggleRow}
+                        activeOpacity={0.7}
+                        onPress={() => setLegalModal({ visible: true, title: "HEALTH DISCLAIMER", content: DISCLAIMER_CONTENT })}
+                    >
+                        <View style={styles.toggleIconWrap}>
+                            <Ionicons name="medical-outline" size={18} color={COLORS.textSub} />
+                        </View>
+                        <View style={styles.toggleInfo}>
+                            <Text style={styles.toggleLabel}>DISCLAIMER</Text>
+                            <Text style={styles.toggleSub}>Physical safety & risk notice</Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.1)" />
+                    </TouchableOpacity>
+                </View>
+
+                <SectionLabel title="CRITICAL OPERATIONS" icon="warning-outline" />
+                <View style={styles.dangerCard}>
+                    <TouchableOpacity
+                        style={styles.dangerRow}
+                        activeOpacity={0.7}
+                        onPress={() =>
+                            Alert.alert(
+                                "ERASE HISTORY?",
+                                "Permanently delete session archives, streaks, and performance metrics. Control settings persist.",
+                                [
+                                    { text: "ABORT", style: "cancel" },
+                                    {
+                                        text: "CONFIRM ERASURE",
+                                        style: "destructive",
+                                        onPress: async () => {
+                                            await clearHistory();
+                                            flash();
+                                        },
+                                    },
+                                ]
+                            )
+                        }
+                    >
+                        <Ionicons name="trash-outline" size={18} color={COLORS.accent} style={{ marginRight: 16 }} />
+                        <View style={styles.dangerInfo}>
+                            <Text style={styles.dangerLabel}>DELETE HISTORY</Text>
+                            <Text style={styles.dangerSub}>Wipe all workout logs and streaks</Text>
+                        </View>
+                    </TouchableOpacity>
+
+                    <View style={styles.dangerDivider} />
+
+                    <TouchableOpacity
+                        style={styles.dangerRow}
+                        activeOpacity={0.7}
+                        onPress={() =>
+                            Alert.alert(
+                                "RESET EVERYTHING?",
+                                "All history and settings will be wiped. The app will return to its original state.",
+                                [
+                                    { text: "ABORT", style: "cancel" },
+                                    {
+                                        text: "RESET",
+                                        style: "destructive",
+                                        onPress: async () => {
+                                            await clearAllData();
+                                            navigation.replace("Onboarding");
+                                        },
+                                    },
+                                ]
+                            )
+                        }
+                    >
+                        <Ionicons name="nuclear-outline" size={18} color={COLORS.accent} style={{ marginRight: 16 }} />
+                        <View style={styles.dangerInfo}>
+                            <Text style={styles.dangerLabel}>FACTORY RESET</Text>
+                            <Text style={styles.dangerSub}>Wipe all data and restart</Text>
+                        </View>
+                    </TouchableOpacity>
+                </View>
+
+                <TouchableOpacity
+                    style={styles.resetBtn}
+                    onPress={async () => { await saveSettings(DEFAULT_SETTINGS); setSettings(DEFAULT_SETTINGS); flash(); }}
+                    activeOpacity={0.7}
+                >
+                    <Ionicons name="refresh-outline" size={14} color={COLORS.textMuted} />
+                    <Text style={styles.resetText}>RESTORE DEFAULT SETTINGS</Text>
+                </TouchableOpacity>
+
+                <View style={[styles.creditWrap, { paddingBottom: insets.bottom + 20 }]}>
+                    <Text style={styles.creditText}>BUILT FOR POWER BY <Text style={styles.creditName}>VIVASWAN SHETTY</Text></Text>
+                    <Text style={styles.creditVersion}>CONQUER ONE CORE PROTOCOL v1.0.5</Text>
+                </View>
+            </ScrollView>
+
+            <LegalModal
+                visible={legalModal.visible}
+                title={legalModal.title}
+                content={legalModal.content}
+                onClose={() => setLegalModal({ ...legalModal, visible: false })}
+            />
+        </View>
+    );
+}
+
+function LegalModal({ visible, title, content, onClose }) {
+    return (
+        <Modal visible={visible} transparent animationType="slide">
+            <View style={styles.modalOverlay}>
+                <View style={styles.modalSheet}>
+                    <View style={styles.modalHandle} />
+                    <Text style={styles.modalTitle}>{title}</Text>
+                    <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 400 }}>
+                        <Text style={styles.legalBody}>{content}</Text>
+                    </ScrollView>
+                    <TouchableOpacity style={styles.modalCloseBtn} onPress={onClose} activeOpacity={0.8}>
+                        <Text style={styles.modalCloseText}>UNDERSTOOD</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        </Modal>
+    );
+}
+
+function Divider() { return <View style={styles.divider} />; }
+
+function SectionLabel({ title, icon }) {
+    return (
+        <View style={styles.sectionLabelRow}>
+            {icon && <Ionicons name={icon} size={12} color={COLORS.textMuted} />}
+            <Text style={styles.sectionLabel}>{title}</Text>
+        </View>
+    );
+}
+
+function ToggleRow({ label, sublabel, icon, value, onToggle, disabled }) {
+    return (
+        <View style={[styles.toggleRow, disabled && { opacity: 0.3 }]}>
+            {icon && (
+                <View style={styles.toggleIconWrap}>
+                    <Ionicons name={icon} size={18} color={COLORS.textSub} />
+                </View>
+            )}
+            <View style={styles.toggleInfo}>
+                <Text style={styles.toggleLabel}>{label.toUpperCase()}</Text>
+                {sublabel && <Text style={styles.toggleSub}>{sublabel}</Text>}
+            </View>
+            <AppleSwitch value={value} onToggle={onToggle} disabled={disabled} />
+        </View>
+    );
+}
+
+function AppleSwitch({ value, onToggle, disabled }) {
+    const [anim] = useState(new Animated.Value(value ? 1 : 0));
+
+    useEffect(() => {
+        Animated.timing(anim, {
+            toValue: value ? 1 : 0,
+            duration: 220,
+            useNativeDriver: false,
+        }).start();
+    }, [value]);
+
+    const trackColor = anim.interpolate({
+        inputRange: [0, 1],
+        outputRange: ["rgba(255,255,255,0.08)", COLORS.primary],
+    });
+
+    const thumbTranslate = anim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [2, 18],
+    });
+
+    return (
+        <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => onToggle(!value)}
+            disabled={disabled}
+        >
+            <Animated.View style={[styles.appleSwitchTrack, { backgroundColor: trackColor }]}>
+                <Animated.View style={[
+                    styles.appleSwitchThumb,
+                    { transform: [{ translateX: thumbTranslate }] }
+                ]} />
+            </Animated.View>
+        </TouchableOpacity>
+    );
+}
+
+function InfoRow({ label, value, icon }) {
+    return (
+        <View style={styles.infoRow}>
+            {icon && <Ionicons name={icon} size={18} color={COLORS.textMuted} style={{ marginRight: 16 }} />}
+            <Text style={styles.infoLabel}>{label.toUpperCase()}</Text>
+            <Text style={styles.infoValue}>{value}</Text>
+        </View>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: COLORS.bg },
+    header: {
+        flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+        paddingHorizontal: 20, paddingBottom: 24, paddingTop: 12,
+    },
+    backBtn: {
+        width: 48, height: 48, borderRadius: 14, backgroundColor: "rgba(255,255,255,0.04)",
+        alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
+    },
+    headerTitle: { fontSize: 26, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -1.2 },
+    savedBadge: { backgroundColor: "rgba(255,255,255,0.05)", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
+    savedText: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.accent, letterSpacing: 1 },
+
+    betaBadge: { backgroundColor: "rgba(255,255,255,0.05)", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" },
+    betaText: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1 },
+
+    sectionLabelRow: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 24, marginTop: 48, marginBottom: 20 },
+    sectionLabel: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 3 },
+
+    card: {
+        marginHorizontal: 20, backgroundColor: "rgba(255,255,255,0.03)",
+        borderRadius: 28, borderWidth: 1, borderColor: COLORS.border, overflow: "hidden",
+    },
+    divider: { height: 1, backgroundColor: "rgba(255,255,255,0.03)", marginHorizontal: 24 },
+
+    toggleRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 24, paddingVertical: 22, gap: 16 },
+    toggleIconWrap: { width: 44, height: 44, borderRadius: 14, backgroundColor: "rgba(255,255,255,0.03)", alignItems: "center", justifyContent: "center" },
+    toggleInfo: { flex: 1 },
+    toggleLabel: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.textSub, letterSpacing: 0.5 },
+    toggleSub: { fontSize: 12, fontFamily: FAMILY.regular, color: COLORS.textMuted, marginTop: 4, opacity: 0.6 },
+
+    appleSwitchTrack: {
+        width: 42,
+        height: 26,
+        borderRadius: 13,
+        padding: 2,
+        justifyContent: "center",
+    },
+    appleSwitchThumb: {
+        width: 22,
+        height: 22,
+        borderRadius: 11,
+        backgroundColor: "#FFFFFF",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
+        elevation: 3,
+    },
+
+    chipSection: { paddingHorizontal: 24, paddingTop: 22, paddingBottom: 22 },
+    chipLabelRow: { flexDirection: "row", alignItems: "flex-start", gap: 16, marginBottom: 20 },
+    chipLabel: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.textSub, letterSpacing: 0.5 },
+    chipSub: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1 },
+    chipRow: { flexDirection: "row", gap: 12, flexWrap: "wrap" },
+    chip: { paddingHorizontal: 20, paddingVertical: 12, borderRadius: 14, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", backgroundColor: "rgba(255,255,255,0.02)", flexDirection: "row", alignItems: "center" },
+    chipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+    chipCustom: { borderStyle: "dashed", borderColor: "rgba(255,255,255,0.2)" },
+    chipText: { fontSize: 12, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1 },
+    chipTextActive: { color: "#fff" },
+
+    infoRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 24, paddingVertical: 22 },
+    infoLabel: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.textSub, flex: 1, letterSpacing: 0.5 },
+    infoValue: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.textMuted },
+
+    profileIconWrap: { width: 48, height: 48, borderRadius: 24, backgroundColor: "rgba(227,30,36,0.1)", alignItems: "center", justifyContent: "center" },
+    profileTitle: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 0.5 },
+    profileSub: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, marginTop: 4, letterSpacing: 1 },
+
+    resetBtn: {
+        marginHorizontal: 24, marginTop: 40, paddingVertical: 18,
+        borderRadius: 16, borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
+        alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 10,
+    },
+    resetText: { fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1 },
+
+    dangerCard: { marginHorizontal: 20, borderRadius: 28, borderWidth: 1, borderColor: "rgba(209,209,209,0.1)", backgroundColor: "rgba(209,209,209,0.02)", overflow: "hidden" },
+    dangerRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 24, paddingVertical: 24 },
+    dangerDivider: { height: 1, backgroundColor: "rgba(209,209,209,0.05)", marginHorizontal: 24 },
+    dangerInfo: { flex: 1 },
+    dangerLabel: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.accent, letterSpacing: 1 },
+    dangerSub: { fontSize: 12, fontFamily: FAMILY.regular, color: COLORS.textMuted, marginTop: 4, opacity: 0.6 },
+
+    updateCheckRow: { flexDirection: "row", alignItems: "center", gap: 20, paddingHorizontal: 24, paddingVertical: 22 },
+    updateCheckText: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.textSub, letterSpacing: 1 },
+
+    creditWrap: { marginTop: 60, alignItems: "center", paddingHorizontal: 40 },
+    creditText: { fontSize: 8, fontFamily: FAMILY.bold, color: "rgba(255,255,255,0.2)", letterSpacing: 3, textAlign: "center" },
+    creditName: { color: COLORS.primary, opacity: 0.8 },
+    creditVersion: { fontSize: 7, fontFamily: FAMILY.bold, color: "rgba(255,255,255,0.1)", letterSpacing: 2, marginTop: 8 },
+
+    modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.8)", justifyContent: "flex-end" },
+    modalSheet: { backgroundColor: "#0f0f0f", borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 28, paddingBottom: 48, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
+    modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: "rgba(255,255,255,0.1)", alignSelf: "center", marginBottom: 24 },
+    modalTitle: { fontSize: 16, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 1, marginBottom: 24 },
+    legalBody: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textSub, lineHeight: 20, marginBottom: 24 },
+    modalCloseBtn: { paddingVertical: 16, borderRadius: 16, backgroundColor: COLORS.primary, alignItems: "center" },
+    modalCloseText: { fontSize: 12, fontFamily: FAMILY.bold, color: "#fff", letterSpacing: 1 },
+});
