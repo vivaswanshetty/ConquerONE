@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity, StyleSheet,
-    Dimensions, StatusBar, Animated, ImageBackground, Image, Modal,
+    Dimensions, StatusBar, Animated, ImageBackground, Image, Modal, Share,
 } from "react-native";
 import { ScrollView as GestureScrollView, TouchableOpacity as GestureTouchableOpacity } from "react-native-gesture-handler";
 import { LinearGradient } from "expo-linear-gradient";
@@ -9,12 +9,16 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { WORKOUT_PLAN } from "../data/workoutData";
-import { COLORS, FONTS, SPACING, RADIUS, FAMILY, GRADIENTS } from "../utils/theme";
-import { getStreak, getTotalWorkouts } from "../utils/storage";
+import { COLORS, FONTS, SPACING, RADIUS, FAMILY, GRADIENTS, APP_VERSION } from "../utils/theme";
+import {
+    getStreak, getTotalWorkouts, getLastWorkoutDate,
+    getLastFreezeDate, withdrawStreakFreeze
+} from "../utils/storage";
 import MaskedView from "@react-native-masked-view/masked-view";
 import * as SplashScreen from "expo-splash-screen";
 import * as Haptics from "expo-haptics";
-import * as Sharing from "expo-sharing";
+import { getDailyStats, checkHealthConnectStatus } from "../utils/health";
+
 
 // Auth
 import { useAuth } from "../context/AuthContext";
@@ -58,7 +62,9 @@ export default function HomeScreen({ navigation }) {
     const [streak, setStreak] = useState(0);
     const [total, setTotal] = useState(0);
     const [todayDay, setTodayDay] = useState(1);
-    const [greeting, setGreeting] = useState("Good morning");
+    const [greeting, setGreeting] = useState("COMMANDER");
+    const [isFrozen, setIsFrozen] = useState(false);
+    const [freezeModal, setFreezeModal] = useState(false);
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
     const displayName = profile?.fullName?.split(" ")[0] || user?.displayName?.split(" ")[0] || "ATHLETE";
@@ -82,6 +88,24 @@ export default function HomeScreen({ navigation }) {
     const loadStats = async () => {
         setStreak(await getStreak());
         setTotal(await getTotalWorkouts());
+        const lastFreeze = await getLastFreezeDate();
+        setIsFrozen(lastFreeze === new Date().toISOString().split("T")[0]);
+
+        // Fetch Health Stats if available
+        const isHealthReady = await checkHealthConnectStatus();
+        if (isHealthReady) {
+            const hStats = await getDailyStats();
+            // We can use these stats to update UI elements like step counters if you add them!
+        }
+    };
+
+    const handleUnfreeze = async () => {
+        const success = await withdrawStreakFreeze();
+        if (success) {
+            setIsFrozen(false);
+            setFreezeModal(false);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        }
     };
 
     const todayWorkout = todayDay <= 6 ? WORKOUT_PLAN[todayDay - 1] : null;
@@ -137,13 +161,30 @@ export default function HomeScreen({ navigation }) {
                                 <LinearGradient
                                     colors={[COLORS.primary, '#FF4D4D']}
                                     start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                                    style={[styles.levelFill, { width: '65%' }]}
+                                    style={[styles.levelFill, { width: `${total === 0 ? 0 : total % 10 === 0 ? 100 : ((total % 10) / 10) * 100}%` }]}
                                 />
                             </View>
-                            <Text style={styles.levelText}>LVL 05 · PRO ATHLETE</Text>
+                            <Text style={styles.levelText}>
+                                LVL {String(Math.min(Math.floor(total / 10) + 1, 99)).padStart(2, '0')} · {
+                                    total >= 100 ? 'LEGEND' :
+                                        total >= 50 ? 'TITAN' :
+                                            total >= 25 ? 'WARRIOR' :
+                                                total >= 10 ? 'PRO ATHLETE' :
+                                                    total >= 5 ? 'RISING STAR' : 'RECRUIT'
+                                }
+                            </Text>
                         </View>
                         <View style={{ flex: 1 }} />
                         <View style={styles.headerSmallActions}>
+                            {isFrozen && (
+                                <TouchableOpacity
+                                    style={[styles.iconBtnSm, { backgroundColor: 'rgba(96,165,250,0.15)', borderColor: 'rgba(96,165,250,0.3)', marginRight: 4 }]}
+                                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setFreezeModal(true); }}
+                                    activeOpacity={0.7}
+                                >
+                                    <Ionicons name="snow" size={14} color="#60A5FA" />
+                                </TouchableOpacity>
+                            )}
                             <TouchableOpacity style={styles.iconBtnSm} onPress={() => navigation.navigate("AICoach")} activeOpacity={0.7}>
                                 <Ionicons name="flash" size={16} color={COLORS.primary} />
                             </TouchableOpacity>
@@ -187,7 +228,7 @@ export default function HomeScreen({ navigation }) {
                             <Text style={styles.statValueSmall}>{total} <Text style={{ fontSize: 9 }}>SESSIONS</Text></Text>
                         </View>
                     </View>
-                    <TouchableOpacity style={styles.statLarge} activeOpacity={0.8} onPress={() => navigation.navigate("Progress")}>
+                    <TouchableOpacity style={styles.statLarge} activeOpacity={0.8} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); navigation.navigate("Rank"); }}>
                         <LinearGradient
                             colors={["rgba(255,255,255,0.05)", "rgba(227,30,36,0.01)", "transparent"]}
                             start={{ x: 0, y: 0 }}
@@ -196,8 +237,14 @@ export default function HomeScreen({ navigation }) {
                         />
                         <View style={styles.statLargeTop}>
                             <View>
-                                <Text style={styles.statLabelSmall}>INTENSITY</Text>
-                                <Text style={styles.statValueLarge}>ELITE</Text>
+                                <Text style={styles.statLabelSmall}>YOUR RANK</Text>
+                                <Text style={styles.statValueLarge}>{
+                                    total >= 100 ? 'LEGEND' :
+                                        total >= 50 ? 'TITAN' :
+                                            total >= 25 ? 'WARRIOR' :
+                                                total >= 10 ? 'PRO' :
+                                                    total >= 5 ? 'RISING' : 'RECRUIT'
+                                }</Text>
                             </View>
                             <View style={styles.intensityBadge}>
                                 <Ionicons name="trending-up" size={14} color={COLORS.primary} />
@@ -208,7 +255,7 @@ export default function HomeScreen({ navigation }) {
                                 <View key={i} style={[styles.sparklineBar, { height: h * 2, opacity: 0.3 + (i * 0.1) }]} />
                             ))}
                         </View>
-                        <Text style={styles.statSubText}>TOP 2% OF ATHLETES</Text>
+                        <Text style={styles.statSubText}>TAP TO VIEW DETAILS →</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -378,12 +425,63 @@ export default function HomeScreen({ navigation }) {
                     </View>
                 </TouchableOpacity>
 
-                <View style={{ paddingVertical: 40, alignItems: "center", opacity: 0.2 }}>
-                    <Text style={{ fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textSub, letterSpacing: 2 }}>
-                        CONQUER ONE · v1.0.5 · ELITE
-                    </Text>
+                <View style={[styles.footer, { paddingBottom: insets.bottom + 40 }]}>
+                    <View style={styles.footerDivider} />
+                    <Text style={styles.footerVersion}>CONQUER ONE PROTOCOL · {APP_VERSION}</Text>
+                    <Text style={styles.footerAuthor}>BUILT FOR PERFORMANCE BY <Text style={{ color: COLORS.primary }}>VIVASWAN SHETTY</Text></Text>
                 </View>
             </Animated.ScrollView>
+
+            <Modal
+                visible={freezeModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setFreezeModal(false)}
+            >
+                <View style={styles.freezeOverlay}>
+                    <TouchableOpacity style={StyleSheet.absoluteFill} onPress={() => setFreezeModal(false)} activeOpacity={1} />
+                    <View style={styles.freezeModalContent}>
+                        <LinearGradient
+                            colors={['rgba(30,58,138,0.95)', 'rgba(0,0,0,0.98)']}
+                            style={StyleSheet.absoluteFill}
+                        />
+                        <View style={styles.iceEffect} />
+
+                        <View style={styles.freezeModalHeader}>
+                            <View style={styles.snowCircle}>
+                                <Ionicons name="snow" size={42} color="#60A5FA" />
+                            </View>
+                            <Text style={styles.freezeStatus}>STREAK FROZEN</Text>
+                            <Text style={styles.freezeTitle}>RECOVERY MODE ACTIVE</Text>
+                        </View>
+
+                        <Text style={styles.freezeDesc}>
+                            Your {streak}-day streak is locked in. No matter what happens today, your progress remains untouchable. Rest up, Athlete.
+                        </Text>
+
+                        <View style={styles.protectionBadge}>
+                            <Ionicons name="shield-checkmark" size={14} color="#60A5FA" />
+                            <Text style={styles.protectionText}>SHIELD ACTIVE · 24H PROTECTED</Text>
+                        </View>
+
+                        <TouchableOpacity
+                            style={styles.freezeCloseBtn}
+                            onPress={() => setFreezeModal(false)}
+                            activeOpacity={0.8}
+                        >
+                            <Text style={styles.freezeCloseText}>UNDERSTOOD</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.unfreezeLink}
+                            onPress={handleUnfreeze}
+                            activeOpacity={0.7}
+                        >
+                            <Text style={styles.unfreezeLinkText}>UNFREEZE & WORKOUT</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -606,7 +704,11 @@ function MomentsGallery({ streak, total, profile = null }) {
 
                             <TouchableOpacity
                                 style={styles.momentShareBtn}
-                                onPress={() => Sharing.shareAsync("https://conquer-one.app", { dialogTitle: `PROTOCOL: ${expandedMoment?.title}` })}
+                                onPress={() => Share.share({
+                                    message: `🏆 Just hit a milestone: ${expandedMoment?.title}! Training with CONQUER ONE.
+
+Download: https://conquer-one.app`, title: expandedMoment?.title
+                                })}
                             >
                                 <Ionicons name="share-social-outline" size={14} color="rgba(255,255,255,0.4)" style={{ marginRight: 8 }} />
                                 <Text style={styles.momentShareText}>SHARE ACHIEVEMENT</Text>
@@ -666,14 +768,14 @@ const styles = StyleSheet.create({
     },
     headerTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 },
     profileCircle: {
-        width: 52, height: 52, borderRadius: 26,
+        width: 44, height: 44, borderRadius: 22,
         borderWidth: 1.5, borderColor: "rgba(255,255,255,0.12)",
         overflow: "hidden", backgroundColor: "rgba(255,255,255,0.05)",
         alignItems: "center", justifyContent: "center",
     },
     headerAvatar: { width: "100%", height: "100%" },
     avatarPlaceholder: { width: "100%", height: "100%", alignItems: "center", justifyContent: "center" },
-    avatarText: { fontSize: 18, fontFamily: FAMILY.bold, color: COLORS.textSub },
+    avatarText: { fontSize: 16, fontFamily: FAMILY.bold, color: COLORS.textSub },
 
     greeting: { fontSize: 10, color: COLORS.textMuted, fontFamily: FAMILY.bold, letterSpacing: 4, marginBottom: 4 },
     name: {
@@ -703,7 +805,7 @@ const styles = StyleSheet.create({
     },
     statsLeft: { flex: 1, gap: 12 },
     statSmall: {
-        flex: 1, padding: 14,
+        flex: 1, padding: 18,
         backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 20,
         borderWidth: 1, borderColor: "rgba(255,255,255,0.07)",
         justifyContent: "center", overflow: "hidden",
@@ -796,11 +898,12 @@ const styles = StyleSheet.create({
     weekCell: {
         width: 108, paddingVertical: 24, paddingHorizontal: 12,
         borderRadius: 22, backgroundColor: COLORS.bgCard,
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.06)", alignItems: "center", gap: 8,
+        borderWidth: 1, borderColor: "transparent", alignItems: "center", gap: 8,
+        overflow: "hidden",
     },
     weekCellActive: {
         backgroundColor: "rgba(255,255,255,0.03)",
-        borderColor: "rgba(255,255,255,0.15)",
+        borderColor: "rgba(255,255,255,0.12)",
     },
     weekDay: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2 },
     weekDayActive: { color: COLORS.text },
@@ -868,4 +971,42 @@ const styles = StyleSheet.create({
     momentActionText: { fontSize: 12, fontFamily: FAMILY.bold, color: "#fff", letterSpacing: 2 },
     momentShareBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", marginTop: 20, paddingVertical: 10 },
     momentShareText: { fontSize: 9, fontFamily: FAMILY.bold, color: "rgba(255,255,255,0.4)", letterSpacing: 2 },
+
+    // Freeze Modal
+    freezeOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+    freezeModalContent: {
+        width: '100%', borderRadius: 32, padding: 32, alignItems: 'center',
+        borderWidth: 1, borderColor: 'rgba(96,165,250,0.3)', overflow: 'hidden',
+    },
+    iceEffect: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(96,165,250,0.05)', opacity: 0.5 },
+    freezeModalHeader: { alignItems: 'center', marginBottom: 24 },
+    snowCircle: {
+        width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(96,165,250,0.1)',
+        alignItems: 'center', justifyContent: 'center', marginBottom: 20,
+        borderWidth: 1, borderColor: 'rgba(96,165,250,0.3)',
+    },
+    freezeStatus: { fontSize: 9, fontFamily: FAMILY.bold, color: '#60A5FA', letterSpacing: 3, marginBottom: 8 },
+    freezeTitle: { fontSize: 22, fontFamily: FAMILY.bold, color: '#fff', textAlign: 'center', lineHeight: 28 },
+    freezeDesc: {
+        fontSize: 14, fontFamily: FAMILY.regular, color: COLORS.textSub,
+        textAlign: 'center', lineHeight: 22, marginBottom: 32, opacity: 0.8
+    },
+    protectionBadge: {
+        flexDirection: 'row', alignItems: 'center', gap: 8,
+        backgroundColor: 'rgba(96,165,250,0.1)', paddingHorizontal: 16, paddingVertical: 10,
+        borderRadius: 12, marginBottom: 40, borderWidth: 1, borderColor: 'rgba(96,165,250,0.2)'
+    },
+    protectionText: { fontSize: 9, fontFamily: FAMILY.bold, color: '#60A5FA', letterSpacing: 1 },
+    freezeCloseBtn: {
+        width: '100%', height: 60, borderRadius: 18, backgroundColor: '#fff',
+        alignItems: 'center', justifyContent: 'center'
+    },
+    freezeCloseText: { fontSize: 13, fontFamily: FAMILY.bold, color: '#000', letterSpacing: 2 },
+    unfreezeLink: { marginTop: 24, paddingVertical: 8 },
+    unfreezeLinkText: { fontSize: 10, fontFamily: FAMILY.bold, color: 'rgba(255,255,255,0.4)', letterSpacing: 2 },
+    // Footer
+    footer: { alignItems: "center", marginTop: 64, paddingHorizontal: SPACING.base },
+    footerDivider: { width: 40, height: 1, backgroundColor: "rgba(255,255,255,0.1)", marginBottom: 24 },
+    footerVersion: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 3, marginBottom: 8 },
+    footerAuthor: { fontSize: 7, fontFamily: FAMILY.medium, color: "rgba(255,255,255,0.2)", letterSpacing: 1.5 },
 });

@@ -8,6 +8,7 @@ const KEYS = {
     TOTAL_WORKOUTS: "total_workouts",
     PR_RECORDS: "pr_records",
     BODY_STATS: "body_stats",
+    LAST_FREEZE_DATE: "last_freeze_date",
 };
 
 export const saveWorkoutComplete = async (day, target, durationSec, exercises = []) => {
@@ -27,12 +28,19 @@ export const saveWorkoutComplete = async (day, target, durationSec, exercises = 
 
         // Update streak
         const lastDate = await AsyncStorage.getItem(KEYS.LAST_WORKOUT_DATE);
+        const lastFreeze = await AsyncStorage.getItem(KEYS.LAST_FREEZE_DATE);
         const streakStr = await AsyncStorage.getItem(KEYS.STREAK);
+
         let streak = streakStr ? parseInt(streakStr) : 0;
-        if (lastDate) {
-            const last = new Date(lastDate);
+        const lastEffectiveDate = (lastFreeze && (!lastDate || new Date(lastFreeze) > new Date(lastDate)))
+            ? lastFreeze
+            : lastDate;
+
+        if (lastEffectiveDate) {
+            const last = new Date(lastEffectiveDate);
             const todayDate = new Date(today);
             const diff = Math.floor((todayDate - last) / (1000 * 60 * 60 * 24));
+
             if (diff === 1) {
                 streak += 1;
             } else if (diff > 1) {
@@ -194,5 +202,46 @@ export const saveBodyStat = async (entry) => {
     } catch (e) {
         console.error("saveBodyStat error", e);
         return [];
+    }
+};
+
+/** 
+ * Manually freeze the streak for TODAY. 
+ * This treats today as a "protected" day so missing it doesn't break the streak tomorrow.
+ */
+/** 
+ * Manually freeze the streak for TODAY. 
+ * This treats today as a "protected" day so missing it doesn't break the streak tomorrow.
+ */
+export const applyStreakFreeze = async () => {
+    try {
+        const today = new Date().toISOString().split("T")[0];
+        await AsyncStorage.setItem(KEYS.LAST_FREEZE_DATE, today);
+        triggerAutoSync();
+        return true;
+    } catch {
+        return false;
+    }
+};
+
+/** 
+ * Withdraw the streak freeze for TODAY. 
+ * Allows users to change their mind and continue their streak normally.
+ */
+export const withdrawStreakFreeze = async () => {
+    try {
+        await AsyncStorage.removeItem(KEYS.LAST_FREEZE_DATE);
+        triggerAutoSync();
+        return true;
+    } catch {
+        return false;
+    }
+};
+
+export const getLastFreezeDate = async () => {
+    try {
+        return await AsyncStorage.getItem(KEYS.LAST_FREEZE_DATE);
+    } catch {
+        return null;
     }
 };

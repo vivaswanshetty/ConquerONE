@@ -18,6 +18,7 @@
     "@expo-google-fonts/dm-serif-display": "^0.4.2",
     "@expo-google-fonts/inter": "^0.4.2",
     "@expo-google-fonts/manrope": "^0.4.2",
+    "@expo-google-fonts/montserrat": "^0.4.2",
     "@expo-google-fonts/outfit": "^0.4.3",
     "@expo-google-fonts/space-grotesk": "^0.4.1",
     "@expo-google-fonts/syne": "^0.4.2",
@@ -27,15 +28,21 @@
     "@google/generative-ai": "^0.24.1",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/datetimepicker": "8.4.4",
+    "@react-native-google-signin/google-signin": "^16.1.2",
     "@react-native-masked-view/masked-view": "0.3.2",
     "@react-navigation/bottom-tabs": "^7.14.0",
     "@react-navigation/native": "^7.1.28",
     "@react-navigation/stack": "^7.7.2",
     "expo": "~54.0.33",
+    "expo-apple-authentication": "~8.0.8",
     "expo-av": "^16.0.8",
     "expo-build-properties": "~1.0.10",
+    "expo-dev-client": "~6.0.20",
+    "expo-file-system": "~19.0.21",
     "expo-font": "~14.0.11",
     "expo-haptics": "^15.0.8",
+    "expo-health-connect": "^0.1.1",
+    "expo-image-manipulator": "~14.0.8",
     "expo-image-picker": "~17.0.10",
     "expo-insights": "~0.10.8",
     "expo-keep-awake": "~15.0.8",
@@ -54,7 +61,6 @@
     "react-native": "0.81.5",
     "react-native-circular-progress-indicator": "^4.4.2",
     "react-native-gesture-handler": "~2.28.0",
-    "react-native-health": "^1.19.0",
     "react-native-health-connect": "^3.5.0",
     "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "~5.6.0",
@@ -64,6 +70,9 @@
     "react-native-web": "^0.21.2",
     "react-native-worklets": "0.5.1"
   },
+  "devDependencies": {
+    "babel-preset-expo": "~54.0.10"
+  },
   "private": true,
   "overrides": {
     "@expo/fingerprint": "0.15.4"
@@ -72,8 +81,11 @@
     "doctor": {
       "reactNativeDirectoryCheck": {
         "exclude": [
-          "react-native-health"
-        ]
+          "expo-av",
+          "expo-modules-core",
+          "expo-image-loader"
+        ],
+        "listUnknownPackages": false
       }
     }
   }

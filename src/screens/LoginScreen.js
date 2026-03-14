@@ -9,10 +9,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
 import { COLORS, FAMILY, SPACING } from "../utils/theme";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "../utils/firebase";
+import { Alert } from "react-native";
 
 export default function LoginScreen({ navigation }) {
     const insets = useSafeAreaInsets();
-    const { signIn } = useAuth();
+    const { signIn, signInWithGoogle, signInWithApple } = useAuth();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -38,6 +41,49 @@ export default function LoginScreen({ navigation }) {
                         ? "Incorrect password."
                         : "Login failed. Please try again.";
             setError(msg);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleGoogleLogin = async () => {
+        setLoading(true);
+        setError("");
+        try {
+            await signInWithGoogle();
+        } catch (e) {
+            setError("Google sign-in failed.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleAppleLogin = async () => {
+        setLoading(true);
+        setError("");
+        try {
+            await signInWithApple();
+        } catch (e) {
+            setError("Apple sign-in failed.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleForgotPassword = async () => {
+        if (!email.trim()) {
+            setError("Please enter your email above first.");
+            return;
+        }
+        setLoading(true);
+        try {
+            await sendPasswordResetEmail(auth, email.trim());
+            Alert.alert(
+                "✅ Reset Link Sent",
+                `We have sent a password reset link to ${email.trim()}. Please check your inbox and spam folder.`
+            );
+        } catch (e) {
+            setError(e.message);
         } finally {
             setLoading(false);
         }
@@ -104,6 +150,12 @@ export default function LoginScreen({ navigation }) {
                                     <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={16} color={COLORS.textMuted} />
                                 </TouchableOpacity>
                             </View>
+                            <TouchableOpacity
+                                onPress={handleForgotPassword}
+                                style={{ alignSelf: 'flex-end', marginTop: 8 }}
+                            >
+                                <Text style={{ fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1 }}>FORGOT PASSWORD?</Text>
+                            </TouchableOpacity>
                         </View>
 
                         {/* Error */}
@@ -114,7 +166,6 @@ export default function LoginScreen({ navigation }) {
                             </View>
                         )}
 
-                        {/* Login Button */}
                         <TouchableOpacity
                             style={[styles.ctaBtn, loading && { opacity: 0.6 }]}
                             onPress={handleLogin}
@@ -132,6 +183,28 @@ export default function LoginScreen({ navigation }) {
                                 }
                             </LinearGradient>
                         </TouchableOpacity>
+
+                        {/* Divider */}
+                        <View style={styles.divider}>
+                            <View style={styles.line} />
+                            <Text style={styles.dividerText}>OR CONTINUE WITH</Text>
+                            <View style={styles.line} />
+                        </View>
+
+                        {/* Social Row */}
+                        <View style={styles.socialRow}>
+                            <TouchableOpacity style={styles.socialBtn} onPress={handleGoogleLogin} activeOpacity={0.7}>
+                                <Ionicons name="logo-google" size={18} color="#fff" />
+                                <Text style={styles.socialBtnText}>GOOGLE</Text>
+                            </TouchableOpacity>
+
+                            {Platform.OS === 'ios' && (
+                                <TouchableOpacity style={[styles.socialBtn, { opacity: 0.5 }]} onPress={() => Alert.alert("Coming Soon", "Apple Sign-In will be available once we enroll in the Apple Developer Program.")} activeOpacity={0.7}>
+                                    <Ionicons name="logo-apple" size={18} color="#fff" />
+                                    <Text style={styles.socialBtnText}>COMING SOON</Text>
+                                </TouchableOpacity>
+                            )}
+                        </View>
                     </View>
 
                     {/* Footer */}
@@ -150,7 +223,7 @@ export default function LoginScreen({ navigation }) {
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
-        </View>
+        </View >
     );
 }
 
@@ -193,6 +266,18 @@ const styles = StyleSheet.create({
     footer: { flexDirection: "row", justifyContent: "center", alignItems: "center" },
     footerText: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textMuted },
     footerLink: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 1 },
+
+    divider: { flexDirection: "row", alignItems: "center", gap: 12, marginVertical: 20 },
+    line: { flex: 1, height: 1, backgroundColor: "rgba(255,255,255,0.06)" },
+    dividerText: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2 },
+
+    socialRow: { flexDirection: "row", gap: 12 },
+    socialBtn: {
+        flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center",
+        gap: 8, backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 14,
+        paddingVertical: 14, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)"
+    },
+    socialBtnText: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 1 },
 
     signatureWrap: { marginTop: 60, alignItems: "center", opacity: 0.25 },
     signatureText: { fontSize: 7, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 3 },

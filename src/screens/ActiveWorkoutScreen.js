@@ -436,6 +436,29 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
     const autoStartRef = useRef(true);   // mirrors settings.autoStartRest
     const settingsRef = useRef(settings);
 
+    // Intercept back navigation (hardware back, swipe gesture) to prevent data loss
+    useEffect(() => {
+        const unsubscribe = navigation.addListener("beforeRemove", (e) => {
+            // Allow navigation if it's a replace (workout complete) — not a back action
+            if (e.data.action.type === "REPLACE") return;
+
+            e.preventDefault();
+
+            Alert.alert("QUIT WORKOUT?", "Your current progress won't be recorded.", [
+                { text: "KEEP GOING", style: "cancel" },
+                {
+                    text: "QUIT", style: "destructive",
+                    onPress: () => {
+                        clearInterval(intervalRef.current);
+                        clearInterval(elapsedRef.current);
+                        navigation.dispatch(e.data.action);
+                    }
+                },
+            ]);
+        });
+        return unsubscribe;
+    }, [navigation]);
+
     useEffect(() => {
         (async () => {
             const s = await getSettings();
@@ -546,18 +569,22 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
             setTimeLeft(t);
             if (t <= 3 && t > 0 && !hasAnnouncedRef.current) {
                 announceFinalCountdown(t);
+                // Strong haptic pulse for final 3-2-1
+                vibrate(Haptics.ImpactFeedbackStyle.Heavy);
             }
             const ph = phasesArr[curIdx];
             if (ph?.type !== "active") {
                 if (t === 30 || t === 15 || t === 10) vibrate(Haptics.ImpactFeedbackStyle.Light);
                 if (t === 5) vibrate(Haptics.ImpactFeedbackStyle.Heavy);
-                if (t === 3 || t || t === 1) vibrate(Haptics.ImpactFeedbackStyle.Medium);
             }
 
             // Logic for regular timer-based phases
             if (t <= 0) {
                 clearInterval(intervalRef.current);
+                // Triple-burst haptic when rest ends (feels powerful)
                 hapticNotify();
+                setTimeout(() => vibrate(Haptics.ImpactFeedbackStyle.Heavy), 150);
+                setTimeout(() => vibrate(Haptics.ImpactFeedbackStyle.Heavy), 300);
                 hasAnnouncedRef.current = true;
                 advancePhase(phasesArr, curIdx);
                 const nextPh = phasesArr[curIdx + 1];
@@ -619,17 +646,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
     };
 
     const handleQuit = () => {
-        Alert.alert("QUIT WORKOUT?", "Your current progress won't be recorded.", [
-            { text: "KEEP GOING", style: "cancel" },
-            {
-                text: "QUIT", style: "destructive",
-                onPress: () => {
-                    clearInterval(intervalRef.current);
-                    clearInterval(elapsedRef.current);
-                    navigation.goBack();
-                }
-            },
-        ]);
+        navigation.goBack();
     };
 
     const completeWorkout = async () => {
@@ -797,7 +814,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                         {/* Set indicator with tactical tracks */}
                         {currentPhase.type === "active" && (
                             <View style={styles.setIndicator}>
-                                <Text style={styles.setLabel}>SET 0{currentPhase.set} / 0{ex.sets}</Text>
+                                <Text style={styles.setLabel}>SET {String(currentPhase.set).padStart(2, '0')} / {String(ex.sets).padStart(2, '0')}</Text>
                                 <View style={styles.setDots}>
                                     {activeSetPhases.map((_, i) => (
                                         <View key={i} style={[
@@ -955,7 +972,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
 /* ── Styles ───────────────────────────────────────────────── */
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: COLORS.bg },
-    scroll: { paddingBottom: 60 },
+    scroll: { paddingBottom: 100 },
 
     topBar: {
         flexDirection: "row", alignItems: "center", justifyContent: "space-between",
@@ -1055,8 +1072,8 @@ const styles = StyleSheet.create({
     logPRText: { fontSize: 10, color: COLORS.accent, fontFamily: FAMILY.bold, letterSpacing: 1.5 },
 
     formCard: {
-        backgroundColor: COLORS.bgCard, margin: 24,
-        borderRadius: 24, padding: 24,
+        backgroundColor: COLORS.bgCard, marginTop: 40, marginHorizontal: 24,
+        marginBottom: 24, borderRadius: 24, padding: 24,
         borderWidth: 1, borderColor: COLORS.border,
         width: width - 48,
     },

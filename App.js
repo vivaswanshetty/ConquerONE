@@ -1,5 +1,5 @@
 import 'react-native-url-polyfill/auto'; // Required for Firebase + React Native
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Text, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
@@ -7,28 +7,24 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
-import {
-  useFonts,
-  Manrope_300Light,
-  Manrope_400Regular,
-  Manrope_500Medium,
-  Manrope_600SemiBold,
-  Manrope_700Bold,
-  Manrope_800ExtraBold,
-} from "@expo-google-fonts/manrope";
+import * as Font from "expo-font";
+import * as Updates from "expo-updates";
+
+// ── Font assets (these are pre-resolved require() calls to .ttf files) ──
 import {
   Outfit_300Light,
   Outfit_400Regular,
   Outfit_500Medium,
   Outfit_600SemiBold,
-  Outfit_700Bold,
-  Outfit_900Black,
 } from "@expo-google-fonts/outfit";
-import { Syne_400Regular, Syne_700Bold } from "@expo-google-fonts/syne";
+import { Syne_700Bold } from "@expo-google-fonts/syne";
 import { Arimo_400Regular, Arimo_700Bold } from "@expo-google-fonts/arimo";
-import { Urbanist_700Bold, Urbanist_800ExtraBold, Urbanist_900Black } from "@expo-google-fonts/urbanist";
-import * as Updates from "expo-updates";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Urbanist_900Black } from "@expo-google-fonts/urbanist";
+import {
+  Montserrat_400Regular,
+  Montserrat_600SemiBold,
+  Montserrat_700Bold
+} from "@expo-google-fonts/montserrat";
 
 // Screens
 import HomeScreen from "./src/screens/HomeScreen";
@@ -46,6 +42,7 @@ import RestDayScreen from "./src/screens/RestDayScreen";
 import UpdateScreen from "./src/screens/UpdateScreen";
 import ProfileScreen from "./src/screens/ProfileScreen";
 import AICoachScreen from "./src/screens/AICoachScreen";
+import RankScreen from "./src/screens/RankScreen";
 import NetworkBanner from "./src/components/NetworkBanner";
 
 // Auth
@@ -97,85 +94,131 @@ function AppStack() {
       <Stack.Screen name="RestDay" component={RestDayScreen} />
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="AICoach" component={AICoachScreen} />
+      <Stack.Screen name="Rank" component={RankScreen} />
     </Stack.Navigator>
   );
 }
 
-/* ─── Root navigator — switches between stacks based on auth ─── */
-function RootNavigator() {
+/* Root navigator — switches between stacks based on auth */
+function RootNavigator({ fontsLoaded }) {
   const { user, loading } = useAuth();
 
-  // While Firebase checks persisted session, show nothing (splash is still visible)
-  if (loading) return <View style={{ flex: 1, backgroundColor: "#000" }} />;
+  if (loading || !fontsLoaded) return <View style={{ flex: 1, backgroundColor: "#000" }} />;
 
   return user ? <AppStack /> : <AuthStack />;
 }
 
-/* ─── Main App ───────────────────────────────────────────────── */
+/*
+ * ─── Font Loading Strategy ─────────────────────────────────────
+ *
+ * CRITICAL fonts (block splash): Only the 3 fonts used on the first
+ * visible screen (HomeScreen / OnboardingScreen). This cuts boot time
+ * because we load 3 fonts instead of 8 before showing the first frame.
+ *
+ * DEFERRED fonts: Loaded silently in the background after the splash
+ * hides and the app is already interactive. These are only needed on
+ * secondary screens (WorkoutDetail, WorkoutComplete, Rank, etc.)
+ */
+const CRITICAL_FONTS = {
+  Arimo_400Regular,
+  Arimo_700Bold,
+  Outfit_400Regular,
+};
+
+const DEFERRED_FONTS = {
+  Outfit_300Light,
+  Outfit_500Medium,
+  Outfit_600SemiBold,
+  Urbanist_900Black,
+  Syne_700Bold,
+  Montserrat_400Regular,
+  Montserrat_600SemiBold,
+  Montserrat_700Bold,
+};
+
+/* Main App */
 export default function App() {
-  const [fontsLoaded] = useFonts({
-    Manrope_400Regular,
-    Manrope_500Medium,
-    Manrope_600SemiBold,
-    Manrope_700Bold,
-    Manrope_800ExtraBold,
-    Outfit_300Light,
-    Outfit_400Regular,
-    Outfit_500Medium,
-    Outfit_600SemiBold,
-    Outfit_700Bold,
-    Outfit_900Black,
-    Urbanist_700Bold,
-    Urbanist_800ExtraBold,
-    Urbanist_900Black,
-    Syne_700Bold,
-    Arimo_400Regular,
-    Arimo_700Bold,
-  });
-
+  const [fontsLoaded, setFontsLoaded] = useState(false);
   const [isDownloadingUpdate, setIsDownloadingUpdate] = useState(false);
+  const splashHidden = useRef(false);
 
-  if (fontsLoaded) {
-    Text.defaultProps = Text.defaultProps ?? {};
-    Text.defaultProps.style = { fontFamily: "Outfit_400Regular" };
-  }
-
+  // ── Step 1: Load only the 3 critical fonts (blocks splash) ──
   useEffect(() => {
-    // OTA update check (silent)
-    setTimeout(async () => {
+    (async () => {
+      try {
+        await Font.loadAsync(CRITICAL_FONTS);
+      } catch (e) {
+        console.warn("Critical font load failed", e);
+      } finally {
+        setFontsLoaded(true);
+      }
+    })();
+  }, []);
+
+  // ── Step 2: Deferred font loading ──
+  useEffect(() => {
+    if (!fontsLoaded) return;
+    // Tiny delay to ensure first frame render is prioritized
+    const timer = setTimeout(() => {
+      Font.loadAsync(DEFERRED_FONTS).catch(() => { });
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [fontsLoaded]);
+
+  // ── Step 4: OTA update check (delayed to prioritize app launch) ──
+  useEffect(() => {
+    const checkUpdate = async () => {
+      if (__DEV__) return;
+
+      // Auto-fail after 15s to prevent being stuck on the UpdateScreen forever
+      const updateTimeout = setTimeout(() => {
+        setIsDownloadingUpdate(false);
+      }, 15000);
+
       try {
         const update = await Updates.checkForUpdateAsync();
         if (update.isAvailable) {
           setIsDownloadingUpdate(true);
           await Updates.fetchUpdateAsync();
-          setTimeout(async () => { await Updates.reloadAsync(); }, 2000);
+          await Updates.reloadAsync();
         }
-      } catch (_) {
-        console.log("[App] Auto-sync skipped");
+      } catch (e) {
+        console.warn("Update check failed", e);
+        setIsDownloadingUpdate(false);
+      } finally {
+        clearTimeout(updateTimeout);
       }
-    }, 1000);
-  }, []);
+    };
 
-  // Safety timeout to always hide splash
-  useEffect(() => {
-    const timer = setTimeout(async () => {
-      try { await SplashScreen.hideAsync(); } catch (e) { }
-    }, 5000);
+    // Delay slightly to ensure fonts and splash are handled first
+    const timer = setTimeout(checkUpdate, 5000);
     return () => clearTimeout(timer);
   }, []);
 
-  const onLayoutRootView = useCallback(async () => {
+  // ── Step 5: Emergency splash screen fallback ──
+  useEffect(() => {
     if (fontsLoaded) {
-      try { await SplashScreen.hideAsync(); } catch (e) { }
+      const timer = setTimeout(async () => {
+        if (!splashHidden.current) {
+          splashHidden.current = true;
+          try { await SplashScreen.hideAsync(); } catch (_) { }
+        }
+      }, 500); // Quick safety net — onLayout normally handles this faster
+      return () => clearTimeout(timer);
+    }
+  }, [fontsLoaded]);
+
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded && !splashHidden.current) {
+      splashHidden.current = true;
+      try {
+        await SplashScreen.hideAsync();
+      } catch (e) { }
     }
   }, [fontsLoaded]);
 
   if (!fontsLoaded) {
-    return <View style={{ flex: 1, backgroundColor: "#000" }} onLayout={onLayoutRootView} />;
-  }
-
-  if (isDownloadingUpdate) {
-    return <UpdateScreen />;
+    return null; // Keep splash screen visible until critical fonts are ready
   }
 
   return (
@@ -184,9 +227,13 @@ export default function App() {
         <StatusBar style="light" />
         <AuthProvider>
           <NetworkBanner />
-          <NavigationContainer>
-            <RootNavigator />
-          </NavigationContainer>
+          {isDownloadingUpdate ? (
+            <UpdateScreen />
+          ) : (
+            <NavigationContainer>
+              <RootNavigator fontsLoaded={fontsLoaded} />
+            </NavigationContainer>
+          )}
         </AuthProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

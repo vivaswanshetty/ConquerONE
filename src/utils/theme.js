@@ -79,9 +79,6 @@ export const FONTS = {
 
 import { Platform } from "react-native";
 
-// ── Font families ──────────────────────────────────────────
-// On iOS, we use the System font (San Francisco) for a native feel.
-// On Android or other platforms, we use the custom brand fonts.
 export const FAMILY = {
     display: "Arimo_700Bold",
     light: Platform.OS === "ios" ? "System" : "Outfit_300Light",
@@ -92,6 +89,11 @@ export const FAMILY = {
     black: "Arimo_700Bold",
     accent: Platform.OS === "ios" ? "System" : "Syne_700Bold",
     header: "Urbanist_900Black",
+    // Montserrat for specific screens
+    mReg: "Montserrat_400Regular",
+    mSemi: "Montserrat_600SemiBold",
+    mBold: "Montserrat_700Bold",
+    mBlack: "Montserrat_700Bold",
 };
 
 export const SPACING = {
@@ -115,3 +117,5 @@ export const RADIUS = {
     xxl: 32,
     full: 999,
 };
+
+export const APP_VERSION = "v2.2.9";

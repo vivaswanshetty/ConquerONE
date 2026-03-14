@@ -15,6 +15,8 @@ export const DEFAULT_SETTINGS = {
     autoStartRest: true,     // auto-start rest timer after work phase ends
     showCalories: true,      // show live calorie estimate during workout
     restMindset: true,       // show motivational tip during rest
+    streakFreezeEnabled: true,  // allow 1 missed day without breaking streak
+    streakFreezeCount: 1,       // number of freeze days per week
 };
 
 export const getSettings = async () => {

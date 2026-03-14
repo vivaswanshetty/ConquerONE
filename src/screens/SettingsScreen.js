@@ -1,23 +1,28 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-    View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar, Alert, Platform, Animated, Modal,
+    View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar, Alert, Platform, Animated, Modal, Share,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
-import * as Sharing from "expo-sharing";
+import * as Haptics from "expo-haptics";
+
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Updates from "expo-updates";
-import { COLORS, FONTS, SPACING, RADIUS, FAMILY } from "../utils/theme";
+import { COLORS, FONTS, SPACING, RADIUS, FAMILY, APP_VERSION } from "../utils/theme";
 import { getSettings, saveSettings, DEFAULT_SETTINGS } from "../utils/settings";
-import { clearHistory, clearAllData } from "../utils/storage";
+import {
+    clearHistory, clearAllData,
+    getWorkoutHistory, getStreak,
+    applyStreakFreeze, withdrawStreakFreeze, getLastFreezeDate,
+} from "../utils/storage";
 import {
     getReminderSettings, scheduleReminder, disableReminder,
     requestNotifPermission, sendStreakAtRiskNotif
 } from "../utils/notifications";
 import UpdateScreen from "./UpdateScreen";
 import { useAuth } from "../context/AuthContext";
-import { requestHealthPermissions, initHealthSync } from "../utils/health";
+
 
 /* --- Legal Content --- */
 const TERMS_CONTENT = `CONQUER ONE - TERMS OF USE
@@ -78,31 +83,44 @@ export default function SettingsScreen({ navigation, route }) {
     const [settings, setSettings] = useState(DEFAULT_SETTINGS);
     const [saved, setSaved] = useState(false);
     const [reminder, setReminder] = useState({ enabled: false, hour: 18, minute: 0 });
+    const [isFrozenToday, setIsFrozenToday] = useState(false);
+    const [freezing, setFreezing] = useState(false);
     const [updateStatus, setUpdateStatus] = useState("idle");
     const [updateId, setUpdateId] = useState(null);
     const [loaded, setLoaded] = useState(false);
     const [showPicker, setShowPicker] = useState(false);
     const [isDownloadingUpdate, setIsDownloadingUpdate] = useState(false);
     const [legalModal, setLegalModal] = useState({ visible: false, title: "", content: "" });
+    const contentFade = useRef(new Animated.Value(0)).current;
+    const headerFade = useRef(new Animated.Value(1)).current;
+
+    useEffect(() => {
+        loadInitial();
+    }, []);
+
+    const loadInitial = async () => {
+        // Fetch all at once
+        const [s, r, lastFreeze] = await Promise.all([
+            getSettings(),
+            getReminderSettings(),
+            getLastFreezeDate()
+        ]);
+
+        setSettings(s);
+        setReminder(r);
+        setUpdateId(Updates.updateId);
+        setIsFrozenToday(lastFreeze === new Date().toISOString().split("T")[0]);
+        setLoaded(true);
+        Animated.timing(contentFade, { toValue: 1, duration: 400, useNativeDriver: true }).start();
+    };
 
     useEffect(() => {
         if (route?.params?.scrollTo === "notifications" && loaded) {
             setTimeout(() => {
                 scrollRef.current?.scrollTo({ y: notificationsY.current, animated: true });
-            }, 400);
+            }, 600);
         }
     }, [route?.params?.scrollTo, loaded]);
-
-    useEffect(() => {
-        (async () => {
-            if (!__DEV__ && Updates.currentlyRunning?.updateId) {
-                setUpdateId(Updates.currentlyRunning.updateId);
-            }
-            setSettings(await getSettings());
-            setReminder(await getReminderSettings());
-            setLoaded(true);
-        })();
-    }, []);
 
     const flash = () => { setSaved(true); setTimeout(() => setSaved(false), 1500); };
 
@@ -128,31 +146,49 @@ export default function SettingsScreen({ navigation, route }) {
         flash();
     };
 
-    const handleHealthSync = async () => {
-        try {
-            const granted = await requestHealthPermissions();
-            if (granted) {
-                await update("healthSyncEnabled", true);
-                const platformName = Platform.OS === 'ios' ? "Apple Health" : "Google Fit";
-                Alert.alert("SYNC ACTIVATED", `CONQUER ONE is now linked to ${platformName}. Future sessions will be archived automatically.`);
+    const handleManualFreeze = async () => {
+        setFreezing(true);
+        if (isFrozenToday) {
+            const success = await withdrawStreakFreeze();
+            if (success) {
+                setIsFrozenToday(false);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                Alert.alert("FREEZE WITHDRAWN", "Streak protection removed. Go get after it, Athlete!");
             }
-        } catch (e) {
-            const platformName = Platform.OS === 'ios' ? "HealthKit" : "Health Connect";
-            Alert.alert("SYNC ERROR", `Could not establish connection to ${platformName}.`);
+        } else {
+            const success = await applyStreakFreeze();
+            if (success) {
+                setIsFrozenToday(true);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                Alert.alert("STREAK FROZEN", "Your streak is protected for today. Rest up!");
+            }
         }
+        setFreezing(false);
+        flash();
     };
 
+
+
     if (isDownloadingUpdate) return <UpdateScreen />;
-    if (!loaded) return <View style={[styles.container, { backgroundColor: COLORS.bg }]} />;
 
     return (
-        <View style={[styles.container, { paddingTop: insets.top }]}>
+        <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#000" translucent />
 
-            <View style={styles.header}>
-                <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
-                    <Ionicons name="chevron-back" size={22} color={COLORS.text} />
-                </TouchableOpacity>
+            <Animated.View style={[styles.header, {
+                paddingTop: insets.top + 12,
+                opacity: headerFade
+            }]}>
+                <View style={{ width: 60, alignItems: "flex-start" }}>
+                    <TouchableOpacity
+                        style={styles.backBtn}
+                        onPress={() => navigation.goBack()}
+                        activeOpacity={0.7}
+                        hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                    >
+                        <Ionicons name="chevron-back" size={22} color={COLORS.text} />
+                    </TouchableOpacity>
+                </View>
                 <Text style={styles.headerTitle}>SETTINGS</Text>
                 <View style={{ width: 60, alignItems: "flex-end" }}>
                     {saved && (
@@ -161,25 +197,17 @@ export default function SettingsScreen({ navigation, route }) {
                         </View>
                     )}
                 </View>
-            </View>
+            </Animated.View>
 
-            <ScrollView ref={scrollRef} showsVerticalScrollIndicator={false} overScrollMode="never" contentContainerStyle={{ paddingBottom: 60 }}>
+            <Animated.ScrollView
+                ref={scrollRef}
+                showsVerticalScrollIndicator={false}
+                overScrollMode="never"
+                contentContainerStyle={{ paddingBottom: 60 }}
+                style={{ opacity: contentFade, transform: [{ translateY: contentFade.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }}
+            >
 
-                <SectionLabel title="MY PROFILE" icon="person-circle-outline" />
-                <TouchableOpacity
-                    style={[styles.card, { padding: 24, flexDirection: "row", alignItems: "center", gap: 16 }]}
-                    onPress={() => navigation.navigate("Profile")}
-                    activeOpacity={0.8}
-                >
-                    <View style={styles.profileIconWrap}>
-                        <Ionicons name="person-circle-outline" size={28} color={COLORS.primary} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                        <Text style={styles.profileTitle}>{displayName.toUpperCase()}</Text>
-                        <Text style={styles.profileSub}>VIEW & EDIT ACCOUNT DETAILS</Text>
-                    </View>
-                    <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />
-                </TouchableOpacity>
+
 
                 <SectionLabel title="WORKOUT SETTINGS" icon="barbell-outline" />
                 <View style={styles.card}>
@@ -270,29 +298,7 @@ export default function SettingsScreen({ navigation, route }) {
                     />
                 </View>
 
-                <SectionLabel title="CONNECTED SYSTEMS" icon="link-outline" />
-                <View style={styles.card}>
-                    <TouchableOpacity
-                        style={styles.toggleRow}
-                        activeOpacity={0.7}
-                        onPress={handleHealthSync}
-                    >
-                        <View style={styles.toggleIconWrap}>
-                            <Ionicons name="heart-outline" size={18} color={settings.healthSyncEnabled ? "#22c55e" : COLORS.primary} />
-                        </View>
-                        <View style={styles.toggleInfo}>
-                            <Text style={styles.toggleLabel}>HEALTH SYNC {settings.healthSyncEnabled ? "(ACTIVE)" : ""}</Text>
-                            <Text style={styles.toggleSub}>
-                                {settings.healthSyncEnabled
-                                    ? `Connected to ${Platform.OS === 'ios' ? 'Apple Health' : 'Google Fit'}`
-                                    : `Sync workouts to ${Platform.OS === 'ios' ? 'Apple Health' : 'Google Fit'}`}
-                            </Text>
-                        </View>
-                        {settings.healthSyncEnabled && (
-                            <Ionicons name="checkmark-circle" size={18} color="#22c55e" />
-                        )}
-                    </TouchableOpacity>
-                </View>
+
 
                 <SectionLabel title="REST ALLOCATION" icon="bed-outline" />
                 <View style={styles.card}>
@@ -319,6 +325,48 @@ export default function SettingsScreen({ navigation, route }) {
                             ))}
                         </View>
                     </View>
+                </View>
+
+                <SectionLabel title="STREAK PROTECTION" icon="flame-outline" />
+                <View style={[styles.card, { paddingVertical: 10 }]}>
+                    <ToggleRow
+                        label="Enable Streak Insurance"
+                        sublabel="Allows you to manually freeze your streak for recovery days"
+                        icon="shield-checkmark-outline"
+                        value={settings.streakFreezeEnabled}
+                        onToggle={(v) => update("streakFreezeEnabled", v)}
+                    />
+
+                    {settings.streakFreezeEnabled && (
+                        <View style={styles.freezeActionArea}>
+                            <View style={styles.freezeDivider} />
+                            <TouchableOpacity
+                                style={[styles.freezeMainBtn, isFrozenToday && styles.freezeMainBtnActive]}
+                                onPress={handleManualFreeze}
+                                disabled={isFrozenToday || freezing}
+                                activeOpacity={0.7}
+                            >
+                                <View style={[styles.freezeIconCircle, isFrozenToday && { backgroundColor: 'rgba(96,165,250,0.1)' }]}>
+                                    <Ionicons
+                                        name={isFrozenToday ? "snow" : "snow-outline"}
+                                        size={20}
+                                        color={isFrozenToday ? "#60A5FA" : COLORS.textSub}
+                                    />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={[styles.freezeActionTitle, isFrozenToday && { color: "#60A5FA" }]}>
+                                        {isFrozenToday ? "STREAK CURRENTLY FROZEN" : "ACTIVATE FREEZE FOR TODAY"}
+                                    </Text>
+                                    <Text style={styles.freezeActionSub}>
+                                        {isFrozenToday ? "Progress is protected until tomorrow." : "Use this if you can't work out today."}
+                                    </Text>
+                                </View>
+                                {isFrozenToday && (
+                                    <Ionicons name="checkmark-circle" size={20} color="#22c55e" />
+                                )}
+                            </TouchableOpacity>
+                        </View>
+                    )}
                 </View>
 
                 <SectionLabel title="REMINDERS" icon="notifications-outline" />
@@ -414,7 +462,7 @@ export default function SettingsScreen({ navigation, route }) {
                     <TouchableOpacity
                         style={styles.toggleRow}
                         activeOpacity={0.7}
-                        onPress={() => Sharing.shareAsync("https://conquer-one.app", { dialogTitle: "CONQUER ONE - ELITE TRAINING" })}
+                        onPress={() => Share.share({ message: "💪 CONQUER ONE — Elite Training Protocol. Train like a champion!\n\nDownload: https://conquer-one.app", title: "CONQUER ONE" })}
                     >
                         <View style={styles.toggleIconWrap}>
                             <Ionicons name="share-social-outline" size={18} color={COLORS.textSub} />
@@ -444,7 +492,7 @@ export default function SettingsScreen({ navigation, route }) {
                     <TouchableOpacity
                         style={styles.toggleRow}
                         activeOpacity={0.7}
-                        onPress={() => Linking.openURL("mailto:support@conquer-one.app?subject=BUG REPORT - v1.0.5")}
+                        onPress={() => Linking.openURL("mailto:support@conquer-one.app?subject=BUG REPORT - v2.0.0")}
                     >
                         <View style={styles.toggleIconWrap}>
                             <Ionicons name="bug-outline" size={18} color={COLORS.textSub} />
@@ -466,16 +514,23 @@ export default function SettingsScreen({ navigation, route }) {
                                 if (result.isAvailable) {
                                     setUpdateStatus("available");
                                     setIsDownloadingUpdate(true);
-                                    await Updates.fetchUpdateAsync();
-                                    setTimeout(() => {
-                                        Updates.reloadAsync();
-                                    }, 2000);
+                                    try {
+                                        await Updates.fetchUpdateAsync();
+                                        setTimeout(() => {
+                                            Updates.reloadAsync();
+                                        }, 2000);
+                                    } catch (fetchErr) {
+                                        console.warn("Fetch failed", fetchErr);
+                                        setIsDownloadingUpdate(false);
+                                        setUpdateStatus("error");
+                                    }
                                 } else {
                                     setUpdateStatus("latest");
                                     setTimeout(() => setUpdateStatus("idle"), 3000);
                                 }
                             } catch (e) {
                                 setUpdateStatus("error");
+                                setIsDownloadingUpdate(false);
                                 setTimeout(() => setUpdateStatus("idle"), 3000);
                             }
                         }}
@@ -607,7 +662,24 @@ export default function SettingsScreen({ navigation, route }) {
 
                 <TouchableOpacity
                     style={styles.resetBtn}
-                    onPress={async () => { await saveSettings(DEFAULT_SETTINGS); setSettings(DEFAULT_SETTINGS); flash(); }}
+                    onPress={() => {
+                        Alert.alert(
+                            'RESTORE DEFAULTS?',
+                            'This will reset all settings to their original values. Your workout data will NOT be affected.',
+                            [
+                                { text: 'CANCEL', style: 'cancel' },
+                                {
+                                    text: 'RESET',
+                                    style: 'destructive',
+                                    onPress: async () => {
+                                        await saveSettings(DEFAULT_SETTINGS);
+                                        setSettings(DEFAULT_SETTINGS);
+                                        flash();
+                                    }
+                                }
+                            ]
+                        );
+                    }}
                     activeOpacity={0.7}
                 >
                     <Ionicons name="refresh-outline" size={14} color={COLORS.textMuted} />
@@ -616,9 +688,9 @@ export default function SettingsScreen({ navigation, route }) {
 
                 <View style={[styles.creditWrap, { paddingBottom: insets.bottom + 20 }]}>
                     <Text style={styles.creditText}>BUILT FOR POWER BY <Text style={styles.creditName}>VIVASWAN SHETTY</Text></Text>
-                    <Text style={styles.creditVersion}>CONQUER ONE CORE PROTOCOL v1.0.5</Text>
+                    <Text style={styles.creditVersion}>CONQUER ONE CORE PROTOCOL {APP_VERSION}</Text>
                 </View>
-            </ScrollView>
+            </Animated.ScrollView>
 
             <LegalModal
                 visible={legalModal.visible}
@@ -662,55 +734,55 @@ function SectionLabel({ title, icon }) {
 
 function ToggleRow({ label, sublabel, icon, value, onToggle, disabled }) {
     return (
-        <View style={[styles.toggleRow, disabled && { opacity: 0.3 }]}>
+        <TouchableOpacity
+            style={[styles.toggleRow, disabled && { opacity: 0.3 }]}
+            activeOpacity={0.7}
+            onPress={() => onToggle(!value)}
+            disabled={disabled}
+        >
             {icon && (
                 <View style={styles.toggleIconWrap}>
-                    <Ionicons name={icon} size={18} color={COLORS.textSub} />
+                    <Ionicons name={icon} size={18} color={value ? COLORS.primary : COLORS.textSub} />
                 </View>
             )}
             <View style={styles.toggleInfo}>
                 <Text style={styles.toggleLabel}>{label.toUpperCase()}</Text>
                 {sublabel && <Text style={styles.toggleSub}>{sublabel}</Text>}
             </View>
-            <AppleSwitch value={value} onToggle={onToggle} disabled={disabled} />
-        </View>
+            <PremiumSwitch value={value} disabled={disabled} />
+        </TouchableOpacity>
     );
 }
 
-function AppleSwitch({ value, onToggle, disabled }) {
-    const [anim] = useState(new Animated.Value(value ? 1 : 0));
+function PremiumSwitch({ value, disabled }) {
+    const swAnim = useRef(new Animated.Value(value ? 1 : 0)).current;
 
     useEffect(() => {
-        Animated.timing(anim, {
+        Animated.spring(swAnim, {
             toValue: value ? 1 : 0,
-            duration: 220,
+            friction: 8,
+            tension: 40,
             useNativeDriver: false,
         }).start();
     }, [value]);
 
-    const trackColor = anim.interpolate({
+    const trackColor = swAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: ["rgba(255,255,255,0.08)", COLORS.primary],
+        outputRange: ["rgba(255,255,255,0.06)", COLORS.primary],
     });
 
-    const thumbTranslate = anim.interpolate({
+    const thumbTranslate = swAnim.interpolate({
         inputRange: [0, 1],
         outputRange: [2, 18],
     });
 
     return (
-        <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => onToggle(!value)}
-            disabled={disabled}
-        >
-            <Animated.View style={[styles.appleSwitchTrack, { backgroundColor: trackColor }]}>
-                <Animated.View style={[
-                    styles.appleSwitchThumb,
-                    { transform: [{ translateX: thumbTranslate }] }
-                ]} />
-            </Animated.View>
-        </TouchableOpacity>
+        <Animated.View style={[styles.appleSwitchTrack, { backgroundColor: trackColor }]}>
+            <Animated.View style={[
+                styles.appleSwitchThumb,
+                { transform: [{ translateX: thumbTranslate }] }
+            ]} />
+        </Animated.View>
     );
 }
 
@@ -734,7 +806,7 @@ const styles = StyleSheet.create({
         width: 48, height: 48, borderRadius: 14, backgroundColor: "rgba(255,255,255,0.04)",
         alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
     },
-    headerTitle: { fontSize: 26, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -1.2 },
+    headerTitle: { flex: 1, textAlign: "center", fontSize: 26, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -1.2 },
     savedBadge: { backgroundColor: "rgba(255,255,255,0.05)", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
     savedText: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.accent, letterSpacing: 1 },
 
@@ -793,7 +865,25 @@ const styles = StyleSheet.create({
     profileIconWrap: { width: 48, height: 48, borderRadius: 24, backgroundColor: "rgba(227,30,36,0.1)", alignItems: "center", justifyContent: "center" },
     profileTitle: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 0.5 },
     profileSub: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, marginTop: 4, letterSpacing: 1 },
-
+    freezeActionArea: { marginTop: 4 },
+    freezeDivider: { height: 1, backgroundColor: "rgba(255,255,255,0.05)", marginHorizontal: 20 },
+    freezeMainBtn: {
+        flexDirection: "row", alignItems: "center", gap: 16,
+        paddingVertical: 20, paddingHorizontal: 22,
+    },
+    freezeMainBtnActive: {
+        backgroundColor: "rgba(96,165,250,0.03)",
+    },
+    freezeIconCircle: {
+        width: 40, height: 40, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.03)",
+        alignItems: "center", justifyContent: "center",
+    },
+    freezeActionTitle: {
+        fontSize: 12, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 0.5,
+    },
+    freezeActionSub: {
+        fontSize: 10, fontFamily: FAMILY.regular, color: COLORS.textMuted, marginTop: 2,
+    },
     resetBtn: {
         marginHorizontal: 24, marginTop: 40, paddingVertical: 18,
         borderRadius: 16, borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
@@ -813,7 +903,7 @@ const styles = StyleSheet.create({
 
     creditWrap: { marginTop: 60, alignItems: "center", paddingHorizontal: 40 },
     creditText: { fontSize: 8, fontFamily: FAMILY.bold, color: "rgba(255,255,255,0.2)", letterSpacing: 3, textAlign: "center" },
-    creditName: { color: COLORS.primary, opacity: 0.8 },
+    creditName: { color: COLORS.primary, opacity: 1 },
     creditVersion: { fontSize: 7, fontFamily: FAMILY.bold, color: "rgba(255,255,255,0.1)", letterSpacing: 2, marginTop: 8 },
 
     modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.8)", justifyContent: "flex-end" },

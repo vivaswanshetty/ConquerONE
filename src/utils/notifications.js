@@ -143,7 +143,7 @@ export const scheduleBirthdayWishes = async (dob) => {
             },
             trigger: {
                 type: Notifications.SchedulableTriggerInputTypes.YEARLY,
-                month: birthDate.getMonth(),
+                month: birthDate.getMonth() + 1,  // Expo expects 1-12, JS Date gives 0-11
                 day: birthDate.getDate(),
                 hour: 9,
                 minute: 0,

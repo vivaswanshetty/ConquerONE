@@ -1,29 +1,40 @@
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "./firebase";
+import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 
 /**
- * Uploads a local image file to Firebase Storage.
- * 
- * @param {string} uri - The local file URI from ImagePicker.
- * @param {string} path - The storage path (e.g. "avatars/uid.jpg").
- * @returns {Promise<string>} - The download URL of the uploaded image.
+ * Processes a local image into a compact data URI for use as a profile avatar.
+ *
+ * Pipeline: Resize to 200px wide → Compress to JPEG 60% → Return as data URI
+ * No cropping — the circular avatar mask in the UI handles the visual crop.
+ *
+ * A 200px JPEG at 60% quality is typically 10-25 KB as base64 —
+ * well within Firestore's 1 MB document limit and fast to load.
  */
-export const uploadImage = async (uri, path) => {
+export const uploadImage = async (uri, _path, onProgress) => {
     try {
-        // 1. Fetch the file data
-        const response = await fetch(uri);
-        const blob = await response.blob();
+        onProgress?.(0.1);
 
-        // 2. Create a reference in storage
-        const storageRef = ref(storage, path);
+        // Resize and compress — no cropping needed
+        const processed = await manipulateAsync(
+            uri,
+            [{ resize: { width: 200 } }],
+            { compress: 0.6, format: SaveFormat.JPEG, base64: true }
+        );
 
-        // 3. Upload the blob
-        await uploadBytes(storageRef, blob);
+        onProgress?.(0.7);
 
-        // 4. Get and return the download URL
-        return await getDownloadURL(storageRef);
+        if (!processed.base64) {
+            throw new Error("Image processing failed — no data returned.");
+        }
+
+        // Construct a data URI (React Native <Image> renders these natively)
+        const dataUri = `data:image/jpeg;base64,${processed.base64}`;
+
+        onProgress?.(1.0);
+
+        return dataUri;
+
     } catch (e) {
-        console.error("[CloudStorage] Upload failed:", e);
-        throw e;
+        console.error("[CloudStorage] Image processing failure:", e);
+        throw new Error(e.message || "Failed to process image");
     }
 };

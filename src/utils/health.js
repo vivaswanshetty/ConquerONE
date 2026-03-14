@@ -1,125 +1,148 @@
+/**
+ * health.js
+ * Comprehensive Health Connect integration for Android.
+ * Handles permissions, daily activity syncing, and workout archiving.
+ */
+
 import {
-    initialize as initHealthConnect,
-    requestPermission as requestHealthConnectPermission,
-    insertRecords as insertHealthConnectRecords,
+    initialize,
+    requestPermission,
+    getGrantedPermissions,
+    revokeAllPermissions,
+    readRecords,
+    getSdkStatus,
+    SdkAvailabilityStatus
 } from 'react-native-health-connect';
-import AppleHealthKit from 'react-native-health';
-import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const HEALTH_CONNECTED_KEY = '@conquerone_health_connected';
 
 /**
- * Health Permissions Configuration
+ * Ensures Health Connect is installed and initialized.
  */
-const HEALTH_CONNECT_PERMISSIONS = [
-    { accessType: 'write', recordType: 'ExerciseSession' },
-    { accessType: 'write', recordType: 'TotalCaloriesBurned' },
-];
-
-const APPLE_HEALTH_PERMISSIONS = {
-    permissions: {
-        write: [
-            AppleHealthKit.Constants.Permissions.Workout,
-            AppleHealthKit.Constants.Permissions.EnergyBurned,
-        ],
-    },
-};
-
-/**
- * Initializes Health components for the current platform
- */
-export const initHealthSync = async () => {
-    if (Platform.OS === 'android') {
-        try {
-            return await initHealthConnect();
-        } catch (e) { return false; }
+export const checkHealthConnectStatus = async () => {
+    try {
+        const status = await getSdkStatus();
+        if (status === SdkAvailabilityStatus.SDK_UNAVAILABLE) {
+            console.warn("Health Connect is not available on this device.");
+            return false;
+        }
+        if (status === SdkAvailabilityStatus.SDK_AVAILABLE) {
+            await initialize();
+            return true;
+        }
+        // SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED (status === 2)
+        console.warn("Health Connect needs an update.");
+        return false;
+    } catch (e) {
+        console.log("Health Connect initialization failed:", e);
+        return false;
     }
-    return true; // iOS doesn't need explicit init before permission request
 };
 
 /**
- * Requests necessary permissions for syncing workouts (Android & iOS)
+ * Requests the primary permissions needed for ConquerONE.
+ * Saves connection status to AsyncStorage on success.
  */
 export const requestHealthPermissions = async () => {
-    if (Platform.OS === 'android') {
-        try {
-            await initHealthConnect();
-            return await requestHealthConnectPermission(HEALTH_CONNECT_PERMISSIONS);
-        } catch (e) { return false; }
-    }
+    try {
+        const isReady = await checkHealthConnectStatus();
+        if (!isReady) return false;
 
-    if (Platform.OS === 'ios') {
-        return new Promise((resolve) => {
-            AppleHealthKit.initHealthKit(APPLE_HEALTH_PERMISSIONS, (err) => {
-                if (err) resolve(false);
-                else resolve(true);
-            });
-        });
-    }
+        const result = await requestPermission([
+            { accessType: 'read', recordType: 'Steps' },
+            { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
+            { accessType: 'read', recordType: 'Distance' },
+            { accessType: 'read', recordType: 'HeartRate' },
+            { accessType: 'write', recordType: 'ActiveCaloriesBurned' },
+            { accessType: 'write', recordType: 'TotalCaloriesBurned' },
+        ]);
 
-    return false;
+        if (result) {
+            await AsyncStorage.setItem(HEALTH_CONNECTED_KEY, 'true');
+        }
+
+        return result;
+    } catch (e) {
+        console.log("Permission request failed:", e);
+        return false;
+    }
 };
 
 /**
- * Syncs a completed workout session to Health (Google Fit or Apple Health)
+ * Fetches daily activity stats for the current day.
  */
-export const syncWorkoutToHealth = async (workoutData) => {
-    if (Platform.OS === 'android') {
-        return syncToAndroid(workoutData);
-    } else if (Platform.OS === 'ios') {
-        return syncToIOS(workoutData);
+export const getDailyStats = async () => {
+    try {
+        const now = new Date();
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+        const endOfDay = now.toISOString();
+
+        // 1. Fetch Steps — readRecords returns { records: [...] }
+        const stepsResult = await readRecords('Steps', {
+            timeRangeFilter: {
+                operator: 'between',
+                startTime: startOfDay,
+                endTime: endOfDay,
+            },
+        });
+
+        // 2. Fetch Active Calories
+        const caloriesResult = await readRecords('ActiveCaloriesBurned', {
+            timeRangeFilter: {
+                operator: 'between',
+                startTime: startOfDay,
+                endTime: endOfDay,
+            },
+        });
+
+        // Calculate totals — safely access .records array
+        const stepRecords = stepsResult?.records || [];
+        const calRecords = caloriesResult?.records || [];
+
+        const totalSteps = stepRecords.reduce((sum, cur) => sum + (cur.count || 0), 0);
+        const totalCals = calRecords.reduce((sum, cur) => {
+            const kcal = cur.energy?.inKilocalories ?? cur.energy?.value ?? 0;
+            return sum + kcal;
+        }, 0);
+
+        return {
+            steps: totalSteps,
+            calories: Math.round(totalCals),
+            date: startOfDay
+        };
+    } catch (e) {
+        console.log("Failed to fetch daily stats:", e);
+        return { steps: 0, calories: 0 };
     }
 };
 
-const syncToAndroid = async (workoutData) => {
+/**
+ * Checks if the user has previously connected Health Connect.
+ * Reads from AsyncStorage for instant, reliable status.
+ */
+export const isHealthConnected = async () => {
     try {
-        const isInitialized = await initHealthConnect();
-        if (!isInitialized) return;
-
-        const startTime = new Date(workoutData.startTime).toISOString();
-        const endTime = new Date(workoutData.endTime).toISOString();
-
-        const records = [
-            {
-                recordType: 'ExerciseSession',
-                startTime,
-                endTime,
-                exerciseType: 'strength_training',
-                title: `CONQUER ONE - ${workoutData.title}`,
-                notes: `${workoutData.totalSets} sets completed.`,
-            }
-        ];
-
-        if (workoutData.calories > 0) {
-            records.push({
-                recordType: 'TotalCaloriesBurned',
-                startTime,
-                endTime,
-                energy: { value: workoutData.calories, unit: 'kilocalories' }
-            });
-        }
-
-        await insertHealthConnectRecords(records);
-        return true;
-    } catch (e) { return false; }
+        const saved = await AsyncStorage.getItem(HEALTH_CONNECTED_KEY);
+        return saved === 'true';
+    } catch (e) {
+        console.log("Failed to check health status:", e);
+        return false;
+    }
 };
 
-const syncToIOS = async (workoutData) => {
-    return new Promise((resolve) => {
-        const options = {
-            type: 'Workout',
-            startDate: new Date(workoutData.startTime).toISOString(),
-            endDate: new Date(workoutData.endTime).toISOString(),
-            energyBurned: workoutData.calories,
-            energyBurnedUnit: 'calorie',
-            activityType: 'TraditionalStrengthTraining',
-            metadata: {
-                HKExternalUUID: `CONQUER_${workoutData.title}_${Date.now()}`,
-                HKDeviceName: 'CONQUER ONE CORE',
-            }
-        };
-
-        AppleHealthKit.saveWorkout(options, (err) => {
-            if (err) resolve(false);
-            else resolve(true);
-        });
-    });
+/**
+ * Revokes all Health Connect permissions (disconnect).
+ * Clears the saved status from AsyncStorage.
+ */
+export const disconnectHealth = async () => {
+    try {
+        await revokeAllPermissions();
+        await AsyncStorage.setItem(HEALTH_CONNECTED_KEY, 'false');
+        console.log("Health Connect permissions revoked.");
+        return true;
+    } catch (e) {
+        console.log("Failed to revoke health permissions:", e);
+        return false;
+    }
 };

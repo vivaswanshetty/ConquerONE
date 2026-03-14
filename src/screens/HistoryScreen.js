@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import {
-    View, Text, ScrollView, StyleSheet, TouchableOpacity, StatusBar, Dimensions,
+    View, Text, ScrollView, StyleSheet, TouchableOpacity, StatusBar, Dimensions, Share, Alert,
 } from "react-native";
 import Svg, { Polyline, Circle, Path, Defs, LinearGradient as SvgGradient, Stop } from "react-native-svg";
 import { Ionicons } from "@expo/vector-icons";
@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS, FONTS, SPACING, RADIUS, FAMILY } from "../utils/theme";
 import { getWorkoutHistory, getStreak, getTotalWorkouts, formatDuration } from "../utils/storage";
 import { WORKOUT_PLAN } from "../data/workoutData";
+import * as Haptics from "expo-haptics";
 
 const { width } = Dimensions.get("window");
 const CARD_PADDING = 24;
@@ -17,6 +18,21 @@ const CHART_W = width - CARD_PADDING * 4;
 const CHART_H = 100;
 
 /* ── helpers ─────────────────────────────────────────────── */
+
+/**
+ * Safely convert a completedAt value to a JS Date.
+ * Handles: Firestore Timestamp (has .seconds), ISO string, Date object.
+ */
+function toDate(completedAt) {
+    if (!completedAt) return new Date(0);
+    if (typeof completedAt === 'object' && completedAt.seconds) {
+        // Firestore Timestamp
+        return new Date(completedAt.seconds * 1000);
+    }
+    if (completedAt instanceof Date) return completedAt;
+    return new Date(completedAt);
+}
+
 function getWeekLabel(date) {
     const now = new Date();
     const thisWeek = new Date(now);
@@ -39,7 +55,7 @@ function computeWeeklyData(history) {
         const end = new Date(start);
         end.setDate(start.getDate() + 7);
         const count = history.filter(h => {
-            const d = new Date(h.completedAt);
+            const d = toDate(h.completedAt);
             return d >= start && d < end;
         }).length;
         return { label: wk === 0 ? "NOW" : `W-${wk}`, count };
@@ -143,7 +159,7 @@ function PRCard({ pr }) {
             <View style={pr_s.info}>
                 <Text style={pr_s.target}>{pr.target.toUpperCase()}</Text>
                 <Text style={pr_s.date}>
-                    {new Date(pr.completedAt).toLocaleDateString("en-US", { day: "numeric", month: "short" }).toUpperCase()}
+                    {toDate(pr.completedAt).toLocaleDateString("en-US", { day: "numeric", month: "short" }).toUpperCase()}
                 </Text>
             </View>
             <View style={pr_s.right}>
@@ -171,7 +187,7 @@ const pr_s = StyleSheet.create({
 /* ── History row ────────────────────────────────────────────── */
 function HistoryRow({ entry, isLast }) {
     const [expanded, setExpanded] = useState(false);
-    const date = new Date(entry.completedAt);
+    const date = toDate(entry.completedAt);
     const dateStr = date.toLocaleDateString("en-US", { day: "numeric", month: "short" }).toUpperCase();
     const timeStr = date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false }).toUpperCase();
 
@@ -287,11 +303,43 @@ export default function HistoryScreen({ navigation }) {
     const maxCount = Math.max(...WORKOUT_PLAN.map(d => history.filter(h => h.day === d.day).length), 1);
 
     const groups = history.reduce((acc, e) => {
-        const key = getWeekLabel(new Date(e.completedAt));
+        const key = getWeekLabel(toDate(e.completedAt));
         if (!acc[key]) acc[key] = [];
         acc[key].push(e);
         return acc;
     }, {});
+
+    const exportHistory = async () => {
+        if (history.length === 0) {
+            Alert.alert("No Data", "Complete some workouts first to export history.");
+            return;
+        }
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        try {
+            let csv = "Date,Time,Workout,Duration (min),Exercises\n";
+            history.forEach(h => {
+                const d = toDate(h.completedAt);
+                const date = d.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
+                const time = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+                const dur = Math.round((h.durationSec || 0) / 60);
+                const exercises = h.exercises ? h.exercises.map(e => `${e.name} (${e.sets}s)`).join(" | ") : "\u2014";
+                csv += `${date},${time},${h.target},${dur},"${exercises}"\n`;
+            });
+
+            const summary = `\n\n\ud83d\udcca CONQUER ONE WORKOUT REPORT\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n` +
+                `Total Sessions: ${total}\n` +
+                `Current Streak: ${streak} days\n` +
+                `Total Time: ${totalMin} minutes\n` +
+                `\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n\n` + csv;
+
+            await Share.share({
+                message: summary,
+                title: "CONQUER ONE - Workout History",
+            });
+        } catch (e) {
+            Alert.alert("Export Failed", e.message);
+        }
+    };
 
     return (
         <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -302,7 +350,9 @@ export default function HistoryScreen({ navigation }) {
                     <Ionicons name="chevron-back" size={22} color={COLORS.text} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>HISTORY</Text>
-                <View style={{ width: 48 }} />
+                <TouchableOpacity style={styles.backBtn} onPress={exportHistory} activeOpacity={0.7}>
+                    <Ionicons name="share-outline" size={18} color={COLORS.text} />
+                </TouchableOpacity>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} overScrollMode="never" contentContainerStyle={{ paddingBottom: 60 }}>

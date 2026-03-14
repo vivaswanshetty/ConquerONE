@@ -10,6 +10,13 @@ const BAR_GAP = 8;
 
 // history: array of { completedAt }
 // returns last 8 weeks as [{ label, count }]
+function toDate(val) {
+    if (!val) return new Date(0);
+    if (typeof val === 'object' && val.seconds) return new Date(val.seconds * 1000);
+    if (val instanceof Date) return val;
+    return new Date(val);
+}
+
 function computeWeeklyData(history) {
     const now = new Date();
     const weeks = [];
@@ -21,7 +28,7 @@ function computeWeeklyData(history) {
         weekEnd.setDate(weekStart.getDate() + 7);
 
         const count = history.filter((h) => {
-            const d = new Date(h.completedAt);
+            const d = toDate(h.completedAt);
             return d >= weekStart && d < weekEnd;
         }).length;
 

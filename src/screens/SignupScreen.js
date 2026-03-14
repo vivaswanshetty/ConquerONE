@@ -17,7 +17,7 @@ const GENDER_OPTIONS = ["Male", "Female", "Other", "Prefer not to say"];
 
 export default function SignupScreen({ navigation }) {
     const insets = useSafeAreaInsets();
-    const { signUp } = useAuth();
+    const { signUp, verifyEmail, signInWithGoogle, signInWithApple } = useAuth();
 
     const [fullName, setFullName] = useState("");
     const [email, setEmail] = useState("");
@@ -60,6 +60,9 @@ export default function SignupScreen({ navigation }) {
             });
             // Mark onboarding done — user came through signup flow
             await AsyncStorage.setItem(ONBOARDING_KEY, "1");
+            // Send verification email
+            await verifyEmail();
+            Alert.alert("✅ Account Created", "Please check your inbox to verify your email address.");
             // Auth state change in App.js will navigate to Main
         } catch (e) {
             console.error("[Signup] Error:", e.code, e.message);
@@ -73,6 +76,32 @@ export default function SignupScreen({ navigation }) {
                             ? "Network error. Check your internet connection."
                             : `Error: ${e.code || e.message}`;
             setError(msg);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleGoogleSignup = async () => {
+        setLoading(true);
+        setError("");
+        try {
+            await signInWithGoogle();
+            await AsyncStorage.setItem(ONBOARDING_KEY, "1");
+        } catch (e) {
+            setError("Google sign-in failed.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleAppleSignup = async () => {
+        setLoading(true);
+        setError("");
+        try {
+            await signInWithApple();
+            await AsyncStorage.setItem(ONBOARDING_KEY, "1");
+        } catch (e) {
+            setError("Apple sign-in failed.");
         } finally {
             setLoading(false);
         }
@@ -225,7 +254,6 @@ export default function SignupScreen({ navigation }) {
                             </View>
                         )}
 
-                        {/* Signup Button */}
                         <TouchableOpacity
                             style={[styles.ctaBtn, loading && { opacity: 0.6 }]}
                             onPress={handleSignup}
@@ -243,6 +271,28 @@ export default function SignupScreen({ navigation }) {
                                 }
                             </LinearGradient>
                         </TouchableOpacity>
+
+                        {/* Divider */}
+                        <View style={styles.divider}>
+                            <View style={styles.line} />
+                            <Text style={styles.dividerText}>OR CONTINUE WITH</Text>
+                            <View style={styles.line} />
+                        </View>
+
+                        {/* Social Row */}
+                        <View style={styles.socialRow}>
+                            <TouchableOpacity style={styles.socialBtn} onPress={handleGoogleSignup} activeOpacity={0.7}>
+                                <Ionicons name="logo-google" size={18} color="#fff" />
+                                <Text style={styles.socialBtnText}>GOOGLE</Text>
+                            </TouchableOpacity>
+
+                            {Platform.OS === 'ios' && (
+                                <TouchableOpacity style={[styles.socialBtn, { opacity: 0.5 }]} onPress={() => Alert.alert("Coming Soon", "Apple Sign-In will be available once we enroll in the Apple Developer Program.")} activeOpacity={0.7}>
+                                    <Ionicons name="logo-apple" size={18} color="#fff" />
+                                    <Text style={styles.socialBtnText}>COMING SOON</Text>
+                                </TouchableOpacity>
+                            )}
+                        </View>
                     </View>
 
                     {/* Footer */}
@@ -254,7 +304,7 @@ export default function SignupScreen({ navigation }) {
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
-        </View>
+        </View >
     );
 }
 
@@ -310,4 +360,16 @@ const styles = StyleSheet.create({
     footer: { flexDirection: "row", justifyContent: "center", alignItems: "center" },
     footerText: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textMuted },
     footerLink: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 1 },
+
+    divider: { flexDirection: "row", alignItems: "center", gap: 12, marginVertical: 20 },
+    line: { flex: 1, height: 1, backgroundColor: "rgba(255,255,255,0.06)" },
+    dividerText: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2 },
+
+    socialRow: { flexDirection: "row", gap: 12 },
+    socialBtn: {
+        flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center",
+        gap: 8, backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 14,
+        paddingVertical: 14, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)"
+    },
+    socialBtnText: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 1 },
 });

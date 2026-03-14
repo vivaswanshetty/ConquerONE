@@ -2,6 +2,7 @@
   "expo": {
     "name": "ConquerONE",
     "slug": "conquer-one",
+    "scheme": "conquerone",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -43,8 +44,6 @@
         }
       ],
       "@react-native-community/datetimepicker",
-      "react-native-health-connect",
-      "react-native-health",
       [
         "expo-build-properties",
         {
@@ -52,16 +51,34 @@
             "minSdkVersion": 26
           }
         }
-      ]
+      ],
+      [
+        "react-native-health-connect",
+        {
+          "healthPermissionRead": [
+            "ActiveCaloriesBurned",
+            "BasalMetabolicRate",
+            "Distance",
+            "HeartRate",
+            "Steps",
+            "TotalCaloriesBurned"
+          ],
+          "healthPermissionWrite": [
+            "ActiveCaloriesBurned",
+            "TotalCaloriesBurned"
+          ]
+        }
+      ],
+      "@react-native-google-signin/google-signin",
+      "expo-apple-authentication",
+      "./plugins/withTTSQueries"
     ],
     "extra": {
       "eas": {
         "projectId": "fa539543-bc51-4677-8251-2e9ff8c7a17d"
       }
     },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "runtimeVersion": "1.0.0",
     "updates": {
       "url": "https://u.expo.dev/fa539543-bc51-4677-8251-2e9ff8c7a17d"
     }

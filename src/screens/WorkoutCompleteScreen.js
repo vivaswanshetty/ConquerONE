@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
     View, Text, TouchableOpacity, StyleSheet, Dimensions,
     StatusBar, Animated, ScrollView, ImageBackground,
@@ -10,9 +10,11 @@ import * as Haptics from "expo-haptics";
 import { COLORS, FONTS, SPACING, RADIUS, FAMILY } from "../utils/theme";
 import { formatDuration } from "../utils/storage";
 import { sendMilestoneNotif } from "../utils/notifications";
-import { syncWorkoutToHealth } from "../utils/health";
+
 import { getSettings } from "../utils/settings";
 import { Platform } from "react-native";
+import { checkHealthConnectStatus } from "../utils/health";
+import { insertRecords } from 'react-native-health-connect';
 
 const { width, height } = Dimensions.get("window");
 
@@ -25,6 +27,8 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
     const prAnim = useRef(new Animated.Value(0)).current;
     const checkAnim = useRef(new Animated.Value(0)).current;
     const streakAnim = useRef(new Animated.Value(0)).current;
+    const rankAnim = useRef(new Animated.Value(0)).current;
+    const [rankUp, setRankUp] = useState(null);
 
     useEffect(() => {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => { });
@@ -53,23 +57,33 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
         // Milestone Recognition
         checkMilestones();
 
-        // Health Sync Trigger
-        handleAutoSync();
+        // Archive to Google Fit
+        archiveWorkoutToHealth();
     }, []);
 
-    const handleAutoSync = async () => {
-        const settings = await getSettings();
-        if (settings.healthSyncEnabled) {
-            await syncWorkoutToHealth({
-                title: day.target,
-                durationSec,
-                calories: caloriesBurned,
-                totalSets: total, // Approximate or fetch actual if available
-                startTime: Date.now() - (durationSec * 1000),
-                endTime: Date.now()
-            });
+    const archiveWorkoutToHealth = async () => {
+        try {
+            const isReady = await checkHealthConnectStatus();
+            if (!isReady) return;
+
+            const now = new Date();
+            const start = new Date(now.getTime() - (durationSec * 1000));
+
+            await insertRecords([
+                {
+                    recordType: 'ActiveCaloriesBurned',
+                    startTime: start.toISOString(),
+                    endTime: now.toISOString(),
+                    energy: { value: caloriesBurned || 150, unit: 'kilocalories' },
+                }
+            ]);
+            console.log("Workout archived to Health Connect");
+        } catch (e) {
+            console.log("Health archive failed:", e);
         }
     };
+
+
 
     const checkMilestones = () => {
         if (total === 1) {
@@ -86,6 +100,26 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
             sendMilestoneNotif("Streak Mastery", "3 days of discipline. The momentum is building.");
         } else if (streak === 7) {
             sendMilestoneNotif("Heatwave", "7-day streak! You are officially on fire.");
+        }
+
+        // Rank-up detection
+        const RANK_THRESHOLDS = [
+            { min: 100, title: "LEGEND", icon: "trophy-outline", color: "#EF4444", desc: "The pinnacle. Pure excellence." },
+            { min: 50, title: "TITAN", icon: "diamond-outline", color: "#F97316", desc: "An unstoppable force." },
+            { min: 25, title: "WARRIOR", icon: "fitness", color: "#FBBF24", desc: "Battle-tested and relentless." },
+            { min: 10, title: "RISING STAR", icon: "trending-up", color: "#34D399", desc: "Your consistency is paying off." },
+            { min: 5, title: "ROOKIE", icon: "star-outline", color: "#60A5FA", desc: "You've proven you're serious." },
+        ];
+        for (const t of RANK_THRESHOLDS) {
+            if (total === t.min) {
+                setRankUp(t);
+                sendMilestoneNotif(`RANK UP: ${t.title}`, t.desc);
+                setTimeout(() => {
+                    Animated.spring(rankAnim, { toValue: 1, tension: 50, friction: 7, useNativeDriver: true }).start();
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => { });
+                }, 900);
+                break;
+            }
         }
     };
 
@@ -151,6 +185,26 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
                         }]}>
                             <Ionicons name="flame" size={18} color={COLORS.primary} />
                             <Text style={styles.streakText}>{streak}-DAY STREAK. CONSISTENCY IS KEY.</Text>
+                        </Animated.View>
+                    )}
+
+                    {rankUp && (
+                        <Animated.View style={[styles.rankUpCard, {
+                            opacity: rankAnim,
+                            transform: [{ scale: rankAnim.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1] }) }],
+                        }]}>
+                            <LinearGradient
+                                colors={[`${rankUp.color}20`, 'transparent']}
+                                style={[StyleSheet.absoluteFill, { borderRadius: 20 }]}
+                            />
+                            <View style={[styles.rankUpIcon, { borderColor: `${rankUp.color}50` }]}>
+                                <Ionicons name={rankUp.icon} size={28} color={rankUp.color} />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.rankUpLabel}>RANK UP!</Text>
+                                <Text style={[styles.rankUpTitle, { color: rankUp.color }]}>{rankUp.title}</Text>
+                                <Text style={styles.rankUpDesc}>{rankUp.desc}</Text>
+                            </View>
                         </Animated.View>
                     )}
 
@@ -264,6 +318,22 @@ const styles = StyleSheet.create({
     histLink: { paddingVertical: 10 },
     histLinkText: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2 },
     linkDiv: { width: 1, height: 12, backgroundColor: "rgba(255,255,255,0.1)" },
+
+    // Rank Up Card
+    rankUpCard: {
+        flexDirection: "row", alignItems: "center", gap: 16,
+        width: "100%", padding: 18, borderRadius: 20, marginTop: 20,
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
+        backgroundColor: "rgba(255,255,255,0.02)", overflow: "hidden",
+    },
+    rankUpIcon: {
+        width: 52, height: 52, borderRadius: 16, borderWidth: 2,
+        alignItems: "center", justifyContent: "center",
+        backgroundColor: "rgba(0,0,0,0.3)",
+    },
+    rankUpLabel: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2 },
+    rankUpTitle: { fontSize: 20, fontFamily: FAMILY.bold, letterSpacing: 1, marginTop: 2 },
+    rankUpDesc: { fontSize: 10, fontFamily: FAMILY.regular, color: COLORS.textSub, marginTop: 4 },
 });
 
 

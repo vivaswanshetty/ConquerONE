@@ -1,11 +1,13 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity, StyleSheet,
-    StatusBar, Alert, Image, ActivityIndicator,
-    Modal, TextInput, KeyboardAvoidingView, Platform,
+    StatusBar, Alert, Image, ActivityIndicator, Animated,
+    Modal, TextInput, KeyboardAvoidingView, Platform, DeviceEventEmitter
 } from "react-native";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import { LinearGradient } from "expo-linear-gradient";
+import { useFocusEffect } from "@react-navigation/native";
+import DateTimePicker from "@react-native-community/datetimepicker";
+
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
@@ -13,9 +15,10 @@ import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../utils/firebase";
 import { useAuth } from "../context/AuthContext";
 import { fsGetStreak, fsGetTotalWorkouts } from "../utils/firestore";
-import { COLORS, SPACING, FAMILY, GRADIENTS } from "../utils/theme";
+import { COLORS, SPACING, FAMILY, APP_VERSION } from "../utils/theme";
 import { uploadImage } from "../utils/cloudStorage";
 import { scheduleBirthdayWishes } from "../utils/notifications";
+import { requestHealthPermissions, getDailyStats, isHealthConnected, disconnectHealth } from "../utils/health";
 
 const GENDER_OPTIONS = ["Male", "Female", "Other", "Prefer not to say"];
 
@@ -145,28 +148,11 @@ function EditModal({ visible, title, value, onSave, onClose, multiChoice, choice
     );
 }
 
-/* ─── Sub-components ─────────────────────────────────────────── */
-function InfoRow({ icon, label, value, onEdit, last }) {
-    return (
-        <TouchableOpacity
-            style={[styles.infoRow, !last && styles.rowBorder]}
-            onPress={onEdit}
-            activeOpacity={onEdit ? 0.6 : 1}
-        >
-            <View style={styles.rowIconWrap}>
-                <Ionicons name={icon} size={14} color={COLORS.primary} />
-            </View>
-            <View style={styles.rowContent}>
-                <Text style={styles.rowLabel}>{label}</Text>
-                <Text style={styles.rowValue} numberOfLines={1}>{value || "—"}</Text>
-            </View>
-            {onEdit && <Ionicons name="pencil-outline" size={14} color="rgba(255,255,255,0.2)" />}
-        </TouchableOpacity>
-    );
-}
+
 
 function ActionRow({ icon, label, onPress, color, last, sublabel }) {
-    const c = color || COLORS.textSub;
+    const c = color || COLORS.text;
+    const labelColor = color || COLORS.text;
     return (
         <TouchableOpacity
             style={[styles.infoRow, !last && styles.rowBorder]}
@@ -177,7 +163,7 @@ function ActionRow({ icon, label, onPress, color, last, sublabel }) {
                 <Ionicons name={icon} size={14} color={c} />
             </View>
             <View style={styles.rowContent}>
-                <Text style={[styles.rowLabel, { color: c }]}>{label}</Text>
+                <Text style={[styles.rowLabel, { color: labelColor }]}>{label}</Text>
                 {sublabel && <Text style={styles.rowSublabel}>{sublabel}</Text>}
             </View>
             <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.15)" />
@@ -193,29 +179,44 @@ function Card({ children }) {
     return <View style={styles.card}>{children}</View>;
 }
 
-function StatPill({ label, value, icon }) {
-    return (
-        <View style={styles.statPill}>
-            <Ionicons name={icon} size={18} color={COLORS.primary} />
-            <Text style={styles.statValue}>{value}</Text>
-            <Text style={styles.statLabel}>{label}</Text>
-        </View>
-    );
-}
+
 
 /* ─── Main Screen ────────────────────────────────────────────── */
 export default function ProfileScreen({ navigation }) {
     const insets = useSafeAreaInsets();
-    const { user, profile, signOut, updateUserProfile } = useAuth();
+    const { user, profile, signOut, updateUserProfile, verifyEmail, changeEmail, reloadProfile } = useAuth();
     const [streak, setStreak] = useState(0);
     const [total, setTotal] = useState(0);
     const [syncing, setSyncing] = useState(false);
+    const [healthStatus, setHealthStatus] = useState("inactive"); // inactive, active, syncing
     const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [currentAvatarUrl, setCurrentAvatarUrl] = useState(profile?.photoURL);
     const [pwLoading, setPwLoading] = useState(false);
 
     const [editModal, setEditModal] = useState({ visible: false, field: "", title: "", value: "", type: "text" });
 
-    useEffect(() => { loadStats(); }, []);
+    useFocusEffect(
+        useCallback(() => {
+            loadStats();
+            checkHealthOnLoad();
+            // Sync current avatar state with profile from auth
+            if (profile?.photoURL) {
+                setCurrentAvatarUrl(profile.photoURL);
+            }
+            // Refresh user object to pick up email verification status
+            if (user) {
+                user.reload().catch(() => { });
+            }
+        }, [profile?.photoURL])
+    );
+
+    const checkHealthOnLoad = async () => {
+        try {
+            const connected = await isHealthConnected();
+            if (connected) setHealthStatus("active");
+        } catch (_) { }
+    };
 
     const loadStats = async () => {
         try {
@@ -232,43 +233,81 @@ export default function ProfileScreen({ navigation }) {
     const handleSaveEdit = async (newValue) => {
         const { field } = editModal;
         setEditModal(e => ({ ...e, visible: false }));
-        if (!newValue?.trim && !newValue) return;
+
+        // Handle values gracefully
+        if (newValue === undefined || newValue === null) return;
         const val = typeof newValue === "string" ? newValue.trim() : newValue;
-        if (!val) return;
+        if (val === "" && field !== "gender") return;
 
         try {
-            await updateUserProfile({ [field]: val });
-            if (field === "dateOfBirth") {
-                await scheduleBirthdayWishes(val);
+            if (field === "email") {
+                await changeEmail(val);
+                Alert.alert("✅ Security Check", "A verification link has been sent to your new email. The update will complete once verified.");
+            } else {
+                await updateUserProfile({ [field]: val });
+                if (field === "dateOfBirth") {
+                    await scheduleBirthdayWishes(val);
+                }
             }
         } catch (e) {
-            Alert.alert("Update Failed", e.message);
+            console.warn("[Profile] Update failed:", e.code, e.message);
+            const msg = e.code === "auth/requires-recent-login"
+                ? "For security, changing your email requires a recent login. Please log out and back in."
+                : e.message;
+            Alert.alert("Update Failed", msg);
+        }
+    };
+
+    const handleVerifyEmail = async () => {
+        try {
+            await verifyEmail();
+            Alert.alert("✅ Verification Sent", "Check your inbox for the verification link.");
+        } catch (e) {
+            Alert.alert("Failed", e.message);
         }
     };
 
     const pickImage = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== "granted") {
-            Alert.alert("Permission Required", "We need gallery access to set a profile picture.");
+            Alert.alert("Permission Required", "Gallery access is needed for a profile picture.");
             return;
         }
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true, aspect: [1, 1], quality: 0.8,
-        });
-        if (!result.canceled) {
+
+        try {
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'],
+                allowsEditing: false, // Skip OS crop — we crop programmatically for reliability
+                quality: 0.8,
+            });
+
+            if (result.canceled) return;
+
             const uri = result.assets[0].uri;
+
+            // 1. Optimistic UI — show the picked image immediately
+            setCurrentAvatarUrl(uri);
             setIsUploading(true);
-            try {
-                const path = `avatars/${user.uid}.jpg`;
-                const downloadURL = await uploadImage(uri, path);
-                await updateUserProfile({ photoURL: downloadURL });
-                Alert.alert("Success", "Profile picture updated!");
-            } catch (err) {
-                Alert.alert("Upload Failed", "Could not upload image.");
-            } finally {
-                setIsUploading(false);
-            }
+            setUploadProgress(0);
+
+            // 2. Process image (crop to square + compress + base64)
+            const dataUri = await uploadImage(uri, `avatars/${user.uid}`, (pct) => {
+                setUploadProgress(pct);
+            });
+
+            if (!dataUri) throw new Error("Image processing returned empty.");
+
+            // 3. Save to Firestore
+            await updateUserProfile({ photoURL: dataUri });
+            setCurrentAvatarUrl(dataUri);
+
+        } catch (err) {
+            console.error("[Profile] Upload error:", err);
+            setCurrentAvatarUrl(profile?.photoURL);
+            Alert.alert("Upload Failed", `${err.message || "Unknown error"}\n\nPlease try again.`);
+        } finally {
+            setIsUploading(false);
+            setUploadProgress(0);
         }
     };
 
@@ -280,14 +319,48 @@ export default function ProfileScreen({ navigation }) {
     };
 
     const handleSyncNow = async () => {
+        // If already connected, offer to disconnect
+        if (healthStatus === "active") {
+            Alert.alert(
+                "Disconnect Google Fit?",
+                "This will stop syncing your workouts and health data with Health Connect.",
+                [
+                    { text: "Cancel", style: "cancel" },
+                    {
+                        text: "Disconnect",
+                        style: "destructive",
+                        onPress: async () => {
+                            setSyncing(true);
+                            const revoked = await disconnectHealth();
+                            if (revoked) {
+                                setHealthStatus("inactive");
+                                Alert.alert("Disconnected", "Google Fit sync has been turned off.");
+                            }
+                            setSyncing(false);
+                        }
+                    }
+                ]
+            );
+            return;
+        }
+
+        // Connect flow
         setSyncing(true);
+        DeviceEventEmitter.emit('showNetworkBanner');
+
         try {
-            const response = await fetch("https://www.google.com", { method: "HEAD", mode: "no-cors" });
-            if (!response) throw new Error("Offline");
-            await new Promise(r => setTimeout(r, 1000));
-            Alert.alert("✅ Synced", "All data is up to date.");
+            const hasCnx = await fetch("https://www.google.com", { method: "HEAD", mode: "no-cors" });
+            if (!hasCnx) throw new Error("Offline");
+
+            const success = await requestHealthPermissions();
+            if (success) {
+                setHealthStatus("active");
+                const stats = await getDailyStats();
+                console.log("Health Stats:", stats);
+                Alert.alert("✅ Health Sync Active", "Google Fit data is now being synchronized.");
+            }
         } catch (e) {
-            Alert.alert("Sync Failed", "No internet connection detected.");
+            Alert.alert("Sync Failed", "Check your internet and Health Connect settings.");
         } finally {
             setSyncing(false);
         }
@@ -301,161 +374,330 @@ export default function ProfileScreen({ navigation }) {
         : "—";
     const initials = displayName.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
 
+    // Dynamic rank based on total workouts
+    const getRank = () => {
+        if (total >= 100) return { label: "LEGEND", pct: "100%" };
+        if (total >= 50) return { label: "TITAN", pct: "95%" };
+        if (total >= 25) return { label: "WARRIOR", pct: "88%" };
+        if (total >= 10) return { label: "RISING", pct: "75%" };
+        if (total >= 5) return { label: "ROOKIE", pct: "60%" };
+        return { label: "RECRUIT", pct: "40%" };
+    };
+    const rank = getRank();
+
+    const handleChangePassword = async () => {
+        if (!email) return Alert.alert("Error", "No email associated with this account.");
+        Alert.alert(
+            "RESET PASSWORD",
+            `We'll send a password reset link to:\n${email}`,
+            [
+                { text: "CANCEL", style: "cancel" },
+                {
+                    text: "SEND LINK",
+                    onPress: async () => {
+                        setPwLoading(true);
+                        try {
+                            await sendPasswordResetEmail(auth, email);
+                            Alert.alert("✅ Email Sent", "Check your inbox for the password reset link.");
+                        } catch (e) {
+                            Alert.alert("Failed", e.message);
+                        } finally {
+                            setPwLoading(false);
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    const firstName = displayName.split(' ')[0];
+
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#000" translucent />
 
-            <View style={[styles.topBar, { paddingTop: insets.top + 10 }]}>
-                <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
-                    <Ionicons name="chevron-back" size={20} color={COLORS.text} />
+            {/* ── Floating Header Icons ── */}
+            <View style={[styles.topBar, {
+                paddingTop: insets.top + 8,
+            }]}>
+                <TouchableOpacity
+                    style={styles.backBtn}
+                    onPress={() => navigation.goBack()}
+                    activeOpacity={0.7}
+                    hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                >
+                    <Ionicons name="chevron-back" size={22} color={COLORS.text} />
                 </TouchableOpacity>
-                <Text style={styles.topBarTitle}>MY ACCOUNT</Text>
-                <TouchableOpacity style={styles.iconBtn} onPress={handleLogout} activeOpacity={0.7}>
-                    <Ionicons name="log-out-outline" size={20} color={COLORS.primary} />
+                <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.7}>
+                    <Ionicons name="log-out-outline" size={18} color={COLORS.primary} />
                 </TouchableOpacity>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-                {/* ── Membership Card ── */}
-                <View style={styles.memberCardWrap}>
-                    <LinearGradient
-                        colors={["#1a1a1a", "#0d0d0d"]}
-                        style={styles.memberCard}
-                    >
-                        <LinearGradient
-                            colors={["rgba(227,30,36,0.15)", "transparent"]}
-                            style={StyleSheet.absoluteFill}
-                            start={{ x: 1, y: 0 }} end={{ x: 0, y: 1 }}
-                        />
-                        <View style={styles.memberCardHeader}>
-                            <View style={styles.brandRow}>
-                                <Ionicons name="flash" size={16} color={COLORS.primary} />
-                                <Text style={styles.brandName}>CONQUER ONE</Text>
-                            </View>
-                            <View style={styles.eliteBadge}>
-                                <Text style={styles.eliteBadgeText}>ELITE PRO</Text>
-                            </View>
-                        </View>
 
-                        <View style={styles.memberInfo}>
-                            <TouchableOpacity
-                                style={styles.avatarWrap}
-                                onPress={pickImage}
-                                activeOpacity={0.8}
-                                disabled={isUploading}
-                            >
-                                {isUploading ? (
-                                    <View style={[styles.avatarBg, styles.avatarLoading]}>
-                                        <ActivityIndicator size="small" color={COLORS.primary} />
-                                    </View>
-                                ) : profile?.photoURL ? (
-                                    <Image source={{ uri: profile.photoURL }} style={styles.avatarImg} />
-                                ) : (
+                {/* ── Profile Hero ── */}
+                <View style={styles.heroSection}>
+                    {/* Ambient glow behind avatar */}
+                    <View style={styles.avatarGlowOuter}>
+                        <LinearGradient
+                            colors={['rgba(227,30,36,0.15)', 'rgba(227,30,36,0.03)', 'transparent']}
+                            style={styles.avatarGlowGradient}
+                        />
+                    </View>
+
+                    <TouchableOpacity
+                        style={styles.avatarWrap}
+                        onPress={pickImage}
+                        activeOpacity={0.8}
+                        disabled={isUploading}
+                    >
+                        <View style={styles.avatarRing}>
+                            {(() => {
+                                const hasImage = typeof currentAvatarUrl === 'string' && currentAvatarUrl.length > 0;
+                                if (hasImage) {
+                                    return (
+                                        <>
+                                            <Image
+                                                key={currentAvatarUrl}
+                                                source={{ uri: currentAvatarUrl }}
+                                                style={[styles.avatarImg, isUploading && { opacity: 0.6 }]}
+                                                resizeMode="cover"
+                                                onError={() => {
+                                                    console.warn("Image load failed for:", currentAvatarUrl);
+                                                    setCurrentAvatarUrl(null);
+                                                }}
+                                            />
+                                            {isUploading && (
+                                                <View style={styles.avatarProgressOverlay}>
+                                                    <ActivityIndicator size="small" color="#FFF" style={{ marginBottom: 4 }} />
+                                                    <Text style={styles.avatarProgressText}>
+                                                        {Math.round(uploadProgress * 100)}%
+                                                    </Text>
+                                                </View>
+                                            )}
+                                        </>
+                                    );
+                                }
+                                return (
                                     <View style={styles.avatarBg}>
                                         <Text style={styles.initials}>{initials}</Text>
+                                        {isUploading && (
+                                            <View style={styles.avatarProgressOverlay}>
+                                                <ActivityIndicator size="small" color="#FFF" />
+                                            </View>
+                                        )}
                                     </View>
-                                )}
-                                <View style={styles.cameraBtn}>
-                                    <Ionicons name="camera" size={10} color="#fff" />
-                                </View>
-                            </TouchableOpacity>
-                            <View>
-                                <Text style={styles.memberName}>{displayName.toUpperCase()}</Text>
-                                <Text style={styles.memberId}>ID: {user?.uid?.slice(0, 8).toUpperCase()}</Text>
-                            </View>
+                                );
+                            })()}
                         </View>
+                        <View style={styles.cameraBtn}>
+                            <Ionicons name="camera" size={12} color="#fff" />
+                        </View>
+                    </TouchableOpacity>
 
-                        <View style={styles.memberFooter}>
-                            <View>
-                                <Text style={styles.memberLabel}>MEMBER SINCE</Text>
-                                <Text style={styles.memberValue}>{memberSince}</Text>
-                            </View>
-                            <View style={{ alignItems: "flex-end" }}>
-                                <Text style={styles.memberLabel}>STATUS</Text>
-                                <Text style={styles.memberValue}>ACTIVE</Text>
-                            </View>
+                    <Text style={styles.heroGreeting}>Welcome back,</Text>
+                    <Text style={styles.heroName}>{displayName}</Text>
+                    <Text style={styles.heroEmail}>{email}</Text>
+
+                    <View style={styles.heroBadges}>
+                        <LinearGradient
+                            colors={['rgba(227,30,36,0.12)', 'rgba(227,30,36,0.04)']}
+                            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                            style={styles.rankBadge}
+                        >
+                            <Ionicons name="flash" size={10} color={COLORS.primary} />
+                            <Text style={styles.rankBadgeText}>{rank.label}</Text>
+                        </LinearGradient>
+                        <View style={styles.dateBadge}>
+                            <Ionicons name="calendar-outline" size={9} color={COLORS.textMuted} />
+                            <Text style={styles.dateBadgeText}>SINCE {memberSince}</Text>
                         </View>
-                    </LinearGradient>
+                    </View>
                 </View>
 
-                {/* ── Stats ── */}
+                {/* ── Stats Strip ── */}
                 <View style={styles.statsRow}>
-                    <StatPill label="STREAK" value={`${streak}D`} icon="flame" />
-                    <View style={styles.statDivider} />
-                    <StatPill label="SESSIONS" value={total} icon="barbell-outline" />
-                    <View style={styles.statDivider} />
-                    <StatPill label="INTENSITY" value="98%" icon="trending-up" />
+                    <View style={[styles.statCard, styles.statCardStreak]}>
+                        <View style={styles.statIconWrap}>
+                            <Ionicons name="flame" size={18} color={COLORS.primary} />
+                        </View>
+                        <Text style={styles.statValue}>{streak}</Text>
+                        <Text style={styles.statLabel}>DAY STREAK</Text>
+                    </View>
+                    <View style={styles.statCard}>
+                        <View style={styles.statIconWrap}>
+                            <Ionicons name="barbell-outline" size={18} color={COLORS.textSub} />
+                        </View>
+                        <Text style={styles.statValue}>{total}</Text>
+                        <Text style={styles.statLabel}>SESSIONS</Text>
+                    </View>
+                    <View style={styles.statCard}>
+                        <View style={styles.statIconWrap}>
+                            <Ionicons name="trending-up" size={18} color={COLORS.textSub} />
+                        </View>
+                        <Text style={styles.statValue}>{rank.pct}</Text>
+                        <Text style={styles.statLabel}>TOP RANK</Text>
+                    </View>
                 </View>
 
-                {/* ── Sections ── */}
-                <SectionTitle title="IDENTITY DETAILS" />
+                {/* ── Personal Info ── */}
+                <SectionTitle title="PERSONAL INFO" />
                 <Card>
-                    <InfoRow
-                        icon="person-outline" label="Full Name" value={displayName}
-                        onEdit={() => openEdit("fullName", "Edit Name", displayName)}
-                    />
-                    <InfoRow
-                        icon="mail-outline" label="Email Address" value={email}
-                        onEdit={() => Alert.alert("Change Email", "Identity verification required to update email address.")}
-                    />
-                    <InfoRow
-                        icon="calendar-outline" label="Date of Birth" value={profile?.dateOfBirth}
-                        onEdit={() => openEdit("dateOfBirth", "Edit Birth Date", profile?.dateOfBirth, "date")}
-                    />
-                    <InfoRow
-                        icon="male-female-outline" label="Gender" value={profile?.gender}
-                        onEdit={() => openEdit("gender", "Select Gender", profile?.gender, "choice")}
-                        last
-                    />
+                    <TouchableOpacity
+                        style={[styles.detailRow, styles.rowBorder]}
+                        onPress={() => openEdit("fullName", "Edit Name", displayName)}
+                        activeOpacity={0.6}
+                    >
+                        <View style={styles.detailContent}>
+                            <Text style={styles.detailValue}>{displayName}</Text>
+                            <Text style={styles.detailLabel}>FULL NAME</Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.12)" />
+                    </TouchableOpacity>
+
+                    <View style={[styles.detailRow, styles.rowBorder]}>
+                        <View style={styles.detailContent}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.xs }}>
+                                <Text style={[styles.detailValue, { flexShrink: 1 }]} numberOfLines={1}>{email}</Text>
+                                <View style={[styles.verifiedBadge, { backgroundColor: user?.emailVerified ? 'rgba(255,255,255,0.06)' : 'rgba(227,30,36,0.06)' }]}>
+                                    <View style={[styles.verifiedDot, { backgroundColor: user?.emailVerified ? '#FFF' : COLORS.primary }]} />
+                                    <Text style={[styles.verifiedText, { color: user?.emailVerified ? '#FFF' : COLORS.primary }]}>
+                                        {user?.emailVerified ? "VERIFIED" : "UNVERIFIED"}
+                                    </Text>
+                                </View>
+                            </View>
+                            <Text style={styles.detailLabel}>EMAIL ADDRESS</Text>
+                        </View>
+                        {!user?.emailVerified && (
+                            <TouchableOpacity onPress={handleVerifyEmail} style={styles.miniActionBtn}>
+                                <Text style={styles.miniActionBtnText}>VERIFY</Text>
+                            </TouchableOpacity>
+                        )}
+                        <TouchableOpacity
+                            onPress={() => openEdit("email", "Change Email", email, "email")}
+                            style={styles.chevronAction}
+                            hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                        >
+                            <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.12)" />
+                        </TouchableOpacity>
+                    </View>
+
+                    <TouchableOpacity
+                        style={[styles.detailRow, styles.rowBorder]}
+                        onPress={() => openEdit("dateOfBirth", "Edit Birth Date", profile?.dateOfBirth, "date")}
+                        activeOpacity={0.6}
+                    >
+                        <View style={styles.detailContent}>
+                            <Text style={styles.detailValue}>{profile?.dateOfBirth || "—"}</Text>
+                            <Text style={styles.detailLabel}>DATE OF BIRTH</Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.12)" />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.detailRow}
+                        onPress={() => openEdit("gender", "Select Gender", profile?.gender, "choice")}
+                        activeOpacity={0.6}
+                    >
+                        <View style={styles.detailContent}>
+                            <Text style={styles.detailValue}>{profile?.gender || "—"}</Text>
+                            <Text style={styles.detailLabel}>GENDER</Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.12)" />
+                    </TouchableOpacity>
                 </Card>
 
-                <SectionTitle title="CLOUD SYNC" />
+                {/* ── Connected Services ── */}
+                <SectionTitle title="CONNECTED SERVICES" />
                 <Card>
-                    <View style={styles.cloudRow}>
-                        <View style={styles.cloudIcon}>
-                            <Ionicons name="cloud-done-outline" size={20} color="#22c55e" />
+                    <View style={[styles.serviceRow, styles.rowBorder]}>
+                        <View style={[styles.serviceIcon, healthStatus === "active" && { backgroundColor: 'rgba(66,133,244,0.08)', borderColor: 'rgba(66,133,244,0.15)' }]}>
+                            <Ionicons
+                                name={healthStatus === "active" ? "heart" : "fitness-outline"}
+                                size={18}
+                                color={healthStatus === "active" ? "#4285F4" : COLORS.textMuted}
+                            />
                         </View>
-                        <View style={styles.cloudInfo}>
-                            <Text style={styles.cloudTitle}>Real-time Backup</Text>
-                            <Text style={styles.cloudSub}>Firebase Cloud Sync is active</Text>
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.serviceTitle}>Health Connect</Text>
+                            <Text style={styles.serviceSub}>
+                                {healthStatus === "active" ? "Linked to Google Fit" : "Sync steps & calories"}
+                            </Text>
                         </View>
-                        <TouchableOpacity style={styles.syncBtn} onPress={handleSyncNow} activeOpacity={0.7}>
-                            {syncing ? <ActivityIndicator size="small" color={COLORS.text} /> : <Text style={styles.syncBtnText}>SYNC</Text>}
+                        <TouchableOpacity
+                            style={[styles.serviceAction, healthStatus === "active" && { backgroundColor: 'rgba(239,68,68,0.06)', borderColor: 'rgba(239,68,68,0.15)' }]}
+                            onPress={handleSyncNow}
+                            activeOpacity={0.7}
+                        >
+                            {syncing ? (
+                                <ActivityIndicator size="small" color={COLORS.text} />
+                            ) : (
+                                <Text style={[styles.serviceActionText, healthStatus === "active" && { color: '#EF4444' }]}>
+                                    {healthStatus === "active" ? "DISCONNECT" : "CONNECT"}
+                                </Text>
+                            )}
                         </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.serviceRow}>
+                        <View style={[styles.serviceIcon, { backgroundColor: 'rgba(34,197,94,0.06)', borderColor: 'rgba(34,197,94,0.1)' }]}>
+                            <Ionicons name="cloud-done-outline" size={18} color="#22c55e" />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.serviceTitle}>Firebase Sync</Text>
+                            <Text style={styles.serviceSub}>Real-time backup active</Text>
+                        </View>
+                        <View style={styles.liveBadge}>
+                            <View style={styles.liveDot} />
+                            <Text style={styles.liveBadgeText}>LIVE</Text>
+                        </View>
                     </View>
                 </Card>
 
-                <SectionTitle title="SECURITY" />
+                {/* ── Account ── */}
+                <SectionTitle title="ACCOUNT" />
                 <Card>
                     <ActionRow
                         icon="lock-closed-outline"
                         label="Change Password"
-                        sublabel="Update your security credentials"
-                        onPress={() => Alert.alert("Password Reset", "Reset instructions sent to your email.")}
+                        sublabel={pwLoading ? "Sending reset link..." : "Reset via email link"}
+                        onPress={handleChangePassword}
                     />
                     <ActionRow
-                        icon="notifications-outline"
+                        icon="shield-checkmark-outline"
                         label="Data & Privacy"
-                        sublabel="Manage how we handle your data"
-                        onPress={() => { }}
+                        sublabel="Encryption & data policies"
+                        onPress={() => Alert.alert(
+                            "DATA & PRIVACY",
+                            "Your workout data is stored securely on Firebase with end-to-end encryption.\n\n• We never sell your personal data\n• Workout history is backed up to the cloud\n• You can delete your account at any time\n\nFor questions, contact support@conquer-one.app"
+                        )}
                         last
                     />
                 </Card>
 
-                <SectionTitle title="DANGER ZONE" />
                 <Card>
-                    <ActionRow
-                        icon="trash-outline"
-                        label="Delete Account"
-                        sublabel="Permanently erase all your history"
-                        color={COLORS.primary}
-                        onPress={() => Alert.alert("Delete Account", "Contact support to erase data.")}
-                        last
-                    />
+                    <TouchableOpacity
+                        style={styles.dangerRow}
+                        onPress={() => Alert.alert(
+                            "DELETE ACCOUNT?",
+                            "This will permanently delete your account and ALL workout data. This action cannot be undone.",
+                            [
+                                { text: "CANCEL", style: "cancel" },
+                                { text: "DELETE", style: "destructive", onPress: () => Alert.alert("Contact Support", "Email support@conquer-one.app to process your account deletion.") }
+                            ]
+                        )}
+                        activeOpacity={0.6}
+                    >
+                        <Ionicons name="trash-outline" size={16} color={COLORS.primary} />
+                        <Text style={styles.dangerText}>Delete Account</Text>
+                    </TouchableOpacity>
                 </Card>
 
-                <View style={{ paddingVertical: 40, alignItems: "center" }}>
-                    <Text style={styles.version}>CONQUER ONE · v1.0.8 PREMIUM</Text>
+                <View style={styles.footerSection}>
+                    <View style={styles.footerDivider} />
+                    <Text style={styles.footerBrand}>CONQUER ONE</Text>
+                    <Text style={styles.footerAuthor}>by <Text style={{ color: COLORS.primary }}>Vivaswan Shetty</Text></Text>
+                    <Text style={styles.version}>{APP_VERSION}</Text>
                 </View>
 
             </ScrollView>
@@ -476,102 +718,251 @@ export default function ProfileScreen({ navigation }) {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: COLORS.bg },
+
+    // Header
     topBar: {
         flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-        paddingHorizontal: SPACING.base, paddingBottom: 10,
+        paddingHorizontal: 20, paddingBottom: 8,
     },
-    iconBtn: {
-        width: 40, height: 40, borderRadius: 12,
+    backBtn: {
+        width: 48, height: 48, borderRadius: 14,
         backgroundColor: "rgba(255,255,255,0.04)",
         alignItems: "center", justifyContent: "center",
         borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
     },
-    topBarTitle: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 3 },
-    scroll: { paddingBottom: 60, paddingTop: 10 },
-
-    // Membership Card
-    memberCardWrap: { paddingHorizontal: SPACING.base, marginBottom: 32 },
-    memberCard: {
-        borderRadius: 24, padding: 24, height: 210, overflow: "hidden",
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
-        shadowColor: "#000", shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.5, shadowRadius: 15, elevation: 10,
+    logoutBtn: {
+        width: 44, height: 44, borderRadius: 22,
+        backgroundColor: "rgba(227,30,36,0.06)",
+        alignItems: "center", justifyContent: "center",
+        borderWidth: 1, borderColor: "rgba(227,30,36,0.1)",
     },
-    memberCardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 28 },
-    brandRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-    brandName: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 2 },
-    eliteBadge: {
-        backgroundColor: "rgba(227,30,36,0.15)", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6,
-        borderWidth: 1, borderColor: "rgba(227,30,36,0.3)",
-    },
-    eliteBadgeText: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 1.5 },
+    scroll: { paddingBottom: 40 },
 
-    memberCard: { padding: 28, borderRadius: 28, height: 210, justifyContent: "space-between", overflow: "hidden", borderWidth: 1, borderColor: "rgba(255,255,255,0.06)" },
-    memberInfo: { flexDirection: "row", alignItems: "center", gap: 16 },
-    avatarWrap: { position: "relative" },
-    avatarBg: { width: 68, height: 68, borderRadius: 34, backgroundColor: "rgba(255,255,255,0.05)", alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "rgba(255,255,255,0.15)" },
-    avatarImg: { width: 68, height: 68, borderRadius: 34 },
+    // Hero
+    heroSection: {
+        alignItems: "center", paddingTop: 16, paddingBottom: 36,
+    },
+    avatarGlowOuter: {
+        position: 'absolute', top: 0, width: 200, height: 200,
+        alignItems: 'center', justifyContent: 'center',
+    },
+    avatarGlowGradient: {
+        width: 200, height: 200, borderRadius: 100,
+    },
+    avatarWrap: { position: "relative", marginBottom: 20 },
+    avatarRing: {
+        padding: 3,
+        borderRadius: 60,
+        borderWidth: 2,
+        borderColor: 'rgba(227,30,36,0.25)',
+    },
+    avatarBg: {
+        width: 110, height: 110, borderRadius: 55,
+        backgroundColor: "rgba(255,255,255,0.03)",
+        alignItems: "center", justifyContent: "center",
+    },
+    avatarImg: { width: 110, height: 110, borderRadius: 55, backgroundColor: "#000" },
     avatarLoading: { backgroundColor: "rgba(0,0,0,0.3)" },
-    initials: { fontSize: 24, fontFamily: FAMILY.bold, color: COLORS.textMuted },
-    cameraBtn: {
-        position: "absolute", bottom: 0, right: 0, width: 22, height: 22, borderRadius: 11,
-        backgroundColor: COLORS.primary, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "#000"
+    avatarProgressOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        borderRadius: 55,
+        backgroundColor: "rgba(0,0,0,0.5)",
+        alignItems: "center", justifyContent: "center",
     },
-    memberName: { fontSize: 22, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -0.5 },
-    memberBadge: { alignSelf: 'flex-start', marginTop: 6, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, backgroundColor: 'rgba(227,30,36,0.12)', borderWidth: 1, borderColor: 'rgba(227,30,36,0.2)' },
-    memberBadgeText: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 1.5 },
-
-    memberFooter: { flexDirection: "row", justifyContent: "space-between", borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.05)", paddingTop: 20 },
-    memberLabel: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2, marginBottom: 6 },
-    memberValue: { fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.textSub },
+    avatarProgressText: {
+        fontSize: 14, fontFamily: FAMILY.mBold, color: "#fff",
+    },
+    initials: { fontSize: 32, fontFamily: FAMILY.mBold, color: COLORS.textMuted },
+    cameraBtn: {
+        position: "absolute", bottom: 6, right: 6, width: 32, height: 32, borderRadius: 16,
+        backgroundColor: COLORS.primary, alignItems: "center", justifyContent: "center",
+        borderWidth: 3, borderColor: "#000",
+        shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.4, shadowRadius: 6, elevation: 5,
+    },
+    heroGreeting: {
+        fontSize: 12, fontFamily: FAMILY.mReg, color: COLORS.textMuted,
+        letterSpacing: 0.5, marginBottom: 4,
+    },
+    heroName: {
+        fontSize: 28, fontFamily: FAMILY.mBold, color: COLORS.text,
+        marginBottom: 4,
+    },
+    heroEmail: {
+        fontSize: 12, fontFamily: FAMILY.mReg, color: COLORS.textMuted,
+        marginBottom: 18,
+    },
+    heroBadges: { flexDirection: "row", gap: 8 },
+    rankBadge: {
+        flexDirection: "row", alignItems: "center", gap: 6,
+        paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20,
+        borderWidth: 1, borderColor: "rgba(227,30,36,0.2)",
+    },
+    rankBadgeText: { fontSize: 9, fontFamily: FAMILY.mBold, color: COLORS.primary, letterSpacing: 1 },
+    dateBadge: {
+        flexDirection: "row", alignItems: "center", gap: 5,
+        paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20,
+        backgroundColor: "rgba(255,255,255,0.03)",
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.06)",
+    },
+    dateBadgeText: { fontSize: 9, fontFamily: FAMILY.mSemi, color: COLORS.textMuted, letterSpacing: 0.5 },
 
     // Stats
     statsRow: {
-        flexDirection: "row", marginHorizontal: SPACING.base, marginBottom: 32,
-        backgroundColor: "rgba(255,255,255,0.02)", borderRadius: 20,
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.05)", padding: 20,
+        flexDirection: "row", gap: 10, marginHorizontal: 20, marginBottom: 36,
     },
-    statPill: { flex: 1, alignItems: "center", gap: 6 },
-    statDivider: { width: 1, backgroundColor: "rgba(255,255,255,0.05)" },
-    statValue: { fontSize: 18, fontFamily: FAMILY.bold, color: COLORS.text },
-    statLabel: { fontSize: 7, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1.5 },
+    statCard: {
+        flex: 1, alignItems: "center", paddingVertical: 22, gap: 8,
+        backgroundColor: "rgba(255,255,255,0.02)", borderRadius: 20,
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.04)",
+    },
+    statCardStreak: {
+        borderColor: "rgba(227,30,36,0.12)",
+        backgroundColor: "rgba(227,30,36,0.03)",
+    },
+    statIconWrap: {
+        width: 36, height: 36, borderRadius: 12,
+        backgroundColor: "rgba(255,255,255,0.03)",
+        alignItems: "center", justifyContent: "center",
+        marginBottom: 2,
+    },
+    statValue: { fontSize: 24, fontFamily: FAMILY.mBold, color: COLORS.text },
+    statLabel: { fontSize: 8, fontFamily: FAMILY.mSemi, color: COLORS.textMuted, letterSpacing: 1.2 },
 
     // Sections
-    sectionTitle: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 3, marginHorizontal: SPACING.base, marginBottom: 12, marginTop: 8 },
-    card: { marginHorizontal: SPACING.base, marginBottom: 20, backgroundColor: "rgba(255,255,255,0.02)", borderRadius: 20, borderWidth: 1, borderColor: "rgba(255,255,255,0.06)", overflow: "hidden" },
+    sectionTitle: {
+        fontSize: 10, fontFamily: FAMILY.mBold, color: COLORS.textMuted,
+        letterSpacing: 1.5, marginHorizontal: 20, marginBottom: 14, marginTop: 24,
+    },
+    card: {
+        marginHorizontal: 20, marginBottom: 16,
+        backgroundColor: "rgba(255,255,255,0.02)", borderRadius: 20,
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.05)", overflow: "hidden",
+    },
 
-    infoRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 18, paddingVertical: 16, gap: 14 },
+    // Detail rows (value-first pattern)
+    detailRow: {
+        flexDirection: "row", alignItems: "center",
+        paddingHorizontal: 20, paddingVertical: 18,
+    },
     rowBorder: { borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.04)" },
-    rowIconWrap: { width: 32, height: 32, borderRadius: 10, backgroundColor: "rgba(227,30,36,0.06)", alignItems: "center", justifyContent: "center" },
-    rowContent: { flex: 1 },
-    rowLabel: { fontSize: 11, fontFamily: FAMILY.medium, color: COLORS.textMuted, marginBottom: 2 },
-    rowValue: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.text },
-    rowSublabel: { fontSize: 10, fontFamily: FAMILY.regular, color: COLORS.textMuted, marginTop: 2 },
+    detailContent: { flex: 1, marginRight: 12 },
+    detailValue: {
+        fontSize: 15, fontFamily: FAMILY.mBold, color: COLORS.text,
+        marginBottom: 3,
+    },
+    detailLabel: {
+        fontSize: 9, fontFamily: FAMILY.mSemi, color: COLORS.textMuted,
+        letterSpacing: 1,
+    },
 
-    cloudRow: { flexDirection: "row", alignItems: "center", gap: 16, paddingHorizontal: 18, paddingVertical: 20 },
-    cloudIcon: { width: 44, height: 44, borderRadius: 12, backgroundColor: "rgba(34,197,94,0.06)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(34,197,94,0.1)" },
-    cloudInfo: { flex: 1 },
-    cloudTitle: { fontSize: 14, fontFamily: FAMILY.bold, color: COLORS.text },
-    cloudSub: { fontSize: 10, fontFamily: FAMILY.regular, color: COLORS.textMuted, marginTop: 2 },
-    syncBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 10, backgroundColor: "rgba(255,255,255,0.05)", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
-    syncBtnText: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 1 },
+    // Legacy info row (kept for ActionRow compat)
+    infoRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingVertical: 18 },
+    rowIconWrap: { width: 34, height: 34, borderRadius: 11, backgroundColor: "rgba(255,255,255,0.03)", alignItems: "center", justifyContent: "center", marginRight: 12 },
+    rowContent: { flex: 1, marginRight: 12 },
+    rowLabel: { fontSize: 13, fontFamily: FAMILY.mBold, color: COLORS.text, marginBottom: 2 },
+    rowValue: { fontSize: 15, fontFamily: FAMILY.mBold, color: COLORS.text },
+    rowSublabel: { fontSize: 11, fontFamily: FAMILY.mReg, color: COLORS.textSub, marginTop: 2 },
 
-    version: { fontSize: 9, fontFamily: FAMILY.bold, color: "rgba(255,255,255,0.1)", letterSpacing: 2 },
+    // Verified Badge
+    verifiedBadge: {
+        flexDirection: 'row', alignItems: 'center', gap: 5,
+        paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6,
+        borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
+    },
+    verifiedDot: { width: 4, height: 4, borderRadius: 2 },
+    verifiedText: { fontSize: 8, fontFamily: FAMILY.mBold, letterSpacing: 0.5 },
+
+    // Connected Services
+    serviceRow: {
+        flexDirection: "row", alignItems: "center", gap: 14,
+        paddingHorizontal: 20, paddingVertical: 18,
+    },
+    serviceIcon: {
+        width: 40, height: 40, borderRadius: 12,
+        backgroundColor: "rgba(255,255,255,0.03)",
+        alignItems: "center", justifyContent: "center",
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
+    },
+    serviceTitle: { fontSize: 14, fontFamily: FAMILY.mBold, color: COLORS.text },
+    serviceSub: { fontSize: 11, fontFamily: FAMILY.mReg, color: COLORS.textMuted, marginTop: 2 },
+    serviceAction: {
+        paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10,
+        backgroundColor: "rgba(255,255,255,0.04)",
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.06)",
+    },
+    serviceActionText: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 1 },
+    liveBadge: {
+        flexDirection: "row", alignItems: "center", gap: 6,
+        paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10,
+        backgroundColor: "rgba(34,197,94,0.06)",
+        borderWidth: 1, borderColor: "rgba(34,197,94,0.1)",
+    },
+    liveDot: {
+        width: 6, height: 6, borderRadius: 3, backgroundColor: "#22c55e",
+    },
+    liveBadgeText: { fontSize: 8, fontFamily: FAMILY.mBold, color: "#22c55e", letterSpacing: 1 },
+
+    // Danger
+    dangerRow: {
+        flexDirection: "row", alignItems: "center", gap: 12,
+        paddingHorizontal: 20, paddingVertical: 18,
+    },
+    dangerText: { fontSize: 14, fontFamily: FAMILY.mBold, color: COLORS.primary },
+
+    footerSection: {
+        alignItems: 'center', paddingVertical: 48, gap: 8,
+    },
+    footerDivider: {
+        width: 40, height: 2, borderRadius: 1,
+        backgroundColor: 'rgba(255,255,255,0.04)', marginBottom: 16,
+    },
+    footerBrand: {
+        fontSize: 11, fontFamily: FAMILY.mBold, color: 'rgba(255,255,255,0.15)',
+        letterSpacing: 3,
+    },
+    footerAuthor: {
+        fontSize: 10, fontFamily: FAMILY.mReg, color: 'rgba(255,255,255,0.08)',
+        letterSpacing: 0.5,
+    },
+    version: { fontSize: 9, fontFamily: FAMILY.mReg, color: "rgba(255,255,255,0.06)", letterSpacing: 1.5 },
 
     // Modal
-    modalOverlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.8)" },
-    modalSheet: { backgroundColor: "#0f0f0f", borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 28, paddingBottom: 48, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
-    modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: "rgba(255,255,255,0.1)", alignSelf: "center", marginBottom: 24 },
-    modalTitle: { fontSize: 16, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 1, marginBottom: 24 },
-    modalInputWrap: { backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 16, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", paddingHorizontal: 20, paddingVertical: 16, marginBottom: 28, flexDirection: "row", alignItems: "center" },
-    modalInput: { color: COLORS.text, fontFamily: FAMILY.medium, fontSize: 16, flex: 1 },
-    choiceGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 28 },
-    choiceBtn: { paddingHorizontal: 18, paddingVertical: 12, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.03)", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
-    choiceBtnActive: { backgroundColor: "rgba(227,30,36,0.15)", borderColor: COLORS.primary },
-    choiceBtnText: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1 },
+    modalOverlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.85)" },
+    modalSheet: {
+        backgroundColor: "#0A0A0A", borderTopLeftRadius: 32, borderTopRightRadius: 32,
+        padding: 28, paddingBottom: 48,
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.06)",
+    },
+    modalHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: "rgba(255,255,255,0.1)", alignSelf: "center", marginBottom: 24 },
+    modalTitle: { fontSize: 16, fontFamily: FAMILY.mBold, color: COLORS.text, letterSpacing: 0.2, marginBottom: 24 },
+    modalInputWrap: {
+        backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 16,
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.06)",
+        paddingHorizontal: 20, paddingVertical: 16, marginBottom: 28,
+        flexDirection: "row", alignItems: "center",
+    },
+    modalInput: { color: COLORS.text, fontFamily: FAMILY.mReg, fontSize: 16, flex: 1, letterSpacing: 0.1 },
+    choiceGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 28 },
+    choiceBtn: {
+        paddingHorizontal: 20, paddingVertical: 14, borderRadius: 14,
+        backgroundColor: "rgba(255,255,255,0.03)",
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.06)",
+    },
+    choiceBtnActive: { backgroundColor: "rgba(227,30,36,0.1)", borderColor: "rgba(227,30,36,0.3)" },
+    choiceBtnText: { fontSize: 10, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 0.5 },
     choiceBtnTextActive: { color: COLORS.primary },
-    modalBtns: { flexDirection: "row", gap: 14 },
+    modalBtns: { flexDirection: "row", gap: 12 },
     modalCancelBtn: { flex: 1, paddingVertical: 16, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.04)", alignItems: "center" },
-    modalCancelText: { fontSize: 12, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1 },
+    modalCancelText: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 1 },
     modalSaveBtn: { flex: 2, paddingVertical: 16, borderRadius: 16, backgroundColor: COLORS.primary, alignItems: "center" },
-    modalSaveText: { fontSize: 12, fontFamily: FAMILY.bold, color: "#fff", letterSpacing: 1 },
+    modalSaveText: { fontSize: 12, fontFamily: FAMILY.accent, color: "#fff", letterSpacing: 1 },
+    miniActionBtn: {
+        backgroundColor: 'rgba(227,30,36,0.08)', paddingHorizontal: 10, paddingVertical: 6,
+        borderRadius: 8, borderWidth: 1, borderColor: 'rgba(227,30,36,0.15)',
+    },
+    miniActionBtnText: { fontSize: 8, fontFamily: FAMILY.accent, color: COLORS.primary, letterSpacing: 0.5 },
+    miniVerifyBtn: { backgroundColor: 'rgba(227,30,36,0.08)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(227,30,36,0.15)' },
+    miniVerifyBtnText: { fontSize: 8, fontFamily: FAMILY.accent, color: COLORS.primary, letterSpacing: 0.5 },
+    chevronAction: { paddingLeft: 12 },
 });

@@ -14,12 +14,18 @@ import { saveExerciseConfig, getWorkoutOverrides } from "../utils/workoutConfig"
 function totalTime(day) {
     let s = 0;
     day.exercises.forEach((ex) => {
-        const setDuration = ex.type === 'reps' ? 45 : ex.activeTimeSec; // Use 45s as estimate for reps
+        const setDuration = ex.type === 'reps' ? 45 : ex.activeTimeSec;
         s += ex.sets * setDuration + (ex.sets - 1) * ex.restTimeSec;
         if (ex.unilateral) s += ex.sets * setDuration;
     });
     return Math.ceil(s / 60);
 }
+
+const estimateCalories = (durationMin) => {
+    // MET values: 5.0 for resistance training
+    // Simplified formula: 5.0 * 75kg * (mins / 60)
+    return Math.round(5.0 * 75 * (durationMin / 60));
+};
 
 export default function WorkoutDetailScreen({ navigation, route }) {
     const { day: initialDay } = route.params;
@@ -91,9 +97,9 @@ export default function WorkoutDetailScreen({ navigation, route }) {
                     <View style={styles.metaDivider} />
                     <MetaItem icon="time-outline" val={`${totalTime(day)}M`} label="DURATION" />
                     <View style={styles.metaDivider} />
-                    <MetaItem icon="layers-outline" val="3" label="SETS" />
+                    <MetaItem icon="flame-outline" val={`${estimateCalories(totalTime(day))}`} label="KCAL EST." accent />
                     <View style={styles.metaDivider} />
-                    <MetaItem icon="flash" val="ELITE" label="INTENSITY" accent />
+                    <MetaItem icon="flash" val="ELITE" label="PROTOCOL" accent />
                 </View>
 
                 {/* ── CTA ── */}
@@ -237,44 +243,64 @@ function MetaItem({ icon, val, label, accent }) {
 
 function ExerciseRow({ ex, index, total, expanded, onPress, onEdit }) {
     const isReps = ex.type === "reps" || (ex.type !== "timer" && ex.name.toLowerCase() !== "plank");
+    const numLabel = String(index + 1).padStart(2, '0');
+
     return (
         <TouchableOpacity
             style={styles.exRow}
             onPress={onPress}
             activeOpacity={0.75}
         >
-            {/* Header */}
+            {/* ── Collapsed Row ── */}
             <View style={styles.exRowHeader}>
-                <Text style={[styles.exRowNum, { color: COLORS.primary }]}>0{index + 1}</Text>
+                {/* Left: number */}
+                <Text style={[styles.exRowNum, { color: COLORS.primary }]}>{numLabel}</Text>
+
+                {/* Centre: name + meta */}
                 <View style={styles.exRowInfo}>
-                    <Text style={styles.exRowName}>{ex.name}</Text>
+                    <Text style={styles.exRowName} numberOfLines={2}>{ex.name}</Text>
                     <View style={styles.exRowMeta}>
-                        <Text style={styles.exRowMetaText}>{ex.primaryTarget.toUpperCase()}</Text>
-                        <Text style={styles.exRowDot}>/</Text>
-                        <Text style={styles.exRowMetaText}>{ex.equipment.toUpperCase()}</Text>
+                        <Text style={styles.exRowMetaText}>
+                            {ex.primaryTarget.toUpperCase()}
+                            <Text style={styles.exRowDot}>  /  </Text>
+                            {ex.equipment.toUpperCase()}
+                        </Text>
                     </View>
                 </View>
 
-                <TouchableOpacity
-                    style={styles.editBtnSmall}
-                    onPress={(e) => {
-                        e.stopPropagation();
-                        onEdit();
-                    }}
-                >
-                    <Ionicons name="options-outline" size={16} color={COLORS.primary} />
-                </TouchableOpacity>
-
-                <View style={styles.exRowTimers}>
-                    <Text style={styles.timeChip}>
-                        {isReps ? `${ex.repRange || '12-15'} REPS` : `${ex.activeTimeSec}S WORK`}
-                    </Text>
-                    <Text style={[styles.timeChip, { color: COLORS.textMuted }]}>{ex.restTimeSec}S REST</Text>
+                {/* Right: chips + controls */}
+                <View style={styles.exRowRight}>
+                    {/* Rep / Work chip */}
+                    <View style={styles.chipPill}>
+                        <Text style={styles.chipPillText}>
+                            {isReps ? `${ex.repRange || '12-15'} REPS` : `${ex.activeTimeSec}S WORK`}
+                        </Text>
+                    </View>
+                    {/* Rest chip */}
+                    <View style={[styles.chipPill, styles.chipPillMuted]}>
+                        <Text style={[styles.chipPillText, { color: COLORS.textMuted }]}>{ex.restTimeSec}S REST</Text>
+                    </View>
+                    {/* Controls row */}
+                    <View style={styles.exRowControls}>
+                        <TouchableOpacity
+                            style={styles.editBtnSmall}
+                            onPress={(e) => {
+                                e.stopPropagation();
+                                onEdit();
+                            }}
+                        >
+                            <Ionicons name="options-outline" size={12} color={COLORS.primary} />
+                        </TouchableOpacity>
+                        <Ionicons
+                            name={expanded ? "chevron-up" : "chevron-down"}
+                            size={14}
+                            color={COLORS.textMuted}
+                        />
+                    </View>
                 </View>
-                <Ionicons name={expanded ? "chevron-up" : "chevron-down"} size={14} color={COLORS.textMuted} />
             </View>
 
-            {/* Expanded */}
+            {/* ── Expanded ── */}
             {expanded && (
                 <View style={styles.exExpanded}>
                     <View style={styles.exImgBox}>
@@ -289,7 +315,7 @@ function ExerciseRow({ ex, index, total, expanded, onPress, onEdit }) {
                     <View style={styles.setsGrid}>
                         {Array.from({ length: ex.sets }).map((_, i) => (
                             <View key={i} style={styles.setCell}>
-                                <Text style={styles.setCellLabel}>SET 0{i + 1}</Text>
+                                <Text style={styles.setCellLabel}>SET {String(i + 1).padStart(2, '0')}</Text>
                                 <Text style={styles.setCellWork}>
                                     {isReps ? (ex.repRange || '12-15') : (ex.activeTimeSec + 's')}
                                 </Text>
@@ -317,6 +343,7 @@ function ExerciseRow({ ex, index, total, expanded, onPress, onEdit }) {
         </TouchableOpacity>
     );
 }
+
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: COLORS.bg },
@@ -355,8 +382,8 @@ const styles = StyleSheet.create({
     },
     metaDivider: { width: 1, height: 20, backgroundColor: "rgba(255,255,255,0.08)" },
     metaInfo: { alignItems: "center" },
-    metaVal: { fontSize: 15, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -0.2 },
-    metaLabel: { fontSize: 7, color: COLORS.textMuted, marginTop: 1, fontFamily: FAMILY.bold, letterSpacing: 0.5 },
+    metaVal: { fontSize: 16, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -0.2 },
+    metaLabel: { fontSize: 9, color: COLORS.textMuted, marginTop: 4, fontFamily: FAMILY.bold, letterSpacing: 1.5 },
 
     cta: {
         flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12,
@@ -376,19 +403,34 @@ const styles = StyleSheet.create({
         marginHorizontal: SPACING.base, gap: 12,
     },
     exRow: {
-        paddingHorizontal: 24, paddingVertical: 28,
+        paddingHorizontal: 20, paddingVertical: 22,
         backgroundColor: COLORS.bgCard, borderRadius: 24,
         borderWidth: 1, borderColor: COLORS.border,
     },
-    exRowHeader: { flexDirection: "row", alignItems: "flex-start", gap: 16 },
-    exRowNum: { width: 32, fontSize: 11, color: COLORS.accent, fontFamily: FAMILY.bold, letterSpacing: 1, marginTop: 4 },
-    exRowInfo: { flex: 1 },
-    exRowName: { fontSize: 18, fontFamily: FAMILY.display, color: COLORS.text, letterSpacing: 0.5 },
-    exRowMeta: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8, flexWrap: "wrap" },
-    exRowMetaText: { fontSize: 10, color: COLORS.textMuted, fontFamily: FAMILY.bold, letterSpacing: 1.5 },
-    exRowDot: { fontSize: 10, color: COLORS.borderLight },
-    exRowTimers: { alignItems: "flex-end", gap: 4, marginTop: 4, marginLeft: 8 },
-    timeChip: { fontSize: 10, color: COLORS.textSub, fontFamily: FAMILY.bold, letterSpacing: 0.5 },
+    exRowHeader: { flexDirection: "row", alignItems: "center", gap: 14 },
+    exRowNum: { width: 28, fontSize: 11, color: COLORS.accent, fontFamily: FAMILY.bold, letterSpacing: 1 },
+    exRowInfo: { flex: 1, minWidth: 0 },
+    exRowName: { fontSize: 16, fontFamily: FAMILY.display, color: COLORS.text, letterSpacing: 0.3, flexWrap: 'wrap' },
+    exRowMeta: { flexDirection: "row", marginTop: 6 },
+    exRowMetaText: {
+        fontSize: 9,
+        color: COLORS.textMuted,
+        fontFamily: FAMILY.bold,
+        letterSpacing: 1.5,
+        lineHeight: 14,
+    },
+    exRowDot: { fontSize: 9, color: COLORS.borderLight, opacity: 0.5 },
+    // New right-side layout
+    exRowRight: { alignItems: 'flex-end', gap: 6, flexShrink: 0 },
+    chipPill: {
+        paddingHorizontal: 10, paddingVertical: 5,
+        borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.05)',
+        borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
+        alignItems: 'center', minWidth: 80,
+    },
+    chipPillMuted: { backgroundColor: 'transparent', borderColor: 'rgba(255,255,255,0.05)' },
+    chipPillText: { fontSize: 10, color: COLORS.textSub, fontFamily: FAMILY.bold, letterSpacing: 0.5 },
+    exRowControls: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 },
 
     exExpanded: { paddingTop: 24, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.05)", marginTop: 20 },
     exImgBox: { borderRadius: 16, overflow: "hidden", height: 220, marginBottom: 24 },
