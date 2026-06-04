@@ -561,7 +561,6 @@ export default function HomeScreen({ navigation, route }) {
                             </TouchableOpacity>
                         )}
                     </View>
-                </View>
 
                     {/* Tactical Readout HUD Card */}
                     <View style={styles.hudCard}>
