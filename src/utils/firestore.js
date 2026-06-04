@@ -103,6 +103,16 @@ export const fsGetStreak = async () => {
     } catch { return 0; }
 };
 
+export const fsUpdateStreak = async (streak) => {
+    try {
+        await setDoc(userDoc(), { streak }, { merge: true });
+        return true;
+    } catch (e) {
+        console.warn("[Firestore] Failed to update streak", e);
+        return false;
+    }
+};
+
 export const fsGetTotalWorkouts = async () => {
     try {
         const snap = await getDoc(userDoc());

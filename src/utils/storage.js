@@ -12,6 +12,7 @@ import {
     fsTryUpdatePR,
     fsGetBodyStats,
     fsSaveBodyStat,
+    fsUpdateStreak,
 } from "./firestore";
 
 const KEYS = {
@@ -127,8 +128,45 @@ export const getWorkoutHistory = async () => {
     }
 };
 
+export const checkAndCleanStreak = async () => {
+    try {
+        const lastDate = await AsyncStorage.getItem(KEYS.LAST_WORKOUT_DATE);
+        const lastFreeze = await AsyncStorage.getItem(KEYS.LAST_FREEZE_DATE);
+        const streakStr = await AsyncStorage.getItem(KEYS.STREAK);
+        let streak = streakStr ? parseInt(streakStr) : 0;
+
+        if (streak === 0) return { wasReset: false, previousStreak: 0 };
+
+        const lastEffectiveDate = (lastFreeze && (!lastDate || new Date(lastFreeze) > new Date(lastDate)))
+            ? lastFreeze
+            : lastDate;
+
+        if (lastEffectiveDate) {
+            const today = new Date().toISOString().split("T")[0];
+            const last = new Date(lastEffectiveDate);
+            const todayDate = new Date(today);
+            const diff = Math.floor((todayDate - last) / (1000 * 60 * 60 * 24));
+
+            if (diff > 1) {
+                // Streak is broken!
+                await AsyncStorage.setItem(KEYS.STREAK, "0");
+                if (hasCloudSession()) {
+                    await fsUpdateStreak(0);
+                }
+                triggerAutoSync();
+                return { wasReset: true, previousStreak: streak };
+            }
+        }
+        return { wasReset: false, previousStreak: streak };
+    } catch (e) {
+        console.warn("[Storage] checkAndCleanStreak failed", e);
+        return { wasReset: false, previousStreak: 0 };
+    }
+};
+
 export const getStreak = async () => {
     try {
+        await checkAndCleanStreak();
         const [localStreak, localLastDate] = await Promise.all([readLocalStreak(), readLocalLastWorkoutDate()]);
         if (hasCloudSession()) {
             try {

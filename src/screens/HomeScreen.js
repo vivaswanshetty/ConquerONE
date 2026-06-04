@@ -12,7 +12,7 @@ import { WORKOUT_PLAN } from "../data/workoutData";
 import { COLORS, FONTS, SPACING, RADIUS, FAMILY, GRADIENTS, APP_VERSION } from "../utils/theme";
 import {
     getStreak, getTotalWorkouts, getLastWorkoutDate,
-    getLastFreezeDate, withdrawStreakFreeze
+    getLastFreezeDate, withdrawStreakFreeze, checkAndCleanStreak
 } from "../utils/storage";
 import MaskedView from "@react-native-masked-view/masked-view";
 import * as Haptics from "expo-haptics";
@@ -72,6 +72,8 @@ export default function HomeScreen({ navigation }) {
     const [greeting, setGreeting] = useState("COMMANDER");
     const [isFrozen, setIsFrozen] = useState(false);
     const [freezeModal, setFreezeModal] = useState(false);
+    const [streakResetModal, setStreakResetModal] = useState(false);
+    const [prevStreak, setPrevStreak] = useState(0);
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
     // Animations
@@ -129,6 +131,17 @@ export default function HomeScreen({ navigation }) {
     }, []);
 
     const loadStats = async () => {
+        try {
+            const { wasReset, previousStreak } = await checkAndCleanStreak();
+            if (wasReset) {
+                setPrevStreak(previousStreak);
+                setStreakResetModal(true);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+            }
+        } catch (e) {
+            console.warn("checkAndCleanStreak failed in loadStats", e);
+        }
+
         const [nextStreak, nextTotal, lastFreeze] = await Promise.all([
             getStreak(),
             getTotalWorkouts(),
@@ -620,6 +633,53 @@ export default function HomeScreen({ navigation }) {
                             activeOpacity={0.7}
                         >
                             <Text style={styles.unfreezeLinkText}>UNFREEZE & WORKOUT</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Streak Reset Alert Modal */}
+            <Modal
+                visible={streakResetModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setStreakResetModal(false)}
+            >
+                <View style={styles.resetOverlay}>
+                    <TouchableOpacity style={StyleSheet.absoluteFill} onPress={() => setStreakResetModal(false)} activeOpacity={1} />
+                    <View style={styles.resetModalContent}>
+                        <LinearGradient
+                            colors={['rgba(13,13,13,0.95)', 'rgba(0,0,0,0.98)']}
+                            style={StyleSheet.absoluteFill}
+                        />
+                        <View style={styles.resetGlowEffect} />
+
+                        <View style={styles.resetModalHeader}>
+                            <View style={styles.brokenFlameCircle}>
+                                <Ionicons name="flame" size={38} color={COLORS.primary} />
+                            </View>
+                            <Text style={styles.resetStatus}>STREAK RESET</Text>
+                            <Text style={styles.resetTitle}>DISCIPLINE INTERRUPTED</Text>
+                        </View>
+
+                        <Text style={styles.resetDesc}>
+                            Your consecutive <Text style={{ color: COLORS.primary, fontFamily: FAMILY.bold }}>{prevStreak}-day</Text> workout streak has been broken. The protocol requires daily consistency to conquer.
+                        </Text>
+
+                        <View style={styles.warningBadge}>
+                            <Ionicons name="alert-circle-outline" size={14} color={COLORS.primary} />
+                            <Text style={styles.warningBadgeText}>STREAK CLASSIFIED: 0 DAYS</Text>
+                        </View>
+
+                        <TouchableOpacity
+                            style={styles.resetCloseBtn}
+                            onPress={() => {
+                                setStreakResetModal(false);
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+                            }}
+                            activeOpacity={0.8}
+                        >
+                            <Text style={styles.resetCloseText}>RECLAIM THE PROTOCOL</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -1293,4 +1353,40 @@ const styles = StyleSheet.create({
     footerDivider: { width: 40, height: 1, backgroundColor: "rgba(255,255,255,0.08)", marginBottom: 20 },
     footerVersion: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 3, marginBottom: 6 },
     footerAuthor: { fontSize: 7, fontFamily: FAMILY.medium, color: "rgba(255,255,255,0.2)", letterSpacing: 1.5 },
+
+    // Streak Reset Modal Styles
+    resetOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+    resetModalContent: {
+        width: '100%', borderRadius: 28, padding: 28, alignItems: 'center',
+        borderWidth: 1, borderColor: "rgba(227, 30, 36, 0.3)", overflow: 'hidden',
+        shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.25, shadowRadius: 20,
+    },
+    resetGlowEffect: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(227, 30, 36, 0.03)', opacity: 0.5 },
+    resetModalHeader: { alignItems: 'center', marginBottom: 20 },
+    brokenFlameCircle: {
+        width: 72, height: 72, borderRadius: 36, backgroundColor: 'rgba(227, 30, 36, 0.08)',
+        alignItems: 'center', justifyContent: 'center', marginBottom: 18,
+        borderWidth: 1, borderColor: 'rgba(227, 30, 36, 0.25)',
+    },
+    resetStatus: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 3, marginBottom: 8 },
+    resetTitle: { fontSize: 20, fontFamily: FAMILY.bold, color: '#fff', textAlign: 'center', lineHeight: 26 },
+    resetDesc: {
+        fontSize: 14, fontFamily: FAMILY.regular, color: COLORS.textSub,
+        textAlign: 'center', lineHeight: 22, marginBottom: 28, opacity: 0.8
+    },
+    warningBadge: {
+        flexDirection: 'row', alignItems: 'center', gap: 8,
+        backgroundColor: 'rgba(227, 30, 36, 0.08)', paddingHorizontal: 14, paddingVertical: 8,
+        borderRadius: 10, marginBottom: 32, borderWidth: 1, borderColor: 'rgba(227, 30, 36, 0.18)'
+    },
+    warningBadgeText: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 1 },
+    resetCloseBtn: {
+        width: '100%', height: 56, borderRadius: 16, backgroundColor: COLORS.primary,
+        alignItems: 'center', justifyContent: 'center',
+        shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.3, shadowRadius: 12,
+        elevation: 4,
+    },
+    resetCloseText: { fontSize: 13, fontFamily: FAMILY.bold, color: '#fff', letterSpacing: 2 },
 });
