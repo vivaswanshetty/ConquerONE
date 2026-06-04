@@ -8,7 +8,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS, FONTS, SPACING, RADIUS, FAMILY } from "../utils/theme";
-import { getWorkoutHistory, getStreak, getTotalWorkouts, formatDuration } from "../utils/storage";
+import { getWorkoutHistory, getStreak, getTotalWorkouts, formatDuration, getStreakLocal, getTotalWorkoutsLocal, getWorkoutHistoryLocal } from "../utils/storage";
 import { WORKOUT_PLAN } from "../data/workoutData";
 import * as Haptics from "expo-haptics";
 
@@ -348,14 +348,31 @@ export default function HistoryScreen({ navigation }) {
 
     useFocusEffect(useCallback(() => { load(); }, []));
     const load = async () => {
-        const [nextHistory, nextStreak, nextTotal] = await Promise.all([
-            getWorkoutHistory(),
-            getStreak(),
-            getTotalWorkouts(),
-        ]);
-        setHistory(nextHistory);
-        setStreak(nextStreak);
-        setTotal(nextTotal);
+        // 1. Immediate local cache load
+        try {
+            const cachedHistory = await getWorkoutHistoryLocal();
+            const cachedStreak = await getStreakLocal();
+            const cachedTotal = await getTotalWorkoutsLocal();
+            setHistory(cachedHistory);
+            setStreak(cachedStreak);
+            setTotal(cachedTotal);
+        } catch (e) {
+            console.warn("Failed to load cached history in HistoryScreen", e);
+        }
+
+        // 2. Background cloud sync
+        try {
+            const [nextHistory, nextStreak, nextTotal] = await Promise.all([
+                getWorkoutHistory(),
+                getStreak(),
+                getTotalWorkouts(),
+            ]);
+            setHistory(nextHistory);
+            setStreak(nextStreak);
+            setTotal(nextTotal);
+        } catch (e) {
+            console.warn("History background sync failed", e);
+        }
     };
 
     const totalMin = useMemo(() => Math.round(history.reduce((s, h) => s + (h.durationSec || 0), 0) / 60), [history]);

@@ -14,7 +14,7 @@ import * as ImagePicker from "expo-image-picker";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../utils/firebase";
 import { useAuth } from "../context/AuthContext";
-import { getStreak, getTotalWorkouts } from "../utils/storage";
+import { getStreak, getTotalWorkouts, getStreakLocal, getTotalWorkoutsLocal } from "../utils/storage";
 import { COLORS, SPACING, FAMILY, APP_VERSION } from "../utils/theme";
 import { uploadImage } from "../utils/cloudStorage";
 import { scheduleBirthdayWishes } from "../utils/notifications";
@@ -257,6 +257,17 @@ export default function ProfileScreen({ navigation }) {
     };
 
     const loadStats = async () => {
+        // 1. Immediate local cache load
+        try {
+            const cachedStreak = await getStreakLocal();
+            const cachedTotal = await getTotalWorkoutsLocal();
+            setStreak(cachedStreak);
+            setTotal(cachedTotal);
+        } catch (e) {
+            console.warn("Failed to load cached stats in ProfileScreen", e);
+        }
+
+        // 2. Background cloud sync
         try {
             const [s, t] = await Promise.all([getStreak(), getTotalWorkouts()]);
             setStreak(s);

@@ -12,7 +12,8 @@ import { WORKOUT_PLAN } from "../data/workoutData";
 import { COLORS, FONTS, SPACING, RADIUS, FAMILY, GRADIENTS, APP_VERSION } from "../utils/theme";
 import {
     getStreak, getTotalWorkouts, getLastWorkoutDate,
-    getLastFreezeDate, withdrawStreakFreeze, checkAndCleanStreak
+    getLastFreezeDate, withdrawStreakFreeze, checkAndCleanStreak,
+    getStreakLocal, getTotalWorkoutsLocal
 } from "../utils/storage";
 import MaskedView from "@react-native-masked-view/masked-view";
 import * as Haptics from "expo-haptics";
@@ -131,25 +132,42 @@ export default function HomeScreen({ navigation }) {
     }, []);
 
     const loadStats = async () => {
+        // 1. Immediate local cache load
+        try {
+            const cachedStreak = await getStreakLocal();
+            const cachedTotal = await getTotalWorkoutsLocal();
+            setStreak(cachedStreak);
+            setTotal(cachedTotal);
+        } catch (e) {
+            console.warn("Failed to load cached stats in HomeScreen", e);
+        }
+
+        // 2. checkAndCleanStreak (which resets streak if broken)
         try {
             const { wasReset, previousStreak } = await checkAndCleanStreak();
             if (wasReset) {
                 setPrevStreak(previousStreak);
                 setStreakResetModal(true);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+                setStreak(0); // update instantly to 0 in UI
             }
         } catch (e) {
             console.warn("checkAndCleanStreak failed in loadStats", e);
         }
 
-        const [nextStreak, nextTotal, lastFreeze] = await Promise.all([
-            getStreak(),
-            getTotalWorkouts(),
-            getLastFreezeDate(),
-        ]);
-        setStreak(nextStreak);
-        setTotal(nextTotal);
-        setIsFrozen(lastFreeze === new Date().toISOString().split("T")[0]);
+        // 3. Background cloud sync
+        try {
+            const [nextStreak, nextTotal, lastFreeze] = await Promise.all([
+                getStreak(),
+                getTotalWorkouts(),
+                getLastFreezeDate(),
+            ]);
+            setStreak(nextStreak);
+            setTotal(nextTotal);
+            setIsFrozen(lastFreeze === new Date().toISOString().split("T")[0]);
+        } catch (e) {
+            console.warn("HomeScreen background sync failed", e);
+        }
     };
 
     const handleUnfreeze = async () => {

@@ -411,3 +411,18 @@ export const getLastFreezeDate = async () => {
         return null;
     }
 };
+
+export const getStreakLocal = async () => {
+    try {
+        await checkAndCleanStreak();
+    } catch {}
+    return await readLocalStreak();
+};
+
+export const getTotalWorkoutsLocal = async () => {
+    return await readLocalTotalWorkouts();
+};
+
+export const getWorkoutHistoryLocal = async () => {
+    return await readLocalHistory();
+};
