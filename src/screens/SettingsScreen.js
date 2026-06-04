@@ -360,7 +360,7 @@ export default function SettingsScreen({ navigation, route }) {
                             <TouchableOpacity
                                 style={[styles.freezeMainBtn, isFrozenToday && styles.freezeMainBtnActive]}
                                 onPress={handleManualFreeze}
-                                disabled={isFrozenToday || freezing}
+                                disabled={freezing}
                                 activeOpacity={0.7}
                             >
                                 <View style={[styles.freezeIconCircle, isFrozenToday && { backgroundColor: 'rgba(96,165,250,0.1)' }]}>

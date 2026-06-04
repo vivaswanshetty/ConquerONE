@@ -1897,7 +1897,8 @@ const styles = StyleSheet.create({
         gap: 12,
     },
     freezeActionTextWrap: {
-        flex: 1.2,
+        flex: 1,
+        marginRight: 8,
     },
     freezeSectionTitle: {
         fontFamily: FAMILY.mono,
@@ -1913,7 +1914,7 @@ const styles = StyleSheet.create({
         lineHeight: 12,
     },
     freezeToggleButton: {
-        flex: 0.8,
+        paddingHorizontal: 12,
         height: 38,
         borderRadius: 12,
         backgroundColor: COLORS.primary,
