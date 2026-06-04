@@ -1958,7 +1958,7 @@ const styles = StyleSheet.create({
 
     // Hero HUD card
     heroCard: {
-        marginHorizontal: SPACING.base, height: 320, borderRadius: 24,
+        marginHorizontal: SPACING.base, height: 290, borderRadius: 24,
         overflow: "hidden", backgroundColor: COLORS.bgCard,
         borderWidth: 1, borderColor: "rgba(227, 30, 36, 0.22)",
         shadowColor: COLORS.primary,
@@ -1979,7 +1979,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.8,
         shadowRadius: 10,
     },
-    heroContent: { flex: 1, padding: 28, justifyContent: "space-between", paddingLeft: 32 },
+    heroContent: { flex: 1, padding: 22, justifyContent: "space-between", paddingLeft: 28 },
     heroHeader: { flex: 1 },
     heroBadge: {
         alignSelf: "flex-start",
@@ -1994,7 +1994,7 @@ const styles = StyleSheet.create({
 
     heroFooter: {
         flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-        borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.04)", paddingTop: 20,
+        borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.04)", paddingTop: 16,
     },
     heroMeta: { gap: 4 },
     heroMetaLabel: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2 },
@@ -2013,9 +2013,9 @@ const styles = StyleSheet.create({
     // Rest Card
     restCard: {
         marginHorizontal: SPACING.base, borderRadius: 24, overflow: "hidden",
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.06)", minHeight: 320, backgroundColor: COLORS.bgCard,
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.06)", minHeight: 290, backgroundColor: COLORS.bgCard,
     },
-    restContent: { padding: 28, paddingBottom: 36, flex: 1 },
+    restContent: { padding: 22, paddingBottom: 28, flex: 1 },
     restEyebrow: {
         fontSize: 10, fontFamily: FAMILY.bold,
         color: COLORS.primary, letterSpacing: 3, marginBottom: 12,
