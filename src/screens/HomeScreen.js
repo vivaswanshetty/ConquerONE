@@ -747,7 +747,7 @@ export default function HomeScreen({ navigation, route }) {
                             <View style={styles.heroLeftAccent} />
 
                             <View style={styles.heroContent}>
-                                <View style={styles.heroHeader}>
+                                <View>
                                     <View style={styles.heroBadge}>
                                         <Text style={styles.heroBadgeText}>ACTIVE PROTOCOL</Text>
                                     </View>
@@ -755,8 +755,10 @@ export default function HomeScreen({ navigation, route }) {
                                         {todayWorkout.target.toUpperCase()}
                                     </Text>
                                     <Text style={styles.heroSub}>READY FOR SESSION</Text>
+                                </View>
 
-                                    <View style={{ flexDirection: "row", gap: 28, marginTop: 16 }}>
+                                <View style={styles.heroMetaRow}>
+                                    <View style={{ flexDirection: "row", gap: 28 }}>
                                         <View style={styles.heroMeta}>
                                             <Text style={styles.heroMetaLabel}>VOLUME</Text>
                                             <Text style={styles.heroMetaValue}>{todayWorkout.exercises.length} EXERCISES</Text>
@@ -766,10 +768,7 @@ export default function HomeScreen({ navigation, route }) {
                                             <Text style={styles.heroMetaValue}>{totalTime(todayWorkout)} MINUTES</Text>
                                         </View>
                                     </View>
-                                </View>
 
-                                <View style={styles.heroFooter}>
-                                    <View style={{ flex: 1 }} />
                                     <TouchableOpacity
                                         style={styles.heroCta}
                                         activeOpacity={0.8}
@@ -1970,7 +1969,7 @@ const styles = StyleSheet.create({
 
     // Hero HUD card
     heroCard: {
-        marginHorizontal: SPACING.base, height: 250, borderRadius: 24,
+        marginHorizontal: SPACING.base, height: 220, borderRadius: 24,
         overflow: "hidden", backgroundColor: COLORS.bgCard,
         borderWidth: 1, borderColor: "rgba(227, 30, 36, 0.22)",
         shadowColor: COLORS.primary,
@@ -2004,9 +2003,9 @@ const styles = StyleSheet.create({
     heroTitle: { fontSize: 38, fontFamily: FAMILY.bold, color: COLORS.text, lineHeight: 42, letterSpacing: -1 },
     heroSub: { fontSize: 12, fontFamily: FAMILY.regular, color: COLORS.textSub, marginTop: 10, letterSpacing: 1 },
 
-    heroFooter: {
+    heroMetaRow: {
         flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-        borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.04)", paddingTop: 14,
+        marginTop: 14,
     },
     heroMeta: { gap: 4 },
     heroMetaLabel: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2 },
@@ -2014,7 +2013,7 @@ const styles = StyleSheet.create({
 
     heroCta: {
         flexDirection: "row", alignItems: "center", gap: 8,
-        backgroundColor: COLORS.primary, paddingHorizontal: 22, paddingVertical: 12,
+        backgroundColor: COLORS.primary, paddingHorizontal: 18, paddingVertical: 10,
         borderRadius: 12,
         shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.25, shadowRadius: 8, elevation: 4,
@@ -2025,7 +2024,7 @@ const styles = StyleSheet.create({
     // Rest Card
     restCard: {
         marginHorizontal: SPACING.base, borderRadius: 24, overflow: "hidden",
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.06)", minHeight: 250, backgroundColor: COLORS.bgCard,
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.06)", minHeight: 240, backgroundColor: COLORS.bgCard,
     },
     restContent: { paddingVertical: 18, paddingHorizontal: 22, paddingBottom: 22, flex: 1 },
     hudShortcutBar: {
