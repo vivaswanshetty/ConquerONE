@@ -514,47 +514,54 @@ export default function HomeScreen({ navigation, route }) {
                                 height={42}
                             />
                         </View>
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                            {isFrozen && (
+                        
+                        <View style={styles.avatarContainer}>
+                            <Animated.View style={[styles.avatarGlowRing, { opacity: avatarGlow }]} />
+                            <Animated.View style={{ transform: [{ scale: avatarScale }] }}>
                                 <TouchableOpacity
-                                    style={[styles.iconBtnSm, { backgroundColor: 'rgba(96,165,250,0.15)', borderColor: 'rgba(96,165,250,0.3)' }]}
-                                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setFreezeModal(true); }}
-                                    activeOpacity={0.7}
+                                    style={styles.profileCircle}
+                                    onPressIn={handleAvatarPressIn}
+                                    onPressOut={handleAvatarPressOut}
+                                    activeOpacity={1}
                                 >
-                                    <Ionicons name="snow" size={14} color="#60A5FA" />
+                                    {profile?.photoURL ? (
+                                        <Image source={{ uri: profile.photoURL }} style={styles.headerAvatar} />
+                                    ) : (
+                                        <View style={styles.avatarPlaceholder}>
+                                            <Text style={styles.avatarText}>{displayName[0].toUpperCase()}</Text>
+                                        </View>
+                                    )}
                                 </TouchableOpacity>
-                            )}
-                            <TouchableOpacity style={styles.iconBtnSm} onPress={() => navigation.navigate("AICoach")} activeOpacity={0.7}>
-                                <Ionicons name="flash" size={16} color={COLORS.primary} />
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.iconBtnSm} onPress={() => navigation.navigate("History")} activeOpacity={0.7}>
-                                <Ionicons name="time-outline" size={16} color={COLORS.text} />
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.iconBtnSm} onPress={() => navigation.navigate("Settings")} activeOpacity={0.7}>
-                                <Ionicons name="settings-outline" size={16} color={COLORS.text} />
-                            </TouchableOpacity>
-                            
-                            <View style={styles.avatarContainer}>
-                                <Animated.View style={[styles.avatarGlowRing, { opacity: avatarGlow }]} />
-                                <Animated.View style={{ transform: [{ scale: avatarScale }] }}>
-                                    <TouchableOpacity
-                                        style={styles.profileCircle}
-                                        onPressIn={handleAvatarPressIn}
-                                        onPressOut={handleAvatarPressOut}
-                                        activeOpacity={1}
-                                    >
-                                        {profile?.photoURL ? (
-                                            <Image source={{ uri: profile.photoURL }} style={styles.headerAvatar} />
-                                        ) : (
-                                            <View style={styles.avatarPlaceholder}>
-                                                <Text style={styles.avatarText}>{displayName[0].toUpperCase()}</Text>
-                                            </View>
-                                        )}
-                                    </TouchableOpacity>
-                                </Animated.View>
-                            </View>
+                            </Animated.View>
                         </View>
                     </View>
+
+                    {/* HUD Action Shortcut Bar */}
+                    <View style={styles.hudShortcutBar}>
+                        <TouchableOpacity style={styles.hudShortcutBtn} onPress={() => navigation.navigate("AICoach")} activeOpacity={0.7}>
+                            <Ionicons name="flash" size={13} color={COLORS.primary} style={{ marginRight: 6 }} />
+                            <Text style={[styles.hudShortcutBtnText, { color: COLORS.primary }]}>COACH</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.hudShortcutBtn} onPress={() => navigation.navigate("History")} activeOpacity={0.7}>
+                            <Ionicons name="time-outline" size={13} color={COLORS.textSub} style={{ marginRight: 6 }} />
+                            <Text style={styles.hudShortcutBtnText}>HISTORY</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.hudShortcutBtn} onPress={() => navigation.navigate("Settings")} activeOpacity={0.7}>
+                            <Ionicons name="settings-outline" size={13} color={COLORS.textSub} style={{ marginRight: 6 }} />
+                            <Text style={styles.hudShortcutBtnText}>SETTINGS</Text>
+                        </TouchableOpacity>
+                        {isFrozen && (
+                            <TouchableOpacity
+                                style={[styles.hudShortcutBtn, { backgroundColor: 'rgba(96,165,250,0.08)', borderColor: 'rgba(96,165,250,0.2)' }]}
+                                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setFreezeModal(true); }}
+                                activeOpacity={0.7}
+                            >
+                                <Ionicons name="snow" size={12} color="#60A5FA" style={{ marginRight: 6 }} />
+                                <Text style={[styles.hudShortcutBtnText, { color: "#60A5FA" }]}>FROZEN</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                </View>
 
                     {/* Tactical Readout HUD Card */}
                     <View style={styles.hudCard}>
@@ -745,7 +752,7 @@ export default function HomeScreen({ navigation, route }) {
                                     </Text>
                                     <Text style={styles.heroSub}>READY FOR SESSION</Text>
 
-                                    <View style={{ flexDirection: "row", gap: 28, marginTop: 24 }}>
+                                    <View style={{ flexDirection: "row", gap: 28, marginTop: 16 }}>
                                         <View style={styles.heroMeta}>
                                             <Text style={styles.heroMetaLabel}>VOLUME</Text>
                                             <Text style={styles.heroMetaValue}>{todayWorkout.exercises.length} EXERCISES</Text>
@@ -1959,7 +1966,7 @@ const styles = StyleSheet.create({
 
     // Hero HUD card
     heroCard: {
-        marginHorizontal: SPACING.base, height: 290, borderRadius: 24,
+        marginHorizontal: SPACING.base, height: 250, borderRadius: 24,
         overflow: "hidden", backgroundColor: COLORS.bgCard,
         borderWidth: 1, borderColor: "rgba(227, 30, 36, 0.22)",
         shadowColor: COLORS.primary,
@@ -1980,7 +1987,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.8,
         shadowRadius: 10,
     },
-    heroContent: { flex: 1, padding: 22, justifyContent: "space-between", paddingLeft: 28 },
+    heroContent: { flex: 1, paddingVertical: 18, paddingHorizontal: 22, justifyContent: "space-between", paddingLeft: 26 },
     heroHeader: { flex: 1 },
     heroBadge: {
         alignSelf: "flex-start",
@@ -1995,7 +2002,7 @@ const styles = StyleSheet.create({
 
     heroFooter: {
         flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-        borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.04)", paddingTop: 16,
+        borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.04)", paddingTop: 14,
     },
     heroMeta: { gap: 4 },
     heroMetaLabel: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2 },
@@ -2014,9 +2021,31 @@ const styles = StyleSheet.create({
     // Rest Card
     restCard: {
         marginHorizontal: SPACING.base, borderRadius: 24, overflow: "hidden",
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.06)", minHeight: 290, backgroundColor: COLORS.bgCard,
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.06)", minHeight: 250, backgroundColor: COLORS.bgCard,
     },
-    restContent: { padding: 22, paddingBottom: 28, flex: 1 },
+    restContent: { paddingVertical: 18, paddingHorizontal: 22, paddingBottom: 22, flex: 1 },
+    hudShortcutBar: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        marginTop: 18,
+    },
+    hudShortcutBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "rgba(255,255,255,0.03)",
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.06)",
+        borderRadius: 10,
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+    },
+    hudShortcutBtnText: {
+        fontSize: 9,
+        fontFamily: FAMILY.bold,
+        color: COLORS.textSub,
+        letterSpacing: 1.5,
+    },
     restEyebrow: {
         fontSize: 10, fontFamily: FAMILY.bold,
         color: COLORS.primary, letterSpacing: 3, marginBottom: 12,
