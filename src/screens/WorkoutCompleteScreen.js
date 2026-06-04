@@ -20,7 +20,7 @@ const { width, height } = Dimensions.get("window");
 
 /* ── Main screen ──────────────────────────────────────────── */
 export default function WorkoutCompleteScreen({ navigation, route }) {
-    const { day, durationSec, streak, total, newPRs = [], caloriesBurned = 0, showCalories = true } = route.params;
+    const { day, durationSec, streak, total, newPRs = [], caloriesBurned = 0, showCalories = true, xpGained = 0, totalXP = 0 } = route.params;
     const insets = useSafeAreaInsets();
     const scaleAnim = useRef(new Animated.Value(0.9)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -28,6 +28,7 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
     const checkAnim = useRef(new Animated.Value(0)).current;
     const streakAnim = useRef(new Animated.Value(0)).current;
     const rankAnim = useRef(new Animated.Value(0)).current;
+    const xpAnim = useRef(new Animated.Value(0)).current;
     const [rankUp, setRankUp] = useState(null);
     const pulseAnim = useRef(new Animated.Value(1)).current;
 
@@ -62,6 +63,10 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
                 Animated.spring(streakAnim, { toValue: 1, tension: 60, friction: 9, useNativeDriver: true }).start();
             }, 400);
         }
+
+        setTimeout(() => {
+            Animated.spring(xpAnim, { toValue: 1, tension: 50, friction: 8, useNativeDriver: true }).start();
+        }, 500);
 
         if (newPRs.length > 0) {
             setTimeout(() => {
@@ -203,6 +208,48 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
                             />
                         </Animated.View>
                     </View>
+
+                    {(() => {
+                        let multiplierText = "Tier I Multiplier (1.0x)";
+                        let badgeColor = "#EF4444";
+                        if (xpGained === 20) {
+                            multiplierText = "Tier IV Multiplier (2.0x)";
+                            badgeColor = "#A855F7";
+                        } else if (xpGained === 15) {
+                            multiplierText = "Tier III Multiplier (1.5x)";
+                            badgeColor = "#EAB308";
+                        } else if (xpGained === 12) {
+                            multiplierText = "Tier II Multiplier (1.2x)";
+                            badgeColor = "#F97316";
+                        }
+
+                        if (xpGained > 0) {
+                            return (
+                                <Animated.View style={[
+                                    styles.xpAwardBanner,
+                                    {
+                                        borderColor: `${badgeColor}40`,
+                                        opacity: xpAnim,
+                                        transform: [
+                                            { scale: xpAnim.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1] }) },
+                                            { translateY: xpAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }
+                                        ]
+                                    }
+                                ]}>
+                                    <LinearGradient
+                                        colors={[`${badgeColor}15`, "rgba(0, 0, 0, 0.4)"]}
+                                        style={StyleSheet.absoluteFill}
+                                    />
+                                    <Ionicons name="sparkles" size={12} color={badgeColor} />
+                                    <Text style={styles.xpAwardText}>
+                                        <Text style={{ fontFamily: FAMILY.bold, color: "#FFFFFF" }}>+{xpGained} XP GAINED</Text>
+                                        <Text style={{ color: COLORS.textMuted }}> · {multiplierText} active</Text>
+                                    </Text>
+                                </Animated.View>
+                            );
+                        }
+                        return null;
+                    })()}
 
                     <Text style={styles.completedLabel}>PROTOCOL ACHIEVED</Text>
                     <Text style={styles.completedTitle} numberOfLines={2} adjustsFontSizeToFit>{day.target.toUpperCase()}</Text>
@@ -404,6 +451,23 @@ const styles = StyleSheet.create({
     rankUpLabel: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2 },
     rankUpTitle: { fontSize: 20, fontFamily: FAMILY.bold, letterSpacing: 1, marginTop: 2 },
     rankUpDesc: { fontSize: 10, fontFamily: FAMILY.regular, color: COLORS.textSub, marginTop: 4 },
+    xpAwardBanner: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 12,
+        borderWidth: 1,
+        marginBottom: 24,
+        overflow: "hidden",
+    },
+    xpAwardText: {
+        fontSize: 9,
+        fontFamily: FAMILY.bold,
+        letterSpacing: 0.5,
+    },
 });
 
 

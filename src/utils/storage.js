@@ -13,6 +13,8 @@ import {
     fsGetBodyStats,
     fsSaveBodyStat,
     fsUpdateStreak,
+    fsGetXP,
+    fsGetRecordStreak,
 } from "./firestore";
 
 const KEYS = {
@@ -23,6 +25,8 @@ const KEYS = {
     PR_RECORDS: "pr_records",
     BODY_STATS: "body_stats",
     LAST_FREEZE_DATE: "last_freeze_date",
+    XP: "workout_xp",
+    RECORD_STREAK: "record_streak",
 };
 
 const hasCloudSession = () => !!auth.currentUser;
@@ -90,8 +94,30 @@ const saveWorkoutCompleteLocal = async (day, target, durationSec, exercises = []
     const total = totalStr ? parseInt(totalStr) + 1 : 1;
     await AsyncStorage.setItem(KEYS.TOTAL_WORKOUTS, String(total));
 
+    // Calculate XP based on streak tier multipliers
+    let xpGained = 10;
+    if (streak >= 10) {
+        xpGained = 20;
+    } else if (streak >= 5) {
+        xpGained = 15;
+    } else if (streak >= 3) {
+        xpGained = 12;
+    }
+
+    const xpStr = await AsyncStorage.getItem(KEYS.XP);
+    const totalXP = (xpStr ? parseInt(xpStr) : 0) + xpGained;
+    await AsyncStorage.setItem(KEYS.XP, String(totalXP));
+
+    // Calculate Record Streak
+    const recordStr = await AsyncStorage.getItem(KEYS.RECORD_STREAK);
+    let recordStreak = recordStr ? parseInt(recordStr) : 0;
+    if (streak > recordStreak) {
+        recordStreak = streak;
+        await AsyncStorage.setItem(KEYS.RECORD_STREAK, String(recordStreak));
+    }
+
     triggerAutoSync();
-    return { streak, total };
+    return { streak, total, xpGained, totalXP, recordStreak };
 };
 
 export const saveWorkoutComplete = async (day, target, durationSec, exercises = []) => {
@@ -425,4 +451,56 @@ export const getTotalWorkoutsLocal = async () => {
 
 export const getWorkoutHistoryLocal = async () => {
     return await readLocalHistory();
+};
+
+export const getXPLocal = async () => {
+    try {
+        const xp = await AsyncStorage.getItem(KEYS.XP);
+        return xp ? parseInt(xp) : 0;
+    } catch {
+        return 0;
+    }
+};
+
+export const getXP = async () => {
+    try {
+        const localXP = await getXPLocal();
+        if (hasCloudSession()) {
+            try {
+                const cloudXP = await fsGetXP();
+                return Math.max(localXP, cloudXP);
+            } catch (e) {
+                console.warn("[Storage] Cloud XP fetch failed. Falling back to local storage.", e?.message);
+            }
+        }
+        return localXP;
+    } catch {
+        return 0;
+    }
+};
+
+export const getRecordStreakLocal = async () => {
+    try {
+        const record = await AsyncStorage.getItem(KEYS.RECORD_STREAK);
+        return record ? parseInt(record) : 0;
+    } catch {
+        return 0;
+    }
+};
+
+export const getRecordStreak = async () => {
+    try {
+        const localRecord = await getRecordStreakLocal();
+        if (hasCloudSession()) {
+            try {
+                const cloudRecord = await fsGetRecordStreak();
+                return Math.max(localRecord, cloudRecord);
+            } catch (e) {
+                console.warn("[Storage] Cloud record streak fetch failed. Falling back to local storage.", e?.message);
+            }
+        }
+        return localRecord;
+    } catch {
+        return 0;
+    }
 };

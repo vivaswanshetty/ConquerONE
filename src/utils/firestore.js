@@ -68,11 +68,31 @@ export const fssaveWorkoutComplete = async (day, target, durationSec, exercises 
             streak = 1;
         }
 
+        let multiplier = 1.0;
+        let xpGained = 10;
+        if (streak >= 10) {
+            multiplier = 2.0;
+            xpGained = 20;
+        } else if (streak >= 5) {
+            multiplier = 1.5;
+            xpGained = 15;
+        } else if (streak >= 3) {
+            multiplier = 1.2;
+            xpGained = 12;
+        }
+
+        let recordStreak = data.recordStreak || 0;
+        if (streak > recordStreak) {
+            recordStreak = streak;
+        }
+
         // 3. Update user doc atomically
         await setDoc(userDoc(), {
             streak,
             lastWorkoutDate: today,
             totalWorkouts: increment(1),
+            xp: increment(xpGained),
+            recordStreak,
         }, { merge: true });
 
         return { streak, total: (data.totalWorkouts || 0) + 1 };
@@ -111,6 +131,20 @@ export const fsUpdateStreak = async (streak) => {
         console.warn("[Firestore] Failed to update streak", e);
         return false;
     }
+};
+
+export const fsGetXP = async () => {
+    try {
+        const snap = await getDoc(userDoc());
+        return snap.exists() ? (snap.data().xp || 0) : 0;
+    } catch { return 0; }
+};
+
+export const fsGetRecordStreak = async () => {
+    try {
+        const snap = await getDoc(userDoc());
+        return snap.exists() ? (snap.data().recordStreak || 0) : 0;
+    } catch { return 0; }
 };
 
 export const fsGetTotalWorkouts = async () => {
@@ -271,16 +305,18 @@ export const migrateLocalDataToCloud = async (uid) => {
         }
 
         // 2. Fetch all local data
-        const [historyStr, streakStr, lastDate, totalStr, prsStr, statsStr] = await Promise.all([
+        const [historyStr, streakStr, lastDate, totalStr, prsStr, statsStr, xpStr, recStr] = await Promise.all([
             AsyncStorage.getItem("workout_history"),
             AsyncStorage.getItem("workout_streak"),
             AsyncStorage.getItem("last_workout_date"),
             AsyncStorage.getItem("total_workouts"),
             AsyncStorage.getItem("pr_records"),
             AsyncStorage.getItem("body_stats"),
+            AsyncStorage.getItem("workout_xp"),
+            AsyncStorage.getItem("record_streak"),
         ]);
 
-        const hasAnyData = historyStr || streakStr || lastDate || totalStr || prsStr || statsStr;
+        const hasAnyData = historyStr || streakStr || lastDate || totalStr || prsStr || statsStr || xpStr || recStr;
         if (!hasAnyData) {
             console.log("[Migration] No local data found. Marking as done.");
             await AsyncStorage.setItem(MIGRATION_KEY, "true");
@@ -295,6 +331,8 @@ export const migrateLocalDataToCloud = async (uid) => {
         if (streakStr) updates.streak = parseInt(streakStr);
         if (totalStr) updates.totalWorkouts = parseInt(totalStr);
         if (lastDate) updates.lastWorkoutDate = lastDate;
+        if (xpStr) updates.xp = parseInt(xpStr);
+        if (recStr) updates.recordStreak = parseInt(recStr);
 
         if (Object.keys(updates).length > 0) {
             batch.set(userRef, updates, { merge: true });

@@ -13,10 +13,13 @@ import { COLORS, FONTS, SPACING, RADIUS, FAMILY, GRADIENTS, APP_VERSION } from "
 import {
     getStreak, getTotalWorkouts, getLastWorkoutDate,
     getLastFreezeDate, withdrawStreakFreeze, checkAndCleanStreak,
-    getStreakLocal, getTotalWorkoutsLocal
+    getStreakLocal, getTotalWorkoutsLocal, applyStreakFreeze,
+    getXP, getXPLocal, getRecordStreak, getRecordStreakLocal,
+    getWorkoutHistory, getWorkoutHistoryLocal
 } from "../utils/storage";
 import MaskedView from "@react-native-masked-view/masked-view";
 import * as Haptics from "expo-haptics";
+import Svg, { Circle, Path, Defs, LinearGradient as SvgGradient, Stop, Text as SvgText } from "react-native-svg";
 
 
 // Auth
@@ -64,7 +67,234 @@ function GradientText({ text, style, colors = GRADIENTS.diamond, height = 50 }) 
     );
 }
 
-export default function HomeScreen({ navigation }) {
+const getWeekStats = (history, lastFreezeDate) => {
+    const today = new Date();
+    const currentDay = today.getDay(); // 0 is Sunday, 1 is Monday
+    const distanceToMonday = currentDay === 0 ? 6 : currentDay - 1;
+    
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - distanceToMonday);
+    monday.setHours(0, 0, 0, 0);
+
+    const completedDays = [];
+    const freezeDays = [];
+
+    if (history && Array.isArray(history)) {
+        history.forEach(item => {
+            if (!item.date) return;
+            const itemDate = new Date(item.date);
+            itemDate.setHours(0, 0, 0, 0);
+            const diffTime = itemDate - monday;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            if (diffDays >= 0 && diffDays <= 6) {
+                const dayOfWeek = diffDays + 1; // 1 = Mon, 7 = Sun
+                if (!completedDays.includes(dayOfWeek)) {
+                    completedDays.push(dayOfWeek);
+                }
+            }
+        });
+    }
+
+    if (lastFreezeDate) {
+        const freezeDate = new Date(lastFreezeDate);
+        freezeDate.setHours(0, 0, 0, 0);
+        const diffTime = freezeDate - monday;
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        if (diffDays >= 0 && diffDays <= 6) {
+            const dayOfWeek = diffDays + 1;
+            freezeDays.push(dayOfWeek);
+        }
+    }
+
+    return { completedDays, freezeDays };
+};
+
+const getWeeklyHistoryData = (history) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const weeklyCounts = [0, 0, 0, 0]; // Index 0: 3 weeks ago, Index 1: 2 weeks ago, ...
+    
+    const oneDay = 24 * 60 * 60 * 1000;
+    
+    if (history && Array.isArray(history)) {
+        history.forEach(item => {
+            if (!item.date) return;
+            const itemDate = new Date(item.date);
+            itemDate.setHours(0, 0, 0, 0);
+            
+            const diffDays = Math.floor((today - itemDate) / oneDay);
+            if (diffDays >= 0 && diffDays < 28) {
+                const weekIndex = 3 - Math.floor(diffDays / 7);
+                if (weekIndex >= 0 && weekIndex <= 3) {
+                    weeklyCounts[weekIndex]++;
+                }
+            }
+        });
+    }
+    
+    return weeklyCounts;
+};
+
+const getStreakTierInfo = (streak) => {
+    if (streak >= 10) {
+        return {
+            name: "TITAN",
+            multiplier: "2.0x",
+            color: "#A855F7",
+            badge: "Tier IV",
+            desc: "Titan Multiplier active. You reward 20 XP per session.",
+            range: "10+ Days"
+        };
+    } else if (streak >= 5) {
+        return {
+            name: "OVERLOAD",
+            multiplier: "1.5x",
+            color: "#EAB308",
+            badge: "Tier III",
+            desc: "Overload Multiplier active. You reward 15 XP per session.",
+            range: "5–9 Days"
+        };
+    } else if (streak >= 3) {
+        return {
+            name: "IGNITION",
+            multiplier: "1.2x",
+            color: "#F97316",
+            badge: "Tier II",
+            desc: "Ignition Multiplier active. You reward 12 XP per session.",
+            range: "3–4 Days"
+        };
+    } else {
+        return {
+            name: "SPARK",
+            multiplier: "1.0x",
+            color: streak > 0 ? "#EF4444" : "#6B7280",
+            badge: "Tier I",
+            desc: "Spark Multiplier active. You reward 10 XP per session.",
+            range: "1–2 Days"
+        };
+    }
+};
+
+const renderSvgChart = (weeklyData) => {
+    const chartWidth = width - 64;
+    const chartHeight = 140;
+    const padding = 25;
+    
+    // Coordinates
+    const points = weeklyData.map((val, i) => {
+        const x = padding + (i / 3) * (chartWidth - 2 * padding);
+        const y = chartHeight - padding - (Math.min(val, 7) / 7) * (chartHeight - 2 * padding);
+        return { x, y, value: val };
+    });
+    
+    // Create polyline / path
+    let d = "";
+    points.forEach((p, idx) => {
+        if (idx === 0) d += `M ${p.x} ${p.y}`;
+        else {
+            const prev = points[idx - 1];
+            const cp1x = prev.x + (p.x - prev.x) / 3;
+            const cp1y = prev.y;
+            const cp2x = prev.x + 2 * (p.x - prev.x) / 3;
+            const cp2y = p.y;
+            d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p.x} ${p.y}`;
+        }
+    });
+
+    // Path for fill (under the curve)
+    let fillD = d;
+    if (points.length > 0) {
+        fillD += ` L ${points[points.length - 1].x} ${chartHeight - padding} L ${points[0].x} ${chartHeight - padding} Z`;
+    }
+
+    const labels = ["3 Wks Ago", "2 Wks Ago", "1 Wk Ago", "This Wk"];
+
+    return (
+        <View style={styles.chartWrapper}>
+            <Text style={styles.chartTitle}>WEEKLY CONSISTENCY (4-WEEK PROFILE)</Text>
+            <View style={styles.svgContainer}>
+                <Svg width={chartWidth} height={chartHeight}>
+                    <Defs>
+                        <SvgGradient id="chartGlow" x1="0" y1="0" x2="0" y2="1">
+                            <Stop offset="0%" stopColor={COLORS.primary} stopOpacity="0.4" />
+                            <Stop offset="100%" stopColor={COLORS.primary} stopOpacity="0.0" />
+                        </SvgGradient>
+                        <SvgGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+                            <Stop offset="0%" stopColor={COLORS.primary} />
+                            <Stop offset="100%" stopColor="#FF4D4D" />
+                        </SvgGradient>
+                    </Defs>
+                    
+                    {/* Grid Lines */}
+                    {[0, 1, 2, 3].map((g) => {
+                        const y = padding + (g / 3) * (chartHeight - 2 * padding);
+                        return (
+                            <Path
+                                key={g}
+                                d={`M ${padding} ${y} L ${chartWidth - padding} ${y}`}
+                                stroke="rgba(255, 255, 255, 0.05)"
+                                strokeWidth={1}
+                                strokeDasharray="4 4"
+                            />
+                        );
+                    })}
+
+                    {/* Gradient Fill under path */}
+                    {points.length > 0 && (
+                        <Path d={fillD} fill="url(#chartGlow)" />
+                    )}
+
+                    {/* Curve Line */}
+                    {points.length > 0 && (
+                        <Path
+                            d={d}
+                            fill="none"
+                            stroke="url(#lineGrad)"
+                            strokeWidth={3}
+                        />
+                    )}
+
+                    {/* Data Points */}
+                    {points.map((p, idx) => (
+                        <React.Fragment key={idx}>
+                            <Circle
+                                cx={p.x}
+                                cy={p.y}
+                                r={4}
+                                fill="#FFFFFF"
+                            />
+                            <Circle
+                                cx={p.x}
+                                cy={p.y}
+                                r={8}
+                                fill={COLORS.primary}
+                                fillOpacity={0.3}
+                            />
+                            <SvgText
+                                x={p.x}
+                                y={p.y - 10}
+                                fill="#FFFFFF"
+                                fontSize="9"
+                                fontWeight="bold"
+                                textAnchor="middle"
+                                fontFamily={FAMILY.mono}
+                            >
+                                {p.value}
+                            </SvgText>
+                        </React.Fragment>
+                    ))}
+                </Svg>
+            </View>
+            <View style={styles.chartLabelsRow}>
+                {labels.map((lbl) => (
+                    <Text key={lbl} style={styles.chartLabelText}>{lbl.toUpperCase()}</Text>
+                ))}
+            </View>
+        </View>
+    );
+};
+
+export default function HomeScreen({ navigation, route }) {
     const insets = useSafeAreaInsets();
     const { user, profile = null } = useAuth();
     const [streak, setStreak] = useState(0);
@@ -75,6 +305,12 @@ export default function HomeScreen({ navigation }) {
     const [freezeModal, setFreezeModal] = useState(false);
     const [streakResetModal, setStreakResetModal] = useState(false);
     const [prevStreak, setPrevStreak] = useState(0);
+    const [xp, setXP] = useState(0);
+    const [recordStreak, setRecordStreak] = useState(0);
+    const [completedDays, setCompletedDays] = useState([]);
+    const [freezeDays, setFreezeDays] = useState([]);
+    const [history, setHistory] = useState([]);
+    const [streakAnalyticsVisible, setStreakAnalyticsVisible] = useState(false);
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
     // Animations
@@ -87,7 +323,12 @@ export default function HomeScreen({ navigation }) {
 
     useFocusEffect(useCallback(() => {
         loadStats();
-    }, []));
+
+        if (route.params?.openStreakIntelligence) {
+            setStreakAnalyticsVisible(true);
+            navigation.setParams({ openStreakIntelligence: false });
+        }
+    }, [route.params?.openStreakIntelligence]));
 
     useEffect(() => {
         const h = new Date().getHours();
@@ -136,8 +377,20 @@ export default function HomeScreen({ navigation }) {
         try {
             const cachedStreak = await getStreakLocal();
             const cachedTotal = await getTotalWorkoutsLocal();
+            const cachedXP = await getXPLocal();
+            const cachedRecord = await getRecordStreakLocal();
+            const cachedHistory = await getWorkoutHistoryLocal();
+            const cachedFreeze = await getLastFreezeDate();
+
             setStreak(cachedStreak);
             setTotal(cachedTotal);
+            setXP(cachedXP);
+            setRecordStreak(cachedRecord);
+            setHistory(cachedHistory);
+
+            const { completedDays: localComp, freezeDays: localFrz } = getWeekStats(cachedHistory, cachedFreeze);
+            setCompletedDays(localComp);
+            setFreezeDays(localFrz);
         } catch (e) {
             console.warn("Failed to load cached stats in HomeScreen", e);
         }
@@ -157,14 +410,24 @@ export default function HomeScreen({ navigation }) {
 
         // 3. Background cloud sync
         try {
-            const [nextStreak, nextTotal, lastFreeze] = await Promise.all([
+            const [nextStreak, nextTotal, lastFreeze, nextXP, nextRecord, nextHistory] = await Promise.all([
                 getStreak(),
                 getTotalWorkouts(),
                 getLastFreezeDate(),
+                getXP(),
+                getRecordStreak(),
+                getWorkoutHistory(),
             ]);
             setStreak(nextStreak);
             setTotal(nextTotal);
             setIsFrozen(lastFreeze === new Date().toISOString().split("T")[0]);
+            setXP(nextXP);
+            setRecordStreak(nextRecord);
+            setHistory(nextHistory);
+
+            const { completedDays: syncComp, freezeDays: syncFrz } = getWeekStats(nextHistory, lastFreeze);
+            setCompletedDays(syncComp);
+            setFreezeDays(syncFrz);
         } catch (e) {
             console.warn("HomeScreen background sync failed", e);
         }
@@ -176,6 +439,24 @@ export default function HomeScreen({ navigation }) {
             setIsFrozen(false);
             setFreezeModal(false);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        }
+    };
+
+    const handleFreezeToggle = async () => {
+        if (isFrozen) {
+            const success = await withdrawStreakFreeze();
+            if (success) {
+                setIsFrozen(false);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+                loadStats();
+            }
+        } else {
+            const success = await applyStreakFreeze();
+            if (success) {
+                setIsFrozen(true);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+                loadStats();
+            }
         }
     };
 
@@ -249,6 +530,9 @@ export default function HomeScreen({ navigation }) {
                             <TouchableOpacity style={styles.iconBtnSm} onPress={() => navigation.navigate("History")} activeOpacity={0.7}>
                                 <Ionicons name="time-outline" size={16} color={COLORS.text} />
                             </TouchableOpacity>
+                            <TouchableOpacity style={styles.iconBtnSm} onPress={() => navigation.navigate("Settings")} activeOpacity={0.7}>
+                                <Ionicons name="settings-outline" size={16} color={COLORS.text} />
+                            </TouchableOpacity>
                             
                             <View style={styles.avatarContainer}>
                                 <Animated.View style={[styles.avatarGlowRing, { opacity: avatarGlow }]} />
@@ -293,19 +577,19 @@ export default function HomeScreen({ navigation }) {
                                 <View style={styles.hudLevelRow}>
                                     <Text style={styles.hudLevelLabel}>XP CONVERGENCE</Text>
                                     <Text style={styles.hudLevelValue}>
-                                        LVL {String(Math.min(Math.floor(total / 10) + 1, 99)).padStart(2, '0')}
+                                        LVL {String(Math.min(Math.floor(xp / 100) + 1, 99)).padStart(2, '0')}
                                     </Text>
                                 </View>
                                 <View style={styles.hudBar}>
                                     <LinearGradient
                                         colors={[COLORS.primary, '#FF4D4D']}
                                         start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                                        style={[styles.levelFill, { width: `${total === 0 ? 0 : total % 10 === 0 ? 100 : ((total % 10) / 10) * 100}%` }]}
+                                        style={[styles.levelFill, { width: `${xp % 100}%` }]}
                                     />
                                 </View>
                                 <View style={styles.hudFooterRow}>
                                     <Text style={styles.hudSubText}>
-                                        {total % 10}/10 SESSIONS TO NEXT LEVEL
+                                        {xp % 100}/100 XP TO NEXT LEVEL
                                     </Text>
                                     <Text style={styles.hudRankText}>
                                         {total >= 100 ? 'LEGEND' :
@@ -320,64 +604,105 @@ export default function HomeScreen({ navigation }) {
                     </View>
                 </View>
 
-                {/* ── Stats: Asymmetric Grid ── */}
+                {/* ── Streak Intelligence HUD Card ── */}
+                {(() => {
+                    const tierInfo = getStreakTierInfo(streak);
+                    return (
+                        <TouchableOpacity
+                            style={styles.streakIntelligenceCard}
+                            activeOpacity={0.9}
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                setStreakAnalyticsVisible(true);
+                            }}
+                        >
+                            <LinearGradient
+                                colors={[COLORS.glassBg, "rgba(5, 5, 5, 0.9)"]}
+                                style={StyleSheet.absoluteFill}
+                            />
+                            <View style={styles.streakIntelligenceLeft}>
+                                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                                    <Ionicons name="flame" size={16} color={tierInfo.color} />
+                                    <Text style={[styles.streakTierName, { color: tierInfo.color }]}>
+                                        {tierInfo.name} ({tierInfo.badge})
+                                    </Text>
+                                </View>
+                                <Text style={styles.streakValue}>{streak} <Text style={{ fontSize: 10, color: COLORS.textMuted }}>DAYS</Text></Text>
+                                <View style={[styles.multiplierBadge, { backgroundColor: `${tierInfo.color}15`, borderColor: `${tierInfo.color}30` }]}>
+                                    <Text style={[styles.multiplierText, { color: tierInfo.color }]}>{tierInfo.multiplier} MULTIPLIER</Text>
+                                </View>
+                            </View>
+                            <View style={styles.streakIntelligenceRight}>
+                                <Text style={styles.gridTitle}>7-DAY CONSISTENCY</Text>
+                                <View style={styles.gridContainer}>
+                                    {DAY_LABELS.map((label, index) => {
+                                        const dayNum = index + 1;
+                                        const isCompleted = completedDays.includes(dayNum);
+                                        const isDayFrozen = freezeDays.includes(dayNum);
+                                        const isToday = todayDay === dayNum;
+                                        const isFuture = dayNum > todayDay;
+
+                                        return (
+                                            <View key={label} style={styles.gridCellWrapper}>
+                                                <View
+                                                    style={[
+                                                        styles.gridCell,
+                                                        isCompleted && styles.gridCellCompleted,
+                                                        isDayFrozen && styles.gridCellFrozen,
+                                                        isToday && styles.gridCellToday,
+                                                        !isCompleted && !isDayFrozen && !isToday && dayNum < todayDay && styles.gridCellMissed,
+                                                        isFuture && { borderStyle: "dashed", borderColor: "rgba(255, 255, 255, 0.1)" }
+                                                    ]}
+                                                >
+                                                    {isCompleted && <Ionicons name="checkmark" size={10} color="#fff" />}
+                                                    {isDayFrozen && <Ionicons name="snow" size={10} color="#60A5FA" />}
+                                                    {isToday && !isCompleted && !isDayFrozen && <View style={styles.gridCellTodayDot} />}
+                                                </View>
+                                                <Text style={[styles.gridCellLabel, isToday && { color: COLORS.primary }]}>{label[0]}</Text>
+                                            </View>
+                                        );
+                                    })}
+                                </View>
+                            </View>
+                        </TouchableOpacity>
+                    );
+                })()}
+
+                {/* ── Stats: Total & Rank ── */}
                 <View style={styles.statsRow}>
-                    <View style={styles.statsLeft}>
-                        <View style={styles.statSmall}>
-                            <LinearGradient
-                                colors={["rgba(255,255,255,0.015)", "transparent"]}
-                                style={StyleSheet.absoluteFill}
-                            />
-                            <View style={styles.statSmallTop}>
-                                <View style={styles.statIconWrap}>
-                                    <Ionicons name="flame" size={12} color={COLORS.primary} />
-                                </View>
-                                <Text style={styles.statLabelSmall}>STREAK</Text>
+                    <View style={styles.statSmallWidth}>
+                        <LinearGradient
+                            colors={["rgba(255,255,255,0.015)", "transparent"]}
+                            style={StyleSheet.absoluteFill}
+                        />
+                        <View style={styles.statSmallTop}>
+                            <View style={styles.statIconWrap}>
+                                <Ionicons name="fitness" size={12} color={COLORS.accent} />
                             </View>
-                            <Text style={styles.statValueSmall}>{streak} <Text style={{ fontSize: 9, color: COLORS.textMuted }}>DAYS</Text></Text>
+                            <Text style={styles.statLabelSmall}>TOTAL SESSIONS</Text>
                         </View>
-                        <View style={styles.statSmall}>
-                            <LinearGradient
-                                colors={["rgba(255,255,255,0.015)", "transparent"]}
-                                style={StyleSheet.absoluteFill}
-                            />
-                            <View style={styles.statSmallTop}>
-                                <View style={styles.statIconWrap}>
-                                    <Ionicons name="fitness" size={12} color={COLORS.accent} />
-                                </View>
-                                <Text style={styles.statLabelSmall}>TOTAL</Text>
-                            </View>
-                            <Text style={styles.statValueSmall}>{total} <Text style={{ fontSize: 9, color: COLORS.textMuted }}>SESSIONS</Text></Text>
-                        </View>
+                        <Text style={styles.statValueSmall}>{total} <Text style={{ fontSize: 9, color: COLORS.textMuted }}>COMPLETED</Text></Text>
                     </View>
-                    <TouchableOpacity style={styles.statLarge} activeOpacity={0.8} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); navigation.navigate("Rank"); }}>
+                    <TouchableOpacity style={styles.statSmallWidth} activeOpacity={0.8} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); navigation.navigate("Rank"); }}>
                         <LinearGradient
                             colors={["rgba(255,255,255,0.02)", "rgba(227,30,36,0.02)", "transparent"]}
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 1 }}
                             style={StyleSheet.absoluteFill}
                         />
-                        <View style={styles.statLargeTop}>
-                            <View>
-                                <Text style={styles.statLabelSmall}>YOUR RANK</Text>
-                                <Text style={styles.statValueLarge} numberOfLines={1} adjustsFontSizeToFit>{
-                                    total >= 100 ? 'LEGEND' :
-                                        total >= 50 ? 'TITAN' :
-                                            total >= 25 ? 'WARRIOR' :
-                                                total >= 10 ? 'RISING STAR' :
-                                                    total >= 5 ? 'ROOKIE' : 'RECRUIT'
-                                }</Text>
+                        <View style={styles.statSmallTop}>
+                            <View style={styles.statIconWrap}>
+                                <Ionicons name="trending-up" size={12} color={COLORS.primary} />
                             </View>
-                            <View style={styles.intensityBadge}>
-                                <Ionicons name="trending-up" size={14} color={COLORS.primary} />
-                            </View>
+                            <Text style={styles.statLabelSmall}>CURRENT RANK</Text>
                         </View>
-                        <View style={styles.sparklineContainer}>
-                            {sparkAnims.map((anim, i) => (
-                                <Animated.View key={i} style={[styles.sparklineBar, { height: anim, opacity: 0.35 + (i * 0.08) }]} />
-                            ))}
-                        </View>
-                        <Text style={styles.statSubText}>TAP TO VIEW DETAILS →</Text>
+                        <Text style={styles.statValueSmall} numberOfLines={1} adjustsFontSizeToFit>{
+                            total >= 100 ? 'LEGEND' :
+                                total >= 50 ? 'TITAN' :
+                                    total >= 25 ? 'WARRIOR' :
+                                        total >= 10 ? 'RISING STAR' :
+                                            total >= 5 ? 'ROOKIE' : 'RECRUIT'
+                        }</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -699,6 +1024,153 @@ export default function HomeScreen({ navigation }) {
                         >
                             <Text style={styles.resetCloseText}>RECLAIM THE PROTOCOL</Text>
                         </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Streak Analytics Modal Sheet */}
+            <Modal
+                visible={streakAnalyticsVisible}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setStreakAnalyticsVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <TouchableOpacity 
+                        style={StyleSheet.absoluteFill} 
+                        onPress={() => setStreakAnalyticsVisible(false)} 
+                        activeOpacity={1} 
+                    />
+                    <View style={styles.modalSheet}>
+                        <LinearGradient
+                            colors={["#0D0D0D", "#000000"]}
+                            style={StyleSheet.absoluteFill}
+                        />
+                        
+                        {/* Drag Handle */}
+                        <View style={styles.dragHandle} />
+                        
+                        {/* Header */}
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalHeaderTitle}>STREAK INTELLIGENCE</Text>
+                            <TouchableOpacity 
+                                style={styles.modalCloseBtn}
+                                onPress={() => setStreakAnalyticsVisible(false)}
+                            >
+                                <Ionicons name="close" size={20} color={COLORS.text} />
+                            </TouchableOpacity>
+                        </View>
+                        
+                        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.modalScrollContent}>
+                            {/* Summary Metrics */}
+                            {(() => {
+                                const tierInfo = getStreakTierInfo(streak);
+                                return (
+                                    <View style={styles.summaryMetricsRow}>
+                                        <View style={styles.metricCard}>
+                                            <Text style={styles.metricLabel}>ACTIVE STREAK</Text>
+                                            <Text style={[styles.metricValue, { color: tierInfo.color }]}>
+                                                {streak} <Text style={{ fontSize: 12, color: COLORS.textMuted }}>DAYS</Text>
+                                            </Text>
+                                            <Text style={styles.metricSub}>{tierInfo.name} TIER ACTIVE</Text>
+                                        </View>
+                                        <View style={styles.metricCard}>
+                                            <Text style={styles.metricLabel}>ALL-TIME RECORD</Text>
+                                            <Text style={[styles.metricValue, { color: "#FF9500" }]}>
+                                                {recordStreak} <Text style={{ fontSize: 12, color: COLORS.textMuted }}>DAYS</Text>
+                                            </Text>
+                                            <Text style={styles.metricSub}>RECORD TO BEAT</Text>
+                                        </View>
+                                    </View>
+                                );
+                            })()}
+                            
+                            {/* SVG Consistency Graph */}
+                            {renderSvgChart(getWeeklyHistoryData(history))}
+                            
+                            {/* Tiers Breakdown */}
+                            <View style={styles.modalSection}>
+                                <Text style={styles.modalSectionTitle}>STREAK TIERS & MULTIPLIERS</Text>
+                                {["SPARK", "IGNITION", "OVERLOAD", "TITAN"].map((tName) => {
+                                    let tierRange = "";
+                                    let tierMult = "";
+                                    let tierCol = "";
+                                    let isActive = false;
+                                    
+                                    if (tName === "SPARK") {
+                                        tierRange = "1–2 Days";
+                                        tierMult = "1.0x XP";
+                                        tierCol = streak > 0 ? "#EF4444" : "#6B7280";
+                                        isActive = streak > 0 && streak <= 2;
+                                    } else if (tName === "IGNITION") {
+                                        tierRange = "3–4 Days";
+                                        tierMult = "1.2x XP";
+                                        tierCol = "#F97316";
+                                        isActive = streak >= 3 && streak <= 4;
+                                    } else if (tName === "OVERLOAD") {
+                                        tierRange = "5–9 Days";
+                                        tierMult = "1.5x XP";
+                                        tierCol = "#EAB308";
+                                        isActive = streak >= 5 && streak <= 9;
+                                    } else if (tName === "TITAN") {
+                                        tierRange = "10+ Days";
+                                        tierMult = "2.0x XP";
+                                        tierCol = "#A855F7";
+                                        isActive = streak >= 10;
+                                    }
+                                    
+                                    return (
+                                        <View 
+                                            key={tName} 
+                                            style={[
+                                                styles.tierRow,
+                                                isActive && [styles.tierRowActive, { borderColor: `${tierCol}50` }]
+                                            ]}
+                                        >
+                                            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                                                <Ionicons name="flame" size={16} color={tierCol} />
+                                                <View>
+                                                    <Text style={[styles.tierRowName, { color: tierCol }]}>{tName}</Text>
+                                                    <Text style={styles.tierRowRange}>{tierRange}</Text>
+                                                </View>
+                                            </View>
+                                            <View style={[styles.tierMultiplierBadge, { backgroundColor: `${tierCol}15` }]}>
+                                                <Text style={[styles.tierMultiplierText, { color: tierCol }]}>{tierMult}</Text>
+                                            </View>
+                                        </View>
+                                    );
+                                })}
+                            </View>
+                            
+                            {/* Quick Streak Freeze Action */}
+                            <View style={styles.freezeActionSection}>
+                                <View style={styles.freezeActionTextWrap}>
+                                    <Text style={styles.freezeSectionTitle}>STREAK SHIELD STATUS</Text>
+                                    <Text style={styles.freezeSectionDesc}>
+                                        {isFrozen 
+                                            ? "Today is frozen. Missing a session won't break your streak." 
+                                            : "Freeze today if you need a recovery or rest day. Shields active."}
+                                    </Text>
+                                </View>
+                                <TouchableOpacity 
+                                    style={[
+                                        styles.freezeToggleButton,
+                                        isFrozen && styles.freezeToggleButtonActive
+                                    ]}
+                                    onPress={handleFreezeToggle}
+                                    activeOpacity={0.8}
+                                >
+                                    <Ionicons 
+                                        name={isFrozen ? "snow" : "shield-half"} 
+                                        size={16} 
+                                        color={isFrozen ? "#60A5FA" : "#FFFFFF"} 
+                                    />
+                                    <Text style={[styles.freezeToggleText, isFrozen && { color: "#60A5FA" }]}>
+                                        {isFrozen ? "FROZEN (TAP TO MELT)" : "ACTIVATE SHIELD"}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+                        </ScrollView>
                     </View>
                 </View>
             </Modal>
@@ -1136,9 +1608,10 @@ const styles = StyleSheet.create({
     },
 
     // Asymmetric Stats Grid
+    // Asymmetric Stats Grid
     statsRow: {
         flexDirection: "row", marginHorizontal: SPACING.base, marginBottom: 36,
-        height: 124, gap: 12,
+        height: 76, gap: 12, marginTop: 12,
     },
     statsLeft: { flex: 1, gap: 12 },
     statSmall: {
@@ -1147,10 +1620,318 @@ const styles = StyleSheet.create({
         borderWidth: 1, borderColor: COLORS.glassBorder,
         justifyContent: "center", overflow: "hidden",
     },
+    statSmallWidth: {
+        flex: 1, paddingHorizontal: 16, paddingVertical: 12,
+        backgroundColor: COLORS.glassBg, borderRadius: 20,
+        borderWidth: 1, borderColor: COLORS.glassBorder,
+        justifyContent: "center", overflow: "hidden",
+    },
     statSmallTop: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 },
     statIconWrap: { width: 22, height: 22, borderRadius: 6, backgroundColor: "rgba(255,255,255,0.03)", alignItems: "center", justifyContent: "center" },
     statLabelSmall: { fontSize: 7, color: COLORS.textMuted, fontFamily: FAMILY.bold, letterSpacing: 2 },
-    statValueSmall: { fontSize: 16, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -0.5 },
+    statValueSmall: { fontSize: 14, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -0.5 },
+
+    // Streak Intelligence Card Styles
+    streakIntelligenceCard: {
+        marginHorizontal: SPACING.base,
+        marginTop: 16,
+        padding: 16,
+        borderRadius: 24,
+        borderWidth: 1,
+        borderColor: COLORS.glassBorder,
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        overflow: "hidden",
+    },
+    streakIntelligenceLeft: {
+        flex: 1.1,
+    },
+    streakTierName: {
+        fontFamily: FAMILY.bold,
+        fontSize: 10,
+        letterSpacing: 1,
+    },
+    streakValue: {
+        fontFamily: FAMILY.bold,
+        fontSize: 26,
+        color: COLORS.text,
+        marginVertical: 4,
+    },
+    multiplierBadge: {
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 6,
+        borderWidth: 0.5,
+        alignSelf: "flex-start",
+    },
+    multiplierText: {
+        fontFamily: FAMILY.mono,
+        fontSize: 7,
+        letterSpacing: 1,
+    },
+    streakIntelligenceRight: {
+        flex: 1.9,
+        alignItems: "flex-end",
+    },
+    gridTitle: {
+        fontFamily: FAMILY.mono,
+        fontSize: 8,
+        color: COLORS.textMuted,
+        letterSpacing: 1,
+        marginBottom: 8,
+    },
+    gridContainer: {
+        flexDirection: "row",
+        gap: 5,
+    },
+    gridCellWrapper: {
+        alignItems: "center",
+        gap: 4,
+    },
+    gridCell: {
+        width: 22,
+        height: 22,
+        borderRadius: 6,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.12)",
+        backgroundColor: "rgba(0, 0, 0, 0.4)",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    gridCellCompleted: {
+        borderColor: COLORS.primary,
+        backgroundColor: "rgba(227, 30, 36, 0.2)",
+    },
+    gridCellFrozen: {
+        borderColor: "#60A5FA",
+        backgroundColor: "rgba(96, 165, 250, 0.2)",
+    },
+    gridCellToday: {
+        borderColor: COLORS.text,
+        borderWidth: 1.5,
+    },
+    gridCellMissed: {
+        borderColor: "rgba(255, 255, 255, 0.05)",
+        backgroundColor: "rgba(255, 255, 255, 0.02)",
+    },
+    gridCellTodayDot: {
+        width: 5,
+        height: 5,
+        borderRadius: 2.5,
+        backgroundColor: COLORS.text,
+    },
+    gridCellLabel: {
+        fontFamily: FAMILY.mono,
+        fontSize: 7,
+        color: COLORS.textMuted,
+    },
+
+    // Streak Analytics Modal Styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: "rgba(0, 0, 0, 0.75)",
+        justifyContent: "flex-end",
+    },
+    modalSheet: {
+        width: "100%",
+        height: "82%",
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
+        borderWidth: 1,
+        borderColor: COLORS.glassBorder,
+        overflow: "hidden",
+        paddingTop: 12,
+    },
+    dragHandle: {
+        width: 40,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: "rgba(255, 255, 255, 0.2)",
+        alignSelf: "center",
+        marginBottom: 16,
+    },
+    modalHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingHorizontal: 24,
+        paddingBottom: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: "rgba(255, 255, 255, 0.05)",
+    },
+    modalHeaderTitle: {
+        fontFamily: FAMILY.bold,
+        fontSize: 12,
+        color: COLORS.text,
+        letterSpacing: 2,
+    },
+    modalCloseBtn: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: "rgba(255, 255, 255, 0.05)",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    modalScrollContent: {
+        paddingHorizontal: 24,
+        paddingBottom: 48,
+        paddingTop: 20,
+    },
+    summaryMetricsRow: {
+        flexDirection: "row",
+        gap: 12,
+        marginBottom: 20,
+    },
+    metricCard: {
+        flex: 1,
+        backgroundColor: "rgba(255, 255, 255, 0.02)",
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: COLORS.glassBorder,
+        padding: 16,
+    },
+    metricLabel: {
+        fontFamily: FAMILY.mono,
+        fontSize: 7,
+        color: COLORS.textMuted,
+        letterSpacing: 1.5,
+    },
+    metricValue: {
+        fontFamily: FAMILY.bold,
+        fontSize: 22,
+        marginVertical: 4,
+    },
+    metricSub: {
+        fontFamily: FAMILY.bold,
+        fontSize: 7,
+        color: COLORS.textMuted,
+        letterSpacing: 1,
+    },
+    chartWrapper: {
+        backgroundColor: "rgba(255, 255, 255, 0.02)",
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: COLORS.glassBorder,
+        padding: 16,
+        marginBottom: 20,
+    },
+    chartTitle: {
+        fontFamily: FAMILY.mono,
+        fontSize: 8,
+        color: COLORS.textMuted,
+        letterSpacing: 1.5,
+        marginBottom: 12,
+    },
+    svgContainer: {
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    chartLabelsRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        paddingHorizontal: 12,
+        marginTop: 8,
+    },
+    chartLabelText: {
+        fontFamily: FAMILY.mono,
+        fontSize: 7,
+        color: COLORS.textMuted,
+    },
+    modalSection: {
+        marginBottom: 20,
+    },
+    modalSectionTitle: {
+        fontFamily: FAMILY.mono,
+        fontSize: 8,
+        color: COLORS.textMuted,
+        letterSpacing: 2,
+        marginBottom: 12,
+    },
+    tierRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: 14,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.03)",
+        backgroundColor: "rgba(255, 255, 255, 0.01)",
+        marginBottom: 8,
+    },
+    tierRowActive: {
+        backgroundColor: "rgba(255, 255, 255, 0.03)",
+        borderWidth: 1.5,
+    },
+    tierRowName: {
+        fontFamily: FAMILY.bold,
+        fontSize: 11,
+        letterSpacing: 1,
+    },
+    tierRowRange: {
+        fontFamily: FAMILY.regular,
+        fontSize: 9,
+        color: COLORS.textMuted,
+    },
+    tierMultiplierBadge: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 6,
+    },
+    tierMultiplierText: {
+        fontFamily: FAMILY.mono,
+        fontSize: 8,
+        fontWeight: "bold",
+    },
+    freezeActionSection: {
+        flexDirection: "row",
+        backgroundColor: "rgba(255, 255, 255, 0.02)",
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: COLORS.glassBorder,
+        padding: 16,
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 12,
+    },
+    freezeActionTextWrap: {
+        flex: 1.2,
+    },
+    freezeSectionTitle: {
+        fontFamily: FAMILY.mono,
+        fontSize: 8,
+        color: COLORS.textMuted,
+        letterSpacing: 1.5,
+        marginBottom: 4,
+    },
+    freezeSectionDesc: {
+        fontFamily: FAMILY.regular,
+        fontSize: 8,
+        color: COLORS.textMuted,
+        lineHeight: 12,
+    },
+    freezeToggleButton: {
+        flex: 0.8,
+        height: 38,
+        borderRadius: 12,
+        backgroundColor: COLORS.primary,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6,
+    },
+    freezeToggleButtonActive: {
+        backgroundColor: "rgba(96, 165, 250, 0.15)",
+        borderWidth: 1,
+        borderColor: "rgba(96, 165, 250, 0.3)",
+    },
+    freezeToggleText: {
+        fontFamily: FAMILY.bold,
+        fontSize: 8,
+        color: "#FFFFFF",
+        letterSpacing: 0.5,
+    },
 
     statLarge: {
         flex: 1.4, padding: 20,

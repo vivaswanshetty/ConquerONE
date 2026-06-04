@@ -851,6 +851,8 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                 newPRs: newPRsFound,
                 caloriesBurned: liveCalories(dur),
                 showCalories: settings.showCalories,
+                xpGained: result?.xpGained || 0,
+                totalXP: result?.totalXP || 0,
             });
         } catch (_) {
             completingRef.current = false;

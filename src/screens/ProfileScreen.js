@@ -11,6 +11,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
+import * as Haptics from "expo-haptics";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../utils/firebase";
 import { useAuth } from "../context/AuthContext";
@@ -181,7 +182,88 @@ function Card({ children }) {
 
 
 
-/* ─── Main Screen ────────────────────────────────────────────── */
+function CustomToast({ visible, message, type = "success", insets }) {
+    const opacityAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(-15)).current;
+    const [shouldRender, setShouldRender] = useState(visible);
+
+    useEffect(() => {
+        if (visible) {
+            setShouldRender(true);
+            Animated.parallel([
+                Animated.timing(opacityAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
+                Animated.timing(slideAnim, { toValue: 0, duration: 250, useNativeDriver: true }),
+            ]).start();
+        } else {
+            Animated.parallel([
+                Animated.timing(opacityAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
+                Animated.timing(slideAnim, { toValue: -15, duration: 200, useNativeDriver: true }),
+            ]).start(({ finished }) => {
+                if (finished) setShouldRender(false);
+            });
+        }
+    }, [visible]);
+
+    if (!shouldRender) return null;
+
+    const isError = type === "error";
+    const accentColor = isError ? COLORS.primary : "#22c55e";
+    const iconName = isError ? "alert-circle-outline" : "checkmark-circle-outline";
+
+    return (
+        <Animated.View style={[
+            styles.customToast,
+            {
+                top: insets.top + 60,
+                opacity: opacityAnim,
+                transform: [{ translateY: slideAnim }],
+                borderColor: `${accentColor}40`,
+            }
+        ]}>
+            <LinearGradient
+                colors={["rgba(15, 15, 15, 0.98)", "rgba(5, 5, 5, 0.99)"]}
+                style={StyleSheet.absoluteFill}
+            />
+            <Ionicons name={iconName} size={16} color={accentColor} />
+            <Text style={styles.customToastText}>{message.toUpperCase()}</Text>
+        </Animated.View>
+    );
+}
+
+function ConfirmationModal({ visible, title, message, confirmText = "CONFIRM", cancelText = "CANCEL", onConfirm, onCancel, isDestructive = false, singleButton = false }) {
+    return (
+        <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
+            <View style={styles.dialogOverlay}>
+                <View style={styles.dialogSheet}>
+                    <View style={styles.modalHandle} />
+                    <Text style={styles.dialogTitle}>{title.toUpperCase()}</Text>
+                    <Text style={styles.dialogMessage}>{message}</Text>
+                    <View style={styles.modalBtns}>
+                        {!singleButton && (
+                            <TouchableOpacity style={styles.modalCancelBtn} onPress={onCancel} activeOpacity={0.7}>
+                                <Text style={styles.modalCancelText}>{cancelText.toUpperCase()}</Text>
+                            </TouchableOpacity>
+                        )}
+                        <TouchableOpacity
+                            style={[
+                                styles.modalSaveBtn,
+                                isDestructive ? { backgroundColor: COLORS.primary } : { backgroundColor: COLORS.text }
+                            ]}
+                            onPress={onConfirm}
+                            activeOpacity={0.7}
+                        >
+                            <Text style={[
+                                styles.modalSaveText,
+                                isDestructive ? { color: "#fff" } : { color: "#000" }
+                            ]}>{confirmText.toUpperCase()}</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </View>
+        </Modal>
+    );
+}
+
 export default function ProfileScreen({ navigation }) {
     const insets = useSafeAreaInsets();
     const { user, profile, signOut, updateUserProfile, verifyEmail, changeEmail, reloadProfile } = useAuth();
@@ -200,6 +282,26 @@ export default function ProfileScreen({ navigation }) {
     const liveDotOpacity = useRef(new Animated.Value(0.4)).current;
 
     const [editModal, setEditModal] = useState({ visible: false, field: "", title: "", value: "", type: "text" });
+    const [toast, setToast] = useState({ visible: false, message: "", type: "success" });
+    const [dialogState, setDialogState] = useState({
+        visible: false,
+        title: "",
+        message: "",
+        confirmText: "CONFIRM",
+        cancelText: "CANCEL",
+        onConfirm: () => {},
+        isDestructive: false,
+        singleButton: false,
+    });
+    const toastTimer = useRef(null);
+
+    const showToast = (message, type = "success") => {
+        clearTimeout(toastTimer.current);
+        setToast({ visible: true, message, type });
+        toastTimer.current = setTimeout(() => {
+            setToast(t => ({ ...t, visible: false }));
+        }, 3000);
+    };
 
     useEffect(() => {
         // Breathing ring 1 (chest/crimson accent)
@@ -291,7 +393,7 @@ export default function ProfileScreen({ navigation }) {
         try {
             if (field === "email") {
                 await changeEmail(val);
-                Alert.alert("✅ Security Check", "A verification link has been sent to your new email. The update will complete once verified.");
+                showToast("Verification link sent to new email", "success");
             } else {
                 await updateUserProfile({ [field]: val });
                 if (field === "dateOfBirth") {
@@ -303,23 +405,23 @@ export default function ProfileScreen({ navigation }) {
             const msg = e.code === "auth/requires-recent-login"
                 ? "For security, changing your email requires a recent login. Please log out and back in."
                 : e.message;
-            Alert.alert("Update Failed", msg);
+            showToast(msg, "error");
         }
     };
 
     const handleVerifyEmail = async () => {
         try {
             await verifyEmail();
-            Alert.alert("✅ Verification Sent", "Check your inbox for the verification link.");
+            showToast("Verification link sent to inbox", "success");
         } catch (e) {
-            Alert.alert("Failed", e.message);
+            showToast(e.message, "error");
         }
     };
 
     const pickImage = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== "granted") {
-            Alert.alert("Permission Required", "Gallery access is needed for a profile picture.");
+            showToast("Gallery access permission required", "error");
             return;
         }
 
@@ -353,7 +455,7 @@ export default function ProfileScreen({ navigation }) {
         } catch (err) {
             console.error("[Profile] Upload error:", err);
             setCurrentAvatarUrl(profile?.photoURL);
-            Alert.alert("Upload Failed", `${err.message || "Unknown error"}\n\nPlease try again.`);
+            showToast("Profile upload failed", "error");
         } finally {
             setIsUploading(false);
             setUploadProgress(0);
@@ -361,35 +463,43 @@ export default function ProfileScreen({ navigation }) {
     };
 
     const handleLogout = () => {
-        Alert.alert("Log Out", "End your current session?", [
-            { text: "Cancel", style: "cancel" },
-            { text: "Log Out", style: "destructive", onPress: signOut },
-        ]);
+        setDialogState({
+            visible: true,
+            title: "LOG OUT",
+            message: "End your current session?",
+            confirmText: "LOG OUT",
+            cancelText: "CANCEL",
+            isDestructive: true,
+            singleButton: false,
+            onConfirm: () => {
+                setDialogState(prev => ({ ...prev, visible: false }));
+                signOut();
+            }
+        });
     };
 
     const handleSyncNow = async () => {
         // If already connected, offer to disconnect
         if (healthStatus === "active") {
-            Alert.alert(
-                "Disconnect Google Fit?",
-                "This will stop syncing your workouts and health data with Health Connect.",
-                [
-                    { text: "Cancel", style: "cancel" },
-                    {
-                        text: "Disconnect",
-                        style: "destructive",
-                        onPress: async () => {
-                            setSyncing(true);
-                            const revoked = await disconnectHealth();
-                            if (revoked) {
-                                setHealthStatus("inactive");
-                                Alert.alert("Disconnected", "Google Fit sync has been turned off.");
-                            }
-                            setSyncing(false);
-                        }
+            setDialogState({
+                visible: true,
+                title: "Disconnect Google Fit?",
+                message: "This will stop syncing your workouts and health data with Health Connect.",
+                confirmText: "Disconnect",
+                cancelText: "Cancel",
+                isDestructive: true,
+                singleButton: false,
+                onConfirm: async () => {
+                    setDialogState(prev => ({ ...prev, visible: false }));
+                    setSyncing(true);
+                    const revoked = await disconnectHealth();
+                    if (revoked) {
+                        setHealthStatus("inactive");
+                        showToast("Google Fit sync disabled", "success");
                     }
-                ]
-            );
+                    setSyncing(false);
+                }
+            });
             return;
         }
 
@@ -406,10 +516,10 @@ export default function ProfileScreen({ navigation }) {
                 setHealthStatus("active");
                 const stats = await getDailyStats();
                 console.log("Health Stats:", stats);
-                Alert.alert("✅ Health Sync Active", "Google Fit data is now being synchronized.");
+                showToast("Google Fit sync enabled", "success");
             }
         } catch (e) {
-            Alert.alert("Sync Failed", "Check your internet and Health Connect settings.");
+            showToast("Sync failed. Check connection & settings.", "error");
         } finally {
             setSyncing(false);
         }
@@ -435,28 +545,28 @@ export default function ProfileScreen({ navigation }) {
     const rank = getRank();
 
     const handleChangePassword = async () => {
-        if (!email) return Alert.alert("Error", "No email associated with this account.");
-        Alert.alert(
-            "RESET PASSWORD",
-            `We'll send a password reset link to:\n${email}`,
-            [
-                { text: "CANCEL", style: "cancel" },
-                {
-                    text: "SEND LINK",
-                    onPress: async () => {
-                        setPwLoading(true);
-                        try {
-                            await sendPasswordResetEmail(auth, email);
-                            Alert.alert("✅ Email Sent", "Check your inbox for the password reset link.");
-                        } catch (e) {
-                            Alert.alert("Failed", e.message);
-                        } finally {
-                            setPwLoading(false);
-                        }
-                    }
+        if (!email) return showToast("No email associated with account", "error");
+        setDialogState({
+            visible: true,
+            title: "RESET PASSWORD",
+            message: `We'll send a password reset link to:\n${email}`,
+            confirmText: "SEND LINK",
+            cancelText: "CANCEL",
+            isDestructive: false,
+            singleButton: false,
+            onConfirm: async () => {
+                setDialogState(prev => ({ ...prev, visible: false }));
+                setPwLoading(true);
+                try {
+                    await sendPasswordResetEmail(auth, email);
+                    showToast("Password reset link sent", "success");
+                } catch (e) {
+                    showToast(e.message, "error");
+                } finally {
+                    setPwLoading(false);
                 }
-            ]
-        );
+            }
+        });
     };
 
     const firstName = displayName.split(' ')[0];
@@ -464,6 +574,8 @@ export default function ProfileScreen({ navigation }) {
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#000" translucent />
+
+            <CustomToast visible={toast.visible} message={toast.message} type={toast.type} insets={insets} />
 
             {/* ── Floating Header Icons ── */}
             <View style={[styles.topBar, {
@@ -578,7 +690,14 @@ export default function ProfileScreen({ navigation }) {
 
                 {/* ── Stats Strip ── */}
                 <View style={styles.statsRow}>
-                    <View style={[styles.statCard, styles.statCardActive]}>
+                    <TouchableOpacity
+                        style={[styles.statCard, styles.statCardActive]}
+                        activeOpacity={0.8}
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                            navigation.navigate("Main", { openStreakIntelligence: true });
+                        }}
+                    >
                         <LinearGradient
                             colors={["rgba(227,30,36,0.06)", "transparent"]}
                             style={StyleSheet.absoluteFill}
@@ -588,7 +707,7 @@ export default function ProfileScreen({ navigation }) {
                         </View>
                         <Text style={styles.statValue}>{streak}</Text>
                         <Text style={styles.statLabel}>DAY STREAK</Text>
-                    </View>
+                    </TouchableOpacity>
                     
                     <View style={styles.statCard}>
                         <LinearGradient
@@ -699,12 +818,9 @@ export default function ProfileScreen({ navigation }) {
                                 color={healthStatus === "active" ? "#4285F4" : COLORS.textMuted}
                             />
                         </View>
-                        <View style={{ flex: 1 }}>
-                            <Text style={styles.serviceTitle}>Health Connect</Text>
-                            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 }}>
-                                <Text style={styles.serviceSub}>
-                                    {healthStatus === "active" ? "Linked to Google Fit" : "Sync steps & calories"}
-                                </Text>
+                        <View style={{ flex: 1, marginRight: 8 }}>
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                                <Text style={[styles.serviceTitle, { flexShrink: 1 }]} numberOfLines={1}>Health Connect</Text>
                                 {healthStatus === "active" && (
                                     <View style={styles.liveBadgeMini}>
                                         <Animated.View style={[styles.liveDotMini, { opacity: liveDotOpacity }]} />
@@ -712,6 +828,9 @@ export default function ProfileScreen({ navigation }) {
                                     </View>
                                 )}
                             </View>
+                            <Text style={[styles.serviceSub, { marginTop: 2 }]} numberOfLines={1}>
+                                {healthStatus === "active" ? "Linked to Google Fit" : "Sync steps & calories"}
+                            </Text>
                         </View>
                         <TouchableOpacity
                             style={[styles.serviceAction, healthStatus === "active" && { backgroundColor: 'rgba(239,68,68,0.06)', borderColor: 'rgba(239,68,68,0.15)' }]}
@@ -756,25 +875,42 @@ export default function ProfileScreen({ navigation }) {
                         icon="shield-checkmark-outline"
                         label="Data & Privacy"
                         sublabel="Encryption & data policies"
-                        onPress={() => Alert.alert(
-                            "DATA & PRIVACY",
-                            "Your workout data is stored securely on Firebase with end-to-end encryption.\n\n• We never sell your personal data\n• Workout history is backed up to the cloud\n• You can delete your account at any time\n\nFor questions, contact support@conquer-one.app"
-                        )}
+                        onPress={() => setDialogState({
+                            visible: true,
+                            title: "DATA & PRIVACY",
+                            message: "Your workout data is stored securely on Firebase with end-to-end encryption.\n\n• We never sell your personal data\n• Workout history is backed up to the cloud\n• You can delete your account at any time\n\nFor questions, contact support@conquer-one.app",
+                            confirmText: "CLOSE",
+                            singleButton: true,
+                            isDestructive: false,
+                            onConfirm: () => setDialogState(prev => ({ ...prev, visible: false }))
+                        })}
                         last
                     />
                 </Card>
-
+ 
                 <Card>
                     <TouchableOpacity
                         style={styles.dangerRow}
-                        onPress={() => Alert.alert(
-                            "DELETE ACCOUNT?",
-                            "This will permanently delete your account and ALL workout data. This action cannot be undone.",
-                            [
-                                { text: "CANCEL", style: "cancel" },
-                                { text: "DELETE", style: "destructive", onPress: () => Alert.alert("Contact Support", "Email support@conquer-one.app to process your account deletion.") }
-                            ]
-                        )}
+                        onPress={() => setDialogState({
+                            visible: true,
+                            title: "DELETE ACCOUNT?",
+                            message: "This will permanently delete your account and ALL workout data. This action cannot be undone.",
+                            confirmText: "DELETE",
+                            cancelText: "CANCEL",
+                            isDestructive: true,
+                            singleButton: false,
+                            onConfirm: () => {
+                                setDialogState({
+                                    visible: true,
+                                    title: "CONTACT SUPPORT",
+                                    message: "Email support@conquer-one.app to process your account deletion.",
+                                    confirmText: "CLOSE",
+                                    singleButton: true,
+                                    isDestructive: false,
+                                    onConfirm: () => setDialogState(prev => ({ ...prev, visible: false }))
+                                });
+                            }
+                        })}
                         activeOpacity={0.6}
                     >
                         <Ionicons name="trash-outline" size={16} color={COLORS.primary} />
@@ -800,6 +936,18 @@ export default function ProfileScreen({ navigation }) {
                 multiChoice={editModal.type === "choice"}
                 choices={GENDER_OPTIONS}
                 inputType={editModal.type}
+            />
+
+            <ConfirmationModal
+                visible={dialogState.visible}
+                title={dialogState.title}
+                message={dialogState.message}
+                confirmText={dialogState.confirmText}
+                cancelText={dialogState.cancelText}
+                onConfirm={dialogState.onConfirm}
+                onCancel={() => setDialogState(prev => ({ ...prev, visible: false }))}
+                isDestructive={dialogState.isDestructive}
+                singleButton={dialogState.singleButton}
             />
         </View>
     );
@@ -1094,4 +1242,67 @@ const styles = StyleSheet.create({
     miniVerifyBtn: { backgroundColor: 'rgba(227,30,36,0.06)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(227,30,36,0.12)' },
     miniVerifyBtnText: { fontSize: 8, fontFamily: FAMILY.accent, color: COLORS.primary, letterSpacing: 0.5 },
     chevronAction: { paddingLeft: 12 },
+    customToast: {
+        position: "absolute",
+        left: 20,
+        right: 20,
+        backgroundColor: "rgba(10, 10, 10, 0.95)",
+        borderRadius: 16,
+        borderWidth: 1,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+        zIndex: 99999,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.35,
+        shadowRadius: 8,
+        elevation: 10,
+        overflow: "hidden",
+    },
+    customToastText: {
+        fontFamily: FAMILY.mBold,
+        fontSize: 9,
+        color: COLORS.textSub,
+        flex: 1,
+        letterSpacing: 0.5,
+    },
+    dialogOverlay: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "rgba(0,0,0,0.85)",
+    },
+    dialogSheet: {
+        width: "86%",
+        backgroundColor: "#0A0A0A",
+        borderRadius: 24,
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.08)",
+        padding: 28,
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.5,
+        shadowRadius: 16,
+        elevation: 20,
+    },
+    dialogTitle: {
+        fontSize: 14,
+        fontFamily: FAMILY.mBold,
+        color: COLORS.text,
+        letterSpacing: 1.5,
+        marginBottom: 12,
+        textAlign: "center",
+    },
+    dialogMessage: {
+        fontSize: 12,
+        fontFamily: FAMILY.mReg,
+        color: COLORS.textSub,
+        lineHeight: 18,
+        marginBottom: 28,
+        textAlign: "center",
+    },
 });

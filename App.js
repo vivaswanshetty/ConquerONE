@@ -200,7 +200,7 @@ export default function App() {
     const timer = setTimeout(() => {
       const task = InteractionManager.runAfterInteractions(checkUpdate);
       if (cancelled) task.cancel();
-    }, 15000);
+    }, 2000);
     return () => {
       cancelled = true;
       clearTimeout(timer);
