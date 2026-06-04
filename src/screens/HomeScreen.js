@@ -537,7 +537,12 @@ export default function HomeScreen({ navigation, route }) {
                     </View>
 
                     {/* HUD Action Shortcut Bar */}
-                    <View style={styles.hudShortcutBar}>
+                    <ScrollView 
+                        horizontal 
+                        showsHorizontalScrollIndicator={false} 
+                        style={styles.hudShortcutBar}
+                        contentContainerStyle={styles.hudShortcutBarContent}
+                    >
                         <TouchableOpacity style={styles.hudShortcutBtn} onPress={() => navigation.navigate("AICoach")} activeOpacity={0.7}>
                             <Ionicons name="flash" size={13} color={COLORS.primary} style={{ marginRight: 6 }} />
                             <Text style={[styles.hudShortcutBtnText, { color: COLORS.primary }]}>COACH</Text>
@@ -560,7 +565,7 @@ export default function HomeScreen({ navigation, route }) {
                                 <Text style={[styles.hudShortcutBtnText, { color: "#60A5FA" }]}>FROZEN</Text>
                             </TouchableOpacity>
                         )}
-                    </View>
+                    </ScrollView>
 
                     {/* Tactical Readout HUD Card */}
                     <View style={styles.hudCard}>
@@ -2024,10 +2029,13 @@ const styles = StyleSheet.create({
     },
     restContent: { paddingVertical: 18, paddingHorizontal: 22, paddingBottom: 22, flex: 1 },
     hudShortcutBar: {
+        marginTop: 18,
+    },
+    hudShortcutBarContent: {
         flexDirection: "row",
         alignItems: "center",
         gap: 8,
-        marginTop: 18,
+        paddingRight: 20,
     },
     hudShortcutBtn: {
         flexDirection: "row",
