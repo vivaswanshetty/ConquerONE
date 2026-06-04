@@ -29,6 +29,7 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
     const streakAnim = useRef(new Animated.Value(0)).current;
     const rankAnim = useRef(new Animated.Value(0)).current;
     const [rankUp, setRankUp] = useState(null);
+    const pulseAnim = useRef(new Animated.Value(1)).current;
 
     useEffect(() => {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => { });
@@ -36,6 +37,21 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
             Animated.spring(scaleAnim, { toValue: 1, tension: 50, friction: 8, useNativeDriver: true }),
             Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
         ]).start();
+
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(pulseAnim, {
+                    toValue: 1.15,
+                    duration: 2500,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(pulseAnim, {
+                    toValue: 1.0,
+                    duration: 2500,
+                    useNativeDriver: true,
+                })
+            ])
+        ).start();
 
         setTimeout(() => {
             Animated.spring(checkAnim, { toValue: 1, tension: 70, friction: 8, useNativeDriver: true }).start();
@@ -126,6 +142,20 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
     const prScale = prAnim.interpolate({ inputRange: [0, 1], outputRange: [0.95, 1] });
     const checkScale = checkAnim.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] });
 
+    const scaleHalo1 = pulseAnim;
+    const scaleHalo2 = pulseAnim.interpolate({
+        inputRange: [1, 1.15],
+        outputRange: [1, 1.08]
+    });
+    const opacityHalo1 = pulseAnim.interpolate({
+        inputRange: [1, 1.15],
+        outputRange: [0.15, 0.0]
+    });
+    const opacityHalo2 = pulseAnim.interpolate({
+        inputRange: [1, 1.15],
+        outputRange: [0.25, 0.05]
+    });
+
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
@@ -144,15 +174,35 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
             <ScrollView contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 40 }]} showsVerticalScrollIndicator={false} overScrollMode="never">
                 <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }]}>
 
-                    <Animated.View style={[styles.iconRingWrap, { transform: [{ scale: checkScale }] }]}>
-                        <View style={styles.iconRingInner}>
-                            <Ionicons name="checkmark-done" size={54} color={COLORS.primary} />
-                        </View>
-                        <LinearGradient
-                            colors={["rgba(227,30,36,0.15)", "transparent"]}
-                            style={StyleSheet.absoluteFill}
-                        />
-                    </Animated.View>
+                    <View style={styles.checkmarkContainer}>
+                        {/* Breathing Halo 1: Crimson */}
+                        <Animated.View style={[
+                            styles.haloCircle,
+                            {
+                                borderColor: COLORS.primary,
+                                opacity: opacityHalo1,
+                                transform: [{ scale: scaleHalo1 }]
+                            }
+                        ]} />
+                        {/* Breathing Halo 2: Silver */}
+                        <Animated.View style={[
+                            styles.haloCircle,
+                            {
+                                borderColor: COLORS.accent,
+                                opacity: opacityHalo2,
+                                transform: [{ scale: scaleHalo2 }]
+                            }
+                        ]} />
+                        <Animated.View style={[styles.iconRingWrap, { transform: [{ scale: checkScale }] }]}>
+                            <View style={styles.iconRingInner}>
+                                <Ionicons name="checkmark-done" size={54} color={COLORS.primary} />
+                            </View>
+                            <LinearGradient
+                                colors={["rgba(227,30,36,0.15)", "transparent"]}
+                                style={StyleSheet.absoluteFill}
+                            />
+                        </Animated.View>
+                    </View>
 
                     <Text style={styles.completedLabel}>PROTOCOL ACHIEVED</Text>
                     <Text style={styles.completedTitle} numberOfLines={2} adjustsFontSizeToFit>{day.target.toUpperCase()}</Text>
@@ -258,7 +308,7 @@ const styles = StyleSheet.create({
     iconRingWrap: {
         width: 140, height: 140, borderRadius: 70,
         alignItems: "center", justifyContent: "center",
-        marginBottom: 40, backgroundColor: "rgba(255,255,255,0.03)",
+        backgroundColor: "rgba(255,255,255,0.03)",
         borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
         overflow: "hidden",
     },
@@ -268,49 +318,69 @@ const styles = StyleSheet.create({
         alignItems: "center", justifyContent: "center",
         zIndex: 2,
     },
+    checkmarkContainer: {
+        alignItems: "center",
+        justifyContent: "center",
+        position: "relative",
+        width: 180,
+        height: 180,
+        marginBottom: 20,
+    },
+    haloCircle: {
+        position: "absolute",
+        width: 140,
+        height: 140,
+        borderRadius: 70,
+        borderWidth: 2,
+    },
 
     completedLabel: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 4, marginBottom: 16 },
     completedTitle: { fontSize: 38, fontFamily: FAMILY.header, color: COLORS.text, textAlign: "center", letterSpacing: -1, lineHeight: 42, width: "100%", marginBottom: 40 },
 
     statsRow: {
         flexDirection: "row", width: "100%",
-        backgroundColor: "rgba(255,255,255,0.04)",
-        borderRadius: 24, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
+        backgroundColor: COLORS.glassBg,
+        borderRadius: 24, borderWidth: 1, borderColor: COLORS.glassBorder,
         paddingVertical: 24, marginBottom: 40,
+        shadowColor: "#000", shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.2, shadowRadius: 20,
     },
     statBox: { flex: 1, alignItems: "center", justifyContent: "center", gap: 4 },
-    statBoxCenter: { borderLeftWidth: 1, borderRightWidth: 1, borderColor: "rgba(255,255,255,0.05)" },
+    statBoxCenter: { borderLeftWidth: 1, borderRightWidth: 1, borderColor: COLORS.glassBorder },
     statLabel: { fontSize: 7, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2, marginBottom: 4 },
     statValue: { fontSize: 22, fontFamily: FAMILY.display, color: COLORS.text, letterSpacing: -0.5 },
     statIcon: { position: "absolute", bottom: -12, opacity: 0.2 },
 
     streakRow: {
         width: "100%", paddingVertical: 18, paddingHorizontal: 20,
-        marginBottom: 20, backgroundColor: "rgba(255,255,255,0.03)",
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
+        marginBottom: 20, backgroundColor: COLORS.glassBg,
+        borderWidth: 1, borderColor: "rgba(227, 30, 36, 0.25)",
         borderRadius: 20, flexDirection: "row", alignItems: "center", gap: 16,
     },
     streakText: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textSub, flex: 1, letterSpacing: 1 },
 
     prCard: {
-        width: "100%", borderRadius: 24, borderWidth: 1, borderColor: "rgba(255,255,255,0.1)",
-        backgroundColor: "rgba(255,255,255,0.03)", marginBottom: 20, overflow: "hidden",
+        width: "100%", borderRadius: 24, borderWidth: 1, borderColor: COLORS.glassBorder,
+        backgroundColor: COLORS.glassBg, marginBottom: 20, overflow: "hidden",
     },
     prHeader: {
         flexDirection: "row", alignItems: "center", gap: 12,
-        paddingHorizontal: 24, paddingVertical: 20, borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.05)",
-        backgroundColor: "rgba(255,255,255,0.02)",
+        paddingHorizontal: 24, paddingVertical: 20, borderBottomWidth: 1, borderBottomColor: COLORS.glassBorder,
+        backgroundColor: "rgba(255,255,255,0.01)",
     },
     prTitle: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 2 },
     prList: { paddingHorizontal: 24, paddingVertical: 16 },
     prRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 10 },
     prName: { fontSize: 12, fontFamily: FAMILY.bold, color: COLORS.textSub, flex: 1, paddingRight: 8 },
-    prValBox: { backgroundColor: "rgba(255,255,255,0.05)", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
+    prValBox: { backgroundColor: "rgba(255,255,255,0.03)", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: COLORS.glassBorder },
     prVal: { fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 0.5 },
 
     homeBtn: {
-        width: "100%", backgroundColor: COLORS.text, height: 68,
+        width: "100%", backgroundColor: COLORS.primary, height: 64,
         borderRadius: 20, alignItems: "center", justifyContent: "center", marginTop: 40, marginBottom: 32,
+        shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.3, shadowRadius: 15,
+        elevation: 5,
     },
     homeBtnText: { fontSize: 13, fontFamily: FAMILY.bold, color: "#fff", letterSpacing: 2 },
 
@@ -323,8 +393,8 @@ const styles = StyleSheet.create({
     rankUpCard: {
         flexDirection: "row", alignItems: "center", gap: 16,
         width: "100%", padding: 18, borderRadius: 20, marginTop: 20,
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
-        backgroundColor: "rgba(255,255,255,0.02)", overflow: "hidden",
+        borderWidth: 1, borderColor: COLORS.glassBorder,
+        backgroundColor: COLORS.glassBg, overflow: "hidden",
     },
     rankUpIcon: {
         width: 52, height: 52, borderRadius: 16, borderWidth: 2,

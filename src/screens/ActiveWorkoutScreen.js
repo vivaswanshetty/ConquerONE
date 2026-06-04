@@ -95,19 +95,80 @@ function RingTimer({ progress, isWork, size, stroke, timeLeft }) {
     const isUrgent = timeLeft <= 5 && timeLeft > 0;
 
     const activeColor = isWork ? COLORS.primary : COLORS.textMuted;
+    const pulseAnim = useRef(new Animated.Value(1)).current;
+
+    useEffect(() => {
+        pulseAnim.setValue(1);
+        const duration = isUrgent ? 600 : (isWork ? 2000 : 3000);
+        const anim = Animated.loop(
+            Animated.sequence([
+                Animated.timing(pulseAnim, {
+                    toValue: isUrgent ? 1.18 : 1.10,
+                    duration: duration,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(pulseAnim, {
+                    toValue: 1.0,
+                    duration: duration,
+                    useNativeDriver: true,
+                })
+            ])
+        );
+        anim.start();
+        return () => anim.stop();
+    }, [isWork, isUrgent]);
+
+    const scaleOut = pulseAnim;
+    const opacityOut = pulseAnim.interpolate({
+        inputRange: [1, isUrgent ? 1.18 : 1.10],
+        outputRange: [isUrgent ? 0.5 : 0.25, 0.0]
+    });
+
+    const scaleIn = pulseAnim.interpolate({
+        inputRange: [1, isUrgent ? 1.18 : 1.10],
+        outputRange: [1.0, isUrgent ? 1.06 : 1.04]
+    });
+    const opacityIn = pulseAnim.interpolate({
+        inputRange: [1, isUrgent ? 1.18 : 1.10],
+        outputRange: [isUrgent ? 0.7 : 0.4, 0.15]
+    });
 
     return (
         <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
+            {/* Concentric Breathing Halo 1 */}
+            <Animated.View style={{
+                position: "absolute",
+                width: size,
+                height: size,
+                borderRadius: size / 2,
+                borderWidth: 2,
+                borderColor: isUrgent ? COLORS.primary : activeColor,
+                opacity: opacityOut,
+                transform: [{ scale: scaleOut }],
+            }} />
+
+            {/* Concentric Breathing Halo 2 */}
+            <Animated.View style={{
+                position: "absolute",
+                width: size - stroke * 2,
+                height: size - stroke * 2,
+                borderRadius: (size - stroke * 2) / 2,
+                borderWidth: 1,
+                borderColor: isUrgent ? COLORS.primary : activeColor,
+                opacity: opacityIn,
+                transform: [{ scale: scaleIn }],
+            }} />
+
             <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]}>
                 <LinearGradient
-                    colors={isWork ? ["rgba(227,30,36,0.1)", "transparent"] : ["rgba(255,255,255,0.05)", "transparent"]}
+                    colors={isWork ? ["rgba(227,30,36,0.08)", "transparent"] : ["rgba(255,255,255,0.03)", "transparent"]}
                     style={{ width: size * 0.8, height: size * 0.8, borderRadius: size * 0.4 }}
                 />
             </View>
             <Svg width={size} height={size} style={{ position: "absolute" }}>
                 <Circle
                     cx={size / 2} cy={size / 2} r={r}
-                    stroke="rgba(255,255,255,0.04)" strokeWidth={stroke} fill="none"
+                    stroke="rgba(255,255,255,0.03)" strokeWidth={stroke} fill="none"
                 />
                 <Circle
                     cx={size / 2} cy={size / 2} r={r}
@@ -117,15 +178,6 @@ function RingTimer({ progress, isWork, size, stroke, timeLeft }) {
                     rotation="-90" origin={`${size / 2}, ${size / 2}`}
                 />
             </Svg>
-            {isUrgent && (
-                <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]}>
-                    <View style={{
-                        width: size + 20, height: size + 20, borderRadius: (size + 20) / 2,
-                        borderWidth: 1, borderColor: "rgba(227,30,36,0.2)",
-                        position: 'absolute'
-                    }} />
-                </View>
-            )}
         </View>
     );
 }
@@ -230,12 +282,14 @@ const pm = StyleSheet.create({
         justifyContent: "flex-end",
     },
     sheet: {
-        backgroundColor: COLORS.bgCard,
+        backgroundColor: COLORS.glassBg,
         borderTopLeftRadius: 32, borderTopRightRadius: 32,
-        borderWidth: 1, borderColor: COLORS.border,
+        borderWidth: 1, borderColor: COLORS.glassBorder,
         padding: 32, paddingBottom: 48,
         alignItems: "center",
         width: "100%",
+        shadowColor: COLORS.primary, shadowOffset: { width: 0, height: -10 },
+        shadowOpacity: 0.1, shadowRadius: 20,
     },
     handle: {
         width: 40, height: 4, borderRadius: 2,
@@ -247,7 +301,7 @@ const pm = StyleSheet.create({
     },
     trophyBadge: {
         width: 48, height: 48, borderRadius: 14,
-        backgroundColor: "rgba(255,255,255,0.03)", borderWidth: 1, borderColor: COLORS.border,
+        backgroundColor: "rgba(227,30,36,0.05)", borderWidth: 1, borderColor: "rgba(227,30,36,0.2)",
         alignItems: "center", justifyContent: "center",
     },
     title: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 1.5 },
@@ -262,20 +316,23 @@ const pm = StyleSheet.create({
     },
     inputBox: {
         flexDirection: "row", alignItems: "center",
-        backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 16,
+        backgroundColor: "rgba(255,255,255,0.02)", borderRadius: 16,
         paddingHorizontal: 16, paddingVertical: 12,
-        borderWidth: 1.5, borderColor: COLORS.border,
+        borderWidth: 1.5, borderColor: COLORS.glassBorder,
     },
     input: {
         flex: 1, fontSize: 32, fontFamily: FAMILY.display,
         color: COLORS.text, textAlign: "center", padding: 0,
     },
     saveBtn: {
-        width: "100%", backgroundColor: COLORS.text,
+        width: "100%", backgroundColor: COLORS.primary,
         borderRadius: 16, paddingVertical: 20,
         alignItems: "center", marginBottom: 16,
+        shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.3, shadowRadius: 15,
+        elevation: 5,
     },
-    saveBtnText: { fontSize: 12, fontFamily: FAMILY.bold, color: "#000", letterSpacing: 2 },
+    saveBtnText: { fontSize: 12, fontFamily: FAMILY.bold, color: "#fff", letterSpacing: 2 },
     skipBtn: { paddingVertical: 12 },
     skipText: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1 },
 });
@@ -431,8 +488,8 @@ const ro = StyleSheet.create({
     },
     badge: {
         paddingHorizontal: 12, paddingVertical: 6, borderRadius: 4,
-        backgroundColor: "rgba(255,255,255,0.05)",
-        borderWidth: 0.5, borderColor: "rgba(255,255,255,0.1)",
+        backgroundColor: COLORS.glassBg,
+        borderWidth: 1, borderColor: COLORS.glassBorder,
     },
     badgeText: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textSub, letterSpacing: 2 },
     skipBtn: {
@@ -445,8 +502,8 @@ const ro = StyleSheet.create({
     },
     timerUnit: { fontSize: 10, color: COLORS.textMuted, fontFamily: FAMILY.bold, letterSpacing: 3, marginBottom: 48 },
     nextCard: {
-        width: "100%", backgroundColor: COLORS.bgCard,
-        borderRadius: 24, borderWidth: 1, borderColor: COLORS.border,
+        width: "100%", backgroundColor: COLORS.glassBg,
+        borderRadius: 24, borderWidth: 1, borderColor: COLORS.glassBorder,
         padding: 24, alignItems: "center", marginBottom: 32,
     },
     nextLabel: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2.5, marginBottom: 16 },
@@ -454,15 +511,18 @@ const ro = StyleSheet.create({
     nextImgBox: { width: "100%", height: 140, borderRadius: 16, overflow: "hidden", backgroundColor: "rgba(255,255,255,0.03)" },
     nextImg: { width: "100%", height: "100%", opacity: 0.5 },
     tipCard: {
-        width: "100%", minHeight: 44, alignItems: "center", justifyContent: "center", paddingHorizontal: 16, paddingVertical: 12, marginTop: 20,
+        width: "100%", minHeight: 54, alignItems: "center", justifyContent: "center",
+        paddingHorizontal: 20, paddingVertical: 14, marginTop: 20,
+        backgroundColor: "rgba(255,255,255,0.02)", borderRadius: 16,
+        borderWidth: 1, borderColor: COLORS.glassBorder,
     },
     tipText: {
-        fontSize: 13, lineHeight: 18, fontFamily: FAMILY.bold, color: COLORS.textMuted, textAlign: "center", opacity: 0.4, letterSpacing: 0.5,
+        fontSize: 12, lineHeight: 18, fontFamily: FAMILY.bold, color: COLORS.textSub, textAlign: "center", letterSpacing: 0.5,
     },
     nextTargetBox: {
         width: "100%", height: 140, borderRadius: 16, overflow: "hidden",
         backgroundColor: "rgba(255,255,255,0.02)", alignItems: "center", justifyContent: "center",
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.05)", padding: 16,
+        borderWidth: 1, borderColor: COLORS.glassBorder, padding: 16,
     },
     nextTargetText: {
         fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.textSub, letterSpacing: 1, textAlign: "center",
@@ -1193,17 +1253,19 @@ const styles = StyleSheet.create({
     topSub: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2.5, marginTop: 4 },
     quitBtn: {
         width: 36, height: 36, borderRadius: 10,
-        backgroundColor: "rgba(255,255,255,0.05)", alignItems: "center", justifyContent: "center",
+        backgroundColor: COLORS.glassBg, alignItems: "center", justifyContent: "center",
+        borderWidth: 1, borderColor: COLORS.glassBorder,
     },
     calBadge: {
-        backgroundColor: "rgba(255,255,255,0.05)",
+        backgroundColor: COLORS.glassBg,
         paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8,
         alignItems: "center",
+        borderWidth: 1, borderColor: "rgba(227,30,36,0.2)",
     },
     calValue: { fontSize: 13, color: COLORS.text, fontFamily: FAMILY.bold },
     calUnit: { fontSize: 7, color: COLORS.textMuted, fontFamily: FAMILY.bold, letterSpacing: 1 },
 
-    progressTrack: { height: 3, backgroundColor: "rgba(255,255,255,0.05)", width: "100%" },
+    progressTrack: { height: 4, backgroundColor: "rgba(255,255,255,0.04)", width: "100%" },
     progressFill: { height: "100%", backgroundColor: COLORS.primary },
 
     restContainer: { flex: 1, backgroundColor: COLORS.bg, justifyContent: "space-between", paddingBottom: 28 },
@@ -1276,16 +1338,18 @@ const styles = StyleSheet.create({
     logPRBtn: {
         flexDirection: "row", alignItems: "center", gap: 10,
         paddingVertical: 14, paddingHorizontal: 24, borderRadius: 14,
-        backgroundColor: "rgba(255,255,255,0.03)",
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
+        backgroundColor: COLORS.glassBg,
+        borderWidth: 1, borderColor: "rgba(227,30,36,0.25)",
         marginTop: 48,
+        shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1, shadowRadius: 8,
     },
     logPRText: { fontSize: 10, color: COLORS.accent, fontFamily: FAMILY.bold, letterSpacing: 1.5 },
 
     formCard: {
-        backgroundColor: COLORS.bgCard, marginTop: 40, marginHorizontal: 24,
+        backgroundColor: COLORS.glassBg, marginTop: 40, marginHorizontal: 24,
         marginBottom: 24, borderRadius: 24, padding: 24,
-        borderWidth: 1, borderColor: COLORS.border,
+        borderWidth: 1, borderColor: COLORS.glassBorder,
         width: width - 48,
     },
     formLabelRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 20 },
@@ -1302,9 +1366,9 @@ const styles = StyleSheet.create({
     workImg: { width: "100%", height: "100%", opacity: 0.8 },
     workInfoPanel: {
         width: width - 80, height: 180, borderRadius: 20,
-        backgroundColor: "rgba(255,255,255,0.02)",
+        backgroundColor: COLORS.glassBg,
         marginTop: 32, overflow: "hidden",
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
+        borderWidth: 1, borderColor: COLORS.glassBorder,
         alignItems: "center", justifyContent: "center", padding: 20,
     },
     infoPanelLabel: {
@@ -1320,15 +1384,15 @@ const styles = StyleSheet.create({
     infoPanelBadge: {
         flexDirection: "row", alignItems: "center", gap: 6,
         paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8,
-        borderWidth: 1, borderColor: COLORS.primaryDim, backgroundColor: "rgba(227,30,36,0.05)",
+        borderWidth: 1, borderColor: COLORS.glassBorder, backgroundColor: "rgba(255,255,255,0.02)",
     },
     infoPanelBadgeText: {
         fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 0.5,
     },
     jumpBtn: {
         width: 40, height: 40, borderRadius: 12,
-        backgroundColor: "rgba(255,255,255,0.05)", alignItems: "center", justifyContent: "center",
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
+        backgroundColor: COLORS.glassBg, alignItems: "center", justifyContent: "center",
+        borderWidth: 1, borderColor: COLORS.glassBorder,
     },
     modalBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.85)", justifyContent: "center", alignItems: "center" },
     jumpModal: {

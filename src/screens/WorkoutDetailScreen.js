@@ -23,6 +23,15 @@ function totalTime(day) {
     return Math.ceil(s / 60);
 }
 
+function getMuscleColor(target) {
+    const t = target.toUpperCase();
+    if (t.includes("CHEST") || t.includes("TRICEPS") || t.includes("PUSH")) return COLORS.primary; // Crimson
+    if (t.includes("BACK") || t.includes("BICEPS") || t.includes("PULL")) return "#FF9500"; // Gold
+    if (t.includes("LEGS") || t.includes("QUADS") || t.includes("LOWER")) return "#D1D1D1"; // Silver/Titanium
+    if (t.includes("SHOULDERS") || t.includes("CORE") || t.includes("ARMS")) return "#30B0C7"; // Steel teal
+    return "#8E8E93";
+}
+
 const estimateCalories = (durationMin) => {
     // MET values: 5.0 for resistance training
     // Simplified formula: 5.0 * 75kg * (mins / 60)
@@ -130,6 +139,7 @@ export default function WorkoutDetailScreen({ navigation, route }) {
                             expanded={expanded === i}
                             onPress={() => setExpanded(expanded === i ? null : i)}
                             onEdit={() => setEditExercise(ex)}
+                            dayTarget={day.target}
                         />
                     ))}
                 </View>
@@ -243,9 +253,10 @@ function MetaItem({ icon, val, label, accent }) {
     );
 }
 
-function ExerciseRow({ ex, index, total, expanded, onPress, onEdit }) {
+function ExerciseRow({ ex, index, total, expanded, onPress, onEdit, dayTarget }) {
     const isReps = ex.type === "reps" || (ex.type !== "timer" && ex.name.toLowerCase() !== "plank");
     const numLabel = String(index + 1).padStart(2, '0');
+    const targetColor = getMuscleColor(ex.primaryTarget || dayTarget || "");
 
     return (
         <TouchableOpacity
@@ -253,6 +264,7 @@ function ExerciseRow({ ex, index, total, expanded, onPress, onEdit }) {
             onPress={onPress}
             activeOpacity={0.75}
         >
+            <View style={[styles.exRowAccent, { backgroundColor: targetColor }]} />
             {/* ── Collapsed Row ── */}
             <View style={styles.exRowHeader}>
                 {/* Left: number */}
@@ -386,9 +398,9 @@ const styles = StyleSheet.create({
 
     metaStrip: {
         flexDirection: "row", alignItems: "center",
-        backgroundColor: "rgba(255,255,255,0.1)", borderRadius: 24,
+        backgroundColor: COLORS.glassBg, borderRadius: 24,
         marginHorizontal: 12, marginTop: -32, paddingVertical: 20, paddingHorizontal: 8,
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.15)",
+        borderWidth: 1, borderColor: COLORS.glassBorder,
         shadowColor: "#000", shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 20,
     },
     metaItem: {
@@ -417,9 +429,18 @@ const styles = StyleSheet.create({
         marginHorizontal: SPACING.base, gap: 12,
     },
     exRow: {
+        position: "relative",
         paddingHorizontal: 20, paddingVertical: 22,
-        backgroundColor: COLORS.bgCard, borderRadius: 24,
-        borderWidth: 1, borderColor: COLORS.border,
+        backgroundColor: COLORS.glassBg, borderRadius: 24,
+        borderWidth: 1, borderColor: COLORS.glassBorder,
+        overflow: "hidden",
+    },
+    exRowAccent: {
+        position: "absolute",
+        left: 0,
+        top: 0,
+        bottom: 0,
+        width: 4,
     },
     exRowHeader: { flexDirection: "row", alignItems: "center", gap: 14 },
     exRowNum: { width: 28, fontSize: 11, color: COLORS.accent, fontFamily: FAMILY.bold, letterSpacing: 1 },
@@ -458,9 +479,9 @@ const styles = StyleSheet.create({
 
     setsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 24 },
     setCell: {
-        width: "31%", backgroundColor: COLORS.bgSurface,
+        width: "31%", backgroundColor: COLORS.glassBg,
         borderRadius: 12, padding: 12, alignItems: "center",
-        borderWidth: 1, borderColor: COLORS.border
+        borderWidth: 1, borderColor: COLORS.glassBorder
     },
     setCellLabel: { fontSize: 8, color: COLORS.textMuted, marginBottom: 4, fontFamily: FAMILY.bold, letterSpacing: 1 },
     setCellWork: { fontSize: 18, fontFamily: FAMILY.display, color: COLORS.text },
@@ -479,11 +500,11 @@ const styles = StyleSheet.create({
     tipText: { fontSize: 14, color: COLORS.textSub, flex: 1, lineHeight: 22, fontFamily: FAMILY.regular },
 
     // Edit Modal Styles
-    modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.8)", justifyContent: "flex-end" },
+    modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.85)", justifyContent: "flex-end" },
     modalContent: {
-        backgroundColor: COLORS.bgCard, borderTopLeftRadius: 32, borderTopRightRadius: 32,
+        backgroundColor: COLORS.glassBg, borderTopLeftRadius: 32, borderTopRightRadius: 32,
         paddingHorizontal: 32, paddingTop: 32, paddingBottom: 12,
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", borderBottomWidth: 0,
+        borderWidth: 1, borderColor: COLORS.glassBorder, borderBottomWidth: 0,
     },
     modalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 32 },
     modalTitle: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 3 },
@@ -492,13 +513,18 @@ const styles = StyleSheet.create({
     inputBox: { flex: 1, gap: 12 },
     inputLabel: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1.5 },
     input: {
-        backgroundColor: "rgba(255,255,255,0.05)", borderRadius: 12, padding: 16,
+        backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 12, padding: 16,
         color: COLORS.text, fontSize: 18, fontFamily: FAMILY.display, textAlign: "center",
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
+        borderWidth: 1, borderColor: COLORS.glassBorder,
     },
     saveBtn: {
         backgroundColor: COLORS.primary, paddingVertical: 20, borderRadius: 16,
         alignItems: "center",
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.3,
+        shadowRadius: 15,
+        elevation: 5,
     },
     saveBtnText: { fontSize: 12, fontFamily: FAMILY.bold, color: "#fff", letterSpacing: 2 },
     editBtnSmall: {
