@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
     View, Text, TouchableOpacity, StyleSheet, Image,
-    Dimensions, StatusBar, ScrollView, Alert, Animated,
+    Dimensions, StatusBar, ScrollView, Animated,
     Modal, TextInput, KeyboardAvoidingView, Platform,
 } from "react-native";
+import { useNotification } from "../context/NotificationContext";
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from "react-native-svg";
 import * as Haptics from "expo-haptics";
 import { activateKeepAwakeAsync, deactivateKeepAwake } from "expo-keep-awake";
@@ -533,6 +534,7 @@ const ro = StyleSheet.create({
 export default function ActiveWorkoutScreen({ navigation, route }) {
     const { day } = route.params;
     const insets = useSafeAreaInsets();
+    const { showDialog } = useNotification();
     const [settings, setSettings] = useState({
         soundEnabled: true, vibrationEnabled: true, extraRestSec: 0,
         setLoggingEnabled: true, keepScreenOn: true, weightUnit: "kg",
@@ -576,17 +578,18 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
 
             e.preventDefault();
 
-            Alert.alert("QUIT WORKOUT?", "Your current progress won't be recorded.", [
-                { text: "KEEP GOING", style: "cancel" },
-                {
-                    text: "QUIT", style: "destructive",
-                    onPress: () => {
-                        clearInterval(intervalRef.current);
-                        clearInterval(elapsedRef.current);
-                        navigation.dispatch(e.data.action);
-                    }
-                },
-            ]);
+            showDialog({
+                title: "QUIT WORKOUT?",
+                message: "Your current progress won't be recorded.",
+                confirmText: "QUIT",
+                cancelText: "KEEP GOING",
+                isDestructive: true,
+                onConfirm: () => {
+                    clearInterval(intervalRef.current);
+                    clearInterval(elapsedRef.current);
+                    navigation.dispatch(e.data.action);
+                }
+            });
         });
         return unsubscribe;
     }, [navigation]);
@@ -856,7 +859,12 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
             });
         } catch (_) {
             completingRef.current = false;
-            Alert.alert("SAVE FAILED", "We couldn't finish saving this workout. Please try again.");
+            showDialog({
+                title: "SAVE FAILED",
+                message: "We couldn't finish saving this workout. Please try again.",
+                confirmText: "CLOSE",
+                singleButton: true
+            });
         }
     };
 

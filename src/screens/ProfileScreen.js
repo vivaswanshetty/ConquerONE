@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity, StyleSheet,
-    StatusBar, Alert, Image, ActivityIndicator, Animated,
+    StatusBar, Image, ActivityIndicator, Animated,
     Modal, TextInput, KeyboardAvoidingView, Platform, DeviceEventEmitter, InteractionManager
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -15,6 +15,7 @@ import * as Haptics from "expo-haptics";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../utils/firebase";
 import { useAuth } from "../context/AuthContext";
+import { useNotification } from "../context/NotificationContext";
 import { getStreak, getTotalWorkouts, getStreakLocal, getTotalWorkoutsLocal } from "../utils/storage";
 import { COLORS, SPACING, FAMILY, APP_VERSION } from "../utils/theme";
 import { uploadImage } from "../utils/cloudStorage";
@@ -182,87 +183,7 @@ function Card({ children }) {
 
 
 
-function CustomToast({ visible, message, type = "success", insets }) {
-    const opacityAnim = useRef(new Animated.Value(0)).current;
-    const slideAnim = useRef(new Animated.Value(-15)).current;
-    const [shouldRender, setShouldRender] = useState(visible);
 
-    useEffect(() => {
-        if (visible) {
-            setShouldRender(true);
-            Animated.parallel([
-                Animated.timing(opacityAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
-                Animated.timing(slideAnim, { toValue: 0, duration: 250, useNativeDriver: true }),
-            ]).start();
-        } else {
-            Animated.parallel([
-                Animated.timing(opacityAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
-                Animated.timing(slideAnim, { toValue: -15, duration: 200, useNativeDriver: true }),
-            ]).start(({ finished }) => {
-                if (finished) setShouldRender(false);
-            });
-        }
-    }, [visible]);
-
-    if (!shouldRender) return null;
-
-    const isError = type === "error";
-    const accentColor = isError ? COLORS.primary : "#22c55e";
-    const iconName = isError ? "alert-circle-outline" : "checkmark-circle-outline";
-
-    return (
-        <Animated.View style={[
-            styles.customToast,
-            {
-                top: insets.top + 60,
-                opacity: opacityAnim,
-                transform: [{ translateY: slideAnim }],
-                borderColor: `${accentColor}40`,
-            }
-        ]}>
-            <LinearGradient
-                colors={["rgba(15, 15, 15, 0.98)", "rgba(5, 5, 5, 0.99)"]}
-                style={StyleSheet.absoluteFill}
-            />
-            <Ionicons name={iconName} size={16} color={accentColor} />
-            <Text style={styles.customToastText}>{message.toUpperCase()}</Text>
-        </Animated.View>
-    );
-}
-
-function ConfirmationModal({ visible, title, message, confirmText = "CONFIRM", cancelText = "CANCEL", onConfirm, onCancel, isDestructive = false, singleButton = false }) {
-    return (
-        <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
-            <View style={styles.dialogOverlay}>
-                <View style={styles.dialogSheet}>
-                    <View style={styles.modalHandle} />
-                    <Text style={styles.dialogTitle}>{title.toUpperCase()}</Text>
-                    <Text style={styles.dialogMessage}>{message}</Text>
-                    <View style={styles.modalBtns}>
-                        {!singleButton && (
-                            <TouchableOpacity style={styles.modalCancelBtn} onPress={onCancel} activeOpacity={0.7}>
-                                <Text style={styles.modalCancelText}>{cancelText.toUpperCase()}</Text>
-                            </TouchableOpacity>
-                        )}
-                        <TouchableOpacity
-                            style={[
-                                styles.modalSaveBtn,
-                                isDestructive ? { backgroundColor: COLORS.primary } : { backgroundColor: COLORS.text }
-                            ]}
-                            onPress={onConfirm}
-                            activeOpacity={0.7}
-                        >
-                            <Text style={[
-                                styles.modalSaveText,
-                                isDestructive ? { color: "#fff" } : { color: "#000" }
-                            ]}>{confirmText.toUpperCase()}</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </View>
-        </Modal>
-    );
-}
 
 export default function ProfileScreen({ navigation }) {
     const insets = useSafeAreaInsets();
@@ -282,26 +203,7 @@ export default function ProfileScreen({ navigation }) {
     const liveDotOpacity = useRef(new Animated.Value(0.4)).current;
 
     const [editModal, setEditModal] = useState({ visible: false, field: "", title: "", value: "", type: "text" });
-    const [toast, setToast] = useState({ visible: false, message: "", type: "success" });
-    const [dialogState, setDialogState] = useState({
-        visible: false,
-        title: "",
-        message: "",
-        confirmText: "CONFIRM",
-        cancelText: "CANCEL",
-        onConfirm: () => {},
-        isDestructive: false,
-        singleButton: false,
-    });
-    const toastTimer = useRef(null);
-
-    const showToast = (message, type = "success") => {
-        clearTimeout(toastTimer.current);
-        setToast({ visible: true, message, type });
-        toastTimer.current = setTimeout(() => {
-            setToast(t => ({ ...t, visible: false }));
-        }, 3000);
-    };
+    const { showToast, showDialog } = useNotification();
 
     useEffect(() => {
         // Breathing ring 1 (chest/crimson accent)
@@ -463,8 +365,7 @@ export default function ProfileScreen({ navigation }) {
     };
 
     const handleLogout = () => {
-        setDialogState({
-            visible: true,
+        showDialog({
             title: "LOG OUT",
             message: "End your current session?",
             confirmText: "LOG OUT",
@@ -472,7 +373,6 @@ export default function ProfileScreen({ navigation }) {
             isDestructive: true,
             singleButton: false,
             onConfirm: () => {
-                setDialogState(prev => ({ ...prev, visible: false }));
                 signOut();
             }
         });
@@ -481,8 +381,7 @@ export default function ProfileScreen({ navigation }) {
     const handleSyncNow = async () => {
         // If already connected, offer to disconnect
         if (healthStatus === "active") {
-            setDialogState({
-                visible: true,
+            showDialog({
                 title: "Disconnect Google Fit?",
                 message: "This will stop syncing your workouts and health data with Health Connect.",
                 confirmText: "Disconnect",
@@ -490,7 +389,6 @@ export default function ProfileScreen({ navigation }) {
                 isDestructive: true,
                 singleButton: false,
                 onConfirm: async () => {
-                    setDialogState(prev => ({ ...prev, visible: false }));
                     setSyncing(true);
                     const revoked = await disconnectHealth();
                     if (revoked) {
@@ -546,8 +444,7 @@ export default function ProfileScreen({ navigation }) {
 
     const handleChangePassword = async () => {
         if (!email) return showToast("No email associated with account", "error");
-        setDialogState({
-            visible: true,
+        showDialog({
             title: "RESET PASSWORD",
             message: `We'll send a password reset link to:\n${email}`,
             confirmText: "SEND LINK",
@@ -555,7 +452,6 @@ export default function ProfileScreen({ navigation }) {
             isDestructive: false,
             singleButton: false,
             onConfirm: async () => {
-                setDialogState(prev => ({ ...prev, visible: false }));
                 setPwLoading(true);
                 try {
                     await sendPasswordResetEmail(auth, email);
@@ -574,8 +470,6 @@ export default function ProfileScreen({ navigation }) {
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#000" translucent />
-
-            <CustomToast visible={toast.visible} message={toast.message} type={toast.type} insets={insets} />
 
             {/* ── Floating Header Icons ── */}
             <View style={[styles.topBar, {
@@ -875,14 +769,12 @@ export default function ProfileScreen({ navigation }) {
                         icon="shield-checkmark-outline"
                         label="Data & Privacy"
                         sublabel="Encryption & data policies"
-                        onPress={() => setDialogState({
-                            visible: true,
+                        onPress={() => showDialog({
                             title: "DATA & PRIVACY",
                             message: "Your workout data is stored securely on Firebase with end-to-end encryption.\n\n• We never sell your personal data\n• Workout history is backed up to the cloud\n• You can delete your account at any time\n\nFor questions, contact support@conquer-one.app",
                             confirmText: "CLOSE",
                             singleButton: true,
-                            isDestructive: false,
-                            onConfirm: () => setDialogState(prev => ({ ...prev, visible: false }))
+                            isDestructive: false
                         })}
                         last
                     />
@@ -891,8 +783,7 @@ export default function ProfileScreen({ navigation }) {
                 <Card>
                     <TouchableOpacity
                         style={styles.dangerRow}
-                        onPress={() => setDialogState({
-                            visible: true,
+                        onPress={() => showDialog({
                             title: "DELETE ACCOUNT?",
                             message: "This will permanently delete your account and ALL workout data. This action cannot be undone.",
                             confirmText: "DELETE",
@@ -900,14 +791,12 @@ export default function ProfileScreen({ navigation }) {
                             isDestructive: true,
                             singleButton: false,
                             onConfirm: () => {
-                                setDialogState({
-                                    visible: true,
+                                showDialog({
                                     title: "CONTACT SUPPORT",
                                     message: "Email support@conquer-one.app to process your account deletion.",
                                     confirmText: "CLOSE",
                                     singleButton: true,
-                                    isDestructive: false,
-                                    onConfirm: () => setDialogState(prev => ({ ...prev, visible: false }))
+                                    isDestructive: false
                                 });
                             }
                         })}
@@ -936,18 +825,6 @@ export default function ProfileScreen({ navigation }) {
                 multiChoice={editModal.type === "choice"}
                 choices={GENDER_OPTIONS}
                 inputType={editModal.type}
-            />
-
-            <ConfirmationModal
-                visible={dialogState.visible}
-                title={dialogState.title}
-                message={dialogState.message}
-                confirmText={dialogState.confirmText}
-                cancelText={dialogState.cancelText}
-                onConfirm={dialogState.onConfirm}
-                onCancel={() => setDialogState(prev => ({ ...prev, visible: false }))}
-                isDestructive={dialogState.isDestructive}
-                singleButton={dialogState.singleButton}
             />
         </View>
     );

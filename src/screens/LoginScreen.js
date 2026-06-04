@@ -11,11 +11,12 @@ import { useAuth } from "../context/AuthContext";
 import { COLORS, FAMILY, SPACING } from "../utils/theme";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../utils/firebase";
-import { Alert } from "react-native";
+import { useNotification } from "../context/NotificationContext";
 
 export default function LoginScreen({ navigation }) {
     const insets = useSafeAreaInsets();
     const { signIn, signInWithGoogle, signInWithApple } = useAuth();
+    const { showDialog } = useNotification();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -78,10 +79,12 @@ export default function LoginScreen({ navigation }) {
         setLoading(true);
         try {
             await sendPasswordResetEmail(auth, email.trim());
-            Alert.alert(
-                "✅ Reset Link Sent",
-                `We have sent a password reset link to ${email.trim()}. Please check your inbox and spam folder.`
-            );
+            showDialog({
+                title: "RESET LINK SENT",
+                message: `We have sent a password reset link to ${email.trim()}. Please check your inbox and spam folder.`,
+                confirmText: "UNDERSTOOD",
+                singleButton: true
+            });
         } catch (e) {
             setError(e.message);
         } finally {
@@ -199,7 +202,12 @@ export default function LoginScreen({ navigation }) {
                             </TouchableOpacity>
 
                             {Platform.OS === 'ios' && (
-                                <TouchableOpacity style={[styles.socialBtn, { opacity: 0.5 }]} onPress={() => Alert.alert("Coming Soon", "Apple Sign-In will be available once we enroll in the Apple Developer Program.")} activeOpacity={0.7}>
+                                <TouchableOpacity style={[styles.socialBtn, { opacity: 0.5 }]} onPress={() => showDialog({
+                                    title: "COMING SOON",
+                                    message: "Apple Sign-In will be available once we enroll in the Apple Developer Program.",
+                                    confirmText: "CLOSE",
+                                    singleButton: true
+                                })} activeOpacity={0.7}>
                                     <Ionicons name="logo-apple" size={18} color="#fff" />
                                     <Text style={styles.socialBtnText}>COMING SOON</Text>
                                 </TouchableOpacity>

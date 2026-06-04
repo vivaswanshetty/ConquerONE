@@ -46,8 +46,8 @@ import RankScreen from "./src/screens/RankScreen";
 import ProtocolIntelScreen from "./src/screens/ProtocolIntelScreen";
 import NetworkBanner from "./src/components/NetworkBanner";
 
-// Auth
 import { AuthProvider, useAuth } from "./src/context/AuthContext";
+import { NotificationProvider } from "./src/context/NotificationContext";
 
 SplashScreen.preventAutoHideAsync().catch(() => { });
 
@@ -236,17 +236,19 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutRootView}>
       <SafeAreaProvider>
-        <StatusBar style="light" />
-        <AuthProvider>
-          <NetworkBanner />
-          {isDownloadingUpdate ? (
-            <UpdateScreen />
-          ) : (
-            <NavigationContainer>
-              <RootNavigator fontsLoaded={fontsLoaded} />
-            </NavigationContainer>
-          )}
-        </AuthProvider>
+        <NotificationProvider>
+          <StatusBar style="light" />
+          <AuthProvider>
+            <NetworkBanner />
+            {isDownloadingUpdate ? (
+              <UpdateScreen />
+            ) : (
+              <NavigationContainer>
+                <RootNavigator fontsLoaded={fontsLoaded} />
+              </NavigationContainer>
+            )}
+          </AuthProvider>
+        </NotificationProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

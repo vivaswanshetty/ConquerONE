@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useRef, useMemo } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity, StyleSheet,
-    TextInput, StatusBar, Dimensions, Animated, Alert, KeyboardAvoidingView, Platform,
+    TextInput, StatusBar, Dimensions, Animated, KeyboardAvoidingView, Platform,
 } from "react-native";
+import { useNotification } from "../context/NotificationContext";
 import Svg, { Polyline, Circle, Path, Defs, LinearGradient as SvgGradient, Stop } from "react-native-svg";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
@@ -177,6 +178,7 @@ const STAT_FIELDS = [
 /* ── MAIN ──────────────────────────────────────────────────────── */
 export default function ProgressScreen({ navigation }) {
     const insets = useSafeAreaInsets();
+    const { showDialog } = useNotification();
     const [tab, setTab] = useState(0);
     const [bodyStats, setBodyStats] = useState([]);
     const [prRecords, setPRRecords] = useState({});
@@ -215,7 +217,12 @@ export default function ProgressScreen({ navigation }) {
     const handleSave = async () => {
         const hasAny = Object.values(form).some(v => v.trim() !== "");
         if (!hasAny) {
-            Alert.alert("INPUT REQUIRED", "Capture at least one tactical measurement.");
+            showDialog({
+                title: "INPUT REQUIRED",
+                message: "Capture at least one tactical measurement.",
+                confirmText: "CLOSE",
+                singleButton: true
+            });
             return;
         }
         setSaving(true);

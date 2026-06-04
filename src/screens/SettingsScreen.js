@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-    View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar, Alert, Platform, Animated, Modal, Share,
+    View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar, Platform, Animated, Modal, Share,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
@@ -22,6 +22,7 @@ import {
 } from "../utils/notifications";
 import UpdateScreen from "./UpdateScreen";
 import { useAuth } from "../context/AuthContext";
+import { useNotification } from "../context/NotificationContext";
 
 
 /* --- Legal Content --- */
@@ -79,6 +80,7 @@ export default function SettingsScreen({ navigation, route }) {
     const scrollRef = useRef(null);
     const notificationsY = useRef(0);
     const { user, profile = null } = useAuth();
+    const { showDialog } = useNotification();
     const displayName = profile?.fullName || user?.displayName || "Athlete";
     const [settings, setSettings] = useState(DEFAULT_SETTINGS);
     const [saved, setSaved] = useState(false);
@@ -135,7 +137,12 @@ export default function SettingsScreen({ navigation, route }) {
         if (val) {
             const granted = await requestNotifPermission();
             if (!granted) {
-                Alert.alert("PERMISSION GRANTED", "Enable notifications in tactical settings to activate reminders.");
+                showDialog({
+                    title: "PERMISSION REQUIRED",
+                    message: "Enable notifications in settings to activate reminders.",
+                    confirmText: "CLOSE",
+                    singleButton: true
+                });
                 return;
             }
             await scheduleReminder(reminder.hour, reminder.minute);
@@ -153,14 +160,24 @@ export default function SettingsScreen({ navigation, route }) {
             if (success) {
                 setIsFrozenToday(false);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-                Alert.alert("FREEZE WITHDRAWN", "Streak protection removed. Go get after it, Athlete!");
+                showDialog({
+                    title: "FREEZE WITHDRAWN",
+                    message: "Streak protection removed. Go get after it, Athlete!",
+                    confirmText: "CLOSE",
+                    singleButton: true
+                });
             }
         } else {
             const success = await applyStreakFreeze();
             if (success) {
                 setIsFrozenToday(true);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                Alert.alert("STREAK FROZEN", "Your streak is protected for today. Rest up!");
+                showDialog({
+                    title: "STREAK FROZEN",
+                    message: "Your streak is protected for today. Rest up!",
+                    confirmText: "CLOSE",
+                    singleButton: true
+                });
             }
         }
         setFreezing(false);
@@ -605,21 +622,17 @@ export default function SettingsScreen({ navigation, route }) {
                         style={styles.dangerRow}
                         activeOpacity={0.7}
                         onPress={() =>
-                            Alert.alert(
-                                "ERASE HISTORY?",
-                                "Permanently delete session archives, streaks, and performance metrics. Control settings persist.",
-                                [
-                                    { text: "ABORT", style: "cancel" },
-                                    {
-                                        text: "CONFIRM ERASURE",
-                                        style: "destructive",
-                                        onPress: async () => {
-                                            await clearHistory();
-                                            flash();
-                                        },
-                                    },
-                                ]
-                            )
+                            showDialog({
+                                title: "ERASE HISTORY?",
+                                message: "Permanently delete session archives, streaks, and performance metrics. Control settings persist.",
+                                confirmText: "CONFIRM ERASURE",
+                                cancelText: "ABORT",
+                                isDestructive: true,
+                                onConfirm: async () => {
+                                    await clearHistory();
+                                    flash();
+                                }
+                            })
                         }
                     >
                         <Ionicons name="trash-outline" size={18} color={COLORS.accent} style={{ marginRight: 16 }} />
@@ -635,21 +648,17 @@ export default function SettingsScreen({ navigation, route }) {
                         style={styles.dangerRow}
                         activeOpacity={0.7}
                         onPress={() =>
-                            Alert.alert(
-                                "RESET EVERYTHING?",
-                                "All history and settings will be wiped. The app will return to its original state.",
-                                [
-                                    { text: "ABORT", style: "cancel" },
-                                    {
-                                        text: "RESET",
-                                        style: "destructive",
-                                        onPress: async () => {
-                                            await clearAllData();
-                                            navigation.replace("Onboarding");
-                                        },
-                                    },
-                                ]
-                            )
+                            showDialog({
+                                title: "RESET EVERYTHING?",
+                                message: "All history and settings will be wiped. The app will return to its original state.",
+                                confirmText: "RESET",
+                                cancelText: "ABORT",
+                                isDestructive: true,
+                                onConfirm: async () => {
+                                    await clearAllData();
+                                    navigation.replace("Onboarding");
+                                }
+                            })
                         }
                     >
                         <Ionicons name="nuclear-outline" size={18} color={COLORS.accent} style={{ marginRight: 16 }} />
@@ -663,22 +672,18 @@ export default function SettingsScreen({ navigation, route }) {
                 <TouchableOpacity
                     style={styles.resetBtn}
                     onPress={() => {
-                        Alert.alert(
-                            'RESTORE DEFAULTS?',
-                            'This will reset all settings to their original values. Your workout data will NOT be affected.',
-                            [
-                                { text: 'CANCEL', style: 'cancel' },
-                                {
-                                    text: 'RESET',
-                                    style: 'destructive',
-                                    onPress: async () => {
-                                        await saveSettings(DEFAULT_SETTINGS);
-                                        setSettings(DEFAULT_SETTINGS);
-                                        flash();
-                                    }
-                                }
-                            ]
-                        );
+                        showDialog({
+                            title: "RESTORE DEFAULTS?",
+                            message: "This will reset all settings to their original values. Your workout data will NOT be affected.",
+                            confirmText: "RESET",
+                            cancelText: "CANCEL",
+                            isDestructive: true,
+                            onConfirm: async () => {
+                                await saveSettings(DEFAULT_SETTINGS);
+                                setSettings(DEFAULT_SETTINGS);
+                                flash();
+                            }
+                        });
                     }}
                     activeOpacity={0.7}
                 >

@@ -3,8 +3,9 @@ import {
     View, Text, StyleSheet, ScrollView, TextInput,
     TouchableOpacity, KeyboardAvoidingView, Platform,
     ActivityIndicator, Keyboard, Animated, Dimensions,
-    Modal, Alert, FlatList,
+    Modal, FlatList,
 } from "react-native";
+import { useNotification } from "../context/NotificationContext";
 import { Ionicons } from "@expo/vector-icons";
 import { ScrollView as GHScrollView } from "react-native-gesture-handler";
 import * as Haptics from "expo-haptics";
@@ -352,6 +353,7 @@ const hm = StyleSheet.create({
 /* ── Main Screen ───────────────────────────────────────── */
 export default function AICoachScreen({ navigation }) {
     const insets = useSafeAreaInsets();
+    const { showDialog } = useNotification();
     const [messages, setMessages] = useState([{ ...WELCOME_MSG }]);
     const [inputText, setInputText] = useState("");
     const [loading, setLoading] = useState(false);
@@ -571,24 +573,20 @@ export default function AICoachScreen({ navigation }) {
     };
 
     const startNewChat = () => {
-        Alert.alert(
-            'NEW CHAT',
-            'Start a fresh conversation? Current chat will be saved to history.',
-            [
-                { text: 'CANCEL', style: 'cancel' },
-                {
-                    text: 'NEW CHAT',
-                    onPress: () => {
-                        saveCurrentSession(messages);
-                        sessionIdRef.current = Date.now().toString(); // New session ID
-                        setMessages([{ ...WELCOME_MSG, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
-                        setInputText('');
-                        setShowChips(true);
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    }
-                }
-            ]
-        );
+        showDialog({
+            title: "NEW CHAT",
+            message: "Start a fresh conversation? Current chat will be saved to history.",
+            confirmText: "NEW CHAT",
+            cancelText: "CANCEL",
+            onConfirm: () => {
+                saveCurrentSession(messages);
+                sessionIdRef.current = Date.now().toString(); // New session ID
+                setMessages([{ ...WELCOME_MSG, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+                setInputText('');
+                setShowChips(true);
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }
+        });
     };
 
     const restoreSession = (session) => {
@@ -607,17 +605,18 @@ export default function AICoachScreen({ navigation }) {
     };
 
     const clearAllSessions = () => {
-        Alert.alert('CLEAR ALL HISTORY?', 'This will permanently delete all past conversations.', [
-            { text: 'CANCEL', style: 'cancel' },
-            {
-                text: 'CLEAR ALL', style: 'destructive',
-                onPress: async () => {
-                    setSessions([]);
-                    await AsyncStorage.removeItem(CHAT_HISTORY_KEY);
-                    setShowHistory(false);
-                }
+        showDialog({
+            title: "CLEAR ALL HISTORY?",
+            message: "This will permanently delete all past conversations.",
+            confirmText: "CLEAR ALL",
+            cancelText: "CANCEL",
+            isDestructive: true,
+            onConfirm: async () => {
+                setSessions([]);
+                await AsyncStorage.removeItem(CHAT_HISTORY_KEY);
+                setShowHistory(false);
             }
-        ]);
+        });
     };
 
     const getSpeechOpts = useCallback(() => {

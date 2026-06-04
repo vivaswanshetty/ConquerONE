@@ -1,7 +1,8 @@
 import React, { useState, useCallback, useMemo } from "react";
 import {
-    View, Text, ScrollView, StyleSheet, TouchableOpacity, StatusBar, Dimensions, Share, Alert,
+    View, Text, ScrollView, StyleSheet, TouchableOpacity, StatusBar, Dimensions, Share,
 } from "react-native";
+import { useNotification } from "../context/NotificationContext";
 import Svg, { Polyline, Circle, Path, Defs, LinearGradient as SvgGradient, Stop } from "react-native-svg";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -342,6 +343,7 @@ const hr = StyleSheet.create({
 /* ── Main screen ──────────────────────────────────────────── */
 export default function HistoryScreen({ navigation }) {
     const insets = useSafeAreaInsets();
+    const { showDialog } = useNotification();
     const [history, setHistory] = useState([]);
     const [streak, setStreak] = useState(0);
     const [total, setTotal] = useState(0);
@@ -398,7 +400,12 @@ export default function HistoryScreen({ navigation }) {
 
     const exportHistory = async () => {
         if (history.length === 0) {
-            Alert.alert("No Data", "Complete some workouts first to export history.");
+            showDialog({
+                title: "NO DATA",
+                message: "Complete some workouts first to export history.",
+                confirmText: "CLOSE",
+                singleButton: true
+            });
             return;
         }
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -424,7 +431,12 @@ export default function HistoryScreen({ navigation }) {
                 title: "CONQUER ONE - Workout History",
             });
         } catch (e) {
-            Alert.alert("Export Failed", e.message);
+            showDialog({
+                title: "EXPORT FAILED",
+                message: e.message,
+                confirmText: "CLOSE",
+                singleButton: true
+            });
         }
     };
 

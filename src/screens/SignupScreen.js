@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import {
     View, Text, TextInput, TouchableOpacity,
     StyleSheet, StatusBar, ActivityIndicator,
-    KeyboardAvoidingView, Platform, ScrollView, Alert,
+    KeyboardAvoidingView, Platform, ScrollView,
 } from "react-native";
+import { useNotification } from "../context/NotificationContext";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -18,6 +19,7 @@ const GENDER_OPTIONS = ["Male", "Female", "Other", "Prefer not to say"];
 export default function SignupScreen({ navigation }) {
     const insets = useSafeAreaInsets();
     const { signUp, verifyEmail, signInWithGoogle, signInWithApple } = useAuth();
+    const { showDialog } = useNotification();
 
     const [fullName, setFullName] = useState("");
     const [email, setEmail] = useState("");
@@ -62,7 +64,12 @@ export default function SignupScreen({ navigation }) {
             await AsyncStorage.setItem(ONBOARDING_KEY, "1");
             // Send verification email
             await verifyEmail();
-            Alert.alert("✅ Account Created", "Please check your inbox to verify your email address.");
+            showDialog({
+                title: "ACCOUNT CREATED",
+                message: "Please check your inbox to verify your email address.",
+                confirmText: "UNDERSTOOD",
+                singleButton: true
+            });
             // Auth state change in App.js will navigate to Main
         } catch (e) {
             console.error("[Signup] Error:", e.code, e.message);
@@ -287,7 +294,12 @@ export default function SignupScreen({ navigation }) {
                             </TouchableOpacity>
 
                             {Platform.OS === 'ios' && (
-                                <TouchableOpacity style={[styles.socialBtn, { opacity: 0.5 }]} onPress={() => Alert.alert("Coming Soon", "Apple Sign-In will be available once we enroll in the Apple Developer Program.")} activeOpacity={0.7}>
+                                <TouchableOpacity style={[styles.socialBtn, { opacity: 0.5 }]} onPress={() => showDialog({
+                                    title: "COMING SOON",
+                                    message: "Apple Sign-In will be available once we enroll in the Apple Developer Program.",
+                                    confirmText: "CLOSE",
+                                    singleButton: true
+                                })} activeOpacity={0.7}>
                                     <Ionicons name="logo-apple" size={18} color="#fff" />
                                     <Text style={styles.socialBtnText}>COMING SOON</Text>
                                 </TouchableOpacity>
