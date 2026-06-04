@@ -15,7 +15,7 @@ import {
     getLastFreezeDate, withdrawStreakFreeze, checkAndCleanStreak,
     getStreakLocal, getTotalWorkoutsLocal, applyStreakFreeze,
     getXP, getXPLocal, getRecordStreak, getRecordStreakLocal,
-    getWorkoutHistory, getWorkoutHistoryLocal
+    getWorkoutHistory, getWorkoutHistoryLocal, getPreviousFreezeDate
 } from "../utils/storage";
 import MaskedView from "@react-native-masked-view/masked-view";
 import * as Haptics from "expo-haptics";
@@ -302,6 +302,8 @@ export default function HomeScreen({ navigation, route }) {
     const [todayDay, setTodayDay] = useState(1);
     const [greeting, setGreeting] = useState("COMMANDER");
     const [isFrozen, setIsFrozen] = useState(false);
+    const [lastFreezeDate, setLastFreezeDate] = useState(null);
+    const [previousFreezeDate, setPreviousFreezeDate] = useState(null);
     const [freezeModal, setFreezeModal] = useState(false);
     const [streakResetModal, setStreakResetModal] = useState(false);
     const [prevStreak, setPrevStreak] = useState(0);
@@ -381,12 +383,15 @@ export default function HomeScreen({ navigation, route }) {
             const cachedRecord = await getRecordStreakLocal();
             const cachedHistory = await getWorkoutHistoryLocal();
             const cachedFreeze = await getLastFreezeDate();
+            const cachedPrevFreeze = await getPreviousFreezeDate();
 
             setStreak(cachedStreak);
             setTotal(cachedTotal);
             setXP(cachedXP);
             setRecordStreak(cachedRecord);
             setHistory(cachedHistory);
+            setLastFreezeDate(cachedFreeze);
+            setPreviousFreezeDate(cachedPrevFreeze);
 
             const { completedDays: localComp, freezeDays: localFrz } = getWeekStats(cachedHistory, cachedFreeze);
             setCompletedDays(localComp);
@@ -410,17 +415,20 @@ export default function HomeScreen({ navigation, route }) {
 
         // 3. Background cloud sync
         try {
-            const [nextStreak, nextTotal, lastFreeze, nextXP, nextRecord, nextHistory] = await Promise.all([
+            const [nextStreak, nextTotal, lastFreeze, nextXP, nextRecord, nextHistory, nextPrevFreeze] = await Promise.all([
                 getStreak(),
                 getTotalWorkouts(),
                 getLastFreezeDate(),
                 getXP(),
                 getRecordStreak(),
                 getWorkoutHistory(),
+                getPreviousFreezeDate(),
             ]);
             setStreak(nextStreak);
             setTotal(nextTotal);
             setIsFrozen(lastFreeze === new Date().toISOString().split("T")[0]);
+            setLastFreezeDate(lastFreeze);
+            setPreviousFreezeDate(nextPrevFreeze);
             setXP(nextXP);
             setRecordStreak(nextRecord);
             setHistory(nextHistory);
@@ -439,6 +447,7 @@ export default function HomeScreen({ navigation, route }) {
             setIsFrozen(false);
             setFreezeModal(false);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            loadStats();
         }
     };
 
@@ -665,9 +674,23 @@ export default function HomeScreen({ navigation, route }) {
                                                         isFuture && { borderStyle: "dashed", borderColor: "rgba(255, 255, 255, 0.1)" }
                                                     ]}
                                                 >
-                                                    {isCompleted && <Ionicons name="checkmark" size={10} color="#fff" />}
-                                                    {isDayFrozen && <Ionicons name="snow" size={10} color="#60A5FA" />}
-                                                    {isToday && !isCompleted && !isDayFrozen && <View style={styles.gridCellTodayDot} />}
+                                                    {isCompleted ? (
+                                                        <>
+                                                            <Ionicons name="checkmark" size={10} color="#fff" />
+                                                            {isDayFrozen && (
+                                                                <Ionicons 
+                                                                    name="snow" 
+                                                                    size={7} 
+                                                                    color="#60A5FA" 
+                                                                    style={{ position: "absolute", bottom: -2.5, right: -2.5 }} 
+                                                                />
+                                                            )}
+                                                        </>
+                                                    ) : isDayFrozen ? (
+                                                        <Ionicons name="snow" size={10} color="#60A5FA" />
+                                                    ) : (
+                                                        isToday && !isCompleted && !isDayFrozen && <View style={styles.gridCellTodayDot} />
+                                                    )}
                                                 </View>
                                                 <Text style={[styles.gridCellLabel, isToday && { color: COLORS.primary }]}>{label[0]}</Text>
                                             </View>
@@ -1162,6 +1185,21 @@ export default function HomeScreen({ navigation, route }) {
                                             ? "Today is frozen. Missing a session won't break your streak." 
                                             : "Freeze today if you need a recovery or rest day. Shields active."}
                                     </Text>
+                                    {(() => {
+                                        const displayDate = isFrozen ? previousFreezeDate : lastFreezeDate;
+                                        if (!displayDate) return null;
+                                        try {
+                                            const date = new Date(displayDate);
+                                            const formatted = date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }).toUpperCase();
+                                            return (
+                                                <Text style={styles.previousFreezeText}>
+                                                    PREVIOUS SHIELD: {formatted}
+                                                </Text>
+                                            );
+                                        } catch {
+                                            return null;
+                                        }
+                                    })()}
                                 </View>
                                 <TouchableOpacity 
                                     style={[
@@ -1922,6 +1960,13 @@ const styles = StyleSheet.create({
         fontSize: 8,
         color: COLORS.textMuted,
         lineHeight: 12,
+    },
+    previousFreezeText: {
+        fontFamily: FAMILY.bold,
+        fontSize: 7.5,
+        color: "#60A5FA",
+        letterSpacing: 0.5,
+        marginTop: 6,
     },
     freezeToggleButton: {
         paddingHorizontal: 12,

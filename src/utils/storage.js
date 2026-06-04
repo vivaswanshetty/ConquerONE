@@ -25,6 +25,7 @@ const KEYS = {
     PR_RECORDS: "pr_records",
     BODY_STATS: "body_stats",
     LAST_FREEZE_DATE: "last_freeze_date",
+    PREVIOUS_FREEZE_DATE: "previous_freeze_date",
     XP: "workout_xp",
     RECORD_STREAK: "record_streak",
 };
@@ -408,6 +409,10 @@ export const saveBodyStat = async (entry) => {
 export const applyStreakFreeze = async () => {
     try {
         const today = new Date().toISOString().split("T")[0];
+        const currentLast = await AsyncStorage.getItem(KEYS.LAST_FREEZE_DATE);
+        if (currentLast && currentLast !== today) {
+            await AsyncStorage.setItem(KEYS.PREVIOUS_FREEZE_DATE, currentLast);
+        }
         await AsyncStorage.setItem(KEYS.LAST_FREEZE_DATE, today);
         triggerAutoSync();
         return true;
@@ -422,7 +427,13 @@ export const applyStreakFreeze = async () => {
  */
 export const withdrawStreakFreeze = async () => {
     try {
-        await AsyncStorage.removeItem(KEYS.LAST_FREEZE_DATE);
+        const prev = await AsyncStorage.getItem(KEYS.PREVIOUS_FREEZE_DATE);
+        if (prev) {
+            await AsyncStorage.setItem(KEYS.LAST_FREEZE_DATE, prev);
+            await AsyncStorage.removeItem(KEYS.PREVIOUS_FREEZE_DATE);
+        } else {
+            await AsyncStorage.removeItem(KEYS.LAST_FREEZE_DATE);
+        }
         triggerAutoSync();
         return true;
     } catch {
@@ -433,6 +444,14 @@ export const withdrawStreakFreeze = async () => {
 export const getLastFreezeDate = async () => {
     try {
         return await AsyncStorage.getItem(KEYS.LAST_FREEZE_DATE);
+    } catch {
+        return null;
+    }
+};
+
+export const getPreviousFreezeDate = async () => {
+    try {
+        return await AsyncStorage.getItem(KEYS.PREVIOUS_FREEZE_DATE);
     } catch {
         return null;
     }
