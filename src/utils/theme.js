@@ -42,6 +42,11 @@ export const COLORS = {
     timerWorkDim: "rgba(255,255,255,0.10)",
     timerRest: "#2C2C2E",
     timerRestDim: "rgba(44,44,46,0.50)",
+
+    // ── Glassmorphic & Neon glows ──────────────────────────────
+    glassBg: "rgba(13, 13, 13, 0.75)",
+    glassBorder: "rgba(255, 255, 255, 0.06)",
+    glowRed: "rgba(227, 30, 36, 0.45)",
 };
 
 export const GRADIENTS = {

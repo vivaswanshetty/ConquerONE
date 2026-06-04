@@ -34,6 +34,15 @@ function totalTime(day) {
     return Math.ceil(s / 60);
 }
 
+function getMuscleColor(target) {
+    const t = target.toUpperCase();
+    if (t.includes("CHEST") || t.includes("TRICEPS") || t.includes("PUSH")) return COLORS.primary; // Crimson
+    if (t.includes("BACK") || t.includes("BICEPS") || t.includes("PULL")) return "#FF9500"; // Gold
+    if (t.includes("LEGS") || t.includes("QUADS") || t.includes("LOWER")) return "#D1D1D1"; // Silver/Titanium
+    if (t.includes("SHOULDERS") || t.includes("CORE") || t.includes("ARMS")) return "#30B0C7"; // Steel teal
+    return "#8E8E93";
+}
+
 function GradientText({ text, style, colors = GRADIENTS.diamond, height = 50 }) {
     return (
         <MaskedView
@@ -65,6 +74,12 @@ export default function HomeScreen({ navigation }) {
     const [freezeModal, setFreezeModal] = useState(false);
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
+    // Animations
+    const avatarGlow = useRef(new Animated.Value(0.3)).current;
+    const avatarScale = useRef(new Animated.Value(1)).current;
+    const dotOpacity = useRef(new Animated.Value(0.4)).current;
+    const sparkAnims = useRef([4, 6, 3, 8, 5, 9, 7].map(() => new Animated.Value(0))).current;
+
     const displayName = profile?.fullName?.split(" ")[0] || user?.displayName?.split(" ")[0] || "ATHLETE";
 
     useFocusEffect(useCallback(() => {
@@ -80,7 +95,37 @@ export default function HomeScreen({ navigation }) {
 
         const d = new Date().getDay();
         setTodayDay(d === 0 ? 7 : d);
-        Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }).start();
+
+        // Breathing avatar loop
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(avatarGlow, { toValue: 1, duration: 1500, useNativeDriver: true }),
+                Animated.timing(avatarGlow, { toValue: 0.3, duration: 1500, useNativeDriver: true }),
+            ])
+        ).start();
+
+        // Blinking indicator dot loop
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(dotOpacity, { toValue: 1, duration: 1000, useNativeDriver: true }),
+                Animated.timing(dotOpacity, { toValue: 0.4, duration: 1000, useNativeDriver: true }),
+            ])
+        ).start();
+
+        // Animate sparkline graph
+        const animations = sparkAnims.map((anim, i) => {
+            const targets = [4, 6, 3, 8, 5, 9, 7];
+            return Animated.timing(anim, {
+                toValue: targets[i] * 2.2,
+                duration: 650 + i * 90,
+                useNativeDriver: false,
+            });
+        });
+
+        Animated.parallel([
+            Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+            ...animations
+        ]).start();
     }, []);
 
     const loadStats = async () => {
@@ -103,13 +148,35 @@ export default function HomeScreen({ navigation }) {
         }
     };
 
+    const handleAvatarPressIn = () => {
+        Animated.spring(avatarScale, {
+            toValue: 0.92,
+            useNativeDriver: true,
+        }).start();
+    };
+
+    const handleAvatarPressOut = () => {
+        Animated.spring(avatarScale, {
+            toValue: 1,
+            friction: 4,
+            useNativeDriver: true,
+        }).start();
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        navigation.navigate("Profile");
+    };
+
+    const handleWeekCellPress = (day) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        navigation.navigate("WorkoutDetail", { day });
+    };
+
     const todayWorkout = todayDay <= 6 ? WORKOUT_PLAN[todayDay - 1] : null;
 
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#000" translucent />
 
-            {/* Ambient Ambient Glow */}
+            {/* Ambient Glow */}
             <View style={StyleSheet.absoluteFill}>
                 <LinearGradient
                     colors={["rgba(227,30,36,0.12)", "transparent", "transparent"]}
@@ -135,45 +202,10 @@ export default function HomeScreen({ navigation }) {
                                 height={42}
                             />
                         </View>
-                        <TouchableOpacity
-                            style={styles.profileCircle}
-                            onPress={() => navigation.navigate("Profile")}
-                            activeOpacity={0.8}
-                        >
-                            {profile?.photoURL ? (
-                                <Image source={{ uri: profile.photoURL }} style={styles.headerAvatar} />
-                            ) : (
-                                <View style={styles.avatarPlaceholder}>
-                                    <Text style={styles.avatarText}>{displayName[0]}</Text>
-                                </View>
-                            )}
-                        </TouchableOpacity>
-                    </View>
-
-                    <View style={styles.levelProgressRow}>
-                        <View style={styles.levelContainer}>
-                            <View style={styles.levelBar}>
-                                <LinearGradient
-                                    colors={[COLORS.primary, '#FF4D4D']}
-                                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                                    style={[styles.levelFill, { width: `${total === 0 ? 0 : total % 10 === 0 ? 100 : ((total % 10) / 10) * 100}%` }]}
-                                />
-                            </View>
-                            <Text style={styles.levelText} numberOfLines={1} adjustsFontSizeToFit>
-                                LVL {String(Math.min(Math.floor(total / 10) + 1, 99)).padStart(2, '0')} · {
-                                    total >= 100 ? 'LEGEND' :
-                                        total >= 50 ? 'TITAN' :
-                                            total >= 25 ? 'WARRIOR' :
-                                                total >= 10 ? 'RISING STAR' :
-                                                    total >= 5 ? 'ROOKIE' : 'RECRUIT'
-                                }
-                            </Text>
-                        </View>
-                        <View style={{ flex: 1 }} />
-                        <View style={styles.headerSmallActions}>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                             {isFrozen && (
                                 <TouchableOpacity
-                                    style={[styles.iconBtnSm, { backgroundColor: 'rgba(96,165,250,0.15)', borderColor: 'rgba(96,165,250,0.3)', marginRight: 4 }]}
+                                    style={[styles.iconBtnSm, { backgroundColor: 'rgba(96,165,250,0.15)', borderColor: 'rgba(96,165,250,0.3)' }]}
                                     onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setFreezeModal(true); }}
                                     activeOpacity={0.7}
                                 >
@@ -183,12 +215,76 @@ export default function HomeScreen({ navigation }) {
                             <TouchableOpacity style={styles.iconBtnSm} onPress={() => navigation.navigate("AICoach")} activeOpacity={0.7}>
                                 <Ionicons name="flash" size={16} color={COLORS.primary} />
                             </TouchableOpacity>
-                            <TouchableOpacity style={[styles.iconBtnSm, { marginLeft: 8 }]} onPress={() => navigation.navigate("History")} activeOpacity={0.7}>
+                            <TouchableOpacity style={styles.iconBtnSm} onPress={() => navigation.navigate("History")} activeOpacity={0.7}>
                                 <Ionicons name="time-outline" size={16} color={COLORS.text} />
                             </TouchableOpacity>
-                            <TouchableOpacity style={[styles.iconBtnSm, { marginLeft: 8 }]} onPress={() => navigation.navigate("Settings")} activeOpacity={0.7}>
-                                <Ionicons name="settings-outline" size={16} color={COLORS.text} />
-                            </TouchableOpacity>
+                            
+                            <View style={styles.avatarContainer}>
+                                <Animated.View style={[styles.avatarGlowRing, { opacity: avatarGlow }]} />
+                                <Animated.View style={{ transform: [{ scale: avatarScale }] }}>
+                                    <TouchableOpacity
+                                        style={styles.profileCircle}
+                                        onPressIn={handleAvatarPressIn}
+                                        onPressOut={handleAvatarPressOut}
+                                        activeOpacity={1}
+                                    >
+                                        {profile?.photoURL ? (
+                                            <Image source={{ uri: profile.photoURL }} style={styles.headerAvatar} />
+                                        ) : (
+                                            <View style={styles.avatarPlaceholder}>
+                                                <Text style={styles.avatarText}>{displayName[0].toUpperCase()}</Text>
+                                            </View>
+                                        )}
+                                    </TouchableOpacity>
+                                </Animated.View>
+                            </View>
+                        </View>
+                    </View>
+
+                    {/* Tactical Readout HUD Card */}
+                    <View style={styles.hudCard}>
+                        <LinearGradient
+                            colors={[COLORS.glassBg, "rgba(5, 5, 5, 0.85)"]}
+                            style={StyleSheet.absoluteFill}
+                        />
+                        <View style={styles.hudHeader}>
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                                <View style={styles.hudDot} />
+                                <Text style={styles.hudTitle}>TACTICAL READOUT</Text>
+                            </View>
+                            <View style={styles.hudStatusBadge}>
+                                <Text style={styles.hudStatusText}>SYS ACTIVE</Text>
+                            </View>
+                        </View>
+                        
+                        <View style={styles.hudBody}>
+                            <View style={{ flex: 1 }}>
+                                <View style={styles.hudLevelRow}>
+                                    <Text style={styles.hudLevelLabel}>XP CONVERGENCE</Text>
+                                    <Text style={styles.hudLevelValue}>
+                                        LVL {String(Math.min(Math.floor(total / 10) + 1, 99)).padStart(2, '0')}
+                                    </Text>
+                                </View>
+                                <View style={styles.hudBar}>
+                                    <LinearGradient
+                                        colors={[COLORS.primary, '#FF4D4D']}
+                                        start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                                        style={[styles.levelFill, { width: `${total === 0 ? 0 : total % 10 === 0 ? 100 : ((total % 10) / 10) * 100}%` }]}
+                                    />
+                                </View>
+                                <View style={styles.hudFooterRow}>
+                                    <Text style={styles.hudSubText}>
+                                        {total % 10}/10 SESSIONS TO NEXT LEVEL
+                                    </Text>
+                                    <Text style={styles.hudRankText}>
+                                        {total >= 100 ? 'LEGEND' :
+                                         total >= 50 ? 'TITAN' :
+                                         total >= 25 ? 'WARRIOR' :
+                                         total >= 10 ? 'RISING STAR' :
+                                         total >= 5 ? 'ROOKIE' : 'RECRUIT'}
+                                    </Text>
+                                </View>
+                            </View>
                         </View>
                     </View>
                 </View>
@@ -198,7 +294,7 @@ export default function HomeScreen({ navigation }) {
                     <View style={styles.statsLeft}>
                         <View style={styles.statSmall}>
                             <LinearGradient
-                                colors={["rgba(255,255,255,0.03)", "transparent"]}
+                                colors={["rgba(255,255,255,0.015)", "transparent"]}
                                 style={StyleSheet.absoluteFill}
                             />
                             <View style={styles.statSmallTop}>
@@ -207,25 +303,25 @@ export default function HomeScreen({ navigation }) {
                                 </View>
                                 <Text style={styles.statLabelSmall}>STREAK</Text>
                             </View>
-                            <Text style={styles.statValueSmall}>{streak} <Text style={{ fontSize: 9 }}>DAYS</Text></Text>
+                            <Text style={styles.statValueSmall}>{streak} <Text style={{ fontSize: 9, color: COLORS.textMuted }}>DAYS</Text></Text>
                         </View>
                         <View style={styles.statSmall}>
                             <LinearGradient
-                                colors={["rgba(255,255,255,0.03)", "transparent"]}
+                                colors={["rgba(255,255,255,0.015)", "transparent"]}
                                 style={StyleSheet.absoluteFill}
                             />
                             <View style={styles.statSmallTop}>
                                 <View style={styles.statIconWrap}>
-                                    <Ionicons name="fitness" size={12} color={COLORS.textSub} />
+                                    <Ionicons name="fitness" size={12} color={COLORS.accent} />
                                 </View>
                                 <Text style={styles.statLabelSmall}>TOTAL</Text>
                             </View>
-                            <Text style={styles.statValueSmall}>{total} <Text style={{ fontSize: 9 }}>SESSIONS</Text></Text>
+                            <Text style={styles.statValueSmall}>{total} <Text style={{ fontSize: 9, color: COLORS.textMuted }}>SESSIONS</Text></Text>
                         </View>
                     </View>
                     <TouchableOpacity style={styles.statLarge} activeOpacity={0.8} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); navigation.navigate("Rank"); }}>
                         <LinearGradient
-                            colors={["rgba(255,255,255,0.05)", "rgba(227,30,36,0.01)", "transparent"]}
+                            colors={["rgba(255,255,255,0.02)", "rgba(227,30,36,0.02)", "transparent"]}
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 1 }}
                             style={StyleSheet.absoluteFill}
@@ -246,8 +342,8 @@ export default function HomeScreen({ navigation }) {
                             </View>
                         </View>
                         <View style={styles.sparklineContainer}>
-                            {[4, 6, 3, 8, 5, 9, 7].map((h, i) => (
-                                <View key={i} style={[styles.sparklineBar, { height: h * 2, opacity: 0.3 + (i * 0.1) }]} />
+                            {sparkAnims.map((anim, i) => (
+                                <Animated.View key={i} style={[styles.sparklineBar, { height: anim, opacity: 0.35 + (i * 0.08) }]} />
                             ))}
                         </View>
                         <Text style={styles.statSubText}>TAP TO VIEW DETAILS →</Text>
@@ -277,13 +373,16 @@ export default function HomeScreen({ navigation }) {
                             resizeMode="cover"
                         >
                             <LinearGradient
-                                colors={["rgba(0,0,0,0.2)", "rgba(0,0,0,0.6)", "rgba(0,0,0,0.92)", "#000"]}
+                                colors={["rgba(0,0,0,0.15)", "rgba(0,0,0,0.5)", "rgba(0,0,0,0.92)", "#000"]}
                                 style={StyleSheet.absoluteFill}
                             />
+                            
+                            <View style={styles.heroLeftAccent} />
+
                             <View style={styles.heroContent}>
                                 <View style={styles.heroHeader}>
                                     <View style={styles.heroBadge}>
-                                        <Text style={styles.heroBadgeText}>ACTIVE PLAN</Text>
+                                        <Text style={styles.heroBadgeText}>ACTIVE PROTOCOL</Text>
                                     </View>
                                     <Text style={styles.heroTitle} numberOfLines={2} adjustsFontSizeToFit>
                                         {todayWorkout.target.toUpperCase()}
@@ -295,18 +394,21 @@ export default function HomeScreen({ navigation }) {
                                     <View style={{ flexDirection: "row", gap: 24 }}>
                                         <View style={styles.heroMeta}>
                                             <Text style={styles.heroMetaLabel}>VOLUME</Text>
-                                            <Text style={styles.heroMetaValue}>{todayWorkout.exercises.length} EX</Text>
+                                            <Text style={styles.heroMetaValue}>{todayWorkout.exercises.length} EXERCISES</Text>
                                         </View>
                                         <View style={styles.heroMeta}>
-                                            <Text style={styles.heroMetaLabel}>TIME</Text>
-                                            <Text style={styles.heroMetaValue}>{totalTime(todayWorkout)} MIN</Text>
+                                            <Text style={styles.heroMetaLabel}>DURATION</Text>
+                                            <Text style={styles.heroMetaValue}>{totalTime(todayWorkout)} MINUTES</Text>
                                         </View>
                                     </View>
 
                                     <TouchableOpacity
                                         style={styles.heroCta}
                                         activeOpacity={0.8}
-                                        onPress={() => navigation.navigate("WorkoutDetail", { day: todayWorkout })}
+                                        onPress={() => {
+                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                            navigation.navigate("WorkoutDetail", { day: todayWorkout });
+                                        }}
                                     >
                                         <Text style={styles.heroCtaText}>START</Text>
                                         <Ionicons name="play" size={12} color="#fff" />
@@ -335,26 +437,40 @@ export default function HomeScreen({ navigation }) {
                             <GestureTouchableOpacity
                                 key={day.day}
                                 style={[styles.weekCell, isToday && styles.weekCellActive]}
-                                onPress={() => navigation.navigate("WorkoutDetail", { day })}
+                                onPress={() => handleWeekCellPress(day)}
                                 activeOpacity={0.75}
                             >
-                                {isToday && (
+                                {isToday ? (
                                     <LinearGradient
-                                        colors={["rgba(255,255,255,0.08)", "transparent"]}
+                                        colors={["rgba(227,30,36,0.12)", "transparent"]}
+                                        style={StyleSheet.absoluteFill}
+                                    />
+                                ) : (
+                                    <LinearGradient
+                                        colors={["rgba(255,255,255,0.015)", "transparent"]}
                                         style={StyleSheet.absoluteFill}
                                     />
                                 )}
                                 <Text style={[styles.weekDay, isToday && styles.weekDayActive]}>{DAY_LABELS[i].toUpperCase()}</Text>
                                 <Text style={styles.weekTarget} numberOfLines={1}>{day.target.toUpperCase()}</Text>
-                                {isToday && <View style={styles.activeIndicator} />}
+                                {isToday && (
+                                    <Animated.View style={[styles.activeIndicator, { opacity: dotOpacity }]} />
+                                )}
                             </GestureTouchableOpacity>
                         );
                     })}
                     <GestureTouchableOpacity
                         style={styles.weekCell}
-                        onPress={() => navigation.navigate("RestDay")}
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            navigation.navigate("RestDay");
+                        }}
                         activeOpacity={0.7}
                     >
+                        <LinearGradient
+                            colors={["rgba(255,255,255,0.015)", "transparent"]}
+                            style={StyleSheet.absoluteFill}
+                        />
                         <Text style={styles.weekDay}>SUN</Text>
                         <Text style={styles.weekTarget}>REST</Text>
                     </GestureTouchableOpacity>
@@ -369,11 +485,15 @@ export default function HomeScreen({ navigation }) {
                         <TouchableOpacity
                             key={day.day}
                             style={styles.dayRow}
-                            onPress={() => navigation.navigate("WorkoutDetail", { day })}
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                navigation.navigate("WorkoutDetail", { day });
+                            }}
                             activeOpacity={0.7}
                         >
+                            <View style={[styles.dayRowAccent, { backgroundColor: getMuscleColor(day.target) }]} />
                             <LinearGradient
-                                colors={["rgba(255,255,255,0.03)", "transparent"]}
+                                colors={["rgba(255,255,255,0.015)", "transparent"]}
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 0 }}
                                 style={StyleSheet.absoluteFill}
@@ -786,18 +906,39 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: COLORS.bg },
     headerRow: {
         paddingHorizontal: SPACING.base,
-        marginBottom: 32,
+        marginBottom: 24,
     },
-    headerTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 },
+    headerTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 },
+    
+    // Avatar breathing styles
+    avatarContainer: {
+        width: 46,
+        height: 46,
+        alignItems: "center",
+        justifyContent: "center",
+        marginLeft: 4,
+    },
+    avatarGlowRing: {
+        position: "absolute",
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        borderWidth: 1.5,
+        borderColor: COLORS.primary,
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.8,
+        shadowRadius: 6,
+    },
     profileCircle: {
-        width: 44, height: 44, borderRadius: 22,
-        borderWidth: 1.5, borderColor: "rgba(255,255,255,0.12)",
-        overflow: "hidden", backgroundColor: "rgba(255,255,255,0.05)",
+        width: 38, height: 38, borderRadius: 19,
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
+        overflow: "hidden", backgroundColor: "rgba(255,255,255,0.04)",
         alignItems: "center", justifyContent: "center",
     },
     headerAvatar: { width: "100%", height: "100%" },
     avatarPlaceholder: { width: "100%", height: "100%", alignItems: "center", justifyContent: "center" },
-    avatarText: { fontSize: 16, fontFamily: FAMILY.bold, color: COLORS.textSub },
+    avatarText: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.textSub },
 
     greeting: { fontSize: 10, color: COLORS.textMuted, fontFamily: FAMILY.bold, letterSpacing: 4, marginBottom: 4 },
     name: {
@@ -808,28 +949,124 @@ const styles = StyleSheet.create({
         lineHeight: 38,
     },
 
-    levelContainer: { flex: 1, marginRight: 12 },
-    levelProgressRow: { flexDirection: "row", alignItems: "center", marginTop: 24, gap: 12 },
-    levelBar: { height: 4, backgroundColor: "rgba(255,255,255,0.06)", borderRadius: 2, width: '100%', maxWidth: 120, marginBottom: 8, overflow: 'hidden' },
-    levelFill: { height: "100%", borderRadius: 2 },
-    levelText: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1.5, opacity: 0.8 },
+    // Tactical HUD Level Card
+    hudCard: {
+        marginTop: 24,
+        borderRadius: 24,
+        borderWidth: 1,
+        borderColor: COLORS.glassBorder,
+        backgroundColor: COLORS.glassBg,
+        padding: 20,
+        overflow: "hidden",
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+        elevation: 3,
+    },
+    hudHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        borderBottomWidth: 1,
+        borderBottomColor: "rgba(255, 255, 255, 0.04)",
+        paddingBottom: 10,
+        marginBottom: 14,
+    },
+    hudDot: {
+        width: 5,
+        height: 5,
+        borderRadius: 2.5,
+        backgroundColor: COLORS.primary,
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.8,
+        shadowRadius: 3,
+    },
+    hudTitle: {
+        fontSize: 8,
+        fontFamily: FAMILY.bold,
+        color: COLORS.textSub,
+        letterSpacing: 2,
+    },
+    hudStatusBadge: {
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 4,
+        backgroundColor: "rgba(227, 30, 36, 0.08)",
+        borderWidth: 0.5,
+        borderColor: "rgba(227, 30, 36, 0.2)",
+    },
+    hudStatusText: {
+        fontSize: 7,
+        fontFamily: FAMILY.bold,
+        color: COLORS.primary,
+        letterSpacing: 1,
+    },
+    hudBody: {
+        flexDirection: "row",
+    },
+    hudLevelRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "baseline",
+        marginBottom: 6,
+    },
+    hudLevelLabel: {
+        fontSize: 8,
+        fontFamily: FAMILY.semibold,
+        color: COLORS.textMuted,
+        letterSpacing: 1,
+    },
+    hudLevelValue: {
+        fontSize: 14,
+        fontFamily: FAMILY.bold,
+        color: COLORS.text,
+        letterSpacing: 0.5,
+    },
+    hudBar: {
+        height: 5,
+        backgroundColor: "rgba(255,255,255,0.04)",
+        borderRadius: 2.5,
+        width: "100%",
+        marginBottom: 10,
+        overflow: "hidden",
+    },
+    hudFooterRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+    },
+    hudSubText: {
+        fontSize: 8,
+        fontFamily: FAMILY.regular,
+        color: COLORS.textMuted,
+        letterSpacing: 0.5,
+    },
+    hudRankText: {
+        fontSize: 8,
+        fontFamily: FAMILY.bold,
+        color: COLORS.accent,
+        letterSpacing: 1,
+    },
 
+    levelFill: { height: "100%", borderRadius: 2 },
     headerSmallActions: { flexDirection: "row", alignItems: "center" },
     iconBtnSm: {
-        width: 36, height: 36, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.05)",
-        alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)"
+        width: 36, height: 36, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.03)",
+        alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.06)"
     },
 
     // Asymmetric Stats Grid
     statsRow: {
-        flexDirection: "row", marginHorizontal: SPACING.base, marginBottom: 48,
+        flexDirection: "row", marginHorizontal: SPACING.base, marginBottom: 36,
         height: 124, gap: 12,
     },
     statsLeft: { flex: 1, gap: 12 },
     statSmall: {
-        flex: 1, padding: 18,
-        backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 20,
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.07)",
+        flex: 1, padding: 16,
+        backgroundColor: COLORS.glassBg, borderRadius: 20,
+        borderWidth: 1, borderColor: COLORS.glassBorder,
         justifyContent: "center", overflow: "hidden",
     },
     statSmallTop: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 },
@@ -838,14 +1075,14 @@ const styles = StyleSheet.create({
     statValueSmall: { fontSize: 16, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -0.5 },
 
     statLarge: {
-        flex: 1.4, padding: 22,
-        backgroundColor: "rgba(255,255,255,0.04)", borderRadius: 24,
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
+        flex: 1.4, padding: 20,
+        backgroundColor: COLORS.glassBg, borderRadius: 24,
+        borderWidth: 1, borderColor: COLORS.glassBorder,
         justifyContent: "space-between", overflow: "hidden",
     },
     statLargeTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
-    statValueLarge: { fontSize: 26, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -1, marginTop: 4 },
-    intensityBadge: { width: 32, height: 32, borderRadius: 10, backgroundColor: "rgba(227,30,36,0.1)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(227,30,36,0.2)" },
+    statValueLarge: { fontSize: 24, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -1, marginTop: 4 },
+    intensityBadge: { width: 32, height: 32, borderRadius: 10, backgroundColor: "rgba(227,30,36,0.08)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(227,30,36,0.15)" },
     sparklineContainer: { flexDirection: "row", alignItems: "flex-end", gap: 4, height: 24, marginBottom: 4 },
     sparklineBar: { width: 4, borderRadius: 2, backgroundColor: COLORS.primary },
     statSubText: { fontSize: 8, color: COLORS.textMuted, fontFamily: FAMILY.bold, letterSpacing: 1.5 },
@@ -853,65 +1090,83 @@ const styles = StyleSheet.create({
     // Section headers
     sectionHeader: {
         flexDirection: "row", justifyContent: "space-between", alignItems: "baseline",
-        paddingHorizontal: SPACING.base, marginBottom: 16, marginTop: 32,
+        paddingHorizontal: SPACING.base, marginBottom: 16, marginTop: 24,
     },
     sectionLabel: {
         fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 3,
     },
 
-    // Hero - Aesthetic
+    // Hero HUD card
     heroCard: {
-        marginHorizontal: SPACING.base, height: 340, borderRadius: 28,
+        marginHorizontal: SPACING.base, height: 320, borderRadius: 24,
         overflow: "hidden", backgroundColor: COLORS.bgCard,
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
+        borderWidth: 1, borderColor: "rgba(227, 30, 36, 0.22)",
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.12,
+        shadowRadius: 16,
+        elevation: 6,
     },
-    heroContent: { flex: 1, padding: 28, justifyContent: "space-between" },
+    heroLeftAccent: {
+        position: "absolute",
+        left: 0,
+        top: 0,
+        bottom: 0,
+        width: 5,
+        backgroundColor: COLORS.primary,
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 4, height: 0 },
+        shadowOpacity: 0.8,
+        shadowRadius: 10,
+    },
+    heroContent: { flex: 1, padding: 28, justifyContent: "space-between", paddingLeft: 32 },
     heroHeader: { flex: 1 },
     heroBadge: {
         alignSelf: "flex-start",
-        backgroundColor: "rgba(255,255,255,0.1)",
+        backgroundColor: "rgba(255,255,255,0.06)",
         paddingHorizontal: 10, paddingVertical: 4,
-        borderRadius: 4, marginBottom: 16,
-        borderWidth: 0.5, borderColor: "rgba(255,255,255,0.2)",
+        borderRadius: 4, marginBottom: 14,
+        borderWidth: 0.5, borderColor: "rgba(255,255,255,0.12)",
     },
     heroBadgeText: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 2 },
-    heroTitle: { fontSize: 42, fontFamily: FAMILY.bold, color: COLORS.text, lineHeight: 46, letterSpacing: -1 },
-    heroSub: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textSub, marginTop: 12, letterSpacing: 1 },
+    heroTitle: { fontSize: 38, fontFamily: FAMILY.bold, color: COLORS.text, lineHeight: 42, letterSpacing: -1 },
+    heroSub: { fontSize: 12, fontFamily: FAMILY.regular, color: COLORS.textSub, marginTop: 10, letterSpacing: 1 },
 
     heroFooter: {
         flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-        borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.05)", paddingTop: 24,
+        borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.04)", paddingTop: 20,
     },
     heroMeta: { gap: 4 },
     heroMetaLabel: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2 },
     heroMetaValue: { fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.text },
 
     heroCta: {
-        flexDirection: "row", alignItems: "center", gap: 10,
-        backgroundColor: COLORS.primary, paddingHorizontal: 20, paddingVertical: 12,
-        borderRadius: 14,
+        flexDirection: "row", alignItems: "center", gap: 8,
+        backgroundColor: COLORS.primary, paddingHorizontal: 22, paddingVertical: 12,
+        borderRadius: 12,
         shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3, shadowRadius: 8, elevation: 4,
+        shadowOpacity: 0.25, shadowRadius: 8, elevation: 4,
+        borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.15)",
     },
     heroCtaText: { fontSize: 12, fontFamily: FAMILY.bold, color: "#fff", letterSpacing: 2 },
 
-    // Rest - Sophisticated
+    // Rest Card
     restCard: {
-        marginHorizontal: SPACING.base, borderRadius: 28, overflow: "hidden",
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", minHeight: 340, backgroundColor: COLORS.bgCard,
+        marginHorizontal: SPACING.base, borderRadius: 24, overflow: "hidden",
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.06)", minHeight: 320, backgroundColor: COLORS.bgCard,
     },
-    restContent: { padding: 32, paddingBottom: 40, flex: 1 },
+    restContent: { padding: 28, paddingBottom: 36, flex: 1 },
     restEyebrow: {
         fontSize: 10, fontFamily: FAMILY.bold,
-        color: COLORS.primary, letterSpacing: 3, marginBottom: 16,
+        color: COLORS.primary, letterSpacing: 3, marginBottom: 12,
     },
     restTitle: {
-        fontSize: 44, fontFamily: FAMILY.bold,
-        color: COLORS.text, lineHeight: 48, marginBottom: 32, letterSpacing: -1,
+        fontSize: 38, fontFamily: FAMILY.bold,
+        color: COLORS.text, lineHeight: 42, marginBottom: 28, letterSpacing: -1,
     },
-    restTimeline: { gap: 14 },
+    restTimeline: { gap: 12 },
     restPoint: {
-        flexDirection: "row", alignItems: "center", gap: 16,
+        flexDirection: "row", alignItems: "center", gap: 14,
     },
     restDot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: "rgba(255,255,255,0.2)" },
     restPointText: { fontSize: 11, fontFamily: FAMILY.medium, color: COLORS.textSub, flex: 1, letterSpacing: 0.5 },
@@ -919,13 +1174,13 @@ const styles = StyleSheet.create({
     // Week Grid
     weekCell: {
         width: 108, paddingVertical: 24, paddingHorizontal: 12,
-        borderRadius: 22, backgroundColor: COLORS.bgCard,
-        borderWidth: 1, borderColor: "transparent", alignItems: "center", gap: 8,
+        borderRadius: 20, backgroundColor: COLORS.bgCard,
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.04)", alignItems: "center", gap: 8,
         overflow: "hidden",
     },
     weekCellActive: {
-        backgroundColor: "rgba(255,255,255,0.03)",
-        borderColor: "rgba(255,255,255,0.12)",
+        backgroundColor: "rgba(227,30,36,0.04)",
+        borderColor: "rgba(227,30,36,0.25)",
     },
     weekDay: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2 },
     weekDayActive: { color: COLORS.text },
@@ -935,45 +1190,52 @@ const styles = StyleSheet.create({
         borderRadius: 2, backgroundColor: COLORS.primary
     },
 
-    // Item List
+    // Library List Items
     dayList: {
-        marginHorizontal: SPACING.base, gap: 14,
+        marginHorizontal: SPACING.base, gap: 12,
     },
     dayRow: {
         flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-        paddingHorizontal: 28, paddingVertical: 26, backgroundColor: COLORS.bgCard,
-        borderRadius: 24, borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
-        minHeight: 112,
+        paddingHorizontal: 24, paddingVertical: 22, backgroundColor: COLORS.glassBg,
+        borderRadius: 22, borderWidth: 1, borderColor: COLORS.glassBorder,
+        minHeight: 104, overflow: "hidden",
     },
-    dayRowLeft: { flex: 1 },
-    dayNumRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 },
+    dayRowAccent: {
+        position: "absolute",
+        left: 0,
+        top: 0,
+        bottom: 0,
+        width: 4,
+    },
+    dayRowLeft: { flex: 1, paddingLeft: 8 },
+    dayNumRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 8 },
     dayNum: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 2 },
     dayDot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: "rgba(255,255,255,0.15)" },
-    muscleBadge: { backgroundColor: "rgba(255,255,255,0.05)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
+    muscleBadge: { backgroundColor: "rgba(255,255,255,0.04)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
     muscleBadgeText: { fontSize: 7, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1 },
-    dayTargetTitle: { fontSize: 24, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -0.5 },
-    dayMeta: { fontSize: 10, color: COLORS.textMuted, marginTop: 10, fontFamily: FAMILY.bold, letterSpacing: 1 },
-    dayRowRight: { opacity: 0.4 },
+    dayTargetTitle: { fontSize: 22, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -0.5 },
+    dayMeta: { fontSize: 10, color: COLORS.textMuted, marginTop: 8, fontFamily: FAMILY.bold, letterSpacing: 1 },
+    dayRowRight: { opacity: 0.3 },
 
     customCard: {
-        marginHorizontal: SPACING.base, backgroundColor: COLORS.bgCard, borderRadius: 28,
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.06)",
-        padding: 32, overflow: "hidden",
+        marginHorizontal: SPACING.base, backgroundColor: COLORS.glassBg, borderRadius: 24,
+        borderWidth: 1, borderColor: COLORS.glassBorder,
+        padding: 28, overflow: "hidden",
         flexDirection: "row", justifyContent: "space-between", alignItems: "center",
     },
-    customTitle: { fontSize: 24, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 1 },
+    customTitle: { fontSize: 22, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 1 },
     customSub: { fontSize: 10, color: COLORS.textMuted, marginTop: 8, fontFamily: FAMILY.bold, letterSpacing: 1.5 },
     customIconWrap: {
-        width: 48, height: 48, borderRadius: 24,
-        backgroundColor: "rgba(227,30,36,0.12)",
+        width: 44, height: 44, borderRadius: 22,
+        backgroundColor: "rgba(227,30,36,0.08)",
         alignItems: "center", justifyContent: "center",
-        borderWidth: 1, borderColor: "rgba(227,30,36,0.2)",
+        borderWidth: 1, borderColor: "rgba(227,30,36,0.15)",
     },
 
     // Moments
     momentCard: {
-        width: 200, height: 120, padding: 20, borderRadius: 28,
-        backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
+        width: 200, height: 120, padding: 20, borderRadius: 24,
+        backgroundColor: COLORS.glassBg, borderWidth: 1, borderColor: COLORS.glassBorder,
         justifyContent: "space-between", overflow: "hidden"
     },
     momentIconWrap: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center" },
@@ -983,52 +1245,52 @@ const styles = StyleSheet.create({
     // Moment Detail
     momentDetailBlur: { flex: 1, justifyContent: "center", alignItems: "center" },
     momentDetailContent: { width: '90%', maxWidth: 400 },
-    momentDetailCard: { borderRadius: 40, padding: 32, alignItems: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", backgroundColor: "#0B0B0B" },
-    closeMomentBtn: { position: "absolute", top: 24, right: 24, padding: 8, backgroundColor: "rgba(255,255,255,0.05)", borderRadius: 20 },
-    momentDetailIconWrap: { width: 100, height: 100, borderRadius: 50, backgroundColor: "rgba(255,255,255,0.03)", alignItems: "center", justifyContent: "center", marginBottom: 32 },
-    momentDetailTitle: { fontSize: 12, fontFamily: FAMILY.bold, letterSpacing: 4, marginBottom: 12 },
-    momentDetailSub: { fontSize: 24, fontFamily: FAMILY.display, color: "#fff", textAlign: "center", marginBottom: 24, lineHeight: 30 },
-    momentDetailDesc: { fontSize: 14, fontFamily: FAMILY.medium, color: COLORS.textSub, textAlign: "center", lineHeight: 22, opacity: 0.8, marginBottom: 40 },
-    momentActionBtn: { width: '100%', height: 60, borderRadius: 20, alignItems: "center", justifyContent: "center" },
+    momentDetailCard: { borderRadius: 36, padding: 28, alignItems: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", backgroundColor: "#0B0B0B" },
+    closeMomentBtn: { position: "absolute", top: 20, right: 20, padding: 8, backgroundColor: "rgba(255,255,255,0.04)", borderRadius: 20 },
+    momentDetailIconWrap: { width: 80, height: 80, borderRadius: 40, backgroundColor: "rgba(255,255,255,0.03)", alignItems: "center", justifyContent: "center", marginBottom: 24 },
+    momentDetailTitle: { fontSize: 11, fontFamily: FAMILY.bold, letterSpacing: 4, marginBottom: 12 },
+    momentDetailSub: { fontSize: 22, fontFamily: FAMILY.display, color: "#fff", textAlign: "center", marginBottom: 20, lineHeight: 28 },
+    momentDetailDesc: { fontSize: 14, fontFamily: FAMILY.medium, color: COLORS.textSub, textAlign: "center", lineHeight: 22, opacity: 0.8, marginBottom: 32 },
+    momentActionBtn: { width: '100%', height: 56, borderRadius: 18, alignItems: "center", justifyContent: "center" },
     momentActionText: { fontSize: 12, fontFamily: FAMILY.bold, color: "#fff", letterSpacing: 2 },
-    momentShareBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", marginTop: 20, paddingVertical: 10 },
+    momentShareBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", marginTop: 18, paddingVertical: 10 },
     momentShareText: { fontSize: 9, fontFamily: FAMILY.bold, color: "rgba(255,255,255,0.4)", letterSpacing: 2 },
 
     // Freeze Modal
     freezeOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center', padding: 24 },
     freezeModalContent: {
-        width: '100%', borderRadius: 32, padding: 32, alignItems: 'center',
-        borderWidth: 1, borderColor: 'rgba(96,165,250,0.3)', overflow: 'hidden',
+        width: '100%', borderRadius: 28, padding: 28, alignItems: 'center',
+        borderWidth: 1, borderColor: 'rgba(96,165,250,0.35)', overflow: 'hidden',
     },
-    iceEffect: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(96,165,250,0.05)', opacity: 0.5 },
-    freezeModalHeader: { alignItems: 'center', marginBottom: 24 },
+    iceEffect: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(96,165,250,0.04)', opacity: 0.5 },
+    freezeModalHeader: { alignItems: 'center', marginBottom: 20 },
     snowCircle: {
-        width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(96,165,250,0.1)',
-        alignItems: 'center', justifyContent: 'center', marginBottom: 20,
-        borderWidth: 1, borderColor: 'rgba(96,165,250,0.3)',
+        width: 72, height: 72, borderRadius: 36, backgroundColor: 'rgba(96,165,250,0.08)',
+        alignItems: 'center', justifyContent: 'center', marginBottom: 18,
+        borderWidth: 1, borderColor: 'rgba(96,165,250,0.25)',
     },
     freezeStatus: { fontSize: 9, fontFamily: FAMILY.bold, color: '#60A5FA', letterSpacing: 3, marginBottom: 8 },
-    freezeTitle: { fontSize: 22, fontFamily: FAMILY.bold, color: '#fff', textAlign: 'center', lineHeight: 28 },
+    freezeTitle: { fontSize: 20, fontFamily: FAMILY.bold, color: '#fff', textAlign: 'center', lineHeight: 26 },
     freezeDesc: {
         fontSize: 14, fontFamily: FAMILY.regular, color: COLORS.textSub,
-        textAlign: 'center', lineHeight: 22, marginBottom: 32, opacity: 0.8
+        textAlign: 'center', lineHeight: 22, marginBottom: 28, opacity: 0.8
     },
     protectionBadge: {
         flexDirection: 'row', alignItems: 'center', gap: 8,
-        backgroundColor: 'rgba(96,165,250,0.1)', paddingHorizontal: 16, paddingVertical: 10,
-        borderRadius: 12, marginBottom: 40, borderWidth: 1, borderColor: 'rgba(96,165,250,0.2)'
+        backgroundColor: 'rgba(96,165,250,0.08)', paddingHorizontal: 14, paddingVertical: 8,
+        borderRadius: 10, marginBottom: 32, borderWidth: 1, borderColor: 'rgba(96,165,250,0.18)'
     },
     protectionText: { fontSize: 9, fontFamily: FAMILY.bold, color: '#60A5FA', letterSpacing: 1 },
     freezeCloseBtn: {
-        width: '100%', height: 60, borderRadius: 18, backgroundColor: '#fff',
+        width: '100%', height: 56, borderRadius: 16, backgroundColor: '#fff',
         alignItems: 'center', justifyContent: 'center'
     },
     freezeCloseText: { fontSize: 13, fontFamily: FAMILY.bold, color: '#000', letterSpacing: 2 },
-    unfreezeLink: { marginTop: 24, paddingVertical: 8 },
+    unfreezeLink: { marginTop: 20, paddingVertical: 8 },
     unfreezeLinkText: { fontSize: 10, fontFamily: FAMILY.bold, color: 'rgba(255,255,255,0.4)', letterSpacing: 2 },
     // Footer
-    footer: { alignItems: "center", marginTop: 64, paddingHorizontal: SPACING.base },
-    footerDivider: { width: 40, height: 1, backgroundColor: "rgba(255,255,255,0.1)", marginBottom: 24 },
-    footerVersion: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 3, marginBottom: 8 },
+    footer: { alignItems: "center", marginTop: 48, paddingHorizontal: SPACING.base },
+    footerDivider: { width: 40, height: 1, backgroundColor: "rgba(255,255,255,0.08)", marginBottom: 20 },
+    footerVersion: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 3, marginBottom: 6 },
     footerAuthor: { fontSize: 7, fontFamily: FAMILY.medium, color: "rgba(255,255,255,0.2)", letterSpacing: 1.5 },
 });

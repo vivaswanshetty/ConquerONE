@@ -194,7 +194,38 @@ export default function ProfileScreen({ navigation }) {
     const [currentAvatarUrl, setCurrentAvatarUrl] = useState(profile?.photoURL);
     const [pwLoading, setPwLoading] = useState(false);
 
+    // Animations
+    const ringAnim1 = useRef(new Animated.Value(1)).current;
+    const ringAnim2 = useRef(new Animated.Value(1)).current;
+    const liveDotOpacity = useRef(new Animated.Value(0.4)).current;
+
     const [editModal, setEditModal] = useState({ visible: false, field: "", title: "", value: "", type: "text" });
+
+    useEffect(() => {
+        // Breathing ring 1 (chest/crimson accent)
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(ringAnim1, { toValue: 1.18, duration: 1800, useNativeDriver: true }),
+                Animated.timing(ringAnim1, { toValue: 1, duration: 1800, useNativeDriver: true }),
+            ])
+        ).start();
+
+        // Breathing ring 2 (silver outline accent)
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(ringAnim2, { toValue: 1.35, duration: 2400, useNativeDriver: true }),
+                Animated.timing(ringAnim2, { toValue: 1, duration: 2400, useNativeDriver: true }),
+            ])
+        ).start();
+
+        // Live Status indicators pulse loop
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(liveDotOpacity, { toValue: 1, duration: 800, useNativeDriver: true }),
+                Animated.timing(liveDotOpacity, { toValue: 0.4, duration: 800, useNativeDriver: true }),
+            ])
+        ).start();
+    }, []);
 
     useFocusEffect(
         useCallback(() => {
@@ -444,12 +475,24 @@ export default function ProfileScreen({ navigation }) {
 
                 {/* ── Profile Hero ── */}
                 <View style={styles.heroSection}>
-                    {/* Ambient glow behind avatar */}
-                    <View style={styles.avatarGlowOuter}>
-                        <LinearGradient
-                            colors={['rgba(227,30,36,0.15)', 'rgba(227,30,36,0.03)', 'transparent']}
-                            style={styles.avatarGlowGradient}
-                        />
+                    {/* Breathing concentric double-rings */}
+                    <View style={styles.avatarRingsContainer}>
+                        <Animated.View style={[
+                            styles.avatarHaloRing,
+                            {
+                                transform: [{ scale: ringAnim2 }],
+                                opacity: ringAnim2.interpolate({ inputRange: [1, 1.35], outputRange: [0.35, 0.08] }),
+                                borderColor: 'rgba(255, 255, 255, 0.12)'
+                            }
+                        ]} />
+                        <Animated.View style={[
+                            styles.avatarHaloRing,
+                            {
+                                transform: [{ scale: ringAnim1 }],
+                                opacity: ringAnim1.interpolate({ inputRange: [1, 1.18], outputRange: [0.6, 0.15] }),
+                                borderColor: COLORS.primary
+                            }
+                        ]} />
                     </View>
 
                     <TouchableOpacity
@@ -524,23 +567,37 @@ export default function ProfileScreen({ navigation }) {
 
                 {/* ── Stats Strip ── */}
                 <View style={styles.statsRow}>
-                    <View style={[styles.statCard, styles.statCardStreak]}>
+                    <View style={[styles.statCard, styles.statCardActive]}>
+                        <LinearGradient
+                            colors={["rgba(227,30,36,0.06)", "transparent"]}
+                            style={StyleSheet.absoluteFill}
+                        />
                         <View style={styles.statIconWrap}>
-                            <Ionicons name="flame" size={18} color={COLORS.primary} />
+                            <Ionicons name="flame" size={16} color={COLORS.primary} />
                         </View>
                         <Text style={styles.statValue}>{streak}</Text>
                         <Text style={styles.statLabel}>DAY STREAK</Text>
                     </View>
+                    
                     <View style={styles.statCard}>
+                        <LinearGradient
+                            colors={["rgba(255,255,255,0.015)", "transparent"]}
+                            style={StyleSheet.absoluteFill}
+                        />
                         <View style={styles.statIconWrap}>
-                            <Ionicons name="barbell-outline" size={18} color={COLORS.textSub} />
+                            <Ionicons name="barbell-outline" size={16} color={COLORS.accent} />
                         </View>
                         <Text style={styles.statValue}>{total}</Text>
                         <Text style={styles.statLabel}>SESSIONS</Text>
                     </View>
+                    
                     <View style={styles.statCard}>
+                        <LinearGradient
+                            colors={["rgba(255,255,255,0.015)", "transparent"]}
+                            style={StyleSheet.absoluteFill}
+                        />
                         <View style={styles.statIconWrap}>
-                            <Ionicons name="trending-up" size={18} color={COLORS.textSub} />
+                            <Ionicons name="trending-up" size={16} color={COLORS.accent} />
                         </View>
                         <Text style={styles.statValue}>{rank.pct}</Text>
                         <Text style={styles.statLabel}>TOP RANK</Text>
@@ -566,8 +623,14 @@ export default function ProfileScreen({ navigation }) {
                         <View style={styles.detailContent}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.xs }}>
                                 <Text style={[styles.detailValue, { flexShrink: 1 }]} numberOfLines={1}>{email}</Text>
-                                <View style={[styles.verifiedBadge, { backgroundColor: user?.emailVerified ? 'rgba(255,255,255,0.06)' : 'rgba(227,30,36,0.06)' }]}>
-                                    <View style={[styles.verifiedDot, { backgroundColor: user?.emailVerified ? '#FFF' : COLORS.primary }]} />
+                                <View style={[styles.verifiedBadge, { backgroundColor: user?.emailVerified ? 'rgba(255,255,255,0.05)' : 'rgba(227,30,36,0.06)', borderColor: user?.emailVerified ? 'rgba(255,255,255,0.1)' : 'rgba(227,30,36,0.2)' }]}>
+                                    <Animated.View style={[
+                                        styles.verifiedDot,
+                                        {
+                                            backgroundColor: user?.emailVerified ? '#FFF' : COLORS.primary,
+                                            opacity: user?.emailVerified ? 1 : liveDotOpacity
+                                        }
+                                    ]} />
                                     <Text style={[styles.verifiedText, { color: user?.emailVerified ? '#FFF' : COLORS.primary }]}>
                                         {user?.emailVerified ? "VERIFIED" : "UNVERIFIED"}
                                     </Text>
@@ -627,9 +690,17 @@ export default function ProfileScreen({ navigation }) {
                         </View>
                         <View style={{ flex: 1 }}>
                             <Text style={styles.serviceTitle}>Health Connect</Text>
-                            <Text style={styles.serviceSub}>
-                                {healthStatus === "active" ? "Linked to Google Fit" : "Sync steps & calories"}
-                            </Text>
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 }}>
+                                <Text style={styles.serviceSub}>
+                                    {healthStatus === "active" ? "Linked to Google Fit" : "Sync steps & calories"}
+                                </Text>
+                                {healthStatus === "active" && (
+                                    <View style={styles.liveBadgeMini}>
+                                        <Animated.View style={[styles.liveDotMini, { opacity: liveDotOpacity }]} />
+                                        <Text style={styles.liveBadgeTextMini}>LIVE</Text>
+                                    </View>
+                                )}
+                            </View>
                         </View>
                         <TouchableOpacity
                             style={[styles.serviceAction, healthStatus === "active" && { backgroundColor: 'rgba(239,68,68,0.06)', borderColor: 'rgba(239,68,68,0.15)' }]}
@@ -655,7 +726,7 @@ export default function ProfileScreen({ navigation }) {
                             <Text style={styles.serviceSub}>Real-time backup active</Text>
                         </View>
                         <View style={styles.liveBadge}>
-                            <View style={styles.liveDot} />
+                            <Animated.View style={[styles.liveDot, { opacity: liveDotOpacity }]} />
                             <Text style={styles.liveBadgeText}>LIVE</Text>
                         </View>
                     </View>
@@ -733,15 +804,15 @@ const styles = StyleSheet.create({
     },
     backBtn: {
         width: 48, height: 48, borderRadius: 14,
-        backgroundColor: "rgba(255,255,255,0.04)",
+        backgroundColor: "rgba(255,255,255,0.03)",
         alignItems: "center", justifyContent: "center",
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.06)",
     },
     logoutBtn: {
         width: 44, height: 44, borderRadius: 22,
-        backgroundColor: "rgba(227,30,36,0.06)",
+        backgroundColor: "rgba(227,30,36,0.05)",
         alignItems: "center", justifyContent: "center",
-        borderWidth: 1, borderColor: "rgba(227,30,36,0.1)",
+        borderWidth: 1, borderColor: "rgba(227,30,36,0.15)",
     },
     scroll: { paddingBottom: 40 },
 
@@ -749,23 +820,34 @@ const styles = StyleSheet.create({
     heroSection: {
         alignItems: "center", paddingTop: 16, paddingBottom: 36,
     },
-    avatarGlowOuter: {
-        position: 'absolute', top: 0, width: 200, height: 200,
-        alignItems: 'center', justifyContent: 'center',
+    
+    // Concentric double-ring animated styles
+    avatarRingsContainer: {
+        position: 'absolute',
+        top: 16,
+        width: 200,
+        height: 120,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
-    avatarGlowGradient: {
-        width: 200, height: 200, borderRadius: 100,
+    avatarHaloRing: {
+        position: 'absolute',
+        width: 122,
+        height: 122,
+        borderRadius: 61,
+        borderWidth: 1.5,
     },
+    
     avatarWrap: { position: "relative", marginBottom: 20 },
     avatarRing: {
         padding: 3,
         borderRadius: 60,
         borderWidth: 2,
-        borderColor: 'rgba(227,30,36,0.25)',
+        borderColor: 'rgba(227,30,36,0.22)',
     },
     avatarBg: {
         width: 110, height: 110, borderRadius: 55,
-        backgroundColor: "rgba(255,255,255,0.03)",
+        backgroundColor: "rgba(255,255,255,0.02)",
         alignItems: "center", justifyContent: "center",
     },
     avatarImg: { width: 110, height: 110, borderRadius: 55, backgroundColor: "#000" },
@@ -803,35 +885,38 @@ const styles = StyleSheet.create({
     rankBadge: {
         flexDirection: "row", alignItems: "center", gap: 6,
         paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20,
-        borderWidth: 1, borderColor: "rgba(227,30,36,0.2)",
+        borderWidth: 1, borderColor: "rgba(227,30,36,0.18)",
+        backgroundColor: "rgba(227,30,36,0.03)",
     },
     rankBadgeText: { fontSize: 9, fontFamily: FAMILY.mBold, color: COLORS.primary, letterSpacing: 1 },
     dateBadge: {
         flexDirection: "row", alignItems: "center", gap: 5,
         paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20,
-        backgroundColor: "rgba(255,255,255,0.03)",
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.06)",
+        backgroundColor: "rgba(255,255,255,0.02)",
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
     },
     dateBadgeText: { fontSize: 9, fontFamily: FAMILY.mSemi, color: COLORS.textMuted, letterSpacing: 0.5 },
 
-    // Stats
+    // Stats Grid
     statsRow: {
         flexDirection: "row", gap: 10, marginHorizontal: 20, marginBottom: 36,
     },
     statCard: {
         flex: 1, alignItems: "center", paddingVertical: 22, gap: 8,
-        backgroundColor: "rgba(255,255,255,0.02)", borderRadius: 20,
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.04)",
+        backgroundColor: "rgba(13,13,13,0.75)", borderRadius: 20,
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.06)",
+        overflow: "hidden",
     },
-    statCardStreak: {
-        borderColor: "rgba(227,30,36,0.12)",
-        backgroundColor: "rgba(227,30,36,0.03)",
+    statCardActive: {
+        borderColor: "rgba(227,30,36,0.22)",
+        backgroundColor: "rgba(13,13,13,0.75)",
     },
     statIconWrap: {
         width: 36, height: 36, borderRadius: 12,
         backgroundColor: "rgba(255,255,255,0.03)",
         alignItems: "center", justifyContent: "center",
         marginBottom: 2,
+        borderWidth: 0.5, borderColor: "rgba(255,255,255,0.05)",
     },
     statValue: { fontSize: 24, fontFamily: FAMILY.mBold, color: COLORS.text },
     statLabel: { fontSize: 8, fontFamily: FAMILY.mSemi, color: COLORS.textMuted, letterSpacing: 1.2 },
@@ -843,8 +928,8 @@ const styles = StyleSheet.create({
     },
     card: {
         marginHorizontal: 20, marginBottom: 16,
-        backgroundColor: "rgba(255,255,255,0.02)", borderRadius: 20,
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.05)", overflow: "hidden",
+        backgroundColor: "rgba(13,13,13,0.75)", borderRadius: 20,
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.06)", overflow: "hidden",
     },
 
     // Detail rows (value-first pattern)
@@ -863,9 +948,9 @@ const styles = StyleSheet.create({
         letterSpacing: 1,
     },
 
-    // Legacy info row (kept for ActionRow compat)
+    // Legacy info row
     infoRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingVertical: 18 },
-    rowIconWrap: { width: 34, height: 34, borderRadius: 11, backgroundColor: "rgba(255,255,255,0.03)", alignItems: "center", justifyContent: "center", marginRight: 12 },
+    rowIconWrap: { width: 34, height: 34, borderRadius: 11, backgroundColor: "rgba(255,255,255,0.03)", alignItems: "center", justifyContent: "center", marginRight: 12, borderWidth: 0.5, borderColor: "rgba(255,255,255,0.05)" },
     rowContent: { flex: 1, marginRight: 12 },
     rowLabel: { fontSize: 13, fontFamily: FAMILY.mBold, color: COLORS.text, marginBottom: 2 },
     rowValue: { fontSize: 15, fontFamily: FAMILY.mBold, color: COLORS.text },
@@ -875,7 +960,7 @@ const styles = StyleSheet.create({
     verifiedBadge: {
         flexDirection: 'row', alignItems: 'center', gap: 5,
         paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6,
-        borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
+        borderWidth: 1,
     },
     verifiedDot: { width: 4, height: 4, borderRadius: 2 },
     verifiedText: { fontSize: 8, fontFamily: FAMILY.mBold, letterSpacing: 0.5 },
@@ -887,28 +972,54 @@ const styles = StyleSheet.create({
     },
     serviceIcon: {
         width: 40, height: 40, borderRadius: 12,
-        backgroundColor: "rgba(255,255,255,0.03)",
+        backgroundColor: "rgba(255,255,255,0.02)",
         alignItems: "center", justifyContent: "center",
         borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
     },
     serviceTitle: { fontSize: 14, fontFamily: FAMILY.mBold, color: COLORS.text },
-    serviceSub: { fontSize: 11, fontFamily: FAMILY.mReg, color: COLORS.textMuted, marginTop: 2 },
+    serviceSub: { fontSize: 11, fontFamily: FAMILY.mReg, color: COLORS.textMuted },
     serviceAction: {
         paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10,
-        backgroundColor: "rgba(255,255,255,0.04)",
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.06)",
+        backgroundColor: "rgba(255,255,255,0.03)",
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
     },
     serviceActionText: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 1 },
+    
+    // Live syncing badges
     liveBadge: {
         flexDirection: "row", alignItems: "center", gap: 6,
         paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10,
         backgroundColor: "rgba(34,197,94,0.06)",
-        borderWidth: 1, borderColor: "rgba(34,197,94,0.1)",
+        borderWidth: 1, borderColor: "rgba(34,197,94,0.12)",
     },
     liveDot: {
         width: 6, height: 6, borderRadius: 3, backgroundColor: "#22c55e",
     },
     liveBadgeText: { fontSize: 8, fontFamily: FAMILY.mBold, color: "#22c55e", letterSpacing: 1 },
+    
+    liveBadgeMini: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 4,
+        backgroundColor: "rgba(34,197,94,0.06)",
+        borderWidth: 0.5,
+        borderColor: "rgba(34,197,94,0.15)",
+    },
+    liveDotMini: {
+        width: 4,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: "#22c55e",
+    },
+    liveBadgeTextMini: {
+        fontSize: 7,
+        fontFamily: FAMILY.mBold,
+        color: "#22c55e",
+        letterSpacing: 0.5,
+    },
 
     // Danger
     dangerRow: {
@@ -944,8 +1055,8 @@ const styles = StyleSheet.create({
     modalHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: "rgba(255,255,255,0.1)", alignSelf: "center", marginBottom: 24 },
     modalTitle: { fontSize: 16, fontFamily: FAMILY.mBold, color: COLORS.text, letterSpacing: 0.2, marginBottom: 24 },
     modalInputWrap: {
-        backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 16,
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.06)",
+        backgroundColor: "rgba(255,255,255,0.02)", borderRadius: 16,
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
         paddingHorizontal: 20, paddingVertical: 16, marginBottom: 28,
         flexDirection: "row", alignItems: "center",
     },
@@ -953,23 +1064,23 @@ const styles = StyleSheet.create({
     choiceGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 28 },
     choiceBtn: {
         paddingHorizontal: 20, paddingVertical: 14, borderRadius: 14,
-        backgroundColor: "rgba(255,255,255,0.03)",
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.06)",
+        backgroundColor: "rgba(255,255,255,0.02)",
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
     },
-    choiceBtnActive: { backgroundColor: "rgba(227,30,36,0.1)", borderColor: "rgba(227,30,36,0.3)" },
+    choiceBtnActive: { backgroundColor: "rgba(227,30,36,0.08)", borderColor: "rgba(227,30,36,0.22)" },
     choiceBtnText: { fontSize: 10, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 0.5 },
     choiceBtnTextActive: { color: COLORS.primary },
     modalBtns: { flexDirection: "row", gap: 12 },
-    modalCancelBtn: { flex: 1, paddingVertical: 16, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.04)", alignItems: "center" },
+    modalCancelBtn: { flex: 1, paddingVertical: 16, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.03)", alignItems: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.05)" },
     modalCancelText: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 1 },
     modalSaveBtn: { flex: 2, paddingVertical: 16, borderRadius: 16, backgroundColor: COLORS.primary, alignItems: "center" },
     modalSaveText: { fontSize: 12, fontFamily: FAMILY.accent, color: "#fff", letterSpacing: 1 },
     miniActionBtn: {
-        backgroundColor: 'rgba(227,30,36,0.08)', paddingHorizontal: 10, paddingVertical: 6,
-        borderRadius: 8, borderWidth: 1, borderColor: 'rgba(227,30,36,0.15)',
+        backgroundColor: 'rgba(227,30,36,0.06)', paddingHorizontal: 10, paddingVertical: 6,
+        borderRadius: 8, borderWidth: 1, borderColor: 'rgba(227,30,36,0.12)',
     },
     miniActionBtnText: { fontSize: 8, fontFamily: FAMILY.accent, color: COLORS.primary, letterSpacing: 0.5 },
-    miniVerifyBtn: { backgroundColor: 'rgba(227,30,36,0.08)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(227,30,36,0.15)' },
+    miniVerifyBtn: { backgroundColor: 'rgba(227,30,36,0.06)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(227,30,36,0.12)' },
     miniVerifyBtnText: { fontSize: 8, fontFamily: FAMILY.accent, color: COLORS.primary, letterSpacing: 0.5 },
     chevronAction: { paddingLeft: 12 },
 });
