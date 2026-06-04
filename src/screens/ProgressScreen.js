@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useMemo } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity, StyleSheet,
     TextInput, StatusBar, Dimensions, Animated, Alert, KeyboardAvoidingView, Platform,
@@ -188,11 +188,13 @@ export default function ProgressScreen({ navigation }) {
     useFocusEffect(useCallback(() => { load(); }, []));
 
     const load = async () => {
-        const stats = await getBodyStats();
+        const [stats, prs, s] = await Promise.all([
+            getBodyStats(),
+            getPRRecords(),
+            getSettings(),
+        ]);
         setBodyStats(stats);
-        const prs = await getPRRecords();
         setPRRecords(prs);
-        const s = await getSettings();
         setSettings(s);
         if (stats.length > 0) {
             const today = new Date().toISOString().split("T")[0];
@@ -232,17 +234,21 @@ export default function ProgressScreen({ navigation }) {
         ]).start();
     };
 
-    const chartData = (key) => {
-        return [...bodyStats].reverse()
-            .filter(s => s[key] != null)
-            .map(s => ({
-                value: s[key],
-                shortDate: new Date(s.date + "T00:00:00").toLocaleDateString("en-US", { day: "numeric", month: "short" }),
-            }));
-    };
+    const chartDataByKey = useMemo(() => {
+        const reversed = [...bodyStats].reverse();
+        return STAT_FIELDS.reduce((acc, field) => {
+            acc[field.key] = reversed
+                .filter((entry) => entry[field.key] != null)
+                .map((entry) => ({
+                    value: entry[field.key],
+                    shortDate: new Date(entry.date + "T00:00:00").toLocaleDateString("en-US", { day: "numeric", month: "short" }),
+                }));
+            return acc;
+        }, {});
+    }, [bodyStats]);
 
-    const prList = Object.entries(prRecords)
-        .sort((a, b) => (b[1].weightKg || 0) - (a[1].weightKg || 0));
+    const prList = useMemo(() => Object.entries(prRecords)
+        .sort((a, b) => (b[1].weightKg || 0) - (a[1].weightKg || 0)), [prRecords]);
 
     const saveOpacity = flashAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
 
@@ -307,7 +313,7 @@ export default function ProgressScreen({ navigation }) {
                                     <Text style={styles.sectionLabel}>TREND ANALYTICS</Text>
                                 </View>
                                 {STAT_FIELDS.map(f => {
-                                    const data = chartData(f.key);
+                                    const data = chartDataByKey[f.key] || [];
                                     if (data.length < 2) return null;
                                     return (
                                         <View key={f.key} style={[styles.card, { marginBottom: 16 }]}>

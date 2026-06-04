@@ -1,5 +1,18 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { triggerAutoSync } from "./sync";
+import { auth } from "./firebase";
+import {
+    fssaveWorkoutComplete,
+    fsGetWorkoutHistory,
+    fsGetStreak,
+    fsGetTotalWorkouts,
+    fsGetLastWorkoutDate,
+    fsClearHistory,
+    fsGetPRRecords,
+    fsTryUpdatePR,
+    fsGetBodyStats,
+    fsSaveBodyStat,
+} from "./firestore";
 
 const KEYS = {
     HISTORY: "workout_history",
@@ -11,55 +24,86 @@ const KEYS = {
     LAST_FREEZE_DATE: "last_freeze_date",
 };
 
-export const saveWorkoutComplete = async (day, target, durationSec, exercises = []) => {
-    try {
-        const today = new Date().toISOString().split("T")[0];
-        const history = await getWorkoutHistory();
-        const newEntry = {
-            day,
-            target,
-            date: today,
-            durationSec,
-            completedAt: new Date().toISOString(),
-            exercises: exercises // Store full exercise details
-        };
-        const updated = [newEntry, ...history].slice(0, 100);
-        await AsyncStorage.setItem(KEYS.HISTORY, JSON.stringify(updated));
+const hasCloudSession = () => !!auth.currentUser;
 
-        // Update streak
-        const lastDate = await AsyncStorage.getItem(KEYS.LAST_WORKOUT_DATE);
-        const lastFreeze = await AsyncStorage.getItem(KEYS.LAST_FREEZE_DATE);
-        const streakStr = await AsyncStorage.getItem(KEYS.STREAK);
+const readLocalHistory = async () => {
+    const data = await AsyncStorage.getItem(KEYS.HISTORY);
+    return data ? JSON.parse(data) : [];
+};
 
-        let streak = streakStr ? parseInt(streakStr) : 0;
-        const lastEffectiveDate = (lastFreeze && (!lastDate || new Date(lastFreeze) > new Date(lastDate)))
-            ? lastFreeze
-            : lastDate;
+const readLocalStreak = async () => {
+    const streak = await AsyncStorage.getItem(KEYS.STREAK);
+    return streak ? parseInt(streak) : 0;
+};
 
-        if (lastEffectiveDate) {
-            const last = new Date(lastEffectiveDate);
-            const todayDate = new Date(today);
-            const diff = Math.floor((todayDate - last) / (1000 * 60 * 60 * 24));
+const readLocalTotalWorkouts = async () => {
+    const total = await AsyncStorage.getItem(KEYS.TOTAL_WORKOUTS);
+    return total ? parseInt(total) : 0;
+};
 
-            if (diff === 1) {
-                streak += 1;
-            } else if (diff > 1) {
-                streak = 1;
-            }
-        } else {
+const readLocalLastWorkoutDate = async () => {
+    return await AsyncStorage.getItem(KEYS.LAST_WORKOUT_DATE);
+};
+
+const saveWorkoutCompleteLocal = async (day, target, durationSec, exercises = []) => {
+    const today = new Date().toISOString().split("T")[0];
+    const history = await readLocalHistory();
+    const newEntry = {
+        day,
+        target,
+        date: today,
+        durationSec,
+        completedAt: new Date().toISOString(),
+        exercises,
+    };
+    const updated = [newEntry, ...history].slice(0, 100);
+    await AsyncStorage.setItem(KEYS.HISTORY, JSON.stringify(updated));
+
+    const lastDate = await AsyncStorage.getItem(KEYS.LAST_WORKOUT_DATE);
+    const lastFreeze = await AsyncStorage.getItem(KEYS.LAST_FREEZE_DATE);
+    const streakStr = await AsyncStorage.getItem(KEYS.STREAK);
+
+    let streak = streakStr ? parseInt(streakStr) : 0;
+    const lastEffectiveDate = (lastFreeze && (!lastDate || new Date(lastFreeze) > new Date(lastDate)))
+        ? lastFreeze
+        : lastDate;
+
+    if (lastEffectiveDate) {
+        const last = new Date(lastEffectiveDate);
+        const todayDate = new Date(today);
+        const diff = Math.floor((todayDate - last) / (1000 * 60 * 60 * 24));
+
+        if (diff === 1) {
+            streak += 1;
+        } else if (diff > 1) {
             streak = 1;
         }
-        await AsyncStorage.setItem(KEYS.STREAK, String(streak));
-        await AsyncStorage.setItem(KEYS.LAST_WORKOUT_DATE, today);
+    } else {
+        streak = 1;
+    }
 
-        const totalStr = await AsyncStorage.getItem(KEYS.TOTAL_WORKOUTS);
-        const total = totalStr ? parseInt(totalStr) + 1 : 1;
-        await AsyncStorage.setItem(KEYS.TOTAL_WORKOUTS, String(total));
+    await AsyncStorage.setItem(KEYS.STREAK, String(streak));
+    await AsyncStorage.setItem(KEYS.LAST_WORKOUT_DATE, today);
 
-        // Auto-save to cloud
-        triggerAutoSync();
+    const totalStr = await AsyncStorage.getItem(KEYS.TOTAL_WORKOUTS);
+    const total = totalStr ? parseInt(totalStr) + 1 : 1;
+    await AsyncStorage.setItem(KEYS.TOTAL_WORKOUTS, String(total));
 
-        return { streak, total };
+    triggerAutoSync();
+    return { streak, total };
+};
+
+export const saveWorkoutComplete = async (day, target, durationSec, exercises = []) => {
+    try {
+        const localResult = await saveWorkoutCompleteLocal(day, target, durationSec, exercises);
+
+        if (hasCloudSession()) {
+            fssaveWorkoutComplete(day, target, durationSec, exercises).catch((e) => {
+                console.warn("[Storage] Cloud workout sync failed. Local save already completed.", e?.message);
+            });
+        }
+
+        return localResult;
     } catch (e) {
         console.error("saveWorkoutComplete error", e);
     }
@@ -67,8 +111,17 @@ export const saveWorkoutComplete = async (day, target, durationSec, exercises = 
 
 export const getWorkoutHistory = async () => {
     try {
-        const data = await AsyncStorage.getItem(KEYS.HISTORY);
-        return data ? JSON.parse(data) : [];
+        const localHistory = await readLocalHistory();
+        if (hasCloudSession()) {
+            try {
+                const cloudHistory = await fsGetWorkoutHistory();
+                return cloudHistory.length >= localHistory.length ? cloudHistory : localHistory;
+            } catch (e) {
+                console.warn("[Storage] Cloud history fetch failed. Falling back to local storage.", e?.message);
+            }
+        }
+
+        return localHistory;
     } catch {
         return [];
     }
@@ -76,8 +129,21 @@ export const getWorkoutHistory = async () => {
 
 export const getStreak = async () => {
     try {
-        const streak = await AsyncStorage.getItem(KEYS.STREAK);
-        return streak ? parseInt(streak) : 0;
+        const [localStreak, localLastDate] = await Promise.all([readLocalStreak(), readLocalLastWorkoutDate()]);
+        if (hasCloudSession()) {
+            try {
+                const [cloudStreak, cloudLastDate] = await Promise.all([fsGetStreak(), fsGetLastWorkoutDate()]);
+                if (!cloudLastDate) return localStreak;
+                if (!localLastDate) return cloudStreak;
+                if (localLastDate > cloudLastDate) return localStreak;
+                if (cloudLastDate > localLastDate) return cloudStreak;
+                return Math.max(localStreak, cloudStreak);
+            } catch (e) {
+                console.warn("[Storage] Cloud streak fetch failed. Falling back to local storage.", e?.message);
+            }
+        }
+
+        return localStreak;
     } catch {
         return 0;
     }
@@ -85,8 +151,17 @@ export const getStreak = async () => {
 
 export const getTotalWorkouts = async () => {
     try {
-        const total = await AsyncStorage.getItem(KEYS.TOTAL_WORKOUTS);
-        return total ? parseInt(total) : 0;
+        const localTotal = await readLocalTotalWorkouts();
+        if (hasCloudSession()) {
+            try {
+                const cloudTotal = await fsGetTotalWorkouts();
+                return Math.max(localTotal, cloudTotal);
+            } catch (e) {
+                console.warn("[Storage] Cloud total fetch failed. Falling back to local storage.", e?.message);
+            }
+        }
+
+        return localTotal;
     } catch {
         return 0;
     }
@@ -94,7 +169,19 @@ export const getTotalWorkouts = async () => {
 
 export const getLastWorkoutDate = async () => {
     try {
-        return await AsyncStorage.getItem(KEYS.LAST_WORKOUT_DATE);
+        const localLastDate = await readLocalLastWorkoutDate();
+        if (hasCloudSession()) {
+            try {
+                const cloudLastDate = await fsGetLastWorkoutDate();
+                if (!cloudLastDate) return localLastDate;
+                if (!localLastDate) return cloudLastDate;
+                return localLastDate > cloudLastDate ? localLastDate : cloudLastDate;
+            } catch (e) {
+                console.warn("[Storage] Cloud last workout date fetch failed. Falling back to local storage.", e?.message);
+            }
+        }
+
+        return localLastDate;
     } catch {
         return null;
     }
@@ -109,6 +196,14 @@ export const formatDuration = (seconds) => {
 /** Clears all session history, streak, and total count. Settings are kept. */
 export const clearHistory = async () => {
     try {
+        if (hasCloudSession()) {
+            try {
+                await fsClearHistory();
+            } catch (e) {
+                console.warn("[Storage] Cloud history clear failed. Clearing local storage only.", e?.message);
+            }
+        }
+
         await AsyncStorage.multiRemove([
             KEYS.HISTORY,
             KEYS.STREAK,
@@ -138,6 +233,14 @@ export const clearAllData = async () => {
 
 export const getPRRecords = async () => {
     try {
+        if (hasCloudSession()) {
+            try {
+                return await fsGetPRRecords();
+            } catch (e) {
+                console.warn("[Storage] Cloud PR fetch failed. Falling back to local storage.", e?.message);
+            }
+        }
+
         const data = await AsyncStorage.getItem(KEYS.PR_RECORDS);
         return data ? JSON.parse(data) : {};
     } catch {
@@ -152,6 +255,14 @@ export const getPRRecords = async () => {
  */
 export const tryUpdatePR = async (exerciseName, weightKg, reps) => {
     try {
+        if (hasCloudSession()) {
+            try {
+                return await fsTryUpdatePR(exerciseName, weightKg, reps);
+            } catch (e) {
+                console.warn("[Storage] Cloud PR save failed. Falling back to local storage.", e?.message);
+            }
+        }
+
         const records = await getPRRecords();
         const prev = records[exerciseName] || null;
         const today = new Date().toISOString();
@@ -182,6 +293,14 @@ export const tryUpdatePR = async (exerciseName, weightKg, reps) => {
 
 export const getBodyStats = async () => {
     try {
+        if (hasCloudSession()) {
+            try {
+                return await fsGetBodyStats();
+            } catch (e) {
+                console.warn("[Storage] Cloud body stats fetch failed. Falling back to local storage.", e?.message);
+            }
+        }
+
         const data = await AsyncStorage.getItem(KEYS.BODY_STATS);
         return data ? JSON.parse(data) : [];
     } catch {
@@ -191,6 +310,15 @@ export const getBodyStats = async () => {
 
 export const saveBodyStat = async (entry) => {
     try {
+        if (hasCloudSession()) {
+            try {
+                await fsSaveBodyStat(entry);
+                return await fsGetBodyStats();
+            } catch (e) {
+                console.warn("[Storage] Cloud body stat save failed. Falling back to local storage.", e?.message);
+            }
+        }
+
         const stats = await getBodyStats();
         // Replace same-day entry or prepend
         const today = new Date().toISOString().split("T")[0];

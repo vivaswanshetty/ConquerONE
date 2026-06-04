@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
     View, Text, ScrollView, StyleSheet, TouchableOpacity, StatusBar, Dimensions, Share, Alert,
 } from "react-native";
@@ -224,10 +224,29 @@ function HistoryRow({ entry, isLast }) {
             {expanded && hasExercises && (
                 <View style={hr.detailLines}>
                     {entry.exercises.map((ex, idx) => (
-                        <View key={idx} style={hr.detailRow}>
-                            <View style={hr.detailDot} />
-                            <Text style={hr.detailText}>{ex.name.toUpperCase()}</Text>
-                            <Text style={hr.detailSets}>{ex.sets} SETS</Text>
+                        <View key={idx} style={hr.exerciseContainer}>
+                            <View style={hr.detailRow}>
+                                <View style={hr.detailDot} />
+                                <Text style={hr.detailText}>
+                                    {ex.name.toUpperCase()}{ex.side ? ` (${ex.side})` : ""}
+                                </Text>
+                                <Text style={hr.detailSets}>{ex.sets} SETS</Text>
+                            </View>
+                            {ex.loggedSets && ex.loggedSets.some(s => s.completed) ? (
+                                <View style={hr.loggedSetsBox}>
+                                    {ex.loggedSets.filter(s => s.completed).map((s, sIdx) => (
+                                        <View key={sIdx} style={hr.loggedSetRow}>
+                                            <Text style={hr.loggedSetLabel}>SET {s.set}</Text>
+                                            <View style={hr.loggedSetValBox}>
+                                                <Text style={hr.loggedSetVal}>
+                                                    {s.weightKg > 0 ? `${s.weightKg} kg` : "Bodyweight"}
+                                                    {s.reps > 0 ? ` × ${s.reps} reps` : ""}
+                                                </Text>
+                                            </View>
+                                        </View>
+                                    ))}
+                                </View>
+                            ) : null}
                         </View>
                     ))}
                     <View style={{ height: 16 }} />
@@ -281,6 +300,43 @@ const hr = StyleSheet.create({
         color: COLORS.textMuted,
         opacity: 0.5,
     },
+    exerciseContainer: {
+        paddingVertical: 6,
+        borderBottomWidth: 1,
+        borderBottomColor: "rgba(255,255,255,0.01)",
+    },
+    loggedSetsBox: {
+        paddingLeft: 15,
+        paddingTop: 4,
+        paddingBottom: 6,
+        gap: 6,
+    },
+    loggedSetRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+    },
+    loggedSetLabel: {
+        fontSize: 8,
+        fontFamily: FAMILY.bold,
+        color: COLORS.textMuted,
+        width: 32,
+        letterSpacing: 0.5,
+    },
+    loggedSetValBox: {
+        backgroundColor: "rgba(255,255,255,0.02)",
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 6,
+        borderWidth: 0.5,
+        borderColor: "rgba(255,255,255,0.04)",
+    },
+    loggedSetVal: {
+        fontSize: 9,
+        fontFamily: FAMILY.bold,
+        color: COLORS.textSub,
+        letterSpacing: 0.5,
+    },
 });
 
 /* ── Main screen ──────────────────────────────────────────── */
@@ -292,22 +348,36 @@ export default function HistoryScreen({ navigation }) {
 
     useFocusEffect(useCallback(() => { load(); }, []));
     const load = async () => {
-        setHistory(await getWorkoutHistory());
-        setStreak(await getStreak());
-        setTotal(await getTotalWorkouts());
+        const [nextHistory, nextStreak, nextTotal] = await Promise.all([
+            getWorkoutHistory(),
+            getStreak(),
+            getTotalWorkouts(),
+        ]);
+        setHistory(nextHistory);
+        setStreak(nextStreak);
+        setTotal(nextTotal);
     };
 
-    const totalMin = Math.round(history.reduce((s, h) => s + (h.durationSec || 0), 0) / 60);
-    const weeklyData = computeWeeklyData(history);
-    const prs = computePRs(history);
-    const maxCount = Math.max(...WORKOUT_PLAN.map(d => history.filter(h => h.day === d.day).length), 1);
-
-    const groups = history.reduce((acc, e) => {
+    const totalMin = useMemo(() => Math.round(history.reduce((s, h) => s + (h.durationSec || 0), 0) / 60), [history]);
+    const weeklyData = useMemo(() => computeWeeklyData(history), [history]);
+    const prs = useMemo(() => computePRs(history), [history]);
+    const dayCounts = useMemo(() => {
+        const counts = {};
+        history.forEach((item) => {
+            counts[item.day] = (counts[item.day] || 0) + 1;
+        });
+        return counts;
+    }, [history]);
+    const maxCount = useMemo(
+        () => Math.max(...WORKOUT_PLAN.map((day) => dayCounts[day.day] || 0), 1),
+        [dayCounts]
+    );
+    const groups = useMemo(() => history.reduce((acc, e) => {
         const key = getWeekLabel(toDate(e.completedAt));
         if (!acc[key]) acc[key] = [];
         acc[key].push(e);
         return acc;
-    }, {});
+    }, {}), [history]);
 
     const exportHistory = async () => {
         if (history.length === 0) {
@@ -415,7 +485,7 @@ export default function HistoryScreen({ navigation }) {
                         <SectionLabel text="TARGET FOCUS" />
                         <View style={styles.card}>
                             {WORKOUT_PLAN.map((day) => {
-                                const count = history.filter(h => h.day === day.day).length;
+                                const count = dayCounts[day.day] || 0;
                                 return (
                                     <View key={day.day}>
                                         <BreakdownBar day={day} count={count} max={maxCount} />

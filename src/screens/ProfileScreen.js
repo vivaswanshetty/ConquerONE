@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity, StyleSheet,
     StatusBar, Alert, Image, ActivityIndicator, Animated,
-    Modal, TextInput, KeyboardAvoidingView, Platform, DeviceEventEmitter
+    Modal, TextInput, KeyboardAvoidingView, Platform, DeviceEventEmitter, InteractionManager
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
@@ -14,7 +14,7 @@ import * as ImagePicker from "expo-image-picker";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../utils/firebase";
 import { useAuth } from "../context/AuthContext";
-import { fsGetStreak, fsGetTotalWorkouts } from "../utils/firestore";
+import { getStreak, getTotalWorkouts } from "../utils/storage";
 import { COLORS, SPACING, FAMILY, APP_VERSION } from "../utils/theme";
 import { uploadImage } from "../utils/cloudStorage";
 import { scheduleBirthdayWishes } from "../utils/notifications";
@@ -198,17 +198,24 @@ export default function ProfileScreen({ navigation }) {
 
     useFocusEffect(
         useCallback(() => {
+            let cancelled = false;
             loadStats();
-            checkHealthOnLoad();
             // Sync current avatar state with profile from auth
             if (profile?.photoURL) {
                 setCurrentAvatarUrl(profile.photoURL);
             }
-            // Refresh user object to pick up email verification status
-            if (user) {
-                user.reload().catch(() => { });
-            }
-        }, [profile?.photoURL])
+            const task = InteractionManager.runAfterInteractions(() => {
+                if (cancelled) return;
+                checkHealthOnLoad();
+                if (user) {
+                    user.reload().catch(() => { });
+                }
+            });
+            return () => {
+                cancelled = true;
+                task.cancel();
+            };
+        }, [profile?.photoURL, user])
     );
 
     const checkHealthOnLoad = async () => {
@@ -220,7 +227,7 @@ export default function ProfileScreen({ navigation }) {
 
     const loadStats = async () => {
         try {
-            const [s, t] = await Promise.all([fsGetStreak(), fsGetTotalWorkouts()]);
+            const [s, t] = await Promise.all([getStreak(), getTotalWorkouts()]);
             setStreak(s);
             setTotal(t);
         } catch (_) { }
@@ -379,7 +386,7 @@ export default function ProfileScreen({ navigation }) {
         if (total >= 100) return { label: "LEGEND", pct: "100%" };
         if (total >= 50) return { label: "TITAN", pct: "95%" };
         if (total >= 25) return { label: "WARRIOR", pct: "88%" };
-        if (total >= 10) return { label: "RISING", pct: "75%" };
+        if (total >= 10) return { label: "RISING STAR", pct: "75%" };
         if (total >= 5) return { label: "ROOKIE", pct: "60%" };
         return { label: "RECRUIT", pct: "40%" };
     };

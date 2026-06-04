@@ -1,14 +1,15 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
     View, Text, StyleSheet, ScrollView, StatusBar,
     Animated, Dimensions, TouchableOpacity,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getStreak, getTotalWorkouts } from "../utils/storage";
 import { COLORS, FAMILY, SPACING } from "../utils/theme";
 import { useAuth } from "../context/AuthContext";
-import { fsGetStreak, fsGetTotalWorkouts } from "../utils/firestore";
 
 const { width } = Dimensions.get("window");
 
@@ -37,18 +38,24 @@ export default function RankScreen({ navigation }) {
     const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
     const displayName = profile?.fullName?.split(" ")[0] || "ATHLETE";
+    const loadStats = useCallback(async () => {
+        const [t, s] = await Promise.all([getTotalWorkouts(), getStreak()]);
+        setTotal(t);
+        setStreak(s);
+    }, []);
 
     useEffect(() => {
-        (async () => {
-            const [t, s] = await Promise.all([fsGetTotalWorkouts(), fsGetStreak()]);
-            setTotal(t);
-            setStreak(s);
-        })();
         Animated.parallel([
             Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
             Animated.spring(scaleAnim, { toValue: 1, friction: 8, tension: 40, useNativeDriver: true }),
         ]).start();
     }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            loadStats();
+        }, [loadStats])
+    );
 
     const current = getRankData(total);
     const nextRank = current.index < RANKS.length - 1 ? RANKS[current.index + 1] : null;

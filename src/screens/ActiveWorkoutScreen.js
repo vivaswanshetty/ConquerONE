@@ -11,8 +11,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { COLORS, FONTS, SPACING, RADIUS, FAMILY } from "../utils/theme";
-import { saveWorkoutComplete, formatDuration, tryUpdatePR } from "../utils/storage";
+import { saveWorkoutComplete, formatDuration, tryUpdatePR, getPRRecords } from "../utils/storage";
 import { getSettings, estimateCalories, displayWeight } from "../utils/settings";
+import { getSuggestedWeight } from "../data/workoutData";
+
 import {
     setAudioSettings, announceWorkStart, announceSetDone,
     announceRestOver, announceWorkoutDone,
@@ -58,6 +60,13 @@ function buildPhases(queue, extraRest = 0) {
     queue.forEach((ex, exIdx) => {
         const isReps = ex.type === "reps" || (ex.type !== "timer" && ex.name.toLowerCase() !== "plank");
         for (let set = 1; set <= ex.sets; set++) {
+            let targetRepRange = ex.repRange || "12-15";
+            if (targetRepRange.includes("·")) {
+                const parts = targetRepRange.split("·");
+                if (parts[set - 1]) {
+                    targetRepRange = parts[set - 1];
+                }
+            }
             phases.push({
                 type: "active",
                 exercise: ex,
@@ -65,7 +74,7 @@ function buildPhases(queue, extraRest = 0) {
                 exIdx,
                 duration: ex.activeTimeSec,
                 isReps: isReps,
-                repRange: ex.repRange || "12-15"
+                repRange: targetRepRange
             });
             if (set < ex.sets) {
                 phases.push({ type: "set_rest", exercise: ex, set, exIdx, duration: ex.restTimeSec + extraRest, nextExercise: null });
@@ -122,18 +131,20 @@ function RingTimer({ progress, isWork, size, stroke, timeLeft }) {
 }
 
 /* ── PR Logging Modal ─────────────────────────────────────── */
-function PRModal({ visible, exerciseName, onClose, onSave, weightUnit = "kg" }) {
+function PRModal({ visible, exerciseName, onClose, onSave, weightUnit = "kg", initialWeight = "", initialReps = "" }) {
     const [weight, setWeight] = useState("");
     const [reps, setReps] = useState("");
     const scaleAnim = useRef(new Animated.Value(0.92)).current;
 
     useEffect(() => {
         if (visible) {
+            setWeight(initialWeight !== undefined && initialWeight !== null ? String(initialWeight) : "");
+            setReps(initialReps !== undefined && initialReps !== null ? String(initialReps) : "");
             Animated.spring(scaleAnim, { toValue: 1, tension: 80, friction: 9, useNativeDriver: true }).start();
         } else {
             scaleAnim.setValue(0.92);
         }
-    }, [visible]);
+    }, [visible, initialWeight, initialReps]);
 
     const handleSave = () => {
         const w = parseFloat(weight) || 0;
@@ -156,6 +167,15 @@ function PRModal({ visible, exerciseName, onClose, onSave, weightUnit = "kg" }) 
                                 <View style={{ flex: 1 }}>
                                     <Text style={pm.title}>LOG YOUR SET</Text>
                                     <Text style={pm.subtitle} numberOfLines={1}>{exerciseName.toUpperCase()}</Text>
+                                    {initialWeight !== "" && Number(initialWeight) > 0 ? (
+                                        <Text style={pm.targetText}>
+                                            TARGET OVERLOAD: {initialWeight} {weightUnit.toUpperCase()} × {initialReps} REPS
+                                        </Text>
+                                    ) : getSuggestedWeight(exerciseName) ? (
+                                        <Text style={pm.suggestedText}>
+                                            SUGGESTED START: {getSuggestedWeight(exerciseName).toUpperCase()}
+                                        </Text>
+                                    ) : null}
                                 </View>
                             </View>
 
@@ -232,6 +252,8 @@ const pm = StyleSheet.create({
     },
     title: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 1.5 },
     subtitle: { fontSize: 18, fontFamily: FAMILY.display, color: COLORS.textSub, marginTop: 4 },
+    targetText: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.primary, marginTop: 6, letterSpacing: 0.5 },
+    suggestedText: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.accent, marginTop: 6, letterSpacing: 0.5 },
     row: { flexDirection: "row", gap: 16, width: "100%", marginBottom: 32 },
     inputGroup: { flex: 1 },
     inputLabel: {
@@ -280,17 +302,20 @@ function PRToast({ visible, exerciseName, weightKg, reps, weightUnit }) {
     return (
         <Animated.View style={[pt.toast, { opacity: opacityAnim, transform: [{ translateY: slideAnim }] }]}>
             <LinearGradient
-                colors={["rgba(255,255,255,0.05)", "rgba(255,255,255,0.01)"]}
+                colors={["rgba(227, 30, 36, 0.25)", "rgba(13, 13, 13, 0.98)"]}
                 style={StyleSheet.absoluteFill}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0.5 }}
             />
-            <Ionicons name="trophy" size={20} color={COLORS.primary} />
+            <View style={pt.trophyContainer}>
+                <Ionicons name="trophy" size={18} color={COLORS.primary} />
+            </View>
             <View style={pt.info}>
                 <Text style={pt.label}>NEW PERFORMANCE RECORD</Text>
                 <Text style={pt.name} numberOfLines={1}>{exerciseName.toUpperCase()}</Text>
             </View>
             <View style={pt.valBox}>
                 <Text style={pt.val}>{displayWeight(weightKg, weightUnit)}</Text>
+                {reps > 0 && <Text style={pt.subVal}>{reps} REPS</Text>}
             </View>
         </Animated.View>
     );
@@ -298,21 +323,35 @@ function PRToast({ visible, exerciseName, weightKg, reps, weightUnit }) {
 
 const pt = StyleSheet.create({
     toast: {
-        position: "absolute", top: 12, left: 16, right: 16,
-        backgroundColor: COLORS.bgCard, borderRadius: 20,
+        position: "absolute", top: 16, left: 16, right: 16,
+        backgroundColor: "#0D0D0D", borderRadius: 24,
         flexDirection: "row", alignItems: "center", gap: 16,
-        padding: 16, borderWidth: 1, borderColor: COLORS.border,
-        elevation: 12, zIndex: 100, overflow: "hidden",
+        padding: 16, borderWidth: 1.5, borderColor: "rgba(227, 30, 36, 0.45)",
+        elevation: 12, zIndex: 1000, overflow: "hidden",
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.5,
+        shadowRadius: 16,
+    },
+    trophyContainer: {
+        width: 38, height: 38, borderRadius: 12,
+        backgroundColor: "rgba(227, 30, 36, 0.12)",
+        alignItems: "center", justifyContent: "center",
+        borderWidth: 1, borderColor: "rgba(227, 30, 36, 0.25)",
     },
     info: { flex: 1 },
     label: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 1.5 },
     name: { fontSize: 13, fontFamily: FAMILY.display, color: COLORS.text, marginTop: 4 },
     valBox: {
-        backgroundColor: "rgba(255,255,255,0.05)",
-        paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8
+        backgroundColor: "rgba(255,255,255,0.06)",
+        paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10,
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
+        justifyContent: "center", alignItems: "center", minWidth: 64
     },
-    val: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.text },
+    val: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.text, textAlign: "center" },
+    subVal: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.primary, textAlign: "center", marginTop: 2, letterSpacing: 0.5 },
 });
+
 
 /* ── Rest Overlay ─────────────────────────────────────────── */
 function RestOverlay({ phase, timeLeft, onSkip, settings, mindsetTip }) {
@@ -328,34 +367,47 @@ function RestOverlay({ phase, timeLeft, onSkip, settings, mindsetTip }) {
 
     return (
         <View style={ro.container}>
-            <View style={ro.topRow}>
-                <View style={ro.badge}>
-                    <Text style={ro.badgeText}>
-                        {isSetRest ? "RESTING" : "NEXT EXERCISE"}
-                    </Text>
+            <View style={ro.mainContent}>
+                <View style={ro.topRow}>
+                    <View style={ro.badge}>
+                        <Text style={ro.badgeText}>
+                            {isSetRest ? "RESTING" : "NEXT EXERCISE"}
+                        </Text>
+                    </View>
+                    <TouchableOpacity onPress={onSkip} style={ro.skipBtn} activeOpacity={0.7}>
+                        <Text style={[ro.skipText, { color: COLORS.primary }]}>SKIP REST</Text>
+                        <Ionicons name="chevron-forward" size={12} color={COLORS.primary} />
+                    </TouchableOpacity>
                 </View>
-                <TouchableOpacity onPress={onSkip} style={ro.skipBtn} activeOpacity={0.7}>
-                    <Text style={[ro.skipText, { color: COLORS.primary }]}>SKIP REST</Text>
-                    <Ionicons name="chevron-forward" size={12} color={COLORS.primary} />
-                </TouchableOpacity>
+
+                <Text style={[ro.timer, isUrgent && { color: COLORS.primary }]}>
+                    {timeStr}
+                </Text>
+                <Text style={ro.timerUnit}>{timeLeft >= 60 ? "MINUTES REMAINING" : "SECONDS REMAINING"}</Text>
+
+                {phase?.nextExercise && (
+                    <View style={ro.nextCard}>
+                        <Text style={ro.nextLabel}>NEXT UP</Text>
+                        <Text style={ro.nextName} numberOfLines={2} adjustsFontSizeToFit>{phase.nextExercise.name.toUpperCase()}</Text>
+                        {phase.nextExercise.image ? (
+                            <View style={ro.nextImgBox}>
+                                <Image source={phase.nextExercise.image} style={ro.nextImg} resizeMode="cover" />
+                            </View>
+                        ) : (
+                            <View style={ro.nextTargetBox}>
+                                <LinearGradient
+                                    colors={["rgba(255,255,255,0.02)", "transparent"]}
+                                    style={StyleSheet.absoluteFill}
+                                />
+                                <Ionicons name="barbell-outline" size={20} color={COLORS.primary} style={{ marginBottom: 4 }} />
+                                <Text style={ro.nextTargetText}>
+                                    {(phase.nextExercise.primaryTarget || "TARGET").toUpperCase()} · {(phase.nextExercise.equipment || "EQUIPMENT").toUpperCase()}
+                                </Text>
+                            </View>
+                        )}
+                    </View>
+                )}
             </View>
-
-            <Text style={[ro.timer, isUrgent && { color: COLORS.primary }]}>
-                {timeStr}
-            </Text>
-            <Text style={ro.timerUnit}>{timeLeft >= 60 ? "MINUTES REMAINING" : "SECONDS REMAINING"}</Text>
-
-            {phase?.nextExercise && (
-                <View style={ro.nextCard}>
-                    <Text style={ro.nextLabel}>NEXT UP</Text>
-                    <Text style={ro.nextName} numberOfLines={2} adjustsFontSizeToFit>{phase.nextExercise.name.toUpperCase()}</Text>
-                    {phase.nextExercise.image && (
-                        <View style={ro.nextImgBox}>
-                            <Image source={phase.nextExercise.image} style={ro.nextImg} resizeMode="cover" />
-                        </View>
-                    )}
-                </View>
-            )}
 
             {settings?.restMindset && mindsetTip ? (
                 <View style={ro.tipCard}>
@@ -368,9 +420,11 @@ function RestOverlay({ phase, timeLeft, onSkip, settings, mindsetTip }) {
 
 const ro = StyleSheet.create({
     container: {
-        flex: 1, alignItems: "center", paddingHorizontal: SPACING.base,
+        width: "100%", flex: 1, alignItems: "center", justifyContent: "space-between", paddingHorizontal: SPACING.base,
         paddingTop: SPACING.lg,
+        paddingBottom: 8,
     },
+    mainContent: { width: "100%", flex: 1, alignItems: "center" },
     topRow: {
         flexDirection: "row", justifyContent: "space-between",
         alignItems: "center", width: "100%", marginBottom: 40,
@@ -400,9 +454,19 @@ const ro = StyleSheet.create({
     nextImgBox: { width: "100%", height: 140, borderRadius: 16, overflow: "hidden", backgroundColor: "rgba(255,255,255,0.03)" },
     nextImg: { width: "100%", height: "100%", opacity: 0.5 },
     tipCard: {
-        width: "100%", alignItems: "center", paddingVertical: 12,
+        width: "100%", minHeight: 44, alignItems: "center", justifyContent: "center", paddingHorizontal: 16, paddingVertical: 12, marginTop: 20,
     },
-    tipText: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.textMuted, textAlign: "center", opacity: 0.4, letterSpacing: 0.5 },
+    tipText: {
+        fontSize: 13, lineHeight: 18, fontFamily: FAMILY.bold, color: COLORS.textMuted, textAlign: "center", opacity: 0.4, letterSpacing: 0.5,
+    },
+    nextTargetBox: {
+        width: "100%", height: 140, borderRadius: 16, overflow: "hidden",
+        backgroundColor: "rgba(255,255,255,0.02)", alignItems: "center", justifyContent: "center",
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.05)", padding: 16,
+    },
+    nextTargetText: {
+        fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.textSub, letterSpacing: 1, textAlign: "center",
+    },
 });
 
 /* ── MAIN SCREEN ──────────────────────────────────────────── */
@@ -421,9 +485,16 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
     const [workoutStart] = useState(Date.now());
     const [elapsedSec, setElapsedSec] = useState(0);
     const [phases, setPhases] = useState([]);
-    const [prModal, setPRModal] = useState({ visible: false, exerciseName: "" });
+    const [prModal, setPRModal] = useState({ visible: false, exerciseName: "", exIdx: 0, setNum: 0, initialWeight: "", initialReps: "" });
     const [prToast, setPRToast] = useState({ visible: false, exerciseName: "", weightKg: 0, reps: 0 });
     const [newPRsFound, setNewPRsFound] = useState([]);
+    const [loggedExercises, setLoggedExercises] = useState([]);
+    const loggedExercisesRef = useRef([]);
+    const prRecordsRef = useRef({});
+
+    useEffect(() => {
+        loggedExercisesRef.current = loggedExercises;
+    }, [loggedExercises]);
     const [mindsetTip] = useState(() => REST_MINDSET[Math.floor(Math.random() * REST_MINDSET.length)]);
     const [jumpModal, setJumpModal] = useState(false);
     const intervalRef = useRef(null);
@@ -435,6 +506,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
     const setLoggingRef = useRef(true);
     const autoStartRef = useRef(true);   // mirrors settings.autoStartRest
     const settingsRef = useRef(settings);
+    const completingRef = useRef(false);
 
     // Intercept back navigation (hardware back, swipe gesture) to prevent data loss
     useEffect(() => {
@@ -467,7 +539,28 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
             setLoggingRef.current = s.setLoggingEnabled ?? true;
             autoStartRef.current = s.autoStartRest ?? true;
             setAudioSettings(s);
+
+            // Load PR records to prefill target weights
+            try {
+                const prs = await getPRRecords();
+                prRecordsRef.current = prs;
+            } catch (e) {
+                console.warn("[ActiveWorkout] Failed to load PR records for targets", e);
+            }
+
             const q = buildQueue(day.exercises);
+            const initialLogged = q.map((ex, idx) => ({
+                name: ex.name,
+                side: ex.side,
+                sets: ex.sets,
+                loggedSets: Array.from({ length: ex.sets }, (_, i) => ({
+                    set: i + 1,
+                    weightKg: 0,
+                    reps: 0,
+                    completed: false
+                }))
+            }));
+            setLoggedExercises(initialLogged);
             const p = buildPhases(q, s.extraRestSec || 0);
             setPhases(p);
             setTimeLeft(p[0]?.duration ?? 45);
@@ -540,7 +633,40 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
             const completedPhase = phasesArr[currentIdx];
             if (completedPhase?.type === "active" && setLoggingRef.current) {
                 setTimeout(() => {
-                    setPRModal({ visible: true, exerciseName: completedPhase.exercise.name });
+                    const exLog = loggedExercisesRef.current[completedPhase.exIdx];
+                    let initW = "";
+                    let initR = "";
+                    
+                    if (exLog && completedPhase.set > 1) {
+                        const prevSet = exLog.loggedSets.find(s => s.set === completedPhase.set - 1);
+                        if (prevSet && prevSet.completed) {
+                            initW = prevSet.weightKg;
+                            initR = prevSet.reps;
+                        }
+                    } else if (completedPhase.set === 1 && prRecordsRef.current) {
+                        const exPR = prRecordsRef.current[completedPhase.exercise.name];
+                        if (exPR) {
+                            initW = exPR.weightKg;
+                            initR = exPR.reps;
+                        }
+                    }
+                    
+                    if (!initW && !initR) {
+                        const repRange = completedPhase.repRange;
+                        if (repRange) {
+                            const match = repRange.match(/^(\d+)/);
+                            if (match) initR = match[1];
+                        }
+                    }
+                    
+                    setPRModal({
+                        visible: true,
+                        exerciseName: completedPhase.exercise.name,
+                        exIdx: completedPhase.exIdx,
+                        setNum: completedPhase.set,
+                        initialWeight: initW,
+                        initialReps: initR
+                    });
                 }, 600);
             }
         }
@@ -650,18 +776,26 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
     };
 
     const completeWorkout = async () => {
+        if (completingRef.current) return;
+        completingRef.current = true;
         clearInterval(intervalRef.current);
         clearInterval(elapsedRef.current);
         announceWorkoutDone();
         const dur = Math.floor((Date.now() - workoutStart) / 1000);
-        const result = await saveWorkoutComplete(day.day, day.target, dur, day.exercises);
-        navigation.replace("WorkoutComplete", {
-            day, durationSec: dur,
-            streak: result?.streak || 0, total: result?.total || 0,
-            newPRs: newPRsFound,
-            caloriesBurned: liveCalories(dur),
-            showCalories: settings.showCalories,
-        });
+        try {
+            const result = await saveWorkoutComplete(day.day, day.target, dur, loggedExercisesRef.current);
+            navigation.replace("WorkoutComplete", {
+                day: { ...day, exercises: loggedExercisesRef.current },
+                durationSec: dur,
+                streak: result?.streak || 0, total: result?.total || 0,
+                newPRs: newPRsFound,
+                caloriesBurned: liveCalories(dur),
+                showCalories: settings.showCalories,
+            });
+        } catch (_) {
+            completingRef.current = false;
+            Alert.alert("SAVE FAILED", "We couldn't finish saving this workout. Please try again.");
+        }
     };
 
     const jumpToExercise = (idx) => {
@@ -679,14 +813,54 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
     };
 
     const handlePRSave = async (weightKg, reps) => {
-        setPRModal({ visible: false, exerciseName: "" });
-        if ((weightKg === 0 && reps === 0) || !prModal.exerciseName) return;
-        const result = await tryUpdatePR(prModal.exerciseName, weightKg, reps);
-        if (result.isNewPR) {
-            hapticNotify();
-            setNewPRsFound(prev => [...prev, { name: prModal.exerciseName, weightKg, reps }]);
-            showPRToast(prModal.exerciseName, weightKg, reps);
+        const { exerciseName, exIdx, setNum } = prModal;
+        setPRModal(prev => ({ ...prev, visible: false }));
+        if (!exerciseName) return;
+
+        setLoggedExercises(prev => {
+            const next = [...prev];
+            if (next[exIdx]) {
+                const updatedSets = next[exIdx].loggedSets.map(s => {
+                    if (s.set === setNum) {
+                        return { ...s, weightKg, reps, completed: true };
+                    }
+                    return s;
+                });
+                next[exIdx] = { ...next[exIdx], loggedSets: updatedSets };
+            }
+            return next;
+        });
+
+        if (weightKg > 0 || reps > 0) {
+            const result = await tryUpdatePR(exerciseName, weightKg, reps);
+            if (result.isNewPR) {
+                hapticNotify();
+                setNewPRsFound(prev => [...prev, { name: exerciseName, weightKg, reps }]);
+                showPRToast(exerciseName, weightKg, reps);
+                if (prRecordsRef.current) {
+                    prRecordsRef.current[exerciseName] = { weightKg, reps };
+                }
+            }
         }
+    };
+
+    const handlePRSkip = () => {
+        const { exIdx, setNum } = prModal;
+        setPRModal(prev => ({ ...prev, visible: false }));
+
+        setLoggedExercises(prev => {
+            const next = [...prev];
+            if (next[exIdx]) {
+                const updatedSets = next[exIdx].loggedSets.map(s => {
+                    if (s.set === setNum) {
+                        return { ...s, weightKg: 0, reps: 0, completed: true };
+                    }
+                    return s;
+                });
+                next[exIdx] = { ...next[exIdx], loggedSets: updatedSets };
+            }
+            return next;
+        });
     };
 
     if (!currentPhase || phases.length === 0) {
@@ -723,9 +897,11 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
             <PRModal
                 visible={prModal.visible}
                 exerciseName={prModal.exerciseName}
-                onClose={() => setPRModal({ visible: false, exerciseName: "" })}
+                onClose={handlePRSkip}
                 onSave={handlePRSave}
                 weightUnit={settings.weightUnit}
+                initialWeight={prModal.initialWeight}
+                initialReps={prModal.initialReps}
             />
 
             {/* Top bar */}
@@ -770,13 +946,15 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
             {/* REST phase */}
             {isRest ? (
                 <Animated.View style={[styles.restContainer, { opacity: fadeAnim }]}>
-                    <RestOverlay
-                        phase={currentPhase}
-                        timeLeft={timeLeft}
-                        onSkip={handleSkip}
-                        settings={settings}
-                        mindsetTip={mindsetTip}
-                    />
+                    <View style={styles.restContent}>
+                        <RestOverlay
+                            phase={currentPhase}
+                            timeLeft={timeLeft}
+                            onSkip={handleSkip}
+                            settings={settings}
+                            mindsetTip={mindsetTip}
+                        />
+                    </View>
                     <View style={styles.controls}>
                         <TouchableOpacity
                             style={[styles.ctrlSec, phaseIdx === 0 && styles.ctrlSecDisabled]}
@@ -852,13 +1030,45 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                         </View>
 
                         {/* Reference Image during work */}
-                        {ex.image && (
+                        {ex.image ? (
                             <View style={styles.workImgBox}>
                                 <LinearGradient
                                     colors={["transparent", "rgba(0,0,0,0.4)"]}
                                     style={StyleSheet.absoluteFill}
                                 />
                                 <Image source={ex.image} style={styles.workImg} resizeMode="contain" />
+                            </View>
+                        ) : (
+                            <View style={styles.workInfoPanel}>
+                                <LinearGradient
+                                    colors={["rgba(255,255,255,0.03)", "rgba(227,30,36,0.01)"]}
+                                    style={StyleSheet.absoluteFill}
+                                />
+                                <Text style={styles.infoPanelLabel}>TARGET INTEL</Text>
+                                <Text style={styles.infoPanelTitle}>{ex.primaryTarget ? ex.primaryTarget.toUpperCase() : "TARGET MUSCLE"}</Text>
+                                <ScrollView
+                                    horizontal
+                                    showsHorizontalScrollIndicator={false}
+                                    style={{ width: "100%" }}
+                                    contentContainerStyle={styles.infoPanelBadgeRow}
+                                >
+                                    <View style={styles.infoPanelBadge}>
+                                        <Ionicons name="barbell-outline" size={12} color={COLORS.primary} />
+                                        <Text style={styles.infoPanelBadgeText}>{ex.equipment ? ex.equipment.toUpperCase() : "EQUIPMENT"}</Text>
+                                    </View>
+                                    {ex.tag && (
+                                        <View style={[styles.infoPanelBadge, { borderColor: "rgba(255,255,255,0.15)", backgroundColor: "transparent" }]}>
+                                            <Ionicons name="bookmark-outline" size={12} color={COLORS.textSub} />
+                                            <Text style={[styles.infoPanelBadgeText, { color: COLORS.textSub }]}>{ex.tag}</Text>
+                                        </View>
+                                    )}
+                                    {getSuggestedWeight(ex.name) ? (
+                                        <View style={[styles.infoPanelBadge, { borderColor: "rgba(227, 30, 36, 0.35)", backgroundColor: "rgba(227, 30, 36, 0.05)" }]}>
+                                            <Ionicons name="trending-up-outline" size={12} color={COLORS.primary} />
+                                            <Text style={[styles.infoPanelBadgeText, { color: COLORS.primary }]}>SUGGESTED: {getSuggestedWeight(ex.name).toUpperCase()}</Text>
+                                        </View>
+                                    ) : null}
+                                </ScrollView>
                             </View>
                         )}
 
@@ -996,7 +1206,8 @@ const styles = StyleSheet.create({
     progressTrack: { height: 3, backgroundColor: "rgba(255,255,255,0.05)", width: "100%" },
     progressFill: { height: "100%", backgroundColor: COLORS.primary },
 
-    restContainer: { flex: 1, backgroundColor: COLORS.bg, justifyContent: "space-between", paddingBottom: 48 },
+    restContainer: { flex: 1, backgroundColor: COLORS.bg, justifyContent: "space-between", paddingBottom: 28 },
+    restContent: { flex: 1, width: "100%" },
 
     phaseTag: {
         flexDirection: "row", alignItems: "center", gap: 8,
@@ -1033,7 +1244,7 @@ const styles = StyleSheet.create({
 
     controls: {
         flexDirection: "row", alignItems: "center", justifyContent: "center",
-        gap: 32, marginTop: 64,
+        gap: 32, marginTop: 16, paddingBottom: 8,
     },
     ctrlMain: {
         width: 88, height: 88, borderRadius: 44,
@@ -1089,6 +1300,31 @@ const styles = StyleSheet.create({
         borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
     },
     workImg: { width: "100%", height: "100%", opacity: 0.8 },
+    workInfoPanel: {
+        width: width - 80, height: 180, borderRadius: 20,
+        backgroundColor: "rgba(255,255,255,0.02)",
+        marginTop: 32, overflow: "hidden",
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
+        alignItems: "center", justifyContent: "center", padding: 20,
+    },
+    infoPanelLabel: {
+        fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 2, marginBottom: 8,
+    },
+    infoPanelTitle: {
+        fontSize: 20, fontFamily: FAMILY.display, color: COLORS.text, textAlign: "center", marginBottom: 16, letterSpacing: -0.5, lineHeight: 24,
+    },
+    infoPanelBadgeRow: {
+        flexDirection: "row", gap: 10, justifyContent: "center", alignItems: "center",
+        flexGrow: 1, paddingHorizontal: 16,
+    },
+    infoPanelBadge: {
+        flexDirection: "row", alignItems: "center", gap: 6,
+        paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8,
+        borderWidth: 1, borderColor: COLORS.primaryDim, backgroundColor: "rgba(227,30,36,0.05)",
+    },
+    infoPanelBadgeText: {
+        fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 0.5,
+    },
     jumpBtn: {
         width: 40, height: 40, borderRadius: 12,
         backgroundColor: "rgba(255,255,255,0.05)", alignItems: "center", justifyContent: "center",

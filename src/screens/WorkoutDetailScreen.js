@@ -10,6 +10,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { COLORS, FONTS, SPACING, RADIUS, FAMILY } from "../utils/theme";
 import { saveExerciseConfig, getWorkoutOverrides } from "../utils/workoutConfig";
+import { getSuggestedWeight } from "../data/workoutData";
+
 
 function totalTime(day) {
     let s = 0;
@@ -303,13 +305,15 @@ function ExerciseRow({ ex, index, total, expanded, onPress, onEdit }) {
             {/* ── Expanded ── */}
             {expanded && (
                 <View style={styles.exExpanded}>
-                    <View style={styles.exImgBox}>
-                        <Image source={ex.image} style={styles.exImg} resizeMode="cover" />
-                        <LinearGradient colors={["transparent", "rgba(0,0,0,0.8)"]} style={styles.exImgGrad} />
-                        <View style={styles.exImgBadge}>
-                            <Text style={styles.exImgBadgeText}>{ex.equipment.toUpperCase()}</Text>
+                    {ex.image && (
+                        <View style={styles.exImgBox}>
+                            <Image source={ex.image} style={styles.exImg} resizeMode="cover" />
+                            <LinearGradient colors={["transparent", "rgba(0,0,0,0.8)"]} style={styles.exImgGrad} />
+                            <View style={styles.exImgBadge}>
+                                <Text style={styles.exImgBadgeText}>{ex.equipment.toUpperCase()}</Text>
+                            </View>
                         </View>
-                    </View>
+                    )}
 
                     {/* Sets grid */}
                     <View style={styles.setsGrid}>
@@ -331,7 +335,17 @@ function ExerciseRow({ ex, index, total, expanded, onPress, onEdit }) {
                         </View>
                     )}
 
+                    {getSuggestedWeight(ex.name) ? (
+                        <View style={[styles.noteRow, { borderColor: "rgba(227, 30, 36, 0.25)", backgroundColor: "rgba(227, 30, 36, 0.03)", marginBottom: 24 }]}>
+                            <Ionicons name="trending-up-outline" size={16} color={COLORS.primary} />
+                            <Text style={[styles.noteText, { color: COLORS.text }]}>
+                                SUGGESTED WEIGHT: <Text style={{ fontFamily: FAMILY.bold, color: COLORS.primary }}>{getSuggestedWeight(ex.name)}</Text>
+                            </Text>
+                        </View>
+                    ) : null}
+
                     <Text style={styles.formLabel}>TECHNIQUE TIPS</Text>
+
                     {ex.tips.map((tip, i) => (
                         <View key={i} style={styles.tipRow}>
                             <View style={styles.tipDot} />

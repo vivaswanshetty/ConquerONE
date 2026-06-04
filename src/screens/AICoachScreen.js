@@ -450,7 +450,7 @@ export default function AICoachScreen({ navigation }) {
         let voices = [];
         try {
             console.log(`[AICoach] Fetching voices (attempt ${retryCount + 1}/${MAX_VOICE_RETRIES})...`);
-            voices = await Speech.getVoicesAsync();
+            voices = await Speech.getAvailableVoicesAsync();
             console.log(`[AICoach] Got ${(voices || []).length} voices on attempt ${retryCount + 1}`);
 
             // If empty (not error), retry with backoff — engine may not be ready yet

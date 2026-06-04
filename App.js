@@ -1,6 +1,6 @@
 import 'react-native-url-polyfill/auto'; // Required for Firebase + React Native
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Text, View } from "react-native";
+import { Text, View, InteractionManager } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -43,6 +43,7 @@ import UpdateScreen from "./src/screens/UpdateScreen";
 import ProfileScreen from "./src/screens/ProfileScreen";
 import AICoachScreen from "./src/screens/AICoachScreen";
 import RankScreen from "./src/screens/RankScreen";
+import ProtocolIntelScreen from "./src/screens/ProtocolIntelScreen";
 import NetworkBanner from "./src/components/NetworkBanner";
 
 // Auth
@@ -95,6 +96,7 @@ function AppStack() {
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="AICoach" component={AICoachScreen} />
       <Stack.Screen name="Rank" component={RankScreen} />
+      <Stack.Screen name="ProtocolIntel" component={ProtocolIntelScreen} />
     </Stack.Navigator>
   );
 }
@@ -167,32 +169,42 @@ export default function App() {
 
   // ── Step 4: OTA update check (delayed to prioritize app launch) ──
   useEffect(() => {
+    let cancelled = false;
     const checkUpdate = async () => {
-      if (__DEV__) return;
+      if (__DEV__ || cancelled) return;
 
       // Auto-fail after 15s to prevent being stuck on the UpdateScreen forever
       const updateTimeout = setTimeout(() => {
-        setIsDownloadingUpdate(false);
+        if (!cancelled) setIsDownloadingUpdate(false);
       }, 15000);
 
       try {
         const update = await Updates.checkForUpdateAsync();
         if (update.isAvailable) {
+          if (cancelled) return;
           setIsDownloadingUpdate(true);
           await Updates.fetchUpdateAsync();
-          await Updates.reloadAsync();
+          if (!cancelled) {
+            await Updates.reloadAsync();
+          }
         }
       } catch (e) {
         console.warn("Update check failed", e);
-        setIsDownloadingUpdate(false);
+        if (!cancelled) setIsDownloadingUpdate(false);
       } finally {
         clearTimeout(updateTimeout);
       }
     };
 
-    // Delay slightly to ensure fonts and splash are handled first
-    const timer = setTimeout(checkUpdate, 5000);
-    return () => clearTimeout(timer);
+    // Run after initial interactions so OTA work doesn't compete with first-screen rendering.
+    const timer = setTimeout(() => {
+      const task = InteractionManager.runAfterInteractions(checkUpdate);
+      if (cancelled) task.cancel();
+    }, 15000);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, []);
 
   // ── Step 5: Emergency splash screen fallback ──

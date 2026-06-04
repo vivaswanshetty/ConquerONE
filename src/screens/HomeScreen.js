@@ -15,9 +15,7 @@ import {
     getLastFreezeDate, withdrawStreakFreeze
 } from "../utils/storage";
 import MaskedView from "@react-native-masked-view/masked-view";
-import * as SplashScreen from "expo-splash-screen";
 import * as Haptics from "expo-haptics";
-import { getDailyStats, checkHealthConnectStatus } from "../utils/health";
 
 
 // Auth
@@ -86,17 +84,14 @@ export default function HomeScreen({ navigation }) {
     }, []);
 
     const loadStats = async () => {
-        setStreak(await getStreak());
-        setTotal(await getTotalWorkouts());
-        const lastFreeze = await getLastFreezeDate();
+        const [nextStreak, nextTotal, lastFreeze] = await Promise.all([
+            getStreak(),
+            getTotalWorkouts(),
+            getLastFreezeDate(),
+        ]);
+        setStreak(nextStreak);
+        setTotal(nextTotal);
         setIsFrozen(lastFreeze === new Date().toISOString().split("T")[0]);
-
-        // Fetch Health Stats if available
-        const isHealthReady = await checkHealthConnectStatus();
-        if (isHealthReady) {
-            const hStats = await getDailyStats();
-            // We can use these stats to update UI elements like step counters if you add them!
-        }
     };
 
     const handleUnfreeze = async () => {
@@ -164,13 +159,13 @@ export default function HomeScreen({ navigation }) {
                                     style={[styles.levelFill, { width: `${total === 0 ? 0 : total % 10 === 0 ? 100 : ((total % 10) / 10) * 100}%` }]}
                                 />
                             </View>
-                            <Text style={styles.levelText}>
+                            <Text style={styles.levelText} numberOfLines={1} adjustsFontSizeToFit>
                                 LVL {String(Math.min(Math.floor(total / 10) + 1, 99)).padStart(2, '0')} · {
                                     total >= 100 ? 'LEGEND' :
                                         total >= 50 ? 'TITAN' :
                                             total >= 25 ? 'WARRIOR' :
-                                                total >= 10 ? 'PRO ATHLETE' :
-                                                    total >= 5 ? 'RISING STAR' : 'RECRUIT'
+                                                total >= 10 ? 'RISING STAR' :
+                                                    total >= 5 ? 'ROOKIE' : 'RECRUIT'
                                 }
                             </Text>
                         </View>
@@ -238,12 +233,12 @@ export default function HomeScreen({ navigation }) {
                         <View style={styles.statLargeTop}>
                             <View>
                                 <Text style={styles.statLabelSmall}>YOUR RANK</Text>
-                                <Text style={styles.statValueLarge}>{
+                                <Text style={styles.statValueLarge} numberOfLines={1} adjustsFontSizeToFit>{
                                     total >= 100 ? 'LEGEND' :
                                         total >= 50 ? 'TITAN' :
                                             total >= 25 ? 'WARRIOR' :
-                                                total >= 10 ? 'PRO' :
-                                                    total >= 5 ? 'RISING' : 'RECRUIT'
+                                                total >= 10 ? 'RISING STAR' :
+                                                    total >= 5 ? 'ROOKIE' : 'RECRUIT'
                                 }</Text>
                             </View>
                             <View style={styles.intensityBadge}>
@@ -277,7 +272,7 @@ export default function HomeScreen({ navigation }) {
                         onPress={() => navigation.navigate("WorkoutDetail", { day: todayWorkout })}
                     >
                         <ImageBackground
-                            source={require("../../assets/home_hero_bg.png")}
+                            source={todayWorkout.headerImage || require("../../assets/home_hero_bg.png")}
                             style={StyleSheet.absoluteFill}
                             resizeMode="cover"
                         >
@@ -400,6 +395,33 @@ export default function HomeScreen({ navigation }) {
                         </TouchableOpacity>
                     ))}
                 </View>
+
+                {/* ── Protocol Handbook ── */}
+                <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionLabel}>PROTOCOL HANDBOOK</Text>
+                </View>
+                <TouchableOpacity
+                    style={styles.customCard}
+                    onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        navigation.navigate("ProtocolIntel");
+                    }}
+                    activeOpacity={0.8}
+                >
+                    <LinearGradient
+                        colors={["rgba(255,255,255,0.05)", "rgba(227,30,36,0.03)"]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={StyleSheet.absoluteFill}
+                    />
+                    <View style={{ flex: 1 }}>
+                        <Text style={styles.customTitle}>PLAN INTEL</Text>
+                        <Text style={styles.customSub}>THE SCIENCE · THE RULES · THE 12-WEEK SYSTEM</Text>
+                    </View>
+                    <View style={styles.customIconWrap}>
+                        <Ionicons name="book-outline" size={20} color={COLORS.primary} />
+                    </View>
+                </TouchableOpacity>
 
                 {/* ── Custom Workout ── */}
                 <View style={styles.sectionHeader}>

@@ -1,448 +1,726 @@
-// Workout data mapped directly from your JSON + PDF images
-// Images: page1 = plan overview + chest exercises, page2 = back, page3 = arms (part1),
-// page4 = arms (part2) + abs, page5 = abs (rest) + shoulders, page6 = shoulders (rest) + legs, page7 = legs (rest)
-
-// Image mapping: each exercise gets its demo image from the PDF
-// Page 1: img1=plan_overview, img2=chest_header, img3=floor_dumbbell_press, img4=decline_pushups, img5=incline_pushups, img6=dumbbell_floor_flyes
-// Page 2: img1=squeeze_press, img2=back_header, img3=one_arm_row, img4=dumbbell_pullover, img5=reverse_grip_row, img6=romanian_deadlift
-// Page 3: img1=medium_grip_pullups, img2=back_extra, img3=arms_header, img4=alternating_curls, img5=concentration_curls, img6=hammer_curls
-// Page 4: img1=seated_tricep_ext, img2=skull_crusher, img3=bench_dips, img4=abs_header, img5=crunches, img6=lying_leg_raises
-// Page 5: img1=alternate_heel, img2=plank, img3=reverse_wrist_curls, img4=wrist_curls, img5=shoulder_header, img6=seated_shoulder_press
-// Page 6: img1=lateral_raise, img2=arnold_press, img3=rear_lateral_raise, img4=shrugs, img5=legs_header, img6=goblet_squat
-// Page 7: img1=split_squat, img2=bulgarian_squat, img3=stiff_leg_deadlift, img4=calf_raises
+// Workout data mapped directly from Vivaswan's Elite Gym Plan PDF
 
 export const WORKOUT_PLAN = [
     {
         day: 1,
-        target: "Chest",
+        target: "Chest & Triceps",
         dayName: "Monday",
         emoji: "💪",
-        color: "#FF3B30",
-        gradient: ["#FF3B30", "#FF6B35"],
+        color: "#E31E24",
+        gradient: ["#E31E24", "#7A1013"],
         headerImage: require("../../assets/chest_header_premium.png"),
+        focus: "Barbell Bench Press is the anchor. Build the entire session around it.",
         exercises: [
             {
-                name: "Floor Dumbbell Press",
-                sets: 3,
+                name: "Barbell Bench Press",
+                sets: 5,
                 type: "reps",
-                repRange: "12-15",
+                repRange: "5·5·6·8·10",
                 activeTimeSec: 45,
-                restTimeSec: 90,
-                primaryTarget: "Middle Chest",
-                image: require("../../assets/exercises/page1_img3.jpeg"),
-                tips: ["Keep elbows at 45° angle", "Full range of motion", "Squeeze chest at top"],
-                equipment: "Dumbbells",
+                restTimeSec: 180,
+                primaryTarget: "Mid Chest",
+                image: null,
+                tips: [
+                    "Pyramid down in weight as reps go up.",
+                    "Feet flat, arch back slightly, pinch shoulder blades.",
+                    "Bar touches mid-chest controlled, press up explosively."
+                ],
+                equipment: "Barbell",
                 unilateral: false,
+                tag: "MAIN COMPOUND"
             },
             {
-                name: "Decline Push-ups",
-                sets: 3,
+                name: "Incline Dumbbell Press",
+                sets: 4,
                 type: "reps",
-                repRange: "12-15",
+                repRange: "8-12",
                 activeTimeSec: 45,
                 restTimeSec: 90,
                 primaryTarget: "Upper Chest",
-                image: require("../../assets/exercises/page1_img4.jpeg"),
-                tips: ["Feet elevated on chair/bed", "Lower chest to floor", "Keep core tight"],
-                equipment: "Bodyweight",
-                unilateral: false,
-            },
-            {
-                name: "Incline Push-ups",
-                sets: 3,
-                type: "reps",
-                repRange: "12-15",
-                activeTimeSec: 45,
-                restTimeSec: 60,
-                primaryTarget: "Lower Chest",
-                image: require("../../assets/exercises/page1_img5.jpeg"),
-                tips: ["Hands on elevated surface", "Chest to surface", "Keep back straight"],
-                equipment: "Bodyweight",
-                unilateral: false,
-            },
-            {
-                name: "Dumbbell Floor Flyes",
-                sets: 3,
-                type: "reps",
-                repRange: "12-15",
-                activeTimeSec: 45,
-                restTimeSec: 60,
-                primaryTarget: "Inner Chest",
-                image: require("../../assets/exercises/Floor flyes.jpg"),
-                tips: ["Slight bend in elbows", "Open arms wide", "Bring dumbbells together overhead"],
+                image: null,
+                tips: [
+                    "Set bench angle to 30–45 degrees.",
+                    "Get a full stretch at the bottom.",
+                    "Maintain a controlled tempo throughout."
+                ],
                 equipment: "Dumbbells",
                 unilateral: false,
+                tag: "UPPER CHEST"
             },
             {
-                name: "Dumbbell Squeeze Floor Press",
+                name: "Cable Fly — Low to High",
                 sets: 3,
                 type: "reps",
                 repRange: "12-15",
                 activeTimeSec: 45,
                 restTimeSec: 60,
-                primaryTarget: "Inner Chest",
-                image: require("../../assets/exercises/page2_img4.jpeg"),
-                tips: ["Press dumbbells together", "Maintain constant squeeze", "Slow controlled reps"],
-                equipment: "Dumbbells",
+                primaryTarget: "Inner + Upper Chest",
+                image: null,
+                tips: [
+                    "Set cables at the lowest pulley, pull upward and across.",
+                    "Maintain constant tension throughout.",
+                    "Feel the deep squeeze at the top of the movement."
+                ],
+                equipment: "Cable Machine",
                 unilateral: false,
+                tag: "INNER + UPPER"
             },
-        ],
+            {
+                name: "Machine Chest Press",
+                sets: 3,
+                type: "reps",
+                repRange: "12-15",
+                activeTimeSec: 45,
+                restTimeSec: 60,
+                primaryTarget: "Chest Pump",
+                image: null,
+                tips: [
+                    "Great finishing movement.",
+                    "Lets you push to failure safely.",
+                    "Focus on squeezing the chest at full extension."
+                ],
+                equipment: "Machine",
+                unilateral: false,
+                tag: "PUMP + ISOLATION"
+            },
+            {
+                name: "Cable Tricep Pushdown — Rope",
+                sets: 4,
+                type: "reps",
+                repRange: "10-15",
+                activeTimeSec: 45,
+                restTimeSec: 60,
+                primaryTarget: "Triceps (Lateral Head)",
+                image: null,
+                tips: [
+                    "Keep your elbows glued to your sides.",
+                    "Flare the rope outward at the bottom.",
+                    "Triceps make up 2/3 of your arm size, prioritize them."
+                ],
+                equipment: "Cable Machine",
+                unilateral: false,
+                tag: "LATERAL HEAD"
+            },
+            {
+                name: "Overhead Cable Tricep Extension",
+                sets: 3,
+                type: "reps",
+                repRange: "10-12",
+                activeTimeSec: 45,
+                restTimeSec: 60,
+                primaryTarget: "Triceps (Long Head)",
+                image: null,
+                tips: [
+                    "Face away from the cable machine, arms overhead.",
+                    "The long head only gets fully stretched overhead.",
+                    "Control the stretch at the bottom before extending."
+                ],
+                equipment: "Cable Machine",
+                unilateral: false,
+                tag: "LONG HEAD"
+            }
+        ]
     },
     {
         day: 2,
-        target: "Back",
+        target: "Back & Biceps",
         dayName: "Tuesday",
         emoji: "🏋️",
         color: "#5856D6",
-        gradient: ["#5856D6", "#7C3AED"],
+        gradient: ["#5856D6", "#2B2A6B"],
         headerImage: require("../../assets/back_header_premium.png"),
+        focus: "Barbell Row is king here. A thick back = the illusion of width even at your current weight.",
         exercises: [
             {
-                name: "One-Arm Dumbbell Row",
-                sets: 3,
+                name: "Barbell Bent-Over Row",
+                sets: 5,
+                type: "reps",
+                repRange: "5·5·6·8·10",
+                activeTimeSec: 45,
+                restTimeSec: 180,
+                primaryTarget: "Mid & Lower Back",
+                image: null,
+                tips: [
+                    "Hinge at the hips to 45 degrees, chest up, row to lower rib cage.",
+                    "Hits mid/lower traps, rhomboids, and lats simultaneously.",
+                    "This is the upper body squat. Never skip it."
+                ],
+                equipment: "Barbell",
+                unilateral: false,
+                tag: "MAIN COMPOUND"
+            },
+            {
+                name: "Lat Pulldown — Wide Grip",
+                sets: 4,
+                type: "reps",
+                repRange: "8-12",
                 activeTimeSec: 45,
                 restTimeSec: 90,
+                primaryTarget: "Lats (Width)",
+                image: null,
+                tips: [
+                    "Pull the bar to your upper chest.",
+                    "Drive your elbows DOWN, not backward.",
+                    "Full stretch at the top. This builds your V-taper."
+                ],
+                equipment: "Lat Pulldown Machine",
+                unilateral: false,
+                tag: "LAT WIDTH"
+            },
+            {
+                name: "Seated Cable Row — Close Grip",
+                sets: 4,
+                type: "reps",
+                repRange: "10-12",
+                activeTimeSec: 45,
+                restTimeSec: 90,
+                primaryTarget: "Mid Back (Thickness)",
+                image: null,
+                tips: [
+                    "Pull to your belly button.",
+                    "Squeeze your shoulder blades hard together at peak contraction.",
+                    "Builds 3D back thickness."
+                ],
+                equipment: "Cable Row Machine",
+                unilateral: false,
+                tag: "MID BACK"
+            },
+            {
+                name: "Single Arm Dumbbell Row",
+                sets: 3,
+                type: "reps",
+                repRange: "10-12",
+                activeTimeSec: 45,
+                restTimeSec: 60,
                 primaryTarget: "Lats",
-                image: require("../../assets/exercises/page2_img6.jpeg"),
-                tips: ["Use table/chair for support", "Pull elbow back, not up", "Keep back neutral"],
-                equipment: "Dumbbell + Furniture",
-                unilateral: true,
-            },
-            {
-                name: "Dumbbell Pull-Over",
-                sets: 3,
-                activeTimeSec: 45,
-                restTimeSec: 60,
-                primaryTarget: "Upper Lat",
-                image: require("../../assets/exercises/page2_img1.jpeg"),
-                tips: ["Lie on bench/chair", "Keep arms slightly bent", "Feel the stretch at top"],
-                equipment: "Dumbbell + Surface",
-                unilateral: false,
-            },
-            {
-                name: "Reverse Grip Dumbbell Bent-Over Row",
-                sets: 3,
-                activeTimeSec: 45,
-                restTimeSec: 90,
-                primaryTarget: "Lats & Mid Back",
-                image: require("../../assets/exercises/page2_img2.jpeg"),
-                tips: ["Hinge at hips 45°", "Supinate grip (palms up)", "Pull to lower chest"],
-                equipment: "Dumbbells",
-                unilateral: false,
-            },
-            {
-                name: "Dumbbell Romanian Deadlift",
-                sets: 3,
-                activeTimeSec: 45,
-                restTimeSec: 90,
-                primaryTarget: "Lower Back",
-                image: require("../../assets/exercises/page2_img3.jpeg"),
-                tips: ["Keep back flat", "Hinge at hips, not knees", "Feel hamstring stretch"],
-                equipment: "Dumbbells",
-                unilateral: false,
-            },
-            {
-                name: "Medium Grip Pull Ups",
-                sets: 3,
-                activeTimeSec: 60,
-                restTimeSec: 90,
-                primaryTarget: "Full Back",
-                image: require("../../assets/exercises/page3_img1.jpeg"),
-                tips: ["Full hang at bottom", "Pull chest to bar", "Control the descent"],
-                equipment: "Pull-up Bar",
-                unilateral: false,
-            },
-        ],
-    },
-    {
-        day: 3,
-        target: "Arms",
-        dayName: "Wednesday",
-        emoji: "💪",
-        color: "#FF9500",
-        gradient: ["#FF9500", "#FF6B35"],
-        headerImage: require("../../assets/onboarding_bg.png"),
-        exercises: [
-            {
-                name: "Alternating Dumbbell Curls",
-                sets: 3,
-                activeTimeSec: 45,
-                restTimeSec: 60,
-                primaryTarget: "Bicep Short Head",
-                image: require("../../assets/exercises/page3_img3.jpeg"),
-                tips: ["Alternate each arm", "Full curl at top", "Don't swing body"],
-                equipment: "Dumbbells",
-                unilateral: false,
-            },
-            {
-                name: "Dumbbell Concentration Curls",
-                sets: 3,
-                activeTimeSec: 45,
-                restTimeSec: 60,
-                primaryTarget: "Bicep Long Head",
-                image: require("../../assets/exercises/page3_img4.jpeg"),
-                tips: ["Rest elbow on inner thigh", "Curl all the way up", "Squeeze at peak"],
+                image: null,
+                tips: [
+                    "Drive your elbow to the ceiling, not backward.",
+                    "Get a full stretch at the bottom.",
+                    "Unilateral exercise: prevents stronger side compensation."
+                ],
                 equipment: "Dumbbell",
                 unilateral: true,
+                tag: "LATS"
             },
             {
-                name: "Dumbbell Hammer Curls",
-                sets: 3,
-                activeTimeSec: 45,
-                restTimeSec: 60,
-                primaryTarget: "Brachialis",
-                image: require("../../assets/exercises/page3_img5.jpeg"),
-                tips: ["Thumbs pointing up", "Keep elbows at sides", "Both arms simultaneously"],
-                equipment: "Dumbbells",
-                unilateral: false,
-            },
-            {
-                name: "Seated Dumbbell Tricep Extension",
-                sets: 3,
-                activeTimeSec: 45,
-                restTimeSec: 60,
-                primaryTarget: "Tricep Long Head",
-                image: require("../../assets/exercises/page3_img6.jpeg"),
-                tips: ["Hold dumbbell behind head", "Keep elbows close", "Full extension at top"],
-                equipment: "Dumbbell",
-                unilateral: false,
-            },
-            {
-                name: "Floor Dumbbell Skull Crusher",
-                sets: 3,
-                activeTimeSec: 45,
-                restTimeSec: 60,
-                primaryTarget: "Tricep Medial Head",
-                image: require("../../assets/exercises/page4_img1.jpeg"),
-                tips: ["Lie on floor", "Lower to forehead level", "Extend fully at top"],
-                equipment: "Dumbbells",
-                unilateral: false,
-            },
-            {
-                name: "Bench Dips",
-                sets: 3,
-                activeTimeSec: 45,
-                restTimeSec: 60,
-                primaryTarget: "Tricep Lateral Head",
-                image: require("../../assets/exercises/page4_img2.jpeg"),
-                tips: ["Use chair/table", "Keep elbows close", "Lower until 90° bend"],
-                equipment: "Chair/Table",
-                unilateral: false,
-            },
-        ],
-    },
-    {
-        day: 4,
-        target: "Abs & Forearms",
-        dayName: "Thursday",
-        emoji: "🔥",
-        color: "#64748B",
-        gradient: ["#334155", "#1E293B"],
-        headerImage: require("../../assets/abs_header_premium.jpg"),
-        exercises: [
-            {
-                name: "Crunches",
-                sets: 3,
-                activeTimeSec: 45,
-                restTimeSec: 60,
-                primaryTarget: "Upper Abs",
-                image: require("../../assets/exercises/page4_img4.jpeg"),
-                tips: ["Hands behind head lightly", "Curl only upper back", "Exhale on crunch"],
-                equipment: "Bodyweight",
-                unilateral: false,
-            },
-            {
-                name: "Lying Leg Raises",
-                sets: 3,
-                activeTimeSec: 45,
-                restTimeSec: 60,
-                primaryTarget: "Lower Abs",
-                image: require("../../assets/exercises/page4_img5.jpeg"),
-                tips: ["Keep legs straight", "Lower slowly don't drop", "Brace core throughout"],
-                equipment: "Bodyweight",
-                unilateral: false,
-            },
-            {
-                name: "Alternate Heel Touches",
+                name: "Face Pulls — Cable",
                 sets: 3,
                 type: "reps",
                 repRange: "15-20",
                 activeTimeSec: 45,
                 restTimeSec: 60,
-                primaryTarget: "Obliques",
-                image: require("../../assets/exercises/page4_img6.jpeg"),
-                tips: ["Knees bent, feet flat", "Side crunch to touch heel", "Both sides count"],
-                equipment: "Bodyweight",
+                primaryTarget: "Rear Delts & Posture",
+                image: null,
+                tips: [
+                    "Set cable at face height, pull to ears.",
+                    "Externally rotate hands at the end of the pull.",
+                    "Critical for shoulder health and posture. Non-negotiable."
+                ],
+                equipment: "Cable Machine",
                 unilateral: false,
+                tag: "REAR DELT + HEALTH"
             },
             {
-                name: "Plank",
-                sets: 3,
-                type: "timer",
-                activeTimeSec: 60,
-                restTimeSec: 60,
-                primaryTarget: "Whole Abdomen",
-                image: require("../../assets/exercises/page5_img1.jpeg"),
-                tips: ["Straight line head to toe", "Don't let hips sag", "Breathe steadily"],
-                equipment: "Bodyweight",
-                unilateral: false,
-            },
-            {
-                name: "Dumbbell Reverse Wrist Curls",
-                sets: 3,
+                name: "EZ Bar Bicep Curl",
+                sets: 4,
+                type: "reps",
+                repRange: "8-12",
                 activeTimeSec: 45,
                 restTimeSec: 60,
-                primaryTarget: "Outer Forearm",
-                image: require("../../assets/exercises/page5_img2.jpeg"),
-                tips: ["Rest forearms on thighs", "Palms facing down", "Slow controlled curls"],
-                equipment: "Dumbbells",
+                primaryTarget: "Biceps",
+                image: null,
+                tips: [
+                    "EZ bar is much easier on wrists than straight bar.",
+                    "Control the negative — biceps grow more on the way down.",
+                    "Do not swing your torso."
+                ],
+                equipment: "EZ Bar",
                 unilateral: false,
-            },
-            {
-                name: "Dumbbell Wrist Curls",
-                sets: 3,
-                activeTimeSec: 45,
-                restTimeSec: 60,
-                primaryTarget: "Inner Forearm",
-                image: require("../../assets/exercises/page5_img3.jpeg"),
-                tips: ["Rest forearms on thighs", "Palms facing up", "Full range of motion"],
-                equipment: "Dumbbells",
-                unilateral: false,
-            },
-        ],
+                tag: "BICEP PEAK"
+            }
+        ]
     },
     {
-        day: 5,
-        target: "Shoulders",
-        dayName: "Friday",
+        day: 3,
+        target: "Shoulders & Abs",
+        dayName: "Wednesday",
         emoji: "⚡",
-        color: "#007AFF",
-        gradient: ["#007AFF", "#5856D6"],
+        color: "#FF9500",
+        gradient: ["#FF9500", "#7A4700"],
         headerImage: require("../../assets/shoulders_header_premium.png"),
+        focus: "Overhead Press first, always. Shoulder width is the fastest visual transformation for your frame.",
         exercises: [
             {
-                name: "Seated Dumbbell Shoulder Press",
-                sets: 3,
+                name: "Barbell Overhead Press (OHP)",
+                sets: 5,
+                type: "reps",
+                repRange: "5·5·6·8·10",
                 activeTimeSec: 45,
-                restTimeSec: 90,
-                primaryTarget: "Lateral Deltoid",
-                image: require("../../assets/exercises/page5_img5.jpeg"),
-                tips: ["Sit upright, core engaged", "Press overhead fully", "Don't flare elbows"],
-                equipment: "Dumbbells",
+                restTimeSec: 180,
+                primaryTarget: "Shoulders (Full)",
+                image: null,
+                tips: [
+                    "Standing is harder and better for core strength.",
+                    "Bar starts at collarbone, press straight up.",
+                    "Push your head slightly forward at the top (lockout)."
+                ],
+                equipment: "Barbell",
                 unilateral: false,
+                tag: "MAIN COMPOUND"
             },
             {
-                name: "Shoulder Lateral Raise",
-                sets: 3,
+                name: "Dumbbell Lateral Raise",
+                sets: 4,
+                type: "reps",
+                repRange: "12-15",
                 activeTimeSec: 45,
                 restTimeSec: 60,
-                primaryTarget: "Lateral Deltoid",
-                image: require("../../assets/exercises/page5_img6.jpeg"),
-                tips: ["Slight forward lean", "Raise to shoulder height", "Lead with elbows"],
+                primaryTarget: "Lateral Deltoids",
+                image: null,
+                tips: [
+                    "Slight forward lean, lead with elbows, slight bend in arm.",
+                    "THIS gives you shoulder width.",
+                    "Do not cheat with momentum — it ruins the activation."
+                ],
                 equipment: "Dumbbells",
                 unilateral: false,
+                tag: "SHOULDER WIDTH"
             },
             {
-                name: "Arnold Press",
+                name: "Cable Lateral Raise",
                 sets: 3,
+                type: "reps",
+                repRange: "12-15",
                 activeTimeSec: 45,
                 restTimeSec: 60,
-                primaryTarget: "All Three Deltoid Heads",
-                image: require("../../assets/exercises/Arnold.jpg"),
-                tips: ["Start palms facing you", "Rotate as you press up", "Full rotation each rep"],
-                equipment: "Dumbbells",
-                unilateral: false,
+                primaryTarget: "Lateral Deltoids (Tension)",
+                image: null,
+                tips: [
+                    "Cable keeps constant tension at the bottom unlike dumbbells.",
+                    "Use cross-body setup, raise away from stack.",
+                    "One of the best isolation movements."
+                ],
+                equipment: "Cable Machine",
+                unilateral: true,
+                tag: "WIDTH + TENSION"
             },
             {
-                name: "Dumbbell Rear Lateral Raise",
-                sets: 3,
+                name: "Rear Delt Fly — Machine or Cable",
+                sets: 4,
+                type: "reps",
+                repRange: "15-20",
                 activeTimeSec: 45,
                 restTimeSec: 60,
-                primaryTarget: "Rear Deltoid",
-                image: require("../../assets/exercises/page6_img2.jpeg"),
-                tips: ["Hinge forward at hips", "Arms slightly bent", "Raise to shoulder level"],
-                equipment: "Dumbbells",
+                primaryTarget: "Rear Deltoids",
+                image: null,
+                tips: [
+                    "Rear delts give shoulders a full 3D look from the side/back.",
+                    "Severely undertrained by most. Reverse pec deck is ideal.",
+                    "Keep hands high and elbows out."
+                ],
+                equipment: "Machine / Cables",
                 unilateral: false,
+                tag: "REAR DELT"
             },
             {
-                name: "Shrugs",
-                sets: 3,
+                name: "Hanging Leg Raise",
+                sets: 4,
+                type: "reps",
+                repRange: "12-15",
                 activeTimeSec: 45,
                 restTimeSec: 60,
-                primaryTarget: "Upper Traps",
-                image: require("../../assets/exercises/page6_img3.jpeg"),
-                tips: ["Straight up, no circles", "Hold at top 1 second", "Full drop at bottom"],
-                equipment: "Dumbbells",
+                primaryTarget: "Lower Abs",
+                image: null,
+                tips: [
+                    "Hang from pull-up bar, raise legs to 90 degrees.",
+                    "Perform strictly without swinging your body.",
+                    "The best lower ab exercise in existence."
+                ],
+                equipment: "Pull-up Bar",
                 unilateral: false,
+                tag: "LOWER ABS"
             },
-        ],
+            {
+                name: "Cable Crunch",
+                sets: 3,
+                type: "reps",
+                repRange: "15-20",
+                activeTimeSec: 45,
+                restTimeSec: 60,
+                primaryTarget: "Upper Abs",
+                image: null,
+                tips: [
+                    "Use rope attachment, kneel down.",
+                    "Crunch down pulling your elbows to your knees.",
+                    "Abs need progressive resistance to grow, not just bodyweight."
+                ],
+                equipment: "Cable Machine",
+                unilateral: false,
+                tag: "UPPER ABS"
+            }
+        ]
     },
     {
-        day: 6,
+        day: 4,
         target: "Legs",
-        dayName: "Saturday",
+        dayName: "Thursday",
         emoji: "🦵",
         color: "#FF2D55",
-        gradient: ["#FF2D55", "#FF3B30"],
+        gradient: ["#FF2D55", "#7A1528"],
         headerImage: require("../../assets/legs_header_premium.png"),
+        focus: "Barbell Squat is the most important exercise in this entire plan. Do not skip, do not half-rep.",
         exercises: [
             {
-                name: "Dumbbell Goblet Squat",
-                sets: 3,
+                name: "Barbell Back Squat",
+                sets: 5,
+                type: "reps",
+                repRange: "5·5·6·8·10",
                 activeTimeSec: 45,
-                restTimeSec: 90,
-                primaryTarget: "Quads",
-                image: require("../../assets/exercises/page6_img5.jpeg"),
-                tips: ["Hold dumbbell at chest", "Feet shoulder-width apart", "Squat below parallel"],
-                equipment: "Dumbbell",
+                restTimeSec: 180,
+                primaryTarget: "Quads & Glutes",
+                image: null,
+                tips: [
+                    "Place bar on upper traps, chest up, knees track over toes.",
+                    "Squat below parallel. Full depth or it doesn't count.",
+                    "Squats raise testosterone and growth hormone system-wide."
+                ],
+                equipment: "Barbell",
                 unilateral: false,
+                tag: "KING OF ALL LIFTS"
             },
             {
-                name: "Dumbbell Split Squat",
-                sets: 3,
+                name: "Romanian Deadlift",
+                sets: 4,
+                type: "reps",
+                repRange: "8-10",
                 activeTimeSec: 45,
-                restTimeSec: 90,
-                primaryTarget: "Quads & Glutes",
-                image: require("../../assets/exercises/page6_img6.jpeg"),
-                tips: ["Front foot fully flat", "Back knee near floor", "3 sets each leg"],
-                equipment: "Dumbbells",
-                unilateral: true,
-            },
-            {
-                name: "Bulgarian Split Squats",
-                sets: 3,
-                activeTimeSec: 45,
-                restTimeSec: 90,
-                primaryTarget: "Quads & Glutes",
-                image: require("../../assets/exercises/Bulgarian.jpg"),
-                tips: ["Rear foot elevated", "Keep torso upright", "Deep knee bend front leg"],
-                equipment: "Dumbbells + Chair",
-                unilateral: true,
-            },
-            {
-                name: "Dumbbell Stiff Leg Deadlift",
-                sets: 3,
-                activeTimeSec: 45,
-                restTimeSec: 90,
+                restTimeSec: 120,
                 primaryTarget: "Hamstrings",
-                image: require("../../assets/exercises/page7_img2.jpeg"),
-                tips: ["Legs nearly straight", "Hinge at hips", "Feel hamstring stretch"],
-                equipment: "Dumbbells",
+                image: null,
+                tips: [
+                    "Drag bar down your legs, hinging at the hips.",
+                    "Feel the deep stretch in your hamstrings, drive hips through.",
+                    "If you feel it in your lower back, your hinge form is wrong."
+                ],
+                equipment: "Barbell / Dumbbells",
                 unilateral: false,
+                tag: "HAMSTRINGS"
             },
             {
-                name: "Chair Supported Calf Raises",
+                name: "Leg Press",
                 sets: 3,
+                type: "reps",
+                repRange: "10-12",
+                activeTimeSec: 45,
+                restTimeSec: 90,
+                primaryTarget: "Quad Volume",
+                image: null,
+                tips: [
+                    "Feet shoulder width apart, do not let knees cave inward.",
+                    "Go deep (at least 90 degrees).",
+                    "Add a drop set on your last working set."
+                ],
+                equipment: "Leg Press Machine",
+                unilateral: false,
+                tag: "QUAD VOLUME"
+            },
+            {
+                name: "Leg Curl — Lying Machine",
+                sets: 3,
+                type: "reps",
+                repRange: "10-12",
+                activeTimeSec: 45,
+                restTimeSec: 90,
+                primaryTarget: "Hamstrings (Isolation)",
+                image: null,
+                tips: [
+                    "Keep hips pressed firmly into pad throughout.",
+                    "Curl up explosively, lower slowly (3 seconds negative).",
+                    "The negative is where hamstrings grow most."
+                ],
+                equipment: "Lying Leg Curl Machine",
+                unilateral: false,
+                tag: "HAMSTRINGS"
+            },
+            {
+                name: "Leg Extension",
+                sets: 3,
+                type: "reps",
+                repRange: "12-15",
+                activeTimeSec: 45,
+                restTimeSec: 60,
+                primaryTarget: "Quad Isolation",
+                image: null,
+                tips: [
+                    "Full knee extension, squeeze at the top for 1 second.",
+                    "Great for quad definition and teardrop muscle.",
+                    "Do not use this as your only quad work."
+                ],
+                equipment: "Leg Extension Machine",
+                unilateral: false,
+                tag: "QUAD ISOLATION"
+            },
+            {
+                name: "Standing Calf Raise",
+                sets: 4,
+                type: "reps",
+                repRange: "15-25",
                 activeTimeSec: 45,
                 restTimeSec: 60,
                 primaryTarget: "Calves",
-                image: require("../../assets/exercises/page7_img3.jpeg"),
-                tips: ["Hold chair for balance", "Full rise on toes", "Slow controlled descent"],
-                equipment: "Chair",
+                image: null,
+                tips: [
+                    "Full range of motion: stretch all the way down, rise to toes.",
+                    "Calves have slow-twitch fibres — they need high volume and range.",
+                    "Hold the contraction at the peak for a split second."
+                ],
+                equipment: "Calf Raise Machine",
                 unilateral: false,
-            },
-        ],
+                tag: "CALVES"
+            }
+        ]
     },
+    {
+        day: 5,
+        target: "Chest & Back (Heavy)",
+        dayName: "Friday",
+        emoji: "🔥",
+        color: "#E31E24",
+        gradient: ["#E31E24", "#5856D6"],
+        headerImage: require("../../assets/back_header_premium.png"),
+        focus: "Heavy compound day. Different angles from Monday. No machines today — just barbells and cables.",
+        exercises: [
+            {
+                name: "Incline Barbell Press",
+                sets: 4,
+                type: "reps",
+                repRange: "6-10",
+                activeTimeSec: 45,
+                restTimeSec: 180,
+                primaryTarget: "Upper Chest",
+                image: null,
+                tips: [
+                    "Upper chest is the weakest area for beginners and highly visible.",
+                    "30 degree incline, same arch/shoulder blade rules as bench.",
+                    "Controlled descent to upper collarbone region."
+                ],
+                equipment: "Barbell",
+                unilateral: false,
+                tag: "UPPER CHEST"
+            },
+            {
+                name: "Weighted Pull-ups",
+                sets: 4,
+                type: "reps",
+                repRange: "6-10",
+                activeTimeSec: 45,
+                restTimeSec: 120,
+                primaryTarget: "Lats (Width)",
+                image: null,
+                tips: [
+                    "Add weight via belt or hold dumbbell between feet if bodyweight is easy.",
+                    "The barbell squat of upper body pulling.",
+                    "Drive elbows down to engage lats. Full hang at bottom."
+                ],
+                equipment: "Pull-up Bar + Weight",
+                unilateral: false,
+                tag: "LAT WIDTH"
+            },
+            {
+                name: "Chest Dip — Weighted",
+                sets: 4,
+                type: "reps",
+                repRange: "8-12",
+                activeTimeSec: 45,
+                restTimeSec: 90,
+                primaryTarget: "Lower Chest",
+                image: null,
+                tips: [
+                    "Lean forward to hit the chest. Staying upright hits triceps.",
+                    "Add weight once bodyweight is easy.",
+                    "Hits lower chest in a way flat bench cannot."
+                ],
+                equipment: "Dip Bars + Weight",
+                unilateral: false,
+                tag: "LOWER CHEST"
+            },
+            {
+                name: "T-Bar Row or Chest-Supported Row",
+                sets: 4,
+                type: "reps",
+                repRange: "8-10",
+                activeTimeSec: 45,
+                restTimeSec: 120,
+                primaryTarget: "Back Thickness",
+                image: null,
+                tips: [
+                    "Chest-supported setup removes the lower back from the equation.",
+                    "Pure back work. Drive elbows back.",
+                    "Squeeze shoulder blades hard at the top of every rep."
+                ],
+                equipment: "T-Bar Row Machine / Barbell",
+                unilateral: false,
+                tag: "BACK THICKNESS"
+            },
+            {
+                name: "Cable Fly — High to Low",
+                sets: 3,
+                type: "reps",
+                repRange: "12-15",
+                activeTimeSec: 45,
+                restTimeSec: 60,
+                primaryTarget: "Lower & Inner Chest",
+                image: null,
+                tips: [
+                    "Set cables at the top, pull downward and across.",
+                    "Excellent finisher for the chest.",
+                    "Hits lower chest without putting excessive load on joints."
+                ],
+                equipment: "Cable Machine",
+                unilateral: false,
+                tag: "LOWER CHEST"
+            }
+        ]
+    },
+    {
+        day: 6,
+        target: "Arms & Abs",
+        dayName: "Saturday",
+        emoji: "💪",
+        color: "#007AFF",
+        gradient: ["#007AFF", "#003D7A"],
+        headerImage: require("../../assets/abs_header_premium.jpg"),
+        focus: "Pure arm day. Biceps and triceps are fresh, nothing pre-fatigued. Go heavy and feel every rep.",
+        exercises: [
+            {
+                name: "Barbell Curl",
+                sets: 4,
+                type: "reps",
+                repRange: "8-10",
+                activeTimeSec: 45,
+                restTimeSec: 90,
+                primaryTarget: "Bicep Mass",
+                image: null,
+                tips: [
+                    "The absolute best mass builder for biceps.",
+                    "Elbows stay slightly forward at the top to keep tension.",
+                    "Control the negative (2–3 seconds down)."
+                ],
+                equipment: "Barbell",
+                unilateral: false,
+                tag: "BICEP MASS"
+            },
+            {
+                name: "Incline Dumbbell Curl",
+                sets: 3,
+                type: "reps",
+                repRange: "10-12",
+                activeTimeSec: 45,
+                restTimeSec: 60,
+                primaryTarget: "Bicep Peak (Long Head)",
+                image: null,
+                tips: [
+                    "Set incline bench at 45–60 degrees, let arms hang straight down.",
+                    "This fully stretches the long head of the bicep for peak height.",
+                    "Slow, controlled reps. Keep elbows back."
+                ],
+                equipment: "Dumbbells + Incline Bench",
+                unilateral: false,
+                tag: "LONG HEAD STRETCH"
+            },
+            {
+                name: "Hammer Curl",
+                sets: 3,
+                type: "reps",
+                repRange: "10-12",
+                activeTimeSec: 45,
+                restTimeSec: 60,
+                primaryTarget: "Brachialis & Forearms",
+                image: null,
+                tips: [
+                    "Use a neutral grip (palms facing each other).",
+                    "Hits the brachialis, pushing the bicep UP for visual thickness.",
+                    "Also hits forearm brachioradialis."
+                ],
+                equipment: "Dumbbells",
+                unilateral: false,
+                tag: "BRACHIALIS"
+            },
+            {
+                name: "Close Grip Bench Press",
+                sets: 4,
+                type: "reps",
+                repRange: "8-10",
+                activeTimeSec: 45,
+                restTimeSec: 90,
+                primaryTarget: "Tricep Mass",
+                image: null,
+                tips: [
+                    "Hands shoulder-width apart, elbows tucked to ribs.",
+                    "The best compound mass builder for triceps.",
+                    "Allows heavier loading than isolation movements."
+                ],
+                equipment: "Barbell",
+                unilateral: false,
+                tag: "TRICEP MASS"
+            },
+            {
+                name: "Cable Pushdown — Bar",
+                sets: 3,
+                type: "reps",
+                repRange: "12-15",
+                activeTimeSec: 45,
+                restTimeSec: 60,
+                primaryTarget: "Triceps (Lateral Head)",
+                image: null,
+                tips: [
+                    "Straight bar provides more lateral head activation.",
+                    "Elbows pinned to sides. Full extension at bottom.",
+                    "Control the release."
+                ],
+                equipment: "Cable Machine",
+                unilateral: false,
+                tag: "LATERAL HEAD"
+            },
+            {
+                name: "Ab Wheel Rollout",
+                sets: 3,
+                type: "reps",
+                repRange: "8-12",
+                activeTimeSec: 45,
+                restTimeSec: 60,
+                primaryTarget: "Core Stability",
+                image: null,
+                tips: [
+                    "Hardest core exercise. Roll out until back is almost flat.",
+                    "Pull back in using ABS only, do not pull with hips.",
+                    "Builds core stability and visible abs simultaneously."
+                ],
+                equipment: "Ab Wheel",
+                unilateral: false,
+                tag: "FULL CORE"
+            },
+            {
+                name: "Weighted Plank",
+                sets: 3,
+                type: "timer",
+                repRange: "45-60 sec",
+                activeTimeSec: 60,
+                restTimeSec: 60,
+                primaryTarget: "Core Strength",
+                image: null,
+                tips: [
+                    "Place a plate on your back.",
+                    "Squeeze glutes and abs simultaneously.",
+                    "Core is a muscle — it needs progressive resistance to grow."
+                ],
+                equipment: "Weight Plate + Plank",
+                unilateral: false,
+                tag: "CORE STABILITY"
+            }
+        ]
+    }
 ];
 
 export const REST_DAY = {
@@ -451,14 +729,190 @@ export const REST_DAY = {
     dayName: "Sunday",
     emoji: "😴",
     color: "#636366",
-    gradient: ["#2C2C2E", "#1C1C1E"],
+    gradient: ["#2C2C2E", "#1C1C1E"]
 };
 
 export const PLAN_TIPS = [
-    "6-day workout split, 1 day off per week",
-    "5 minutes warm-up before each workout",
-    "Rep range: 12-15 reps",
-    "Pyramid Up: increase weight each set",
-    "Rest 1-2 mins between sets",
-    "5 minutes stretching after workout",
+    "Beat at least one number from last week (Progressive Overload)",
+    "Log every set: Exercise · Weight · Reps. Notes are rules.",
+    "Mandatory warm-up: 5m cardio + 2 warm-up sets for compounds",
+    "Rest times: Compounds 2–3 min. Isolation 60–90 sec.",
+    "Feel the target muscle working. Focus mind-muscle connection.",
+    "Never skip legs. Squats raise anabolic hormones system-wide."
 ];
+
+// ────────────────────────────────────────────────────────────────
+// PDF INTEL — THE FULL MANUAL DETAILS FOR THE PREMIUM HANDBOOK
+// ────────────────────────────────────────────────────────────────
+
+export const PLAN_SCIENCE = [
+    {
+        principle: "Chest + Back hit 2x/week",
+        meaning: "Muscle protein synthesis peaks at 48 hours. Hitting each muscle twice weekly maximises growth stimulus."
+    },
+    {
+        principle: "Arms trained fresh on Wed",
+        meaning: "Biceps and triceps get direct work when fully recovered, not pre-fatigued from heavy compound movements."
+    },
+    {
+        principle: "Legs get their own day",
+        meaning: "Legs make up 40% of total muscle mass. Heavy squats trigger systemic anabolic hormone release."
+    },
+    {
+        principle: "Fri is heavy compound day",
+        meaning: "Second chest + back session using different angles and no machines, keeping adaptation from plateauing."
+    },
+    {
+        principle: "Sat is pure arms + abs",
+        meaning: "Arms get a second dedicated session. At 19, arms respond fast to targeted frequency."
+    }
+];
+
+export const PLAN_RULES = [
+    {
+        rule: "PROGRESSIVE OVERLOAD",
+        desc: "Every single session, beat at least ONE number from last week. One more rep. 2.5 kg more weight. Anything. This is the entire game of muscle growth."
+    },
+    {
+        rule: "LOG EVERYTHING",
+        desc: "Open Notes/Log after every single set. Record weight and reps. If you don't track it, it didn't happen."
+    },
+    {
+        rule: "WARM-UP IS MANDATORY",
+        desc: "5 mins cardio + 2 warm-up sets of every main compound lift before working sets. Joint safety first, ego second."
+    },
+    {
+        rule: "REST TIMES ARE RULES",
+        desc: "Compounds: 2-3 mins rest. Isolation: 60-90 secs rest. Cutting rest short limits your strength and cuts gains short."
+    },
+    {
+        rule: "MIND-MUSCLE CONNECTION",
+        desc: "Feel the target muscle contract. If you cannot feel your chest contracting on bench press, the weight is too heavy or form is wrong."
+    },
+    {
+        rule: "NEVER SKIP LEGS",
+        desc: "Leg training raises testosterone and growth hormone system-wide. Squatting makes your entire body grow, not just your thighs."
+    }
+];
+
+export const PROGRESSION_SYSTEM = [
+    {
+        week: "W 1–2",
+        setsReps: "5 × 10",
+        isoReps: "12–15 reps",
+        focus: "Technique first. Film your lifts. Zero ego. Establish your baselines."
+    },
+    {
+        week: "W 3–4",
+        setsReps: "5 × 8",
+        isoReps: "12–15 reps",
+        focus: "Add weight. First real progressive overload push begins."
+    },
+    {
+        week: "W 5–6",
+        setsReps: "5 × 6",
+        isoReps: "10–12 reps",
+        focus: "Go heavier. Strength phase begins. Weights and numbers jump here."
+    },
+    {
+        week: "W 7–8",
+        setsReps: "5 × 5",
+        isoReps: "10–12 reps",
+        focus: "Peak strength phase. Max heavy lifting. Best muscle gains of the 12 weeks."
+    },
+    {
+        week: "W 9–10",
+        setsReps: "4 × 8",
+        isoReps: "12–15 reps",
+        focus: "Hypertrophy focus. Increase sets/volume slightly with moderate weight."
+    },
+    {
+        week: "W 11–12",
+        setsReps: "4 × 10",
+        isoReps: "12–15 reps",
+        focus: "Attempt PRs! Test your 1-rep maximums on all compound lifts."
+    }
+];
+
+export const RESULTS_TIMELINE = [
+    {
+        time: "Month 1",
+        result: "Strength jumps dramatically due to nervous system adaptation. Mirror look stays same."
+    },
+    {
+        time: "Month 2",
+        result: "People notice. Chest and shoulders show first at low body fat."
+    },
+    {
+        time: "Month 3",
+        result: "Arms are measurably larger. Back gets that 3D wide V-taper. Scale up 2-3 kg minimum."
+    },
+    {
+        time: "Month 6",
+        result: "Unrecognisable from start photos. 5-6 kg of actual muscle mass added."
+    },
+    {
+        time: "Month 12",
+        result: "8-12 kg of muscle added. On a 172cm frame, this is an extreme visual transformation."
+    }
+];
+
+export const PLAN_SECRET = {
+    title: "THE ONLY SECRET",
+    content: "Show up. Log the numbers. Beat them next week. Eat enough. Sleep 8 hours. That's it. Everyone who looks jacked just did exactly that for long enough. You have the frame, the body fat, and now the plan. The rest is just execution."
+};
+
+// Tactical Starting Weights based directly on Vivaswan's Elite Gym Plan PDF
+export const SUGGESTED_WEIGHTS = {
+    "barbell bench press": "30–50 kg",
+    "barbell back squat": "40–60 kg",
+    "barbell overhead press (ohp)": "20–35 kg",
+    "barbell bent-over row": "30–50 kg",
+    "romanian deadlift": "40–60 kg",
+    "incline dumbbell press": "10–16 kg ea",
+    "dumbbell lateral raise": "4–8 kg ea",
+    "ez bar bicep curl": "15–25 kg",
+    "ez bar reverse curl": "10–20 kg",
+    "cable tricep pushdown — rope": "15–25 kg",
+    "lat pulldown — wide grip": "35–50 kg",
+    "seated cable row — close grip": "30–45 kg",
+    "wrist curl": "10–15 kg",
+    "reverse wrist curl": "5–10 kg",
+    "farmer's walk": "16–24 kg ea",
+    "cable fly — low to high": "10–20 kg",
+    "machine chest press": "20–40 kg",
+    "overhead cable tricep extension": "10–20 kg",
+    "single arm dumbbell row": "12–20 kg ea",
+    "face pulls — cable": "10–20 kg",
+    "cable lateral raise": "4–8 kg ea",
+    "rear delt fly — machine or cable": "10–20 kg",
+    "hanging leg raise": "Bodyweight",
+    "cable crunch": "15–25 kg",
+    "leg press": "40–80 kg",
+    "leg curl — lying machine": "15–30 kg",
+    "leg extension": "15–30 kg",
+    "standing calf raise": "20–40 kg",
+    "incline barbell press": "25–45 kg",
+    "weighted pull-ups": "Bodyweight",
+    "chest dip — weighted": "Bodyweight",
+    "t-bar row or chest-supported row": "20–35 kg",
+    "cable fly — high to low": "10–20 kg",
+    "barbell curl": "15–25 kg",
+    "incline dumbbell curl": "8–12 kg ea",
+    "hammer curl": "10–14 kg ea",
+    "close grip bench press": "25–45 kg",
+    "cable pushdown — bar": "15–25 kg",
+    "ab wheel rollout": "Bodyweight",
+    "weighted plank": "Bodyweight",
+    "dead hang": "Bodyweight",
+    "barbell wrist curl": "10–15 kg",
+    "rear delt fly — pec deck reverse": "10–20 kg",
+    "cable crossover — high to low": "10–20 kg",
+    "cable pushdown — straight bar": "15–25 kg"
+};
+
+export const getSuggestedWeight = (exerciseName) => {
+    if (!exerciseName) return "";
+    return SUGGESTED_WEIGHTS[exerciseName.toLowerCase().trim()] || "";
+};
+
