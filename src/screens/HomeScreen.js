@@ -740,14 +740,12 @@ export default function HomeScreen({ navigation, route }) {
                                     <View style={styles.heroBadge}>
                                         <Text style={styles.heroBadgeText}>ACTIVE PROTOCOL</Text>
                                     </View>
-                                    <Text style={styles.heroTitle} numberOfLines={2} adjustsFontSizeToFit>
+                                    <Text style={styles.heroTitle} numberOfLines={1} adjustsFontSizeToFit>
                                         {todayWorkout.target.toUpperCase()}
                                     </Text>
                                     <Text style={styles.heroSub}>READY FOR SESSION</Text>
-                                </View>
 
-                                <View style={styles.heroFooter}>
-                                    <View style={{ flexDirection: "row", gap: 24 }}>
+                                    <View style={{ flexDirection: "row", gap: 28, marginTop: 24 }}>
                                         <View style={styles.heroMeta}>
                                             <Text style={styles.heroMetaLabel}>VOLUME</Text>
                                             <Text style={styles.heroMetaValue}>{todayWorkout.exercises.length} EXERCISES</Text>
@@ -757,7 +755,10 @@ export default function HomeScreen({ navigation, route }) {
                                             <Text style={styles.heroMetaValue}>{totalTime(todayWorkout)} MINUTES</Text>
                                         </View>
                                     </View>
+                                </View>
 
+                                <View style={styles.heroFooter}>
+                                    <View style={{ flex: 1 }} />
                                     <TouchableOpacity
                                         style={styles.heroCta}
                                         activeOpacity={0.8}
