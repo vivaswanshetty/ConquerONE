@@ -16,8 +16,25 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../utils/firebase";
 import { migrateLocalDataToCloud } from "../utils/firestore";
+import { getWorkoutHistory, getStreak, getTotalWorkouts, getXP, getPRRecords, getBodyStats } from "../utils/storage";
 
 const AuthContext = createContext(null);
+
+const syncCloudToLocal = async () => {
+    try {
+        await Promise.all([
+            getWorkoutHistory(),
+            getStreak(),
+            getTotalWorkouts(),
+            getXP(),
+            getPRRecords(),
+            getBodyStats()
+        ]);
+        console.log("[Sync] Local AsyncStorage hydrated successfully with cloud data.");
+    } catch (e) {
+        console.warn("[Sync] Initial cloud-to-local sync failed", e);
+    }
+};
 
 // Configure Google Sign-In
 GoogleSignin.configure({
@@ -36,6 +53,7 @@ export function AuthProvider({ children }) {
                 setUser(firebaseUser);
                 setLoading(false); // Unblock UI immediately after auth is confirmed
                 await loadProfile(firebaseUser.uid);
+                syncCloudToLocal();
             } else {
                 setUser(null);
                 setProfile(null);

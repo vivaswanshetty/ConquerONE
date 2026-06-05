@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import {
     View, Text, TouchableOpacity, StyleSheet, Image,
     Dimensions, StatusBar, ScrollView, Animated,
@@ -12,7 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { COLORS, FONTS, SPACING, RADIUS, FAMILY } from "../utils/theme";
-import { saveWorkoutComplete, formatDuration, tryUpdatePR, getPRRecords } from "../utils/storage";
+import { saveWorkoutComplete, formatDuration, tryUpdatePR, getPRRecords, getWorkoutHistory } from "../utils/storage";
 import { getSettings, estimateCalories, displayWeight } from "../utils/settings";
 import { getSuggestedWeight } from "../data/workoutData";
 
@@ -424,7 +424,12 @@ function RestOverlay({ phase, timeLeft, onSkip, settings, mindsetTip }) {
     const isSetRest = phase?.type === "set_rest";
 
     return (
-        <View style={ro.container}>
+        <ScrollView
+            showsVerticalScrollIndicator={false}
+            overScrollMode="never"
+            contentContainerStyle={ro.scrollContent}
+            style={ro.container}
+        >
             <View style={ro.mainContent}>
                 <View style={ro.topRow}>
                     <View style={ro.badge}>
@@ -443,10 +448,40 @@ function RestOverlay({ phase, timeLeft, onSkip, settings, mindsetTip }) {
                 </Text>
                 <Text style={ro.timerUnit}>{timeLeft >= 60 ? "MINUTES REMAINING" : "SECONDS REMAINING"}</Text>
 
+                {isSetRest && phase?.exercise && (
+                    <View style={ro.nextCard}>
+                        <Text style={ro.nextLabel}>CURRENT EXERCISE</Text>
+                        <Text style={ro.nextName} numberOfLines={2} adjustsFontSizeToFit>{phase.exercise.name.toUpperCase()}</Text>
+                        <View style={ro.setIndicator}>
+                            <Text style={ro.setLabel}>SET {String(phase.set).padStart(2, '0')} / {String(phase.exercise.sets).padStart(2, '0')}</Text>
+                            <View style={ro.setDots}>
+                                {Array.from({ length: phase.exercise.sets }).map((_, i) => (
+                                    <View key={i} style={[
+                                        ro.dot,
+                                        i < phase.set && ro.dotDone,
+                                        i === phase.set - 1 && ro.dotActive,
+                                    ]} />
+                                ))}
+                            </View>
+                        </View>
+                    </View>
+                )}
+
                 {phase?.nextExercise && (
                     <View style={ro.nextCard}>
                         <Text style={ro.nextLabel}>NEXT UP</Text>
                         <Text style={ro.nextName} numberOfLines={2} adjustsFontSizeToFit>{phase.nextExercise.name.toUpperCase()}</Text>
+                        <View style={ro.setIndicator}>
+                            <Text style={ro.setLabel}>UPCOMING: SET 01 / {String(phase.nextExercise.sets).padStart(2, '0')}</Text>
+                            <View style={ro.setDots}>
+                                {Array.from({ length: phase.nextExercise.sets }).map((_, i) => (
+                                    <View key={i} style={[
+                                        ro.dot,
+                                        i === 0 && ro.dotActive,
+                                    ]} />
+                                ))}
+                            </View>
+                        </View>
                         {phase.nextExercise.image ? (
                             <View style={ro.nextImgBox}>
                                 <Image source={phase.nextExercise.image} style={ro.nextImg} resizeMode="cover" />
@@ -472,20 +507,25 @@ function RestOverlay({ phase, timeLeft, onSkip, settings, mindsetTip }) {
                     <Text style={ro.tipText}>“{mindsetTip.toUpperCase().replace(/ 💪|🔥|✅|⚡️/g, "")}”</Text>
                 </View>
             ) : null}
-        </View>
+        </ScrollView>
     );
 }
 
 const ro = StyleSheet.create({
     container: {
-        width: "100%", flex: 1, alignItems: "center", justifyContent: "space-between", paddingHorizontal: SPACING.base,
+        width: "100%", flex: 1, paddingHorizontal: SPACING.base,
         paddingTop: SPACING.lg,
-        paddingBottom: 8,
     },
-    mainContent: { width: "100%", flex: 1, alignItems: "center" },
+    scrollContent: {
+        flexGrow: 1,
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingBottom: 16,
+    },
+    mainContent: { width: "100%", alignItems: "center" },
     topRow: {
         flexDirection: "row", justifyContent: "space-between",
-        alignItems: "center", width: "100%", marginBottom: 40,
+        alignItems: "center", width: "100%", marginBottom: 32,
     },
     badge: {
         paddingHorizontal: 12, paddingVertical: 6, borderRadius: 4,
@@ -501,19 +541,19 @@ const ro = StyleSheet.create({
         fontSize: 120, fontFamily: FAMILY.display, color: COLORS.text,
         letterSpacing: -6, lineHeight: 120,
     },
-    timerUnit: { fontSize: 10, color: COLORS.textMuted, fontFamily: FAMILY.bold, letterSpacing: 3, marginBottom: 48 },
+    timerUnit: { fontSize: 10, color: COLORS.textMuted, fontFamily: FAMILY.bold, letterSpacing: 3, marginBottom: 32 },
     nextCard: {
         width: "100%", backgroundColor: COLORS.glassBg,
         borderRadius: 24, borderWidth: 1, borderColor: COLORS.glassBorder,
-        padding: 24, alignItems: "center", marginBottom: 32,
+        padding: 24, alignItems: "center", marginBottom: 24,
     },
-    nextLabel: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2.5, marginBottom: 16 },
-    nextName: { fontSize: 24, fontFamily: FAMILY.display, color: COLORS.text, textAlign: "center", marginBottom: 20, width: "100%" },
+    nextLabel: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2.5, marginBottom: 12 },
+    nextName: { fontSize: 24, fontFamily: FAMILY.display, color: COLORS.text, textAlign: "center", marginBottom: 16, width: "100%" },
     nextImgBox: { width: "100%", height: 140, borderRadius: 16, overflow: "hidden", backgroundColor: "rgba(255,255,255,0.03)" },
     nextImg: { width: "100%", height: "100%", opacity: 0.5 },
     tipCard: {
         width: "100%", minHeight: 54, alignItems: "center", justifyContent: "center",
-        paddingHorizontal: 20, paddingVertical: 14, marginTop: 20,
+        paddingHorizontal: 20, paddingVertical: 14, marginTop: 12,
         backgroundColor: "rgba(255,255,255,0.02)", borderRadius: 16,
         borderWidth: 1, borderColor: COLORS.glassBorder,
     },
@@ -528,6 +568,12 @@ const ro = StyleSheet.create({
     nextTargetText: {
         fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.textSub, letterSpacing: 1, textAlign: "center",
     },
+    setIndicator: { marginTop: 8, marginBottom: 16, alignItems: "center" },
+    setLabel: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textSub, letterSpacing: 2, marginBottom: 8 },
+    setDots: { flexDirection: "row", gap: 6 },
+    dot: { width: 20, height: 3, borderRadius: 1.5, backgroundColor: "rgba(255,255,255,0.05)" },
+    dotActive: { backgroundColor: COLORS.primary, width: 28 },
+    dotDone: { backgroundColor: "rgba(255,255,255,0.2)" },
 });
 
 /* ── MAIN SCREEN ──────────────────────────────────────────── */
@@ -541,6 +587,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
         showCalories: true, restMindset: true,
     });
     const [phaseIdx, setPhaseIdx] = useState(0);
+    const [history, setHistory] = useState([]);
     const [timeLeft, setTimeLeft] = useState(0);
     const [running, setRunning] = useState(false);
     const [paused, setPaused] = useState(false);
@@ -611,6 +658,14 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                 console.warn("[ActiveWorkout] Failed to load PR records for targets", e);
             }
 
+            // Load workout history for recent logs
+            try {
+                const hist = await getWorkoutHistory();
+                setHistory(hist);
+            } catch (e) {
+                console.warn("[ActiveWorkout] Failed to load workout history", e);
+            }
+
             const q = buildQueue(day.exercises);
             const initialLogged = q.map((ex, idx) => ({
                 name: ex.name,
@@ -647,6 +702,26 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
     const isRest = !isWork;
     const phaseDuration = currentPhase?.duration ?? 1;
     const progress = timeLeft / phaseDuration;
+    const ex = currentPhase?.exercise;
+
+    const recentLogs = useMemo(() => {
+        if (!ex || !history || history.length === 0) return null;
+        for (const entry of history) {
+            if (!entry.exercises) continue;
+            const foundEx = entry.exercises.find(
+                e => e.name.toLowerCase() === ex.name.toLowerCase()
+            );
+            if (foundEx && foundEx.loggedSets && foundEx.loggedSets.some(s => s.completed && (s.weightKg > 0 || s.reps > 0))) {
+                const dateObj = new Date(entry.date + "T00:00:00");
+                const dateStr = dateObj.toLocaleDateString("en-US", { day: "numeric", month: "short" }).toUpperCase();
+                return {
+                    date: dateStr,
+                    loggedSets: foundEx.loggedSets.filter(s => s.completed && (s.weightKg > 0 || s.reps > 0))
+                };
+            }
+        }
+        return null;
+    }, [ex, history]);
 
     // Workout progress stats
     const totalActivePhases = phases.filter(p => p.type === "active").length;
@@ -941,7 +1016,6 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
         );
     }
 
-    const ex = currentPhase.exercise;
     const activeSetPhases = phases.filter(p => p.type === "active" && p.exIdx === currentPhase.exIdx);
     const currentSetPos = currentPhase.type === "active" ? currentPhase.set - 1 : -1;
 
@@ -1175,6 +1249,28 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                                 <Ionicons name="play-skip-forward" size={20} color={COLORS.text} />
                             </TouchableOpacity>
                         </View>
+
+                        {/* Recent Workout Logs */}
+                        {recentLogs ? (
+                            <View style={styles.recentLogsCard}>
+                                <View style={styles.recentLogsHeader}>
+                                    <Ionicons name="time-outline" size={14} color={COLORS.textMuted} />
+                                    <Text style={styles.recentLogsLabel}>RECENT LOGS ({recentLogs.date})</Text>
+                                </View>
+                                <View style={styles.recentLogsSets}>
+                                    {recentLogs.loggedSets.map((s, i) => (
+                                        <View key={i} style={styles.recentSetRow}>
+                                            <View style={styles.recentSetBadge}>
+                                                <Text style={styles.recentSetBadgeText}>S{s.set}</Text>
+                                            </View>
+                                            <Text style={styles.recentSetText}>
+                                                {s.weightKg > 0 ? displayWeight(s.weightKg, settings.weightUnit) : "—"} × {s.reps} REPS
+                                            </Text>
+                                        </View>
+                                    ))}
+                                </View>
+                            </View>
+                        ) : null}
 
                         {/* Log PR button */}
                         {settings.setLoggingEnabled && (
@@ -1420,4 +1516,24 @@ const styles = StyleSheet.create({
     jumpIndexText: { fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.textSub },
     jumpName: { fontSize: 14, fontFamily: FAMILY.display, color: COLORS.textSub, letterSpacing: 0.5 },
     jumpMeta: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, marginTop: 4, letterSpacing: 0.5 },
+    recentLogsCard: {
+        backgroundColor: COLORS.glassBg, marginTop: 32, marginHorizontal: 24,
+        borderRadius: 24, padding: 24,
+        borderWidth: 1, borderColor: COLORS.glassBorder,
+        width: width - 48,
+    },
+    recentLogsHeader: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 20 },
+    recentLogsLabel: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2.5 },
+    recentLogsSets: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+    recentSetRow: {
+        flexDirection: "row", alignItems: "center", gap: 8,
+        backgroundColor: "rgba(255,255,255,0.02)", paddingHorizontal: 12, paddingVertical: 8,
+        borderRadius: 10, borderWidth: 1, borderColor: COLORS.glassBorder,
+    },
+    recentSetBadge: {
+        backgroundColor: COLORS.primaryDim, paddingHorizontal: 6, paddingVertical: 2,
+        borderRadius: 4, borderWidth: 1, borderColor: "rgba(227,30,36,0.2)",
+    },
+    recentSetBadgeText: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.primary },
+    recentSetText: { fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.textSub, letterSpacing: 0.5 },
 });

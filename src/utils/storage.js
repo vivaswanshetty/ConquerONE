@@ -143,6 +143,9 @@ export const getWorkoutHistory = async () => {
         if (hasCloudSession()) {
             try {
                 const cloudHistory = await fsGetWorkoutHistory();
+                if (cloudHistory && cloudHistory.length > 0) {
+                    await AsyncStorage.setItem(KEYS.HISTORY, JSON.stringify(cloudHistory));
+                }
                 return cloudHistory.length >= localHistory.length ? cloudHistory : localHistory;
             } catch (e) {
                 console.warn("[Storage] Cloud history fetch failed. Falling back to local storage.", e?.message);
@@ -198,11 +201,16 @@ export const getStreak = async () => {
         if (hasCloudSession()) {
             try {
                 const [cloudStreak, cloudLastDate] = await Promise.all([fsGetStreak(), fsGetLastWorkoutDate()]);
-                if (!cloudLastDate) return localStreak;
-                if (!localLastDate) return cloudStreak;
-                if (localLastDate > cloudLastDate) return localStreak;
-                if (cloudLastDate > localLastDate) return cloudStreak;
-                return Math.max(localStreak, cloudStreak);
+                
+                let finalStreak = localStreak;
+                if (cloudLastDate) {
+                    if (!localLastDate || cloudLastDate > localLastDate || (cloudLastDate === localLastDate && cloudStreak > localStreak)) {
+                        finalStreak = cloudStreak;
+                        await AsyncStorage.setItem(KEYS.STREAK, String(cloudStreak));
+                        await AsyncStorage.setItem(KEYS.LAST_WORKOUT_DATE, cloudLastDate);
+                    }
+                }
+                return finalStreak;
             } catch (e) {
                 console.warn("[Storage] Cloud streak fetch failed. Falling back to local storage.", e?.message);
             }
@@ -220,6 +228,10 @@ export const getTotalWorkouts = async () => {
         if (hasCloudSession()) {
             try {
                 const cloudTotal = await fsGetTotalWorkouts();
+                if (cloudTotal > localTotal) {
+                    await AsyncStorage.setItem(KEYS.TOTAL_WORKOUTS, String(cloudTotal));
+                    return cloudTotal;
+                }
                 return Math.max(localTotal, cloudTotal);
             } catch (e) {
                 console.warn("[Storage] Cloud total fetch failed. Falling back to local storage.", e?.message);
@@ -300,7 +312,11 @@ export const getPRRecords = async () => {
     try {
         if (hasCloudSession()) {
             try {
-                return await fsGetPRRecords();
+                const cloudPRs = await fsGetPRRecords();
+                if (cloudPRs && Object.keys(cloudPRs).length > 0) {
+                    await AsyncStorage.setItem(KEYS.PR_RECORDS, JSON.stringify(cloudPRs));
+                }
+                return cloudPRs;
             } catch (e) {
                 console.warn("[Storage] Cloud PR fetch failed. Falling back to local storage.", e?.message);
             }
@@ -360,7 +376,11 @@ export const getBodyStats = async () => {
     try {
         if (hasCloudSession()) {
             try {
-                return await fsGetBodyStats();
+                const cloudStats = await fsGetBodyStats();
+                if (cloudStats && cloudStats.length > 0) {
+                    await AsyncStorage.setItem(KEYS.BODY_STATS, JSON.stringify(cloudStats));
+                }
+                return cloudStats;
             } catch (e) {
                 console.warn("[Storage] Cloud body stats fetch failed. Falling back to local storage.", e?.message);
             }
@@ -487,6 +507,10 @@ export const getXP = async () => {
         if (hasCloudSession()) {
             try {
                 const cloudXP = await fsGetXP();
+                if (cloudXP > localXP) {
+                    await AsyncStorage.setItem(KEYS.XP, String(cloudXP));
+                    return cloudXP;
+                }
                 return Math.max(localXP, cloudXP);
             } catch (e) {
                 console.warn("[Storage] Cloud XP fetch failed. Falling back to local storage.", e?.message);
@@ -513,6 +537,10 @@ export const getRecordStreak = async () => {
         if (hasCloudSession()) {
             try {
                 const cloudRecord = await fsGetRecordStreak();
+                if (cloudRecord > localRecord) {
+                    await AsyncStorage.setItem(KEYS.RECORD_STREAK, String(cloudRecord));
+                    return cloudRecord;
+                }
                 return Math.max(localRecord, cloudRecord);
             } catch (e) {
                 console.warn("[Storage] Cloud record streak fetch failed. Falling back to local storage.", e?.message);
