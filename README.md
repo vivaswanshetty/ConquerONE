@@ -1,7 +1,7 @@
 # <p align="center"><img src="./assets/icon.png" width="120" height="120" alt="ConquerONE Logo"/><br>CONQUER ONE</p>
 
 <p align="center">
-  <strong>Elite dumbbell training protocol. Engineered for performance.</strong>
+  <strong>Elite gym training protocol. Engineered for performance.</strong>
 </p>
 
 <p align="center">
@@ -16,7 +16,7 @@
 
 ## ⚡ Overview
 
-**CONQUER ONE** is a premium, offline-first 6-day dumbbell split training application built using React Native and Expo. Tailored for athletes who demand maximum performance, it combines a tactical dark mode and crimson design language with robust cloud synchronization, Health Connect integration, local caching, and custom AI-driven coaching powered by the Google Gemini API.
+**CONQUER ONE** is a premium, offline-first 6-day gym workout split training application built using React Native and Expo. Tailored for athletes who demand maximum performance, it combines a tactical dark mode and crimson design language with robust cloud synchronization, Health Connect integration, local caching, and custom AI-driven coaching powered by the Google Gemini API.
 
 > [!IMPORTANT]
 > This project is designed as a standalone, distraction-free companion to serious lifting routines. No social bloat, no subscription walls—just raw performance, precise timers, and automated progression records.
