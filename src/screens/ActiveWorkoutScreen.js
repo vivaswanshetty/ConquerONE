@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import {
     View, Text, TouchableOpacity, StyleSheet, Image,
     Dimensions, StatusBar, ScrollView, Animated,
-    Modal, TextInput, KeyboardAvoidingView, Platform,
+    Modal, TextInput, KeyboardAvoidingView, Platform, AppState,
 } from "react-native";
 import { useNotification } from "../context/NotificationContext";
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from "react-native-svg";
@@ -12,7 +12,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { COLORS, FONTS, SPACING, RADIUS, FAMILY } from "../utils/theme";
-import { saveWorkoutComplete, formatDuration, tryUpdatePR, getPRRecords, getWorkoutHistory } from "../utils/storage";
+import { saveWorkoutComplete, formatDuration, tryUpdatePR, getPRRecords, getWorkoutHistory, saveActiveWorkoutSession, getActiveWorkoutSession, clearActiveWorkoutSession } from "../utils/storage";
+import { scheduleRestNotification, cancelNotification } from "../utils/notifications";
 import { getSettings, estimateCalories, displayWeight } from "../utils/settings";
 import { getSuggestedWeight } from "../data/workoutData";
 
@@ -591,7 +592,10 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
     const [timeLeft, setTimeLeft] = useState(0);
     const [running, setRunning] = useState(false);
     const [paused, setPaused] = useState(false);
-    const [workoutStart] = useState(Date.now());
+    const workoutStartRef = useRef(Date.now());
+    const phaseStartTimeRef = useRef(Date.now());
+    const restNotifIdRef = useRef(null);
+    const appStateRef = useRef(AppState.currentState);
     const [elapsedSec, setElapsedSec] = useState(0);
     const [phases, setPhases] = useState([]);
     const [prModal, setPRModal] = useState({ visible: false, exerciseName: "", exIdx: 0, setNum: 0, initialWeight: "", initialReps: "" });
@@ -620,7 +624,6 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
     // Intercept back navigation (hardware back, swipe gesture) to prevent data loss
     useEffect(() => {
         const unsubscribe = navigation.addListener("beforeRemove", (e) => {
-            // Allow navigation if it's a replace (workout complete) — not a back action
             if (e.data.action.type === "REPLACE") return;
 
             e.preventDefault();
@@ -631,9 +634,11 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                 confirmText: "QUIT",
                 cancelText: "KEEP GOING",
                 isDestructive: true,
-                onConfirm: () => {
+                onConfirm: async () => {
                     clearInterval(intervalRef.current);
                     clearInterval(elapsedRef.current);
+                    await clearActiveWorkoutSession();
+                    if (restNotifIdRef.current) await cancelNotification(restNotifIdRef.current);
                     navigation.dispatch(e.data.action);
                 }
             });
@@ -650,7 +655,6 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
             autoStartRef.current = s.autoStartRest ?? true;
             setAudioSettings(s);
 
-            // Load PR records to prefill target weights
             try {
                 const prs = await getPRRecords();
                 prRecordsRef.current = prs;
@@ -658,7 +662,6 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                 console.warn("[ActiveWorkout] Failed to load PR records for targets", e);
             }
 
-            // Load workout history for recent logs
             try {
                 const hist = await getWorkoutHistory();
                 setHistory(hist);
@@ -667,35 +670,155 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
             }
 
             const q = buildQueue(day.exercises);
-            const initialLogged = q.map((ex, idx) => ({
-                name: ex.name,
-                side: ex.side,
-                sets: ex.sets,
-                loggedSets: Array.from({ length: ex.sets }, (_, i) => ({
-                    set: i + 1,
-                    weightKg: 0,
-                    reps: 0,
-                    completed: false
-                }))
-            }));
-            setLoggedExercises(initialLogged);
             const p = buildPhases(q, s.extraRestSec || 0);
             setPhases(p);
-            setTimeLeft(p[0]?.duration ?? 45);
-            phaseTimeRef.current = p[0]?.duration ?? 45;
 
-            // Keep screen awake during workout
+            // Attempt to restore an active saved session if available
+            const savedSession = await getActiveWorkoutSession();
+            let isRestored = false;
+
+            if (savedSession && (savedSession.day?.day === day.day || route.params?.resume)) {
+                const now = Date.now();
+                const calcElapsed = Math.floor((now - (savedSession.workoutStart || now)) / 1000);
+
+                workoutStartRef.current = savedSession.workoutStart || now;
+                phaseStartTimeRef.current = savedSession.phaseStartTime || now;
+                setLoggedExercises(savedSession.loggedExercises || []);
+                setNewPRsFound(savedSession.newPRsFound || []);
+                setPhaseIdx(savedSession.phaseIdx || 0);
+                setElapsedSec(calcElapsed > 0 ? calcElapsed : 0);
+
+                const activePh = p[savedSession.phaseIdx || 0];
+                const phDuration = activePh?.duration || 45;
+                const timeInPhase = Math.floor((now - (savedSession.phaseStartTime || now)) / 1000);
+                const remaining = Math.max(0, phDuration - timeInPhase);
+
+                setTimeLeft(remaining);
+                phaseTimeRef.current = remaining;
+
+                if (savedSession.running && !savedSession.paused) {
+                    setRunning(true);
+                    setPaused(false);
+                }
+                isRestored = true;
+            }
+
+            if (!isRestored) {
+                const initialLogged = q.map((ex) => ({
+                    name: ex.name,
+                    side: ex.side,
+                    sets: ex.sets,
+                    loggedSets: Array.from({ length: ex.sets }, (_, i) => ({
+                        set: i + 1,
+                        weightKg: 0,
+                        reps: 0,
+                        completed: false
+                    }))
+                }));
+                setLoggedExercises(initialLogged);
+                setTimeLeft(p[0]?.duration ?? 45);
+                phaseTimeRef.current = p[0]?.duration ?? 45;
+                workoutStartRef.current = Date.now();
+                phaseStartTimeRef.current = Date.now();
+            }
+
             if (s.keepScreenOn) {
                 try { await activateKeepAwakeAsync(); } catch { }
             }
         })();
+
         return () => {
             clearInterval(intervalRef.current);
             clearInterval(elapsedRef.current);
             clearTimeout(toastTimer.current);
+            if (restNotifIdRef.current) cancelNotification(restNotifIdRef.current);
             try { deactivateKeepAwake(); } catch { }
         };
     }, []);
+
+    // AppState listener for background timer recalculation and rest notifications
+    useEffect(() => {
+        const subscription = AppState.addEventListener("change", (nextAppState) => {
+            if (appStateRef.current.match(/inactive|background/) && nextAppState === "active") {
+                if (restNotifIdRef.current) {
+                    cancelNotification(restNotifIdRef.current);
+                    restNotifIdRef.current = null;
+                }
+
+                const now = Date.now();
+                const realElapsed = Math.floor((now - workoutStartRef.current) / 1000);
+                setElapsedSec(realElapsed > 0 ? realElapsed : 0);
+
+                if (phases.length > 0) {
+                    const curPh = phases[phaseIdx];
+                    if (curPh && running && !paused) {
+                        const elapsedInPhase = Math.floor((now - phaseStartTimeRef.current) / 1000);
+                        const remaining = Math.max(0, curPh.duration - elapsedInPhase);
+                        setTimeLeft(remaining);
+                        phaseTimeRef.current = remaining;
+
+                        if (!(curPh.type === "active" && curPh.isReps)) {
+                            startInterval(remaining, phases, phaseIdx);
+                        }
+                        startElapsedTimer();
+                    }
+                }
+            } else if (nextAppState.match(/inactive|background/)) {
+                if (phases.length > 0) {
+                    const curPh = phases[phaseIdx];
+                    saveActiveWorkoutSession({
+                        day,
+                        phaseIdx,
+                        workoutStart: workoutStartRef.current,
+                        phaseStartTime: phaseStartTimeRef.current,
+                        phaseDuration: curPh?.duration || 45,
+                        loggedExercises: loggedExercisesRef.current,
+                        newPRsFound,
+                        running,
+                        paused,
+                    });
+
+                    if (curPh && curPh.type !== "active" && running && !paused) {
+                        const elapsedInPhase = Math.floor((Date.now() - phaseStartTimeRef.current) / 1000);
+                        const rem = Math.max(0, curPh.duration - elapsedInPhase);
+                        if (rem > 0) {
+                            const nextExName = curPh.nextExercise ? curPh.nextExercise.name : curPh.exercise?.name;
+                            scheduleRestNotification(
+                                rem,
+                                "REST OVER — TIME TO LIFT! 🔥",
+                                `Time for set ${curPh.set || 1} of ${nextExName || 'your exercise'}.`
+                            ).then(id => {
+                                restNotifIdRef.current = id;
+                            });
+                        }
+                    }
+                }
+            }
+            appStateRef.current = nextAppState;
+        });
+
+        return () => {
+            subscription.remove();
+        };
+    }, [phases, phaseIdx, running, paused, day, newPRsFound]);
+
+    // Auto-save active workout session state to AsyncStorage on any progression change
+    useEffect(() => {
+        if (phases.length > 0) {
+            const curPh = phases[phaseIdx];
+            saveActiveWorkoutSession({
+                day,
+                phaseIdx,
+                workoutStart: workoutStartRef.current,
+                phaseStartTime: phaseStartTimeRef.current,
+                phaseDuration: curPh?.duration || 45,
+                loggedExercises,
+                newPRsFound,
+                running,
+                paused,
+            });
+        }
+    }, [phaseIdx, loggedExercises, newPRsFound, running, paused]);
 
     const currentPhase = phases[phaseIdx];
     const isWork = currentPhase?.type === "active";
@@ -763,6 +886,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
         }
         fadeTransition();
         const nextPhase = phasesArr[next];
+        phaseStartTimeRef.current = Date.now();
         if (nextPhase.type === "active") {
             if (nextPhase.exercise.side) announceSide(nextPhase.exercise.side);
             else announceWorkStart();
@@ -811,7 +935,6 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
         setPhaseIdx(next);
         setTimeLeft(nextPhase.duration);
         phaseTimeRef.current = nextPhase.duration;
-        // Auto-start rest if setting is on and we just finished a work phase
         if (nextPhase.type !== "active" && autoStartRef.current) {
             setRunning(true);
             setPaused(false);
@@ -821,19 +944,20 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
     const startElapsedTimer = useCallback(() => {
         clearInterval(elapsedRef.current);
         elapsedRef.current = setInterval(() => {
-            setElapsedSec(s => s + 1);
+            const realElapsed = Math.floor((Date.now() - workoutStartRef.current) / 1000);
+            setElapsedSec(realElapsed > 0 ? realElapsed : 0);
         }, 1000);
     }, []);
 
     const startInterval = useCallback((initTime, phasesArr, curIdx) => {
         clearInterval(intervalRef.current);
+        phaseStartTimeRef.current = Date.now();
         let t = initTime;
         intervalRef.current = setInterval(() => {
             t -= 1;
             setTimeLeft(t);
             if (t <= 3 && t > 0 && !hasAnnouncedRef.current) {
                 announceFinalCountdown(t);
-                // Strong haptic pulse for final 3-2-1
                 vibrate(Haptics.ImpactFeedbackStyle.Heavy);
             }
             const ph = phasesArr[curIdx];
@@ -842,10 +966,8 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                 if (t === 5) vibrate(Haptics.ImpactFeedbackStyle.Heavy);
             }
 
-            // Logic for regular timer-based phases
             if (t <= 0) {
                 clearInterval(intervalRef.current);
-                // Triple-burst haptic when rest ends (feels powerful)
                 hapticNotify();
                 setTimeout(() => vibrate(Haptics.ImpactFeedbackStyle.Heavy), 150);
                 setTimeout(() => vibrate(Haptics.ImpactFeedbackStyle.Heavy), 300);
@@ -853,7 +975,6 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                 advancePhase(phasesArr, curIdx);
                 const nextPh = phasesArr[curIdx + 1];
                 if (nextPh) {
-                    // For active-reps, we don't start the auto-countdown
                     if (nextPh.type === "active" && nextPh.isReps) {
                         setRunning(true);
                         setPaused(false);
@@ -871,7 +992,6 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
             setRunning(true); setPaused(false);
             if (currentPhase?.type === "active") announceWorkStart();
 
-            // Only start interval if it's NOT a rep-based active set
             if (!(currentPhase?.type === "active" && currentPhase?.isReps)) {
                 startInterval(timeLeft, phases, phaseIdx);
             }
@@ -906,11 +1026,25 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
         setPhaseIdx(prev);
         setTimeLeft(phases[prev].duration);
         phaseTimeRef.current = phases[prev].duration;
+        phaseStartTimeRef.current = Date.now();
         if (running && !paused) startInterval(phases[prev].duration, phases, prev);
     };
 
     const handleQuit = () => {
-        navigation.goBack();
+        showDialog({
+            title: "QUIT WORKOUT?",
+            message: "Your current progress won't be recorded.",
+            confirmText: "QUIT",
+            cancelText: "KEEP GOING",
+            isDestructive: true,
+            onConfirm: async () => {
+                clearInterval(intervalRef.current);
+                clearInterval(elapsedRef.current);
+                await clearActiveWorkoutSession();
+                if (restNotifIdRef.current) await cancelNotification(restNotifIdRef.current);
+                navigation.goBack();
+            }
+        });
     };
 
     const completeWorkout = async () => {
@@ -918,8 +1052,10 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
         completingRef.current = true;
         clearInterval(intervalRef.current);
         clearInterval(elapsedRef.current);
+        await clearActiveWorkoutSession();
+        if (restNotifIdRef.current) await cancelNotification(restNotifIdRef.current);
         announceWorkoutDone();
-        const dur = Math.floor((Date.now() - workoutStart) / 1000);
+        const dur = Math.max(1, Math.floor((Date.now() - workoutStartRef.current) / 1000));
         try {
             const result = await saveWorkoutComplete(day.day, day.target, dur, loggedExercisesRef.current);
             navigation.replace("WorkoutComplete", {

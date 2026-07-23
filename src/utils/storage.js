@@ -28,6 +28,7 @@ const KEYS = {
     PREVIOUS_FREEZE_DATE: "previous_freeze_date",
     XP: "workout_xp",
     RECORD_STREAK: "record_streak",
+    ACTIVE_WORKOUT: "active_workout_session",
 };
 
 const hasCloudSession = () => !!auth.currentUser;
@@ -551,3 +552,43 @@ export const getRecordStreak = async () => {
         return 0;
     }
 };
+
+/* ── Active Workout Persistence ────────────────────────────── */
+export const saveActiveWorkoutSession = async (sessionData) => {
+    try {
+        if (!sessionData) return;
+        const payload = {
+            ...sessionData,
+            lastUpdated: Date.now(),
+        };
+        await AsyncStorage.setItem(KEYS.ACTIVE_WORKOUT, JSON.stringify(payload));
+    } catch (e) {
+        console.warn("[Storage] Failed to save active workout session", e);
+    }
+};
+
+export const getActiveWorkoutSession = async () => {
+    try {
+        const raw = await AsyncStorage.getItem(KEYS.ACTIVE_WORKOUT);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        // Expire session if older than 12 hours (43,200,000 ms)
+        if (Date.now() - parsed.lastUpdated > 12 * 60 * 60 * 1000) {
+            await clearActiveWorkoutSession();
+            return null;
+        }
+        return parsed;
+    } catch (e) {
+        console.warn("[Storage] Failed to load active workout session", e);
+        return null;
+    }
+};
+
+export const clearActiveWorkoutSession = async () => {
+    try {
+        await AsyncStorage.removeItem(KEYS.ACTIVE_WORKOUT);
+    } catch (e) {
+        console.warn("[Storage] Failed to clear active workout session", e);
+    }
+};
+

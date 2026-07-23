@@ -15,7 +15,8 @@ import {
     getLastFreezeDate, withdrawStreakFreeze, checkAndCleanStreak,
     getStreakLocal, getTotalWorkoutsLocal, applyStreakFreeze,
     getXP, getXPLocal, getRecordStreak, getRecordStreakLocal,
-    getWorkoutHistory, getWorkoutHistoryLocal, getPreviousFreezeDate
+    getWorkoutHistory, getWorkoutHistoryLocal, getPreviousFreezeDate,
+    getActiveWorkoutSession, clearActiveWorkoutSession
 } from "../utils/storage";
 import MaskedView from "@react-native-masked-view/masked-view";
 import * as Haptics from "expo-haptics";
@@ -313,6 +314,7 @@ export default function HomeScreen({ navigation, route }) {
     const [freezeDays, setFreezeDays] = useState([]);
     const [history, setHistory] = useState([]);
     const [streakAnalyticsVisible, setStreakAnalyticsVisible] = useState(false);
+    const [activeSession, setActiveSession] = useState(null);
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
     // Animations
@@ -325,6 +327,10 @@ export default function HomeScreen({ navigation, route }) {
 
     useFocusEffect(useCallback(() => {
         loadStats();
+        (async () => {
+            const sess = await getActiveWorkoutSession();
+            setActiveSession(sess);
+        })();
 
         if (route.params?.openStreakIntelligence) {
             setStreakAnalyticsVisible(true);
@@ -575,6 +581,46 @@ export default function HomeScreen({ navigation, route }) {
                             </TouchableOpacity>
                         )}
                     </ScrollView>
+
+                    {/* Active Workout Resume Banner */}
+                    {activeSession && (
+                        <TouchableOpacity
+                            style={styles.resumeCard}
+                            activeOpacity={0.9}
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                navigation.navigate("ActiveWorkout", { day: activeSession.day, resume: true });
+                            }}
+                        >
+                            <LinearGradient
+                                colors={["rgba(227, 30, 36, 0.25)", "rgba(13, 13, 13, 0.95)"]}
+                                style={StyleSheet.absoluteFill}
+                                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0.5 }}
+                            />
+                            <View style={styles.resumeIconBox}>
+                                <Ionicons name="play" size={20} color={COLORS.primary} />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                                    <View style={styles.resumeDot} />
+                                    <Text style={styles.resumeTag}>WORKOUT IN PROGRESS</Text>
+                                </View>
+                                <Text style={styles.resumeTitle}>{(activeSession.day?.day || "ACTIVE WORKOUT").toUpperCase()}</Text>
+                                <Text style={styles.resumeSub}>Tap to resume session where you left off.</Text>
+                            </View>
+                            <TouchableOpacity
+                                style={styles.resumeDiscardBtn}
+                                onPress={async () => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    await clearActiveWorkoutSession();
+                                    setActiveSession(null);
+                                }}
+                                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                            >
+                                <Ionicons name="close" size={16} color={COLORS.textMuted} />
+                            </TouchableOpacity>
+                        </TouchableOpacity>
+                    )}
 
                     {/* Tactical Readout HUD Card */}
                     <View style={styles.hudCard}>
@@ -2270,4 +2316,30 @@ const styles = StyleSheet.create({
         elevation: 4,
     },
     resetCloseText: { fontSize: 13, fontFamily: FAMILY.bold, color: '#fff', letterSpacing: 2 },
+
+    // Resume Card Styles
+    resumeCard: {
+        width: "100%", backgroundColor: COLORS.glassBg,
+        borderRadius: 20, borderWidth: 1.5, borderColor: "rgba(227,30,36,0.4)",
+        padding: 16, flexDirection: "row", alignItems: "center", gap: 14,
+        marginBottom: 20, overflow: "hidden",
+        elevation: 8, shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.3, shadowRadius: 12,
+    },
+    resumeIconBox: {
+        width: 44, height: 44, borderRadius: 14,
+        backgroundColor: "rgba(227,30,36,0.15)", borderWidth: 1, borderColor: "rgba(227,30,36,0.3)",
+        alignItems: "center", justifyContent: "center",
+    },
+    resumeDot: {
+        width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.primary,
+    },
+    resumeTag: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 1.5 },
+    resumeTitle: { fontSize: 16, fontFamily: FAMILY.display, color: COLORS.text, marginTop: 2 },
+    resumeSub: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, marginTop: 2 },
+    resumeDiscardBtn: {
+        width: 28, height: 28, borderRadius: 14,
+        backgroundColor: "rgba(255,255,255,0.05)", borderWidth: 1, borderColor: COLORS.glassBorder,
+        alignItems: "center", justifyContent: "center",
+    },
 });

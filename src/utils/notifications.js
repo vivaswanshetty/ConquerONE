@@ -175,3 +175,40 @@ export const sendMilestoneNotif = async (title, body) => {
         console.log("[notifications] milestone notif failed", e);
     }
 };
+
+/**
+ * Schedule a local rest completion notification when in background.
+ */
+export const scheduleRestNotification = async (seconds, title, body) => {
+    try {
+        if (!seconds || seconds <= 0) return null;
+        const id = await Notifications.scheduleNotificationAsync({
+            content: {
+                title: title || "REST COMPLETE — TIME TO LIFT! 🔥",
+                body: body || "Get back to your next set.",
+                sound: true,
+                priority: Notifications.AndroidNotificationPriority.HIGH,
+            },
+            trigger: {
+                type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+                seconds: Math.max(1, Math.floor(seconds)),
+                repeats: false,
+            },
+        });
+        return id;
+    } catch (e) {
+        console.log("[notifications] rest timer scheduling failed", e);
+        return null;
+    }
+};
+
+/**
+ * Cancel a specific scheduled notification by ID.
+ */
+export const cancelNotification = async (id) => {
+    if (!id) return;
+    try {
+        await Notifications.cancelScheduledNotificationAsync(id);
+    } catch (e) { }
+};
+
