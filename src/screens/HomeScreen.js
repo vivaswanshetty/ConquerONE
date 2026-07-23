@@ -141,7 +141,7 @@ const getStreakTierInfo = (streak) => {
         return {
             name: "TITAN",
             multiplier: "2.0x",
-            color: "#A855F7",
+            color: "#E31E24",
             badge: "Tier IV",
             desc: "Titan Multiplier active. You reward 20 XP per session.",
             range: "10+ Days"
@@ -150,7 +150,7 @@ const getStreakTierInfo = (streak) => {
         return {
             name: "OVERLOAD",
             multiplier: "1.5x",
-            color: "#EAB308",
+            color: "#E31E24",
             badge: "Tier III",
             desc: "Overload Multiplier active. You reward 15 XP per session.",
             range: "5–9 Days"
@@ -159,7 +159,7 @@ const getStreakTierInfo = (streak) => {
         return {
             name: "IGNITION",
             multiplier: "1.2x",
-            color: "#F97316",
+            color: "#FFFFFF",
             badge: "Tier II",
             desc: "Ignition Multiplier active. You reward 12 XP per session.",
             range: "3–4 Days"
@@ -168,7 +168,7 @@ const getStreakTierInfo = (streak) => {
         return {
             name: "SPARK",
             multiplier: "1.0x",
-            color: streak > 0 ? "#EF4444" : "#6B7280",
+            color: streak > 0 ? "#E31E24" : "#8E8E93",
             badge: "Tier I",
             desc: "Spark Multiplier active. You reward 10 XP per session.",
             range: "1–2 Days"
@@ -572,12 +572,12 @@ export default function HomeScreen({ navigation, route }) {
                         </TouchableOpacity>
                         {isFrozen && (
                             <TouchableOpacity
-                                style={[styles.hudShortcutBtn, { backgroundColor: 'rgba(96,165,250,0.08)', borderColor: 'rgba(96,165,250,0.2)' }]}
+                                style={[styles.hudShortcutBtn, { backgroundColor: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.18)' }]}
                                 onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setFreezeModal(true); }}
                                 activeOpacity={0.7}
                             >
-                                <Ionicons name="snow" size={12} color="#60A5FA" style={{ marginRight: 6 }} />
-                                <Text style={[styles.hudShortcutBtnText, { color: "#60A5FA" }]}>FROZEN</Text>
+                                <Ionicons name="snow" size={12} color="#D1D1D1" style={{ marginRight: 6 }} />
+                                <Text style={[styles.hudShortcutBtnText, { color: "#D1D1D1" }]}>FROZEN</Text>
                             </TouchableOpacity>
                         )}
                     </ScrollView>
@@ -727,13 +727,13 @@ export default function HomeScreen({ navigation, route }) {
                                                                 <Ionicons 
                                                                     name="snow" 
                                                                     size={7} 
-                                                                    color="#60A5FA" 
+                                                                    color="#D1D1D1" 
                                                                     style={{ position: "absolute", bottom: -2.5, right: -2.5 }} 
                                                                 />
                                                             )}
                                                         </>
                                                     ) : isDayFrozen ? (
-                                                        <Ionicons name="snow" size={10} color="#60A5FA" />
+                                                        <Ionicons name="snow" size={10} color="#D1D1D1" />
                                                     ) : (
                                                         isToday && !isCompleted && !isDayFrozen && <View style={styles.gridCellTodayDot} />
                                                     )}
@@ -1799,8 +1799,8 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(227, 30, 36, 0.2)",
     },
     gridCellFrozen: {
-        borderColor: "#60A5FA",
-        backgroundColor: "rgba(96, 165, 250, 0.2)",
+        borderColor: "#D1D1D1",
+        backgroundColor: "rgba(255, 255, 255, 0.15)",
     },
     gridCellToday: {
         borderColor: COLORS.text,
@@ -2247,16 +2247,16 @@ const styles = StyleSheet.create({
     freezeOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center', padding: 24 },
     freezeModalContent: {
         width: '100%', borderRadius: 28, padding: 28, alignItems: 'center',
-        borderWidth: 1, borderColor: 'rgba(96,165,250,0.35)', overflow: 'hidden',
+        borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.2)', overflow: 'hidden',
     },
-    iceEffect: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(96,165,250,0.04)', opacity: 0.5 },
+    iceEffect: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255, 255, 255, 0.03)', opacity: 0.5 },
     freezeModalHeader: { alignItems: 'center', marginBottom: 20 },
     snowCircle: {
-        width: 72, height: 72, borderRadius: 36, backgroundColor: 'rgba(96,165,250,0.08)',
+        width: 72, height: 72, borderRadius: 36, backgroundColor: 'rgba(255, 255, 255, 0.06)',
         alignItems: 'center', justifyContent: 'center', marginBottom: 18,
-        borderWidth: 1, borderColor: 'rgba(96,165,250,0.25)',
+        borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.2)',
     },
-    freezeStatus: { fontSize: 9, fontFamily: FAMILY.bold, color: '#60A5FA', letterSpacing: 3, marginBottom: 8 },
+    freezeStatus: { fontSize: 9, fontFamily: FAMILY.bold, color: '#D1D1D1', letterSpacing: 3, marginBottom: 8 },
     freezeTitle: { fontSize: 20, fontFamily: FAMILY.bold, color: '#fff', textAlign: 'center', lineHeight: 26 },
     freezeDesc: {
         fontSize: 14, fontFamily: FAMILY.regular, color: COLORS.textSub,
@@ -2264,10 +2264,10 @@ const styles = StyleSheet.create({
     },
     protectionBadge: {
         flexDirection: 'row', alignItems: 'center', gap: 8,
-        backgroundColor: 'rgba(96,165,250,0.08)', paddingHorizontal: 14, paddingVertical: 8,
-        borderRadius: 10, marginBottom: 32, borderWidth: 1, borderColor: 'rgba(96,165,250,0.18)'
+        backgroundColor: 'rgba(255, 255, 255, 0.06)', paddingHorizontal: 14, paddingVertical: 8,
+        borderRadius: 10, marginBottom: 32, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.15)'
     },
-    protectionText: { fontSize: 9, fontFamily: FAMILY.bold, color: '#60A5FA', letterSpacing: 1 },
+    protectionText: { fontSize: 9, fontFamily: FAMILY.bold, color: '#D1D1D1', letterSpacing: 1 },
     freezeCloseBtn: {
         width: '100%', height: 56, borderRadius: 16, backgroundColor: '#fff',
         alignItems: 'center', justifyContent: 'center'
