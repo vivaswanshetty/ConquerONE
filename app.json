@@ -88,7 +88,10 @@
         "projectId": "fa539543-bc51-4677-8251-2e9ff8c7a17d"
       }
     },
-    "runtimeVersion": "1.0.0",
+    "sdkVersion": "54.0.0",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "updates": {
       "url": "https://u.expo.dev/fa539543-bc51-4677-8251-2e9ff8c7a17d"
     }

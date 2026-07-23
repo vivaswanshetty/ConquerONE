@@ -128,7 +128,7 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
             { min: 100, title: "LEGEND", icon: "trophy-outline", color: "#EF4444", desc: "The pinnacle. Pure excellence." },
             { min: 50, title: "TITAN", icon: "diamond-outline", color: "#F97316", desc: "An unstoppable force." },
             { min: 25, title: "WARRIOR", icon: "fitness", color: "#FBBF24", desc: "Battle-tested and relentless." },
-            { min: 10, title: "RISING STAR", icon: "trending-up", color: "#34D399", desc: "Your consistency is paying off." },
+            { min: 10, title: "CHADLITE", icon: "trending-up", color: "#34D399", desc: "Your consistency is paying off." },
             { min: 5, title: "ROOKIE", icon: "star-outline", color: "#60A5FA", desc: "You've proven you're serious." },
         ];
         for (const t of RANK_THRESHOLDS) {

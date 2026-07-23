@@ -16,7 +16,7 @@ const { width } = Dimensions.get("window");
 const RANKS = [
     { level: 1, title: "RECRUIT", icon: "shield-outline", min: 0, max: 4, color: "#6B7280", desc: "Every legend starts with a single rep. Welcome to the arena." },
     { level: 2, title: "ROOKIE", icon: "star-outline", min: 5, max: 9, color: "#60A5FA", desc: "You've proven you're serious. Keep building momentum." },
-    { level: 3, title: "RISING STAR", icon: "trending-up", min: 10, max: 24, color: "#34D399", desc: "Others are taking notice. Your consistency is paying off." },
+    { level: 3, title: "CHADLITE", icon: "trending-up", min: 10, max: 24, color: "#34D399", desc: "Others are taking notice. Your consistency is paying off." },
     { level: 4, title: "WARRIOR", icon: "fitness", min: 25, max: 49, color: "#FBBF24", desc: "Battle-tested and relentless. You're in the top tier now." },
     { level: 5, title: "TITAN", icon: "diamond-outline", min: 50, max: 99, color: "#F97316", desc: "An unstoppable force. Very few reach this stage." },
     { level: 6, title: "LEGEND", icon: "trophy-outline", min: 100, max: 999, color: "#EF4444", desc: "The pinnacle. You've conquered everything. Pure excellence." },

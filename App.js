@@ -20,6 +20,8 @@ import {
 import { Syne_700Bold } from "@expo-google-fonts/syne";
 import { Arimo_400Regular, Arimo_700Bold } from "@expo-google-fonts/arimo";
 import { Urbanist_900Black } from "@expo-google-fonts/urbanist";
+import { SpaceGrotesk_700Bold } from "@expo-google-fonts/space-grotesk";
+import { Inter_700Bold } from "@expo-google-fonts/inter";
 import {
   Montserrat_400Regular,
   Montserrat_600SemiBold,
@@ -125,6 +127,7 @@ const CRITICAL_FONTS = {
   Arimo_400Regular,
   Arimo_700Bold,
   Outfit_400Regular,
+  SpaceGrotesk_700Bold,
 };
 
 const DEFERRED_FONTS = {
@@ -133,6 +136,7 @@ const DEFERRED_FONTS = {
   Outfit_600SemiBold,
   Urbanist_900Black,
   Syne_700Bold,
+  Inter_700Bold,
   Montserrat_400Regular,
   Montserrat_600SemiBold,
   Montserrat_700Bold,

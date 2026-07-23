@@ -12,11 +12,24 @@ import {
     signInWithCredential,
 } from "firebase/auth";
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { auth, db } from "../utils/firebase";
 import { migrateLocalDataToCloud } from "../utils/firestore";
 import { getWorkoutHistory, getStreak, getTotalWorkouts, getXP, getPRRecords, getBodyStats } from "../utils/storage";
+
+let GoogleSignin = null;
+try {
+    const googleModule = require('@react-native-google-signin/google-signin');
+    GoogleSignin = googleModule?.GoogleSignin || null;
+    if (GoogleSignin && typeof GoogleSignin.configure === 'function') {
+        GoogleSignin.configure({
+            webClientId: '100815258954-9tbcs233f7uqiech80asjbjktrtng8rs.apps.googleusercontent.com',
+        });
+    }
+} catch (e) {
+    console.warn("[Auth] Native GoogleSignin module unavailable in current environment.");
+}
 
 const AuthContext = createContext(null);
 
@@ -36,11 +49,6 @@ const syncCloudToLocal = async () => {
     }
 };
 
-// Configure Google Sign-In
-GoogleSignin.configure({
-    webClientId: '100815258954-9tbcs233f7uqiech80asjbjktrtng8rs.apps.googleusercontent.com',
-});
-
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);       // Firebase auth user
     const [profile, setProfile] = useState(null); // Firestore user profile
@@ -51,13 +59,25 @@ export function AuthProvider({ children }) {
         const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
             if (firebaseUser) {
                 setUser(firebaseUser);
-                setLoading(false); // Unblock UI immediately after auth is confirmed
+                // Attempt to load cached profile from local storage for instant render
+                try {
+                    const cached = await AsyncStorage.getItem("cached_user_profile");
+                    if (cached) {
+                        setProfile(JSON.parse(cached));
+                    }
+                } catch (e) {
+                    console.warn("[Auth] Failed to read cached profile", e);
+                }
+                setLoading(false); // Unblock UI immediately
                 await loadProfile(firebaseUser.uid);
                 syncCloudToLocal();
             } else {
                 setUser(null);
                 setProfile(null);
                 setLoading(false);
+                try {
+                    await AsyncStorage.removeItem("cached_user_profile");
+                } catch (e) {}
             }
         });
         return unsub;
@@ -66,7 +86,11 @@ export function AuthProvider({ children }) {
     const loadProfile = async (uid) => {
         try {
             const snap = await getDoc(doc(db, "users", uid));
-            if (snap.exists()) setProfile(snap.data());
+            if (snap.exists()) {
+                const data = snap.data();
+                setProfile(data);
+                await AsyncStorage.setItem("cached_user_profile", JSON.stringify(data));
+            }
         } catch (e) {
             console.error("[Auth] Failed to load profile", e);
         }

@@ -68,11 +68,31 @@ function GradientText({ text, style, colors = GRADIENTS.diamond, height = 50 }) 
     );
 }
 
+function MetallicText({ text, style, height = 50 }) {
+    return (
+        <MaskedView
+            style={{ height, width: '100%' }}
+            maskElement={
+                <Text style={style} adjustsFontSizeToFit numberOfLines={1}>{text}</Text>
+            }
+        >
+            <LinearGradient
+                colors={["#FFFFFF", "#F5F5F7", "#B0B0B5", "#FFFFFF", "#8E8E93"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0.8 }}
+                style={StyleSheet.absoluteFill}
+            >
+                <Text style={[style, { opacity: 0 }]} adjustsFontSizeToFit numberOfLines={1}>{text}</Text>
+            </LinearGradient>
+        </MaskedView>
+    );
+}
+
 const getWeekStats = (history, lastFreezeDate) => {
     const today = new Date();
     const currentDay = today.getDay(); // 0 is Sunday, 1 is Monday
     const distanceToMonday = currentDay === 0 ? 6 : currentDay - 1;
-    
+
     const monday = new Date(today);
     monday.setDate(today.getDate() - distanceToMonday);
     monday.setHours(0, 0, 0, 0);
@@ -114,15 +134,15 @@ const getWeeklyHistoryData = (history) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const weeklyCounts = [0, 0, 0, 0]; // Index 0: 3 weeks ago, Index 1: 2 weeks ago, ...
-    
+
     const oneDay = 24 * 60 * 60 * 1000;
-    
+
     if (history && Array.isArray(history)) {
         history.forEach(item => {
             if (!item.date) return;
             const itemDate = new Date(item.date);
             itemDate.setHours(0, 0, 0, 0);
-            
+
             const diffDays = Math.floor((today - itemDate) / oneDay);
             if (diffDays >= 0 && diffDays < 28) {
                 const weekIndex = 3 - Math.floor(diffDays / 7);
@@ -132,7 +152,7 @@ const getWeeklyHistoryData = (history) => {
             }
         });
     }
-    
+
     return weeklyCounts;
 };
 
@@ -180,14 +200,14 @@ const renderSvgChart = (weeklyData) => {
     const chartWidth = width - 64;
     const chartHeight = 140;
     const padding = 25;
-    
+
     // Coordinates
     const points = weeklyData.map((val, i) => {
         const x = padding + (i / 3) * (chartWidth - 2 * padding);
         const y = chartHeight - padding - (Math.min(val, 7) / 7) * (chartHeight - 2 * padding);
         return { x, y, value: val };
     });
-    
+
     // Create polyline / path
     let d = "";
     points.forEach((p, idx) => {
@@ -225,7 +245,7 @@ const renderSvgChart = (weeklyData) => {
                             <Stop offset="100%" stopColor="#FF4D4D" />
                         </SvgGradient>
                     </Defs>
-                    
+
                     {/* Grid Lines */}
                     {[0, 1, 2, 3].map((g) => {
                         const y = padding + (g / 3) * (chartHeight - 2 * padding);
@@ -326,7 +346,7 @@ export default function HomeScreen({ navigation, route }) {
     const displayName = profile?.fullName?.split(" ")[0] || user?.displayName?.split(" ")[0] || "ATHLETE";
 
     useFocusEffect(useCallback(() => {
-        loadStats();
+        loadStats(false); // Instantly load local cache on focus (0ms latency, no blocking)
         (async () => {
             const sess = await getActiveWorkoutSession();
             setActiveSession(sess);
@@ -339,6 +359,9 @@ export default function HomeScreen({ navigation, route }) {
     }, [route.params?.openStreakIntelligence]));
 
     useEffect(() => {
+        // Run a full background cloud sync once when the component mounts
+        loadStats(true);
+
         const h = new Date().getHours();
         let g = "Good morning";
         if (h >= 12 && h < 17) g = "Good afternoon";
@@ -380,7 +403,7 @@ export default function HomeScreen({ navigation, route }) {
         ]).start();
     }, []);
 
-    const loadStats = async () => {
+    const loadStats = async (forceCloudSync = false) => {
         // 1. Immediate local cache load
         try {
             const cachedStreak = await getStreakLocal();
@@ -398,6 +421,7 @@ export default function HomeScreen({ navigation, route }) {
             setHistory(cachedHistory);
             setLastFreezeDate(cachedFreeze);
             setPreviousFreezeDate(cachedPrevFreeze);
+            setIsFrozen(cachedFreeze === new Date().toISOString().split("T")[0]);
 
             const { completedDays: localComp, freezeDays: localFrz } = getWeekStats(cachedHistory, cachedFreeze);
             setCompletedDays(localComp);
@@ -412,38 +436,40 @@ export default function HomeScreen({ navigation, route }) {
             if (wasReset) {
                 setPrevStreak(previousStreak);
                 setStreakResetModal(true);
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => { });
                 setStreak(0); // update instantly to 0 in UI
             }
         } catch (e) {
             console.warn("checkAndCleanStreak failed in loadStats", e);
         }
 
-        // 3. Background cloud sync
-        try {
-            const [nextStreak, nextTotal, lastFreeze, nextXP, nextRecord, nextHistory, nextPrevFreeze] = await Promise.all([
-                getStreak(),
-                getTotalWorkouts(),
-                getLastFreezeDate(),
-                getXP(),
-                getRecordStreak(),
-                getWorkoutHistory(),
-                getPreviousFreezeDate(),
-            ]);
-            setStreak(nextStreak);
-            setTotal(nextTotal);
-            setIsFrozen(lastFreeze === new Date().toISOString().split("T")[0]);
-            setLastFreezeDate(lastFreeze);
-            setPreviousFreezeDate(nextPrevFreeze);
-            setXP(nextXP);
-            setRecordStreak(nextRecord);
-            setHistory(nextHistory);
+        // 3. Background cloud sync (only on app boot or explicit actions)
+        if (forceCloudSync) {
+            try {
+                const [nextStreak, nextTotal, lastFreeze, nextXP, nextRecord, nextHistory, nextPrevFreeze] = await Promise.all([
+                    getStreak(),
+                    getTotalWorkouts(),
+                    getLastFreezeDate(),
+                    getXP(),
+                    getRecordStreak(),
+                    getWorkoutHistory(),
+                    getPreviousFreezeDate(),
+                ]);
+                setStreak(nextStreak);
+                setTotal(nextTotal);
+                setIsFrozen(lastFreeze === new Date().toISOString().split("T")[0]);
+                setLastFreezeDate(lastFreeze);
+                setPreviousFreezeDate(nextPrevFreeze);
+                setXP(nextXP);
+                setRecordStreak(nextRecord);
+                setHistory(nextHistory);
 
-            const { completedDays: syncComp, freezeDays: syncFrz } = getWeekStats(nextHistory, lastFreeze);
-            setCompletedDays(syncComp);
-            setFreezeDays(syncFrz);
-        } catch (e) {
-            console.warn("HomeScreen background sync failed", e);
+                const { completedDays: syncComp, freezeDays: syncFrz } = getWeekStats(nextHistory, lastFreeze);
+                setCompletedDays(syncComp);
+                setFreezeDays(syncFrz);
+            } catch (e) {
+                console.warn("HomeScreen background sync failed", e);
+            }
         }
     };
 
@@ -453,7 +479,7 @@ export default function HomeScreen({ navigation, route }) {
             setIsFrozen(false);
             setFreezeModal(false);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            loadStats();
+            loadStats(true);
         }
     };
 
@@ -462,15 +488,15 @@ export default function HomeScreen({ navigation, route }) {
             const success = await withdrawStreakFreeze();
             if (success) {
                 setIsFrozen(false);
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
-                loadStats();
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => { });
+                loadStats(true);
             }
         } else {
             const success = await applyStreakFreeze();
             if (success) {
                 setIsFrozen(true);
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-                loadStats();
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => { });
+                loadStats(true);
             }
         }
     };
@@ -515,21 +541,20 @@ export default function HomeScreen({ navigation, route }) {
                 style={{ opacity: fadeAnim }}
                 showsVerticalScrollIndicator={false}
                 overScrollMode="never"
-                contentContainerStyle={{ paddingTop: insets.top + SPACING.base, paddingBottom: 48 }}
+                contentContainerStyle={{ paddingTop: insets.top + SPACING.base, paddingBottom: 16 }}
             >
                 {/* ── Header ── */}
                 <View style={styles.headerRow}>
                     <View style={styles.headerTop}>
                         <View style={{ flex: 1, justifyContent: 'center' }}>
                             <Text style={styles.greeting}>{greeting.toUpperCase()},</Text>
-                            <GradientText
+                            <MetallicText
                                 text={displayName.toUpperCase()}
                                 style={styles.name}
-                                colors={GRADIENTS.diamond}
                                 height={42}
                             />
                         </View>
-                        
+
                         <View style={styles.avatarContainer}>
                             <Animated.View style={[styles.avatarGlowRing, { opacity: avatarGlow }]} />
                             <Animated.View style={{ transform: [{ scale: avatarScale }] }}>
@@ -552,9 +577,9 @@ export default function HomeScreen({ navigation, route }) {
                     </View>
 
                     {/* HUD Action Shortcut Bar */}
-                    <ScrollView 
-                        horizontal 
-                        showsHorizontalScrollIndicator={false} 
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
                         style={styles.hudShortcutBar}
                         contentContainerStyle={styles.hudShortcutBarContent}
                     >
@@ -581,90 +606,159 @@ export default function HomeScreen({ navigation, route }) {
                             </TouchableOpacity>
                         )}
                     </ScrollView>
+                </View>
 
-                    {/* Active Workout Resume Banner */}
-                    {activeSession && (
+                {/* Active Workout Resume Banner */}
+                {activeSession && (
+                    <TouchableOpacity
+                        style={styles.resumeCard}
+                        activeOpacity={0.9}
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                            navigation.navigate("ActiveWorkout", { day: activeSession.day, resume: true });
+                        }}
+                    >
+                        <LinearGradient
+                            colors={["rgba(227, 30, 36, 0.25)", "rgba(13, 13, 13, 0.95)"]}
+                            style={StyleSheet.absoluteFill}
+                            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0.5 }}
+                        />
+                        <View style={styles.resumeIconBox}>
+                            <Ionicons name="play" size={20} color={COLORS.primary} />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                                <View style={styles.resumeDot} />
+                                <Text style={styles.resumeTag}>WORKOUT IN PROGRESS</Text>
+                            </View>
+                            <Text style={styles.resumeTitle}>{(activeSession.day?.day || "ACTIVE WORKOUT").toUpperCase()}</Text>
+                            <Text style={styles.resumeSub}>Tap to resume session where you left off.</Text>
+                        </View>
                         <TouchableOpacity
-                            style={styles.resumeCard}
-                            activeOpacity={0.9}
-                            onPress={() => {
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                navigation.navigate("ActiveWorkout", { day: activeSession.day, resume: true });
+                            style={styles.resumeDiscardBtn}
+                            onPress={async () => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                await clearActiveWorkoutSession();
+                                setActiveSession(null);
                             }}
+                            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                        >
+                            <Ionicons name="close" size={16} color={COLORS.textMuted} />
+                        </TouchableOpacity>
+                    </TouchableOpacity>
+                )}
+
+                {/* ── Today's Workout Hero Card (Focal Point) ── */}
+                {todayWorkout ? (
+                    <TouchableOpacity
+                        style={styles.heroCard}
+                        activeOpacity={0.9}
+                        onPress={() => navigation.navigate("WorkoutDetail", { day: todayWorkout })}
+                    >
+                        <ImageBackground
+                            source={todayWorkout.headerImage || require("../../assets/home_hero_bg.png")}
+                            style={StyleSheet.absoluteFill}
+                            resizeMode="cover"
                         >
                             <LinearGradient
-                                colors={["rgba(227, 30, 36, 0.25)", "rgba(13, 13, 13, 0.95)"]}
+                                colors={["rgba(0,0,0,0.2)", "rgba(0,0,0,0.6)", "rgba(0,0,0,0.95)"]}
                                 style={StyleSheet.absoluteFill}
-                                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0.5 }}
                             />
-                            <View style={styles.resumeIconBox}>
-                                <Ionicons name="play" size={20} color={COLORS.primary} />
-                            </View>
-                            <View style={{ flex: 1 }}>
-                                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                                    <View style={styles.resumeDot} />
-                                    <Text style={styles.resumeTag}>WORKOUT IN PROGRESS</Text>
-                                </View>
-                                <Text style={styles.resumeTitle}>{(activeSession.day?.day || "ACTIVE WORKOUT").toUpperCase()}</Text>
-                                <Text style={styles.resumeSub}>Tap to resume session where you left off.</Text>
-                            </View>
-                            <TouchableOpacity
-                                style={styles.resumeDiscardBtn}
-                                onPress={async () => {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                    await clearActiveWorkoutSession();
-                                    setActiveSession(null);
-                                }}
-                                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                            >
-                                <Ionicons name="close" size={16} color={COLORS.textMuted} />
-                            </TouchableOpacity>
-                        </TouchableOpacity>
-                    )}
 
-                    {/* Tactical Readout HUD Card */}
-                    <View style={styles.hudCard}>
-                        <LinearGradient
-                            colors={[COLORS.glassBg, "rgba(5, 5, 5, 0.85)"]}
-                            style={StyleSheet.absoluteFill}
-                        />
-                        <View style={styles.hudHeader}>
-                            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                                <View style={styles.hudDot} />
-                                <Text style={styles.hudTitle}>TACTICAL READOUT</Text>
+                            <View style={styles.heroLeftAccent} />
+
+                            <View style={styles.heroContent}>
+                                <View>
+                                    <View style={styles.heroBadge}>
+                                        <Text style={styles.heroBadgeText}>TODAY'S PROTOCOL</Text>
+                                    </View>
+                                    <Text style={styles.heroTitle} numberOfLines={1} adjustsFontSizeToFit>
+                                        {todayWorkout.target.toUpperCase()}
+                                    </Text>
+                                    <Text style={[styles.heroSub, completedDays.includes(todayDay) && { color: "#FFFFFF", fontFamily: FAMILY.bold }]}>
+                                        {completedDays.includes(todayDay) ? "✓ SESSION DONE" : "READY FOR SESSION"}
+                                    </Text>
+                                </View>
+
+                                <View style={styles.heroMetaRow}>
+                                    <View style={{ flexDirection: "row", gap: 16 }}>
+                                        <View style={styles.heroMeta}>
+                                            <Text style={styles.heroMetaLabel}>VOLUME</Text>
+                                            <Text style={styles.heroMetaValue}>{todayWorkout.exercises.length} EXERCISES</Text>
+                                        </View>
+                                        <View style={styles.heroMeta}>
+                                            <Text style={styles.heroMetaLabel}>DURATION</Text>
+                                            <Text style={styles.heroMetaValue}>{totalTime(todayWorkout)} MINS</Text>
+                                        </View>
+                                    </View>
+
+                                    <TouchableOpacity
+                                        style={styles.heroCta}
+                                        activeOpacity={0.8}
+                                        onPress={() => {
+                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                            navigation.navigate("WorkoutDetail", { day: todayWorkout });
+                                        }}
+                                    >
+                                        <Text style={styles.heroCtaText}>
+                                            {completedDays.includes(todayDay) ? "HIT AGAIN" : "START SESSION"}
+                                        </Text>
+                                        <Ionicons
+                                            name={completedDays.includes(todayDay) ? "refresh-outline" : "play"}
+                                            size={11}
+                                            color="#fff"
+                                        />
+                                    </TouchableOpacity>
+                                </View>
                             </View>
-                            <View style={styles.hudStatusBadge}>
-                                <Text style={styles.hudStatusText}>SYS ACTIVE</Text>
-                            </View>
+                        </ImageBackground>
+                    </TouchableOpacity>
+                ) : (
+                    <RestDayCard navigation={navigation} />
+                )}
+
+                {/* Tactical Readout HUD Card */}
+                <View style={styles.hudCard}>
+                    <LinearGradient
+                        colors={[COLORS.glassBg, "rgba(5, 5, 5, 0.85)"]}
+                        style={StyleSheet.absoluteFill}
+                    />
+                    <View style={styles.hudHeader}>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                            <View style={styles.hudDot} />
+                            <Text style={styles.hudTitle}>TACTICAL READOUT</Text>
                         </View>
-                        
-                        <View style={styles.hudBody}>
-                            <View style={{ flex: 1 }}>
-                                <View style={styles.hudLevelRow}>
-                                    <Text style={styles.hudLevelLabel}>XP CONVERGENCE</Text>
-                                    <Text style={styles.hudLevelValue}>
-                                        LVL {String(Math.min(Math.floor(xp / 100) + 1, 99)).padStart(2, '0')}
-                                    </Text>
-                                </View>
-                                <View style={styles.hudBar}>
-                                    <LinearGradient
-                                        colors={[COLORS.primary, '#FF4D4D']}
-                                        start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                                        style={[styles.levelFill, { width: `${xp % 100}%` }]}
-                                    />
-                                </View>
-                                <View style={styles.hudFooterRow}>
-                                    <Text style={styles.hudSubText}>
-                                        {xp % 100}/100 XP TO NEXT LEVEL
-                                    </Text>
-                                    <Text style={styles.hudRankText}>
-                                        {total >= 100 ? 'LEGEND' :
-                                         total >= 50 ? 'TITAN' :
-                                         total >= 25 ? 'WARRIOR' :
-                                         total >= 10 ? 'RISING STAR' :
-                                         total >= 5 ? 'ROOKIE' : 'RECRUIT'}
-                                    </Text>
-                                </View>
+                        <View style={styles.hudStatusBadge}>
+                            <Text style={styles.hudStatusText}>SYS ACTIVE</Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.hudBody}>
+                        <View style={{ flex: 1 }}>
+                            <View style={styles.hudLevelRow}>
+                                <Text style={styles.hudLevelLabel}>XP CONVERGENCE</Text>
+                                <Text style={styles.hudLevelValue}>
+                                    LVL {String(Math.min(Math.floor(xp / 100) + 1, 99)).padStart(2, '0')}
+                                </Text>
+                            </View>
+                            <View style={styles.hudBar}>
+                                <LinearGradient
+                                    colors={[COLORS.primary, '#FF4D4D']}
+                                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                                    style={[styles.levelFill, { width: `${xp % 100}%` }]}
+                                />
+                            </View>
+                            <View style={styles.hudFooterRow}>
+                                <Text style={styles.hudSubText}>
+                                    {xp % 100}/100 XP TO NEXT LEVEL
+                                </Text>
+                                <Text style={styles.hudRankText}>
+                                    {total >= 100 ? 'LEGEND' :
+                                        total >= 50 ? 'TITAN' :
+                                            total >= 25 ? 'WARRIOR' :
+                                                total >= 10 ? 'CHADLITE' :
+                                                    total >= 5 ? 'ROOKIE' : 'RECRUIT'}
+                                </Text>
                             </View>
                         </View>
                     </View>
@@ -724,11 +818,11 @@ export default function HomeScreen({ navigation, route }) {
                                                         <>
                                                             <Ionicons name="checkmark" size={10} color="#fff" />
                                                             {isDayFrozen && (
-                                                                <Ionicons 
-                                                                    name="snow" 
-                                                                    size={7} 
-                                                                    color="#D1D1D1" 
-                                                                    style={{ position: "absolute", bottom: -2.5, right: -2.5 }} 
+                                                                <Ionicons
+                                                                    name="snow"
+                                                                    size={7}
+                                                                    color="#D1D1D1"
+                                                                    style={{ position: "absolute", bottom: -2.5, right: -2.5 }}
                                                                 />
                                                             )}
                                                         </>
@@ -752,7 +846,7 @@ export default function HomeScreen({ navigation, route }) {
                 <View style={styles.statsRow}>
                     <View style={styles.statSmallWidth}>
                         <LinearGradient
-                            colors={["rgba(255,255,255,0.015)", "transparent"]}
+                            colors={[COLORS.glassBg, "rgba(5, 5, 5, 0.85)"]}
                             style={StyleSheet.absoluteFill}
                         />
                         <View style={styles.statSmallTop}>
@@ -765,7 +859,7 @@ export default function HomeScreen({ navigation, route }) {
                     </View>
                     <TouchableOpacity style={styles.statSmallWidth} activeOpacity={0.8} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); navigation.navigate("Rank"); }}>
                         <LinearGradient
-                            colors={["rgba(255,255,255,0.02)", "rgba(227,30,36,0.02)", "transparent"]}
+                            colors={[COLORS.glassBg, "rgba(5, 5, 5, 0.85)"]}
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 1 }}
                             style={StyleSheet.absoluteFill}
@@ -780,7 +874,7 @@ export default function HomeScreen({ navigation, route }) {
                             total >= 100 ? 'LEGEND' :
                                 total >= 50 ? 'TITAN' :
                                     total >= 25 ? 'WARRIOR' :
-                                        total >= 10 ? 'RISING STAR' :
+                                        total >= 10 ? 'CHADLITE' :
                                             total >= 5 ? 'ROOKIE' : 'RECRUIT'
                         }</Text>
                     </TouchableOpacity>
@@ -791,71 +885,6 @@ export default function HomeScreen({ navigation, route }) {
                     <Text style={styles.sectionLabel}>MOMENTS</Text>
                 </View>
                 <MomentsGallery streak={streak} total={total} profile={profile} />
-
-                {/* ── Today's Workout ── */}
-                <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionLabel}>TODAY'S WORKOUT</Text>
-                </View>
-
-                {todayWorkout ? (
-                    <TouchableOpacity
-                        style={styles.heroCard}
-                        activeOpacity={0.9}
-                        onPress={() => navigation.navigate("WorkoutDetail", { day: todayWorkout })}
-                    >
-                        <ImageBackground
-                            source={todayWorkout.headerImage || require("../../assets/home_hero_bg.png")}
-                            style={StyleSheet.absoluteFill}
-                            resizeMode="cover"
-                        >
-                            <LinearGradient
-                                colors={["rgba(0,0,0,0.15)", "rgba(0,0,0,0.5)", "rgba(0,0,0,0.92)", "#000"]}
-                                style={StyleSheet.absoluteFill}
-                            />
-                            
-                            <View style={styles.heroLeftAccent} />
-
-                            <View style={styles.heroContent}>
-                                <View>
-                                    <View style={styles.heroBadge}>
-                                        <Text style={styles.heroBadgeText}>ACTIVE PROTOCOL</Text>
-                                    </View>
-                                    <Text style={styles.heroTitle} numberOfLines={1} adjustsFontSizeToFit>
-                                        {todayWorkout.target.toUpperCase()}
-                                    </Text>
-                                    <Text style={styles.heroSub}>READY FOR SESSION</Text>
-                                </View>
-
-                                <View style={styles.heroMetaRow}>
-                                    <View style={{ flexDirection: "row", gap: 28 }}>
-                                        <View style={styles.heroMeta}>
-                                            <Text style={styles.heroMetaLabel}>VOLUME</Text>
-                                            <Text style={styles.heroMetaValue}>{todayWorkout.exercises.length} EXERCISES</Text>
-                                        </View>
-                                        <View style={styles.heroMeta}>
-                                            <Text style={styles.heroMetaLabel}>DURATION</Text>
-                                            <Text style={styles.heroMetaValue}>{totalTime(todayWorkout)} MINUTES</Text>
-                                        </View>
-                                    </View>
-
-                                    <TouchableOpacity
-                                        style={styles.heroCta}
-                                        activeOpacity={0.8}
-                                        onPress={() => {
-                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                            navigation.navigate("WorkoutDetail", { day: todayWorkout });
-                                        }}
-                                    >
-                                        <Text style={styles.heroCtaText}>START</Text>
-                                        <Ionicons name="play" size={12} color="#fff" />
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                        </ImageBackground>
-                    </TouchableOpacity>
-                ) : (
-                    <RestDayCard navigation={navigation} />
-                )}
 
                 {/* ── Weekly Plan ── */}
                 <View style={styles.sectionHeader}>
@@ -1003,9 +1032,9 @@ export default function HomeScreen({ navigation, route }) {
                     </View>
                 </TouchableOpacity>
 
-                <View style={[styles.footer, { paddingBottom: insets.bottom + 40 }]}>
+                <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
                     <View style={styles.footerDivider} />
-                    <Text style={styles.footerVersion}>CONQUER ONE PROTOCOL · {APP_VERSION}</Text>
+                    <Text style={styles.footerVersion}>CONQUER ONE · {APP_VERSION}</Text>
                     <Text style={styles.footerAuthor}>BUILT FOR PERFORMANCE BY <Text style={{ color: COLORS.primary }}>VIVASWAN SHETTY</Text></Text>
                 </View>
             </Animated.ScrollView>
@@ -1098,7 +1127,7 @@ export default function HomeScreen({ navigation, route }) {
                             style={styles.resetCloseBtn}
                             onPress={() => {
                                 setStreakResetModal(false);
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => { });
                             }}
                             activeOpacity={0.8}
                         >
@@ -1116,31 +1145,31 @@ export default function HomeScreen({ navigation, route }) {
                 onRequestClose={() => setStreakAnalyticsVisible(false)}
             >
                 <View style={styles.modalOverlay}>
-                    <TouchableOpacity 
-                        style={StyleSheet.absoluteFill} 
-                        onPress={() => setStreakAnalyticsVisible(false)} 
-                        activeOpacity={1} 
+                    <TouchableOpacity
+                        style={StyleSheet.absoluteFill}
+                        onPress={() => setStreakAnalyticsVisible(false)}
+                        activeOpacity={1}
                     />
                     <View style={styles.modalSheet}>
                         <LinearGradient
                             colors={["#0D0D0D", "#000000"]}
                             style={StyleSheet.absoluteFill}
                         />
-                        
+
                         {/* Drag Handle */}
                         <View style={styles.dragHandle} />
-                        
+
                         {/* Header */}
                         <View style={styles.modalHeader}>
                             <Text style={styles.modalHeaderTitle}>STREAK INTELLIGENCE</Text>
-                            <TouchableOpacity 
+                            <TouchableOpacity
                                 style={styles.modalCloseBtn}
                                 onPress={() => setStreakAnalyticsVisible(false)}
                             >
                                 <Ionicons name="close" size={20} color={COLORS.text} />
                             </TouchableOpacity>
                         </View>
-                        
+
                         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.modalScrollContent}>
                             {/* Summary Metrics */}
                             {(() => {
@@ -1164,10 +1193,10 @@ export default function HomeScreen({ navigation, route }) {
                                     </View>
                                 );
                             })()}
-                            
+
                             {/* SVG Consistency Graph */}
                             {renderSvgChart(getWeeklyHistoryData(history))}
-                            
+
                             {/* Tiers Breakdown */}
                             <View style={styles.modalSection}>
                                 <Text style={styles.modalSectionTitle}>STREAK TIERS & MULTIPLIERS</Text>
@@ -1176,7 +1205,7 @@ export default function HomeScreen({ navigation, route }) {
                                     let tierMult = "";
                                     let tierCol = "";
                                     let isActive = false;
-                                    
+
                                     if (tName === "SPARK") {
                                         tierRange = "1–2 Days";
                                         tierMult = "1.0x XP";
@@ -1198,10 +1227,10 @@ export default function HomeScreen({ navigation, route }) {
                                         tierCol = "#A855F7";
                                         isActive = streak >= 10;
                                     }
-                                    
+
                                     return (
-                                        <View 
-                                            key={tName} 
+                                        <View
+                                            key={tName}
                                             style={[
                                                 styles.tierRow,
                                                 isActive && [styles.tierRowActive, { borderColor: `${tierCol}50` }]
@@ -1221,14 +1250,14 @@ export default function HomeScreen({ navigation, route }) {
                                     );
                                 })}
                             </View>
-                            
+
                             {/* Quick Streak Freeze Action */}
                             <View style={styles.freezeActionSection}>
                                 <View style={styles.freezeActionTextWrap}>
                                     <Text style={styles.freezeSectionTitle}>STREAK SHIELD STATUS</Text>
                                     <Text style={styles.freezeSectionDesc}>
-                                        {isFrozen 
-                                            ? "Today is frozen. Missing a session won't break your streak." 
+                                        {isFrozen
+                                            ? "Today is frozen. Missing a session won't break your streak."
                                             : "Freeze today if you need a recovery or rest day. Shields active."}
                                     </Text>
                                     {(() => {
@@ -1247,7 +1276,7 @@ export default function HomeScreen({ navigation, route }) {
                                         }
                                     })()}
                                 </View>
-                                <TouchableOpacity 
+                                <TouchableOpacity
                                     style={[
                                         styles.freezeToggleButton,
                                         isFrozen && styles.freezeToggleButtonActive
@@ -1255,10 +1284,10 @@ export default function HomeScreen({ navigation, route }) {
                                     onPress={handleFreezeToggle}
                                     activeOpacity={0.8}
                                 >
-                                    <Ionicons 
-                                        name={isFrozen ? "snow" : "shield-half"} 
-                                        size={16} 
-                                        color={isFrozen ? "#60A5FA" : "#FFFFFF"} 
+                                    <Ionicons
+                                        name={isFrozen ? "snow" : "shield-half"}
+                                        size={16}
+                                        color={isFrozen ? "#60A5FA" : "#FFFFFF"}
                                     />
                                     <Text style={[styles.freezeToggleText, isFrozen && { color: "#60A5FA" }]}>
                                         {isFrozen ? "FROZEN (TAP TO MELT)" : "ACTIVATE SHIELD"}
@@ -1333,7 +1362,7 @@ function MomentsGallery({ streak, total, profile = null }) {
             sub: `${total} SESSIONS COMPLETED`,
             desc: "The archives don't lie. You've consistently shown up and put in the work. You are no longer just 'trying'—you are an athlete in pursuit of absolute performance. Respect the grind.",
             icon: 'trophy',
-            color: '#5856D6',
+            color: '#FFFFFF',
             show: total >= 10
         },
         {
@@ -1342,7 +1371,7 @@ function MomentsGallery({ streak, total, profile = null }) {
             sub: '50 SESSIONS LOGGED',
             desc: "Halfway to a century. You've moved weights, crushed sets, and evolved. You've proven that you have the endurance for the long game. You are becoming a Titan of the arena.",
             icon: 'medal',
-            color: '#AF52DE',
+            color: '#D1D1D1',
             show: total >= 50
         },
         {
@@ -1351,7 +1380,7 @@ function MomentsGallery({ streak, total, profile = null }) {
             sub: '100 SESSIONS OF POWER',
             desc: "One hundred sessions. A monumental feat of human willpower. You have reconstructed yourself through pure iron and sweat. You are part of the elite 1% who never quit. Legend status.",
             icon: 'trending-up',
-            color: '#FF2D55',
+            color: COLORS.primary,
             show: total >= 100
         },
         {
@@ -1374,7 +1403,7 @@ function MomentsGallery({ streak, total, profile = null }) {
             sub: `${streak}D STREAK · ${total} SESSIONS`,
             desc: `Your weekly briefing is in. You've maintained a ${streak}-day discipline streak and archived ${total} total sessions in the protocol. Analyzing your biometric data shows consistent evolution. Rest and recharge for the next cycle.`,
             icon: 'bar-chart',
-            color: '#AF52DE',
+            color: '#D1D1D1',
             show: total > 0
         });
     }
@@ -1390,7 +1419,7 @@ function MomentsGallery({ streak, total, profile = null }) {
                 sub: `HAPPY BIRTHDAY, ${profile?.fullName?.split(" ")[0] || "ATHLETE"}!`,
                 desc: "A new year of life means a new year of strength. Today we celebrate the discipline you bring to every facet of your life. Take this energy into your next decade of performance. Have an incredible day!",
                 icon: 'gift',
-                color: '#FF2D55',
+                color: COLORS.primary,
                 show: true
             });
         }
@@ -1554,7 +1583,7 @@ const styles = StyleSheet.create({
         marginBottom: 24,
     },
     headerTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 },
-    
+
     // Avatar breathing styles
     avatarContainer: {
         width: 46,
@@ -1585,68 +1614,71 @@ const styles = StyleSheet.create({
     avatarPlaceholder: { width: "100%", height: "100%", alignItems: "center", justifyContent: "center" },
     avatarText: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.textSub },
 
-    greeting: { fontSize: 10, color: COLORS.textMuted, fontFamily: FAMILY.bold, letterSpacing: 4, marginBottom: 4 },
+    greeting: { fontSize: 10, color: COLORS.primary, fontFamily: FAMILY.bold, letterSpacing: 4, marginBottom: 4 },
     name: {
         fontSize: 34,
-        color: COLORS.text,
+        color: "#FFFFFF",
         fontFamily: FAMILY.bold,
-        letterSpacing: -0.8,
+        letterSpacing: -0.5,
         lineHeight: 38,
     },
 
     // Tactical HUD Level Card
     hudCard: {
+        marginHorizontal: SPACING.base,
         marginTop: 24,
-        borderRadius: 24,
+        borderRadius: 22,
         borderWidth: 1,
-        borderColor: COLORS.glassBorder,
-        backgroundColor: COLORS.glassBg,
-        padding: 20,
+        height: 130,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+        backgroundColor: "transparent",
+        padding: 16,
+        justifyContent: "center",
         overflow: "hidden",
         shadowColor: COLORS.primary,
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-        elevation: 3,
+        shadowOpacity: 0.15,
+        shadowRadius: 10,
+        elevation: 4,
     },
     hudHeader: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
         borderBottomWidth: 1,
-        borderBottomColor: "rgba(255, 255, 255, 0.04)",
-        paddingBottom: 10,
-        marginBottom: 14,
+        borderBottomColor: "rgba(255, 255, 255, 0.06)",
+        paddingBottom: 6,
+        marginBottom: 8,
     },
     hudDot: {
-        width: 5,
-        height: 5,
-        borderRadius: 2.5,
+        width: 6,
+        height: 6,
+        borderRadius: 3,
         backgroundColor: COLORS.primary,
         shadowColor: COLORS.primary,
         shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.8,
-        shadowRadius: 3,
+        shadowOpacity: 0.9,
+        shadowRadius: 4,
     },
     hudTitle: {
-        fontSize: 8,
+        fontSize: 9,
         fontFamily: FAMILY.bold,
         color: COLORS.textSub,
-        letterSpacing: 2,
+        letterSpacing: 2.5,
     },
     hudStatusBadge: {
-        paddingHorizontal: 8,
-        paddingVertical: 3,
-        borderRadius: 4,
-        backgroundColor: "rgba(227, 30, 36, 0.08)",
-        borderWidth: 0.5,
-        borderColor: "rgba(227, 30, 36, 0.2)",
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 6,
+        backgroundColor: "rgba(227, 30, 36, 0.12)",
+        borderWidth: 1,
+        borderColor: "rgba(227, 30, 36, 0.4)",
     },
     hudStatusText: {
-        fontSize: 7,
+        fontSize: 8,
         fontFamily: FAMILY.bold,
         color: COLORS.primary,
-        letterSpacing: 1,
+        letterSpacing: 1.5,
     },
     hudBody: {
         flexDirection: "row",
@@ -1661,18 +1693,18 @@ const styles = StyleSheet.create({
         fontSize: 8,
         fontFamily: FAMILY.semibold,
         color: COLORS.textMuted,
-        letterSpacing: 1,
+        letterSpacing: 1.5,
     },
     hudLevelValue: {
-        fontSize: 14,
+        fontSize: 15,
         fontFamily: FAMILY.bold,
         color: COLORS.text,
-        letterSpacing: 0.5,
+        letterSpacing: 1,
     },
     hudBar: {
-        height: 5,
-        backgroundColor: "rgba(255,255,255,0.04)",
-        borderRadius: 2.5,
+        height: 6,
+        backgroundColor: "rgba(255,255,255,0.06)",
+        borderRadius: 3,
         width: "100%",
         marginBottom: 10,
         overflow: "hidden",
@@ -1686,54 +1718,55 @@ const styles = StyleSheet.create({
         fontSize: 8,
         fontFamily: FAMILY.regular,
         color: COLORS.textMuted,
-        letterSpacing: 0.5,
-    },
-    hudRankText: {
-        fontSize: 8,
-        fontFamily: FAMILY.bold,
-        color: COLORS.accent,
         letterSpacing: 1,
     },
-
-    levelFill: { height: "100%", borderRadius: 2 },
-    headerSmallActions: { flexDirection: "row", alignItems: "center" },
-    iconBtnSm: {
-        width: 36, height: 36, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.03)",
-        alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.06)"
+    hudRankText: {
+        fontSize: 9,
+        fontFamily: FAMILY.bold,
+        color: "#FFFFFF",
+        letterSpacing: 1.5,
     },
 
-    // Asymmetric Stats Grid
+    levelFill: { height: "100%", borderRadius: 3 },
+    headerSmallActions: { flexDirection: "row", alignItems: "center" },
+    iconBtnSm: {
+        width: 36, height: 36, borderRadius: 12, backgroundColor: "#0D0D0D",
+        alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)"
+    },
+
     // Asymmetric Stats Grid
     statsRow: {
         flexDirection: "row", marginHorizontal: SPACING.base, marginBottom: 36,
-        height: 76, gap: 12, marginTop: 12,
+        height: 80, gap: 12, marginTop: 12,
     },
     statsLeft: { flex: 1, gap: 12 },
     statSmall: {
         flex: 1, padding: 16,
-        backgroundColor: COLORS.glassBg, borderRadius: 20,
-        borderWidth: 1, borderColor: COLORS.glassBorder,
-        justifyContent: "center", overflow: "hidden",
+        backgroundColor: "transparent", borderRadius: 22,
+        borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.08)",
+        justifyContent: "center", alignItems: "center", overflow: "hidden",
     },
     statSmallWidth: {
         flex: 1, paddingHorizontal: 16, paddingVertical: 12,
-        backgroundColor: COLORS.glassBg, borderRadius: 20,
-        borderWidth: 1, borderColor: COLORS.glassBorder,
-        justifyContent: "center", overflow: "hidden",
+        backgroundColor: "transparent", borderRadius: 22,
+        borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.08)",
+        justifyContent: "center", alignItems: "center", overflow: "hidden",
     },
-    statSmallTop: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 },
-    statIconWrap: { width: 22, height: 22, borderRadius: 6, backgroundColor: "rgba(255,255,255,0.03)", alignItems: "center", justifyContent: "center" },
-    statLabelSmall: { fontSize: 7, color: COLORS.textMuted, fontFamily: FAMILY.bold, letterSpacing: 2 },
-    statValueSmall: { fontSize: 14, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -0.5 },
+    statSmallTop: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 6 },
+    statIconWrap: { width: 22, height: 22, borderRadius: 6, backgroundColor: "rgba(255,255,255,0.05)", alignItems: "center", justifyContent: "center" },
+    statLabelSmall: { fontSize: 8, color: COLORS.textMuted, fontFamily: FAMILY.bold, letterSpacing: 2 },
+    statValueSmall: { fontSize: 15, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -0.5, textAlign: "center" },
 
     // Streak Intelligence Card Styles
     streakIntelligenceCard: {
         marginHorizontal: SPACING.base,
         marginTop: 16,
         padding: 16,
-        borderRadius: 24,
+        height: 130,
+        borderRadius: 22,
         borderWidth: 1,
-        borderColor: COLORS.glassBorder,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+        backgroundColor: "transparent",
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
@@ -1741,28 +1774,32 @@ const styles = StyleSheet.create({
     },
     streakIntelligenceLeft: {
         flex: 1.1,
+        alignItems: "center",
+        justifyContent: "center",
     },
     streakTierName: {
         fontFamily: FAMILY.bold,
         fontSize: 10,
-        letterSpacing: 1,
+        letterSpacing: 2,
+        color: COLORS.primary,
     },
     streakValue: {
         fontFamily: FAMILY.bold,
-        fontSize: 26,
+        fontSize: 28,
         color: COLORS.text,
         marginVertical: 4,
+        textAlign: "center",
     },
     multiplierBadge: {
         paddingHorizontal: 8,
         paddingVertical: 3,
         borderRadius: 6,
-        borderWidth: 0.5,
-        alignSelf: "flex-start",
+        borderWidth: 0.8,
+        alignSelf: "center",
     },
     multiplierText: {
         fontFamily: FAMILY.mono,
-        fontSize: 7,
+        fontSize: 8,
         letterSpacing: 1,
     },
     streakIntelligenceRight: {
@@ -1770,10 +1807,10 @@ const styles = StyleSheet.create({
         alignItems: "flex-end",
     },
     gridTitle: {
-        fontFamily: FAMILY.mono,
+        fontFamily: FAMILY.bold,
         fontSize: 8,
         color: COLORS.textMuted,
-        letterSpacing: 1,
+        letterSpacing: 1.5,
         marginBottom: 8,
     },
     gridContainer: {
@@ -1787,16 +1824,16 @@ const styles = StyleSheet.create({
     gridCell: {
         width: 22,
         height: 22,
-        borderRadius: 6,
+        borderRadius: 3,
         borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.12)",
-        backgroundColor: "rgba(0, 0, 0, 0.4)",
+        borderColor: "rgba(255, 255, 255, 0.15)",
+        backgroundColor: "#000000",
         justifyContent: "center",
         alignItems: "center",
     },
     gridCellCompleted: {
         borderColor: COLORS.primary,
-        backgroundColor: "rgba(227, 30, 36, 0.2)",
+        backgroundColor: "rgba(227, 30, 36, 0.25)",
     },
     gridCellFrozen: {
         borderColor: "#D1D1D1",
@@ -2060,7 +2097,9 @@ const styles = StyleSheet.create({
 
     // Hero HUD card
     heroCard: {
-        marginHorizontal: SPACING.base, height: 220, borderRadius: 24,
+        width: width - (SPACING.base * 2),
+        alignSelf: "center",
+        height: 220, borderRadius: 24,
         overflow: "hidden", backgroundColor: COLORS.bgCard,
         borderWidth: 1, borderColor: "rgba(227, 30, 36, 0.22)",
         shadowColor: COLORS.primary,
@@ -2081,7 +2120,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.8,
         shadowRadius: 10,
     },
-    heroContent: { flex: 1, paddingVertical: 18, paddingHorizontal: 22, justifyContent: "space-between", paddingLeft: 26 },
+    heroContent: { flex: 1, paddingVertical: 18, paddingHorizontal: 16, justifyContent: "space-between", paddingLeft: 20 },
     heroHeader: { flex: 1 },
     heroBadge: {
         alignSelf: "flex-start",
@@ -2103,14 +2142,14 @@ const styles = StyleSheet.create({
     heroMetaValue: { fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.text },
 
     heroCta: {
-        flexDirection: "row", alignItems: "center", gap: 8,
-        backgroundColor: COLORS.primary, paddingHorizontal: 18, paddingVertical: 10,
+        flexDirection: "row", alignItems: "center", gap: 6,
+        backgroundColor: COLORS.primary, paddingHorizontal: 12, paddingVertical: 9,
         borderRadius: 12,
         shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.25, shadowRadius: 8, elevation: 4,
         borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.15)",
     },
-    heroCtaText: { fontSize: 12, fontFamily: FAMILY.bold, color: "#fff", letterSpacing: 2 },
+    heroCtaText: { fontSize: 10.5, fontFamily: FAMILY.bold, color: "#fff", letterSpacing: 1.2 },
 
     // Rest Card
     restCard: {
@@ -2130,18 +2169,18 @@ const styles = StyleSheet.create({
     hudShortcutBtn: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "rgba(255,255,255,0.03)",
+        backgroundColor: "#0D0D0D",
         borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.06)",
-        borderRadius: 10,
+        borderColor: "rgba(255,255,255,0.12)",
+        borderRadius: 14,
         paddingVertical: 8,
-        paddingHorizontal: 12,
+        paddingHorizontal: 14,
     },
     hudShortcutBtnText: {
-        fontSize: 9,
+        fontSize: 10,
         fontFamily: FAMILY.bold,
-        color: COLORS.textSub,
-        letterSpacing: 1.5,
+        color: COLORS.text,
+        letterSpacing: 2,
     },
     restEyebrow: {
         fontSize: 10, fontFamily: FAMILY.bold,

@@ -94,6 +94,7 @@ export const FAMILY = {
     black: "Arimo_700Bold",
     accent: Platform.OS === "ios" ? "System" : "Syne_700Bold",
     header: "Urbanist_900Black",
+    mono: Platform.OS === "ios" ? "Courier" : "monospace",
     // Montserrat for specific screens
     mReg: "Montserrat_400Regular",
     mSemi: "Montserrat_600SemiBold",

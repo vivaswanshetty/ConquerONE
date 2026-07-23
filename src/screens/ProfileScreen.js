@@ -436,7 +436,7 @@ export default function ProfileScreen({ navigation }) {
         if (total >= 100) return { label: "LEGEND", pct: "100%" };
         if (total >= 50) return { label: "TITAN", pct: "95%" };
         if (total >= 25) return { label: "WARRIOR", pct: "88%" };
-        if (total >= 10) return { label: "RISING STAR", pct: "75%" };
+        if (total >= 10) return { label: "CHADLITE", pct: "75%" };
         if (total >= 5) return { label: "ROOKIE", pct: "60%" };
         return { label: "RECRUIT", pct: "40%" };
     };
