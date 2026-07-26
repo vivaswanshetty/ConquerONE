@@ -91,10 +91,12 @@ function buildPhases(queue, extraRest = 0) {
 
 /* ── Animated Ring Timer ──────────────────────────────────── */
 function RingTimer({ progress, isWork, size, stroke, timeLeft }) {
+    const safeProgress = isNaN(progress) ? 0 : progress;
+    const safeTimeLeft = isNaN(timeLeft) ? 0 : timeLeft;
     const r = (size - stroke) / 2;
     const circ = 2 * Math.PI * r;
-    const fill = circ * Math.max(0, Math.min(1, progress));
-    const isUrgent = timeLeft <= 5 && timeLeft > 0;
+    const fill = circ * Math.max(0, Math.min(1, safeProgress));
+    const isUrgent = safeTimeLeft <= 5 && safeTimeLeft > 0;
 
     const activeColor = isWork ? COLORS.primary : COLORS.textMuted;
     const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -608,6 +610,18 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
     useEffect(() => {
         loggedExercisesRef.current = loggedExercises;
     }, [loggedExercises]);
+
+    const phasesRef = useRef([]);
+    const phaseIdxRef = useRef(0);
+    const runningRef = useRef(false);
+    const pausedRef = useRef(false);
+    const newPRsFoundRef = useRef([]);
+
+    useEffect(() => { phasesRef.current = phases; }, [phases]);
+    useEffect(() => { phaseIdxRef.current = phaseIdx; }, [phaseIdx]);
+    useEffect(() => { runningRef.current = running; }, [running]);
+    useEffect(() => { pausedRef.current = paused; }, [paused]);
+    useEffect(() => { newPRsFoundRef.current = newPRsFound; }, [newPRsFound]);
     const [mindsetTip] = useState(() => REST_MINDSET[Math.floor(Math.random() * REST_MINDSET.length)]);
     const [jumpModal, setJumpModal] = useState(false);
     const intervalRef = useRef(null);
@@ -739,68 +753,83 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
     // AppState listener for background timer recalculation and rest notifications
     useEffect(() => {
         const subscription = AppState.addEventListener("change", (nextAppState) => {
-            if (appStateRef.current.match(/inactive|background/) && nextAppState === "active") {
-                if (restNotifIdRef.current) {
-                    cancelNotification(restNotifIdRef.current);
-                    restNotifIdRef.current = null;
-                }
+            const current = appStateRef.current;
+            const next = typeof nextAppState === 'object' && nextAppState ? nextAppState.appState : nextAppState;
 
-                const now = Date.now();
-                const realElapsed = Math.floor((now - workoutStartRef.current) / 1000);
-                setElapsedSec(realElapsed > 0 ? realElapsed : 0);
-
-                if (phases.length > 0) {
-                    const curPh = phases[phaseIdx];
-                    if (curPh && running && !paused) {
-                        const elapsedInPhase = Math.floor((now - phaseStartTimeRef.current) / 1000);
-                        const remaining = Math.max(0, curPh.duration - elapsedInPhase);
-                        setTimeLeft(remaining);
-                        phaseTimeRef.current = remaining;
-
-                        if (!(curPh.type === "active" && curPh.isReps)) {
-                            startInterval(remaining, phases, phaseIdx);
-                        }
-                        startElapsedTimer();
+            if (current && typeof current === 'string' && next && typeof next === 'string') {
+                if (current.match(/inactive|background/) && next === "active") {
+                    if (restNotifIdRef.current) {
+                        cancelNotification(restNotifIdRef.current);
+                        restNotifIdRef.current = null;
                     }
-                }
-            } else if (nextAppState.match(/inactive|background/)) {
-                if (phases.length > 0) {
-                    const curPh = phases[phaseIdx];
-                    saveActiveWorkoutSession({
-                        day,
-                        phaseIdx,
-                        workoutStart: workoutStartRef.current,
-                        phaseStartTime: phaseStartTimeRef.current,
-                        phaseDuration: curPh?.duration || 45,
-                        loggedExercises: loggedExercisesRef.current,
-                        newPRsFound,
-                        running,
-                        paused,
-                    });
 
-                    if (curPh && curPh.type !== "active" && running && !paused) {
-                        const elapsedInPhase = Math.floor((Date.now() - phaseStartTimeRef.current) / 1000);
-                        const rem = Math.max(0, curPh.duration - elapsedInPhase);
-                        if (rem > 0) {
-                            const nextExName = curPh.nextExercise ? curPh.nextExercise.name : curPh.exercise?.name;
-                            scheduleRestNotification(
-                                rem,
-                                "REST OVER — TIME TO LIFT! 🔥",
-                                `Time for set ${curPh.set || 1} of ${nextExName || 'your exercise'}.`
-                            ).then(id => {
-                                restNotifIdRef.current = id;
-                            });
+                    const now = Date.now();
+                    const realElapsed = Math.floor((now - workoutStartRef.current) / 1000);
+                    setElapsedSec(realElapsed > 0 ? realElapsed : 0);
+
+                    const currentPhases = phasesRef.current;
+                    const currentPhaseIdx = phaseIdxRef.current;
+                    const isRunning = runningRef.current;
+                    const isPaused = pausedRef.current;
+
+                    if (currentPhases && currentPhases.length > 0) {
+                        const curPh = currentPhases[currentPhaseIdx];
+                        if (curPh && isRunning && !isPaused) {
+                            const elapsedInPhase = Math.floor((now - phaseStartTimeRef.current) / 1000);
+                            const remaining = Math.max(0, curPh.duration - elapsedInPhase);
+                            setTimeLeft(remaining);
+                            phaseTimeRef.current = remaining;
+
+                            if (!(curPh.type === "active" && curPh.isReps)) {
+                                startInterval(remaining, currentPhases, currentPhaseIdx);
+                            }
+                            startElapsedTimer();
+                        }
+                    }
+                } else if (next.match(/inactive|background/)) {
+                    const currentPhases = phasesRef.current;
+                    const currentPhaseIdx = phaseIdxRef.current;
+                    const isRunning = runningRef.current;
+                    const isPaused = pausedRef.current;
+
+                    if (currentPhases && currentPhases.length > 0) {
+                        const curPh = currentPhases[currentPhaseIdx];
+                        saveActiveWorkoutSession({
+                            day,
+                            phaseIdx: currentPhaseIdx,
+                            workoutStart: workoutStartRef.current,
+                            phaseStartTime: phaseStartTimeRef.current,
+                            phaseDuration: curPh?.duration || 45,
+                            loggedExercises: loggedExercisesRef.current,
+                            newPRsFound: newPRsFoundRef.current,
+                            running: isRunning,
+                            paused: isPaused,
+                        });
+
+                        if (curPh && curPh.type !== "active" && isRunning && !isPaused) {
+                            const elapsedInPhase = Math.floor((Date.now() - phaseStartTimeRef.current) / 1000);
+                            const rem = Math.max(0, curPh.duration - elapsedInPhase);
+                            if (rem > 0) {
+                                const nextExName = curPh.nextExercise ? curPh.nextExercise.name : curPh.exercise?.name;
+                                scheduleRestNotification(
+                                    rem,
+                                    "REST OVER — TIME TO LIFT! 🔥",
+                                    `Time for set ${curPh.set || 1} of ${nextExName || 'your exercise'}.`
+                                ).then(id => {
+                                    restNotifIdRef.current = id;
+                                });
+                            }
                         }
                     }
                 }
             }
-            appStateRef.current = nextAppState;
+            appStateRef.current = next;
         });
 
         return () => {
             subscription.remove();
         };
-    }, [phases, phaseIdx, running, paused, day, newPRsFound]);
+    }, [day]);
 
     // Auto-save active workout session state to AsyncStorage on any progression change
     useEffect(() => {
