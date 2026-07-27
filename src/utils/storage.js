@@ -556,7 +556,9 @@ export const getRecordStreak = async () => {
 /* ── Active Workout Persistence ────────────────────────────── */
 export const saveActiveWorkoutSession = async (sessionData) => {
     try {
-        if (!sessionData) return;
+        if (!sessionData || !sessionData.day || !sessionData.day.exercises) {
+            return;
+        }
         const payload = {
             ...sessionData,
             lastUpdated: Date.now(),
@@ -572,14 +574,19 @@ export const getActiveWorkoutSession = async () => {
         const raw = await AsyncStorage.getItem(KEYS.ACTIVE_WORKOUT);
         if (!raw) return null;
         const parsed = JSON.parse(raw);
+        if (!parsed || !parsed.day || !Array.isArray(parsed.day.exercises)) {
+            await clearActiveWorkoutSession();
+            return null;
+        }
         // Expire session if older than 12 hours (43,200,000 ms)
-        if (Date.now() - parsed.lastUpdated > 12 * 60 * 60 * 1000) {
+        if (Date.now() - (parsed.lastUpdated || 0) > 12 * 60 * 60 * 1000) {
             await clearActiveWorkoutSession();
             return null;
         }
         return parsed;
     } catch (e) {
         console.warn("[Storage] Failed to load active workout session", e);
+        await clearActiveWorkoutSession();
         return null;
     }
 };

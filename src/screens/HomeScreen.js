@@ -609,7 +609,7 @@ export default function HomeScreen({ navigation, route }) {
                 </View>
 
                 {/* Active Workout Resume Banner */}
-                {activeSession && (
+                {activeSession && activeSession.day && Array.isArray(activeSession.day.exercises) && (
                     <TouchableOpacity
                         style={styles.resumeCard}
                         activeOpacity={0.9}

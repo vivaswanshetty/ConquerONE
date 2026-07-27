@@ -581,7 +581,11 @@ const ro = StyleSheet.create({
 
 /* ── MAIN SCREEN ──────────────────────────────────────────── */
 export default function ActiveWorkoutScreen({ navigation, route }) {
-    const { day } = route.params;
+    const rawDay = route.params?.day;
+    const [activeDay, setActiveDay] = useState(rawDay || null);
+    const activeDayRef = useRef(activeDay);
+    useEffect(() => { activeDayRef.current = activeDay; }, [activeDay]);
+
     const insets = useSafeAreaInsets();
     const { showDialog } = useNotification();
     const [settings, setSettings] = useState({
@@ -683,15 +687,24 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                 console.warn("[ActiveWorkout] Failed to load workout history", e);
             }
 
-            const q = buildQueue(day.exercises);
-            const p = buildPhases(q, s.extraRestSec || 0);
-            setPhases(p);
-
             // Attempt to restore an active saved session if available
             const savedSession = await getActiveWorkoutSession();
+            const targetDay = rawDay || savedSession?.day;
+
+            if (!targetDay || !Array.isArray(targetDay.exercises)) {
+                console.warn("[ActiveWorkout] Missing or invalid workout day object. Exiting safely.");
+                await clearActiveWorkoutSession();
+                navigation.navigate("Main");
+                return;
+            }
+            setActiveDay(targetDay);
+
+            const q = buildQueue(targetDay.exercises);
+            const p = buildPhases(q, s.extraRestSec || 0);
+            setPhases(p);
             let isRestored = false;
 
-            if (savedSession && (savedSession.day?.day === day.day || route.params?.resume)) {
+            if (savedSession && (savedSession.day?.day === targetDay.day || route.params?.resume)) {
                 const now = Date.now();
                 const calcElapsed = Math.floor((now - (savedSession.workoutStart || now)) / 1000);
 
@@ -795,7 +808,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                     if (currentPhases && currentPhases.length > 0) {
                         const curPh = currentPhases[currentPhaseIdx];
                         saveActiveWorkoutSession({
-                            day,
+                            day: activeDayRef.current,
                             phaseIdx: currentPhaseIdx,
                             workoutStart: workoutStartRef.current,
                             phaseStartTime: phaseStartTimeRef.current,
@@ -829,14 +842,14 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
         return () => {
             subscription.remove();
         };
-    }, [day]);
+    }, []);
 
     // Auto-save active workout session state to AsyncStorage on any progression change
     useEffect(() => {
-        if (phases.length > 0) {
+        if (phases.length > 0 && activeDayRef.current) {
             const curPh = phases[phaseIdx];
             saveActiveWorkoutSession({
-                day,
+                day: activeDayRef.current,
                 phaseIdx,
                 workoutStart: workoutStartRef.current,
                 phaseStartTime: phaseStartTimeRef.current,
@@ -847,7 +860,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                 paused,
             });
         }
-    }, [phaseIdx, loggedExercises, newPRsFound, running, paused]);
+    }, [phaseIdx, loggedExercises, newPRsFound, running, paused, activeDay]);
 
     const currentPhase = phases[phaseIdx];
     const isWork = currentPhase?.type === "active";
@@ -1086,9 +1099,10 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
         announceWorkoutDone();
         const dur = Math.max(1, Math.floor((Date.now() - workoutStartRef.current) / 1000));
         try {
-            const result = await saveWorkoutComplete(day.day, day.target, dur, loggedExercisesRef.current);
+            const currDay = activeDayRef.current || {};
+            const result = await saveWorkoutComplete(currDay.day || 1, currDay.target || "Workout", dur, loggedExercisesRef.current);
             navigation.replace("WorkoutComplete", {
-                day: { ...day, exercises: loggedExercisesRef.current },
+                day: { ...currDay, exercises: loggedExercisesRef.current },
                 durationSec: dur,
                 streak: result?.streak || 0, total: result?.total || 0,
                 newPRs: newPRsFound,
@@ -1219,7 +1233,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                     <Ionicons name="close" size={20} color={COLORS.text} />
                 </TouchableOpacity>
                 <View style={styles.topCenter}>
-                    <Text style={styles.topTitle}>{day.target.toUpperCase()}</Text>
+                    <Text style={styles.topTitle}>{(activeDay?.target || "WORKOUT").toUpperCase()}</Text>
                     <Text style={styles.topSub}>WORKOUT {pct}% COMPLETE</Text>
                 </View>
                 {/* Calorie counter */}
@@ -1480,7 +1494,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                             </TouchableOpacity>
                         </View>
                         <ScrollView showsVerticalScrollIndicator={false}>
-                            {day.exercises.map((ex, i) => {
+                            {(activeDay?.exercises || []).map((ex, i) => {
                                 const isCurrent = currentPhase.exIdx === i;
                                 return (
                                     <TouchableOpacity
