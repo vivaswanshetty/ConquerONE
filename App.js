@@ -171,40 +171,26 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [fontsLoaded]);
 
-  // ── Step 4: OTA update check (delayed to prioritize app launch) ──
+  // ── Step 4: OTA update check (silent background fetch) ──
   useEffect(() => {
     let cancelled = false;
     const checkUpdate = async () => {
       if (__DEV__ || cancelled) return;
-
-      // Auto-fail after 15s to prevent being stuck on the UpdateScreen forever
-      const updateTimeout = setTimeout(() => {
-        if (!cancelled) setIsDownloadingUpdate(false);
-      }, 15000);
-
       try {
         const update = await Updates.checkForUpdateAsync();
-        if (update.isAvailable) {
-          if (cancelled) return;
-          setIsDownloadingUpdate(true);
+        if (update.isAvailable && !cancelled) {
           await Updates.fetchUpdateAsync();
-          if (!cancelled) {
-            await Updates.reloadAsync();
-          }
+          // Downloaded silently in background — will take effect on next cold app launch.
         }
       } catch (e) {
         console.warn("Update check failed", e);
-        if (!cancelled) setIsDownloadingUpdate(false);
-      } finally {
-        clearTimeout(updateTimeout);
       }
     };
 
-    // Run after initial interactions so OTA work doesn't compete with first-screen rendering.
     const timer = setTimeout(() => {
       const task = InteractionManager.runAfterInteractions(checkUpdate);
       if (cancelled) task.cancel();
-    }, 2000);
+    }, 3000);
     return () => {
       cancelled = true;
       clearTimeout(timer);
