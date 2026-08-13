@@ -12,6 +12,7 @@ import { COLORS, FONTS, SPACING, RADIUS, FAMILY } from "../utils/theme";
 import { getWorkoutHistory, getStreak, getTotalWorkouts, formatDuration, getStreakLocal, getTotalWorkoutsLocal, getWorkoutHistoryLocal } from "../utils/storage";
 import { WORKOUT_PLAN } from "../data/workoutData";
 import * as Haptics from "expo-haptics";
+import WorkoutCalendar from "../components/WorkoutCalendar";
 
 const { width } = Dimensions.get("window");
 const CARD_PADDING = 24;
@@ -488,6 +489,10 @@ export default function HistoryScreen({ navigation }) {
                         <LinearGradient colors={["rgba(227,30,36,0.08)", "transparent"]} style={styles.statMiniGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
                     </View>
                 </View>
+
+                {/* ── Monthly Progress Calendar ── */}
+                <SectionLabel text="MONTHLY PROGRESS CALENDAR" />
+                <WorkoutCalendar history={history} style={{ marginHorizontal: 20 }} />
 
                 {total > 0 && (
                     <>

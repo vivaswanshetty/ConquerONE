@@ -604,6 +604,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
     const appStateRef = useRef(AppState.currentState);
     const [elapsedSec, setElapsedSec] = useState(0);
     const [phases, setPhases] = useState([]);
+    const [isHydrated, setIsHydrated] = useState(false);
     const [prModal, setPRModal] = useState({ visible: false, exerciseName: "", exIdx: 0, setNum: 0, initialWeight: "", initialReps: "" });
     const [prToast, setPRToast] = useState({ visible: false, exerciseName: "", weightKg: 0, reps: 0 });
     const [newPRsFound, setNewPRsFound] = useState([]);
@@ -632,6 +633,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
     const elapsedRef = useRef(null);
     const phaseTimeRef = useRef(0);
     const hasAnnouncedRef = useRef(false);
+    const hasStartedTimerRef = useRef(false);
     const fadeAnim = useRef(new Animated.Value(1)).current;
     const toastTimer = useRef(null);
     const setLoggingRef = useRef(true);
@@ -752,6 +754,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
             if (s.keepScreenOn) {
                 try { await activateKeepAwakeAsync(); } catch { }
             }
+            setIsHydrated(true);
         })();
 
         return () => {
@@ -766,6 +769,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
     // AppState listener for background timer recalculation and rest notifications
     useEffect(() => {
         const subscription = AppState.addEventListener("change", (nextAppState) => {
+            try {
             const current = appStateRef.current;
             const next = typeof nextAppState === 'object' && nextAppState ? nextAppState.appState : nextAppState;
 
@@ -793,10 +797,26 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                             setTimeLeft(remaining);
                             phaseTimeRef.current = remaining;
 
-                            if (!(curPh.type === "active" && curPh.isReps)) {
-                                startInterval(remaining, currentPhases, currentPhaseIdx);
+                            if (remaining > 0) {
+                                // Timer still has time left — resume the countdown
+                                if (!(curPh.type === "active" && curPh.isReps)) {
+                                    startInterval(remaining, currentPhases, currentPhaseIdx);
+                                }
+                                startElapsedTimer();
+                            } else {
+                                // Timer expired while in background — advance to next phase
+                                startElapsedTimer();
+                                advancePhase(currentPhases, currentPhaseIdx);
+                                const nextIdx = currentPhaseIdx + 1;
+                                const nextPh = currentPhases[nextIdx];
+                                if (nextPh) {
+                                    if (nextPh.type === "active" && nextPh.isReps) {
+                                        setTimeLeft(nextPh.duration);
+                                    } else {
+                                        startInterval(nextPh.duration, currentPhases, nextIdx);
+                                    }
+                                }
                             }
-                            startElapsedTimer();
                         }
                     }
                 } else if (next.match(/inactive|background/)) {
@@ -830,6 +850,8 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                                     `Time for set ${curPh.set || 1} of ${nextExName || 'your exercise'}.`
                                 ).then(id => {
                                     restNotifIdRef.current = id;
+                                }).catch(e => {
+                                    console.warn("[ActiveWorkout] Failed to schedule background rest notification:", e);
                                 });
                             }
                         }
@@ -837,6 +859,9 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                 }
             }
             appStateRef.current = next;
+            } catch (e) {
+                console.warn("[ActiveWorkout] AppState handler error (non-fatal):", e);
+            }
         });
 
         return () => {
@@ -895,12 +920,12 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
     const calories = settings.showCalories ? liveCalories(elapsedSec) : 0;
 
     const vibrate = useCallback(async (style) => {
-        if (!settingsRef.current.vibrationEnabled) return;
+        if (!settingsRef.current.vibrationEnabled || appStateRef.current !== "active") return;
         try { await Haptics.impactAsync(style || Haptics.ImpactFeedbackStyle.Medium); } catch { }
     }, []);
 
     const hapticNotify = useCallback(async () => {
-        if (!settingsRef.current.vibrationEnabled) return;
+        if (!settingsRef.current.vibrationEnabled || appStateRef.current !== "active") return;
         try { await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch { }
     }, []);
 
@@ -915,8 +940,8 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
     const fadeTransition = useCallback(() => {
         hasAnnouncedRef.current = false;
         Animated.sequence([
-            Animated.timing(fadeAnim, { toValue: 0, duration: 140, useNativeDriver: true }),
-            Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
+            Animated.timing(fadeAnim, { toValue: 0, duration: 140, useNativeDriver: false }),
+            Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: false }),
         ]).start();
     }, []);
 
@@ -993,10 +1018,14 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
 
     const startInterval = useCallback((initTime, phasesArr, curIdx) => {
         clearInterval(intervalRef.current);
-        phaseStartTimeRef.current = Date.now();
+        // Guard: never start a countdown with zero or negative time
+        if (!initTime || initTime <= 0) return;
+        const duration = phasesArr[curIdx]?.duration || initTime;
+        phaseStartTimeRef.current = Date.now() - (duration - initTime) * 1000;
         let t = initTime;
         intervalRef.current = setInterval(() => {
             t -= 1;
+            if (t < 0) t = 0;
             setTimeLeft(t);
             if (t <= 3 && t > 0 && !hasAnnouncedRef.current) {
                 announceFinalCountdown(t);
@@ -1028,6 +1057,20 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
             }
         }, 1000);
     }, [advancePhase, vibrate, hapticNotify]);
+
+    // Resume/start timer intervals once session rehydration is fully completed on mount
+    useEffect(() => {
+        if (isHydrated && !hasStartedTimerRef.current) {
+            if (running && !paused && appStateRef.current === "active") {
+                const currentPhase = phases[phaseIdx];
+                if (currentPhase && !(currentPhase.type === "active" && currentPhase.isReps)) {
+                    startInterval(timeLeft, phases, phaseIdx);
+                }
+                startElapsedTimer();
+                hasStartedTimerRef.current = true;
+            }
+        }
+    }, [isHydrated, running, paused, phases, phaseIdx, timeLeft, startInterval, startElapsedTimer]);
 
     const handlePlayPause = () => {
         if (!running) {

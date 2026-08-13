@@ -21,6 +21,7 @@ import {
 import MaskedView from "@react-native-masked-view/masked-view";
 import * as Haptics from "expo-haptics";
 import Svg, { Circle, Path, Defs, LinearGradient as SvgGradient, Stop, Text as SvgText } from "react-native-svg";
+import WorkoutCalendar from "../components/WorkoutCalendar";
 
 
 // Auth
@@ -631,7 +632,7 @@ export default function HomeScreen({ navigation, route }) {
                                 <View style={styles.resumeDot} />
                                 <Text style={styles.resumeTag}>WORKOUT IN PROGRESS</Text>
                             </View>
-                            <Text style={styles.resumeTitle}>{(activeSession.day?.day || "ACTIVE WORKOUT").toUpperCase()}</Text>
+                            <Text style={styles.resumeTitle}>{String(activeSession.day?.dayName || activeSession.day?.target || activeSession.day?.day || "ACTIVE WORKOUT").toUpperCase()}</Text>
                             <Text style={styles.resumeSub}>Tap to resume session where you left off.</Text>
                         </View>
                         <TouchableOpacity
@@ -720,15 +721,17 @@ export default function HomeScreen({ navigation, route }) {
                 {/* Tactical Readout HUD Card */}
                 <View style={styles.hudCard}>
                     <LinearGradient
-                        colors={[COLORS.glassBg, "rgba(5, 5, 5, 0.85)"]}
+                        colors={[COLORS.glassBg, "rgba(5, 5, 5, 0.95)"]}
                         style={StyleSheet.absoluteFill}
                     />
+                    <View style={[styles.cardLeftAccent, { backgroundColor: COLORS.primary }]} />
                     <View style={styles.hudHeader}>
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                             <View style={styles.hudDot} />
                             <Text style={styles.hudTitle}>TACTICAL READOUT</Text>
                         </View>
                         <View style={styles.hudStatusBadge}>
+                            <View style={styles.hudStatusDot} />
                             <Text style={styles.hudStatusText}>SYS ACTIVE</Text>
                         </View>
                     </View>
@@ -737,17 +740,42 @@ export default function HomeScreen({ navigation, route }) {
                         <View style={{ flex: 1 }}>
                             <View style={styles.hudLevelRow}>
                                 <Text style={styles.hudLevelLabel}>XP CONVERGENCE</Text>
-                                <Text style={styles.hudLevelValue}>
-                                    LVL {String(Math.min(Math.floor(xp / 100) + 1, 99)).padStart(2, '0')}
-                                </Text>
+                                <View style={styles.hudLevelBadge}>
+                                    <Text style={styles.hudLevelValue}>
+                                        LVL {String(Math.min(Math.floor(xp / 100) + 1, 99)).padStart(2, '0')}
+                                    </Text>
+                                </View>
                             </View>
-                            <View style={styles.hudBar}>
-                                <LinearGradient
-                                    colors={[COLORS.primary, '#FF4D4D']}
-                                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                                    style={[styles.levelFill, { width: `${xp % 100}%` }]}
-                                />
+                            
+                            {/* Segmented Tactical HUD Progress Bar */}
+                            <View style={styles.segmentedBarRow}>
+                                {Array.from({ length: 10 }).map((_, idx) => {
+                                    const progressPercent = xp % 100;
+                                    const blockValue = (idx + 1) * 10;
+                                    const prevBlockValue = idx * 10;
+                                    
+                                    let fillWidth = 0;
+                                    if (progressPercent >= blockValue) {
+                                        fillWidth = 100;
+                                    } else if (progressPercent > prevBlockValue) {
+                                        fillWidth = ((progressPercent - prevBlockValue) / 10) * 100;
+                                    }
+                                    
+                                    return (
+                                        <View key={idx} style={styles.segmentContainer}>
+                                            <View style={styles.segmentBg} />
+                                            {fillWidth > 0 && (
+                                                <LinearGradient
+                                                    colors={[COLORS.primary, '#9A1016']}
+                                                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                                                    style={[styles.segmentFill, { width: `${fillWidth}%` }]}
+                                                />
+                                            )}
+                                        </View>
+                                    );
+                                })}
                             </View>
+
                             <View style={styles.hudFooterRow}>
                                 <Text style={styles.hudSubText}>
                                     {xp % 100}/100 XP TO NEXT LEVEL
@@ -777,18 +805,23 @@ export default function HomeScreen({ navigation, route }) {
                             }}
                         >
                             <LinearGradient
-                                colors={[COLORS.glassBg, "rgba(5, 5, 5, 0.9)"]}
+                                colors={[COLORS.glassBg, "rgba(5, 5, 5, 0.95)"]}
                                 style={StyleSheet.absoluteFill}
                             />
+                            <View style={[styles.cardLeftAccent, { backgroundColor: tierInfo.color || COLORS.accent }]} />
                             <View style={styles.streakIntelligenceLeft}>
-                                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                                <View style={styles.streakIconContainer}>
+                                    <LinearGradient
+                                        colors={["rgba(227, 30, 36, 0.15)", "rgba(5, 5, 5, 0)"]}
+                                        style={StyleSheet.absoluteFill}
+                                    />
                                     <Ionicons name="flame" size={16} color={tierInfo.color} />
-                                    <Text style={[styles.streakTierName, { color: tierInfo.color }]}>
-                                        {tierInfo.name} ({tierInfo.badge})
-                                    </Text>
                                 </View>
-                                <Text style={styles.streakValue}>{streak} <Text style={{ fontSize: 10, color: COLORS.textMuted }}>DAYS</Text></Text>
-                                <View style={[styles.multiplierBadge, { backgroundColor: `${tierInfo.color}15`, borderColor: `${tierInfo.color}30` }]}>
+                                <Text style={[styles.streakTierName, { color: tierInfo.color }]}>
+                                    {tierInfo.name}
+                                </Text>
+                                <Text style={styles.streakValue}>{streak} <Text style={{ fontSize: 10, color: COLORS.textMuted, fontFamily: FAMILY.mono }}>DAYS</Text></Text>
+                                <View style={[styles.multiplierBadge, { backgroundColor: `${tierInfo.color}10`, borderColor: `${tierInfo.color}35` }]}>
                                     <Text style={[styles.multiplierText, { color: tierInfo.color }]}>{tierInfo.multiplier} MULTIPLIER</Text>
                                 </View>
                             </View>
@@ -806,33 +839,40 @@ export default function HomeScreen({ navigation, route }) {
                                             <View key={label} style={styles.gridCellWrapper}>
                                                 <View
                                                     style={[
-                                                        styles.gridCell,
-                                                        isCompleted && styles.gridCellCompleted,
-                                                        isDayFrozen && styles.gridCellFrozen,
-                                                        isToday && styles.gridCellToday,
-                                                        !isCompleted && !isDayFrozen && !isToday && dayNum < todayDay && styles.gridCellMissed,
-                                                        isFuture && { borderStyle: "dashed", borderColor: "rgba(255, 255, 255, 0.1)" }
+                                                        styles.gridCellRing,
+                                                        isToday && styles.gridCellRingToday
                                                     ]}
                                                 >
-                                                    {isCompleted ? (
-                                                        <>
-                                                            <Ionicons name="checkmark" size={10} color="#fff" />
-                                                            {isDayFrozen && (
-                                                                <Ionicons
-                                                                    name="snow"
-                                                                    size={7}
-                                                                    color="#D1D1D1"
-                                                                    style={{ position: "absolute", bottom: -2.5, right: -2.5 }}
-                                                                />
-                                                            )}
-                                                        </>
-                                                    ) : isDayFrozen ? (
-                                                        <Ionicons name="snow" size={10} color="#D1D1D1" />
-                                                    ) : (
-                                                        isToday && !isCompleted && !isDayFrozen && <View style={styles.gridCellTodayDot} />
-                                                    )}
+                                                    <View
+                                                        style={[
+                                                            styles.gridCell,
+                                                            isCompleted && styles.gridCellCompleted,
+                                                            isDayFrozen && styles.gridCellFrozen,
+                                                            isToday && styles.gridCellToday,
+                                                            !isCompleted && !isDayFrozen && !isToday && dayNum < todayDay && styles.gridCellMissed,
+                                                            isFuture && { borderStyle: "dashed", borderColor: "rgba(255, 255, 255, 0.15)" }
+                                                        ]}
+                                                    >
+                                                        {isCompleted ? (
+                                                            <>
+                                                                <Ionicons name="checkmark" size={9} color="#fff" />
+                                                                {isDayFrozen && (
+                                                                    <Ionicons
+                                                                        name="snow"
+                                                                        size={6}
+                                                                        color="#D1D1D1"
+                                                                        style={{ position: "absolute", bottom: -2, right: -2 }}
+                                                                    />
+                                                                )}
+                                                            </>
+                                                        ) : isDayFrozen ? (
+                                                            <Ionicons name="snow" size={9} color="#D1D1D1" />
+                                                        ) : (
+                                                            isToday && !isCompleted && !isDayFrozen && <View style={styles.gridCellTodayDot} />
+                                                        )}
+                                                    </View>
                                                 </View>
-                                                <Text style={[styles.gridCellLabel, isToday && { color: COLORS.primary }]}>{label[0]}</Text>
+                                                <Text style={[styles.gridCellLabel, isToday && { color: COLORS.primary, fontFamily: FAMILY.bold }]}>{label[0]}</Text>
                                             </View>
                                         );
                                     })}
@@ -846,27 +886,29 @@ export default function HomeScreen({ navigation, route }) {
                 <View style={styles.statsRow}>
                     <View style={styles.statSmallWidth}>
                         <LinearGradient
-                            colors={[COLORS.glassBg, "rgba(5, 5, 5, 0.85)"]}
+                            colors={[COLORS.glassBg, "rgba(5, 5, 5, 0.95)"]}
                             style={StyleSheet.absoluteFill}
                         />
+                        <View style={[styles.cardTopAccent, { backgroundColor: COLORS.accent }]} />
                         <View style={styles.statSmallTop}>
                             <View style={styles.statIconWrap}>
-                                <Ionicons name="fitness" size={12} color={COLORS.accent} />
+                                <Ionicons name="fitness" size={11} color={COLORS.accent} />
                             </View>
                             <Text style={styles.statLabelSmall}>TOTAL SESSIONS</Text>
                         </View>
-                        <Text style={styles.statValueSmall}>{total} <Text style={{ fontSize: 9, color: COLORS.textMuted }}>COMPLETED</Text></Text>
+                        <Text style={styles.statValueSmall}>{total} <Text style={{ fontSize: 8, color: COLORS.textMuted, fontFamily: FAMILY.mono }}>COMPLETED</Text></Text>
                     </View>
                     <TouchableOpacity style={styles.statSmallWidth} activeOpacity={0.8} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); navigation.navigate("Rank"); }}>
                         <LinearGradient
-                            colors={[COLORS.glassBg, "rgba(5, 5, 5, 0.85)"]}
+                            colors={[COLORS.glassBg, "rgba(5, 5, 5, 0.95)"]}
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 1 }}
                             style={StyleSheet.absoluteFill}
                         />
+                        <View style={[styles.cardTopAccent, { backgroundColor: COLORS.primary }]} />
                         <View style={styles.statSmallTop}>
                             <View style={styles.statIconWrap}>
-                                <Ionicons name="trending-up" size={12} color={COLORS.primary} />
+                                <Ionicons name="trending-up" size={11} color={COLORS.primary} />
                             </View>
                             <Text style={styles.statLabelSmall}>CURRENT RANK</Text>
                         </View>
@@ -1196,6 +1238,12 @@ export default function HomeScreen({ navigation, route }) {
 
                             {/* SVG Consistency Graph */}
                             {renderSvgChart(getWeeklyHistoryData(history))}
+
+                            {/* Monthly Progress Calendar */}
+                            <View style={{ marginVertical: 12 }}>
+                                <Text style={styles.modalSectionTitle}>MONTHLY PROGRESS CALENDAR</Text>
+                                <WorkoutCalendar history={history} style={{ marginTop: 8 }} />
+                            </View>
 
                             {/* Tiers Breakdown */}
                             <View style={styles.modalSection}>
@@ -1629,17 +1677,31 @@ const styles = StyleSheet.create({
         marginTop: 24,
         borderRadius: 22,
         borderWidth: 1,
-        height: 130,
+        height: 135,
         borderColor: "rgba(255, 255, 255, 0.08)",
         backgroundColor: "transparent",
         padding: 16,
         justifyContent: "center",
         overflow: "hidden",
         shadowColor: COLORS.primary,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 10,
-        elevation: 4,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.12,
+        shadowRadius: 15,
+        elevation: 6,
+    },
+    cardLeftAccent: {
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        bottom: 0,
+        width: 3.5,
+    },
+    cardTopAccent: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 2.5,
     },
     hudHeader: {
         flexDirection: "row",
@@ -1667,16 +1729,25 @@ const styles = StyleSheet.create({
         letterSpacing: 2.5,
     },
     hudStatusBadge: {
-        paddingHorizontal: 10,
-        paddingVertical: 4,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 5,
+        paddingHorizontal: 8,
+        paddingVertical: 3,
         borderRadius: 6,
-        backgroundColor: "rgba(227, 30, 36, 0.12)",
-        borderWidth: 1,
-        borderColor: "rgba(227, 30, 36, 0.4)",
+        backgroundColor: "rgba(227, 30, 36, 0.08)",
+        borderWidth: 0.8,
+        borderColor: "rgba(227, 30, 36, 0.35)",
+    },
+    hudStatusDot: {
+        width: 4,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: COLORS.primary,
     },
     hudStatusText: {
-        fontSize: 8,
-        fontFamily: FAMILY.bold,
+        fontSize: 7.5,
+        fontFamily: FAMILY.mono,
         color: COLORS.primary,
         letterSpacing: 1.5,
     },
@@ -1686,8 +1757,8 @@ const styles = StyleSheet.create({
     hudLevelRow: {
         flexDirection: "row",
         justifyContent: "space-between",
-        alignItems: "baseline",
-        marginBottom: 6,
+        alignItems: "center",
+        marginBottom: 8,
     },
     hudLevelLabel: {
         fontSize: 8,
@@ -1695,24 +1766,25 @@ const styles = StyleSheet.create({
         color: COLORS.textMuted,
         letterSpacing: 1.5,
     },
+    hudLevelBadge: {
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        backgroundColor: "rgba(255, 255, 255, 0.05)",
+        borderRadius: 4,
+        borderWidth: 0.5,
+        borderColor: "rgba(255, 255, 255, 0.1)",
+    },
     hudLevelValue: {
-        fontSize: 15,
-        fontFamily: FAMILY.bold,
+        fontSize: 12,
+        fontFamily: FAMILY.mono,
         color: COLORS.text,
         letterSpacing: 1,
-    },
-    hudBar: {
-        height: 6,
-        backgroundColor: "rgba(255,255,255,0.06)",
-        borderRadius: 3,
-        width: "100%",
-        marginBottom: 10,
-        overflow: "hidden",
     },
     hudFooterRow: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
+        marginTop: 2,
     },
     hudSubText: {
         fontSize: 8,
@@ -1726,6 +1798,33 @@ const styles = StyleSheet.create({
         color: "#FFFFFF",
         letterSpacing: 1.5,
     },
+    
+    // Segmented HUD Bar Styles
+    segmentedBarRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '100%',
+        height: 8,
+        marginBottom: 10,
+    },
+    segmentContainer: {
+        flex: 1,
+        height: '100%',
+        marginHorizontal: 1.5,
+        borderRadius: 1.5,
+        overflow: 'hidden',
+        position: 'relative',
+    },
+    segmentBg: {
+        position: 'absolute',
+        top: 0, left: 0, right: 0, bottom: 0,
+        backgroundColor: 'rgba(255, 255, 255, 0.06)',
+        borderRadius: 1.5,
+    },
+    segmentFill: {
+        height: '100%',
+        borderRadius: 1.5,
+    },
 
     levelFill: { height: "100%", borderRadius: 3 },
     headerSmallActions: { flexDirection: "row", alignItems: "center" },
@@ -1737,7 +1836,7 @@ const styles = StyleSheet.create({
     // Asymmetric Stats Grid
     statsRow: {
         flexDirection: "row", marginHorizontal: SPACING.base, marginBottom: 36,
-        height: 80, gap: 12, marginTop: 12,
+        height: 88, gap: 12, marginTop: 12,
     },
     statsLeft: { flex: 1, gap: 12 },
     statSmall: {
@@ -1747,22 +1846,27 @@ const styles = StyleSheet.create({
         justifyContent: "center", alignItems: "center", overflow: "hidden",
     },
     statSmallWidth: {
-        flex: 1, paddingHorizontal: 16, paddingVertical: 12,
+        flex: 1, paddingHorizontal: 16, paddingVertical: 14,
         backgroundColor: "transparent", borderRadius: 22,
         borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.08)",
         justifyContent: "center", alignItems: "center", overflow: "hidden",
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+        elevation: 2,
     },
-    statSmallTop: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 6 },
-    statIconWrap: { width: 22, height: 22, borderRadius: 6, backgroundColor: "rgba(255,255,255,0.05)", alignItems: "center", justifyContent: "center" },
+    statSmallTop: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 8 },
+    statIconWrap: { width: 20, height: 20, borderRadius: 6, backgroundColor: "rgba(255,255,255,0.04)", alignItems: "center", justifyContent: "center", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.08)" },
     statLabelSmall: { fontSize: 8, color: COLORS.textMuted, fontFamily: FAMILY.bold, letterSpacing: 2 },
-    statValueSmall: { fontSize: 15, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -0.5, textAlign: "center" },
+    statValueSmall: { fontSize: 16, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -0.5, textAlign: "center" },
 
     // Streak Intelligence Card Styles
     streakIntelligenceCard: {
         marginHorizontal: SPACING.base,
         marginTop: 16,
         padding: 16,
-        height: 130,
+        height: 135,
         borderRadius: 22,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.08)",
@@ -1771,23 +1875,40 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         alignItems: "center",
         overflow: "hidden",
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.12,
+        shadowRadius: 15,
+        elevation: 6,
     },
     streakIntelligenceLeft: {
         flex: 1.1,
         alignItems: "center",
         justifyContent: "center",
     },
+    streakIconContainer: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        justifyContent: "center",
+        alignItems: "center",
+        overflow: "hidden",
+        borderWidth: 1,
+        borderColor: "rgba(227, 30, 36, 0.25)",
+        marginBottom: 6,
+    },
     streakTierName: {
         fontFamily: FAMILY.bold,
-        fontSize: 10,
+        fontSize: 9,
         letterSpacing: 2,
         color: COLORS.primary,
+        marginBottom: 2,
     },
     streakValue: {
         fontFamily: FAMILY.bold,
-        fontSize: 28,
+        fontSize: 26,
         color: COLORS.text,
-        marginVertical: 4,
+        marginBottom: 4,
         textAlign: "center",
     },
     multiplierBadge: {
@@ -1815,16 +1936,27 @@ const styles = StyleSheet.create({
     },
     gridContainer: {
         flexDirection: "row",
-        gap: 5,
+        gap: 4,
     },
     gridCellWrapper: {
         alignItems: "center",
         gap: 4,
     },
+    gridCellRing: {
+        width: 26,
+        height: 26,
+        borderRadius: 13,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    gridCellRingToday: {
+        borderWidth: 1.2,
+        borderColor: "rgba(227, 30, 36, 0.5)",
+    },
     gridCell: {
-        width: 22,
-        height: 22,
-        borderRadius: 3,
+        width: 20,
+        height: 20,
+        borderRadius: 10,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.15)",
         backgroundColor: "#000000",
@@ -1833,24 +1965,24 @@ const styles = StyleSheet.create({
     },
     gridCellCompleted: {
         borderColor: COLORS.primary,
-        backgroundColor: "rgba(227, 30, 36, 0.25)",
+        backgroundColor: COLORS.primary,
     },
     gridCellFrozen: {
         borderColor: "#D1D1D1",
-        backgroundColor: "rgba(255, 255, 255, 0.15)",
+        backgroundColor: "rgba(255, 255, 255, 0.2)",
     },
     gridCellToday: {
         borderColor: COLORS.text,
         borderWidth: 1.5,
     },
     gridCellMissed: {
-        borderColor: "rgba(255, 255, 255, 0.05)",
-        backgroundColor: "rgba(255, 255, 255, 0.02)",
+        borderColor: "rgba(255, 255, 255, 0.08)",
+        backgroundColor: "rgba(255, 255, 255, 0.03)",
     },
     gridCellTodayDot: {
-        width: 5,
-        height: 5,
-        borderRadius: 2.5,
+        width: 4,
+        height: 4,
+        borderRadius: 2,
         backgroundColor: COLORS.text,
     },
     gridCellLabel: {

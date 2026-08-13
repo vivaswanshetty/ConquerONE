@@ -47,11 +47,21 @@ import AICoachScreen from "./src/screens/AICoachScreen";
 import RankScreen from "./src/screens/RankScreen";
 import ProtocolIntelScreen from "./src/screens/ProtocolIntelScreen";
 import NetworkBanner from "./src/components/NetworkBanner";
+import ErrorBoundary from "./src/components/ErrorBoundary";
 
 import { AuthProvider, useAuth } from "./src/context/AuthContext";
 import { NotificationProvider } from "./src/context/NotificationContext";
 
 SplashScreen.preventAutoHideAsync().catch(() => { });
+
+// Prevent unhandled JS errors from crashing the app on Android
+if (global.ErrorUtils) {
+    const defaultHandler = global.ErrorUtils.getGlobalHandler();
+    global.ErrorUtils.setGlobalHandler((error, isFatal) => {
+        console.warn("[GlobalError]", isFatal ? "FATAL:" : "ERROR:", error);
+        if (defaultHandler && !isFatal) defaultHandler(error, isFatal);
+    });
+}
 
 const Stack = createStackNavigator();
 
@@ -145,6 +155,7 @@ const DEFERRED_FONTS = {
 /* Main App */
 export default function App() {
   const [fontsLoaded, setFontsLoaded] = useState(false);
+  const [isUpdateCheckDone, setIsUpdateCheckDone] = useState(false);
   const [isDownloadingUpdate, setIsDownloadingUpdate] = useState(false);
   const splashHidden = useRef(false);
 
@@ -171,75 +182,105 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [fontsLoaded]);
 
-  // ── Step 4: OTA update check (silent background fetch) ──
+  // ── Step 3: OTA update check (visible fetch & reload) ──
   useEffect(() => {
     let cancelled = false;
+
     const checkUpdate = async () => {
-      if (__DEV__ || cancelled) return;
+      if (__DEV__ || cancelled) {
+        setIsUpdateCheckDone(true);
+        return;
+      }
+
+      // 2.5s network timeout safety to prevent hanging indefinitely on splash
+      const timeout = setTimeout(() => {
+        if (!cancelled) {
+          console.log("[Updates] Check timed out, proceeding to app");
+          setIsUpdateCheckDone(true);
+        }
+      }, 2500);
+
       try {
         const update = await Updates.checkForUpdateAsync();
+        clearTimeout(timeout);
+
         if (update.isAvailable && !cancelled) {
+          setIsDownloadingUpdate(true);
+          setIsUpdateCheckDone(true); // Let splash screen hide so UpdateScreen is visible
+          
           await Updates.fetchUpdateAsync();
-          // Downloaded silently in background — will take effect on next cold app launch.
+          if (!cancelled) {
+            await Updates.reloadAsync();
+          }
+        } else {
+          if (!cancelled) {
+            setIsUpdateCheckDone(true);
+          }
         }
       } catch (e) {
         console.warn("Update check failed", e);
+        clearTimeout(timeout);
+        if (!cancelled) {
+          setIsDownloadingUpdate(false);
+          setIsUpdateCheckDone(true);
+        }
       }
     };
 
-    const timer = setTimeout(() => {
-      const task = InteractionManager.runAfterInteractions(checkUpdate);
-      if (cancelled) task.cancel();
-    }, 3000);
+    checkUpdate();
+
     return () => {
       cancelled = true;
-      clearTimeout(timer);
     };
   }, []);
 
-  // ── Step 5: Emergency splash screen fallback ──
+  const isReady = fontsLoaded && isUpdateCheckDone;
+
+  // ── Step 4: Splash screen hide condition ──
   useEffect(() => {
-    if (fontsLoaded) {
+    if (isReady) {
       const timer = setTimeout(async () => {
         if (!splashHidden.current) {
           splashHidden.current = true;
           try { await SplashScreen.hideAsync(); } catch (_) { }
         }
-      }, 500); // Quick safety net — onLayout normally handles this faster
+      }, 100);
       return () => clearTimeout(timer);
     }
-  }, [fontsLoaded]);
+  }, [isReady]);
 
   const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded && !splashHidden.current) {
+    if (isReady && !splashHidden.current) {
       splashHidden.current = true;
       try {
         await SplashScreen.hideAsync();
       } catch (e) { }
     }
-  }, [fontsLoaded]);
+  }, [isReady]);
 
-  if (!fontsLoaded) {
-    return null; // Keep splash screen visible until critical fonts are ready
+  if (!isReady) {
+    return null; // Keep splash screen visible until critical fonts are ready AND update check is complete
   }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutRootView}>
-      <SafeAreaProvider>
-        <NotificationProvider>
-          <StatusBar style="light" />
-          <AuthProvider>
-            <NetworkBanner />
-            {isDownloadingUpdate ? (
-              <UpdateScreen />
-            ) : (
-              <NavigationContainer>
-                <RootNavigator fontsLoaded={fontsLoaded} />
-              </NavigationContainer>
-            )}
-          </AuthProvider>
-        </NotificationProvider>
-      </SafeAreaProvider>
+      <ErrorBoundary>
+        <SafeAreaProvider>
+          <NotificationProvider>
+            <StatusBar style="light" />
+            <AuthProvider>
+              <NetworkBanner />
+              {isDownloadingUpdate ? (
+                <UpdateScreen />
+              ) : (
+                <NavigationContainer>
+                  <RootNavigator fontsLoaded={fontsLoaded} />
+                </NavigationContainer>
+              )}
+            </AuthProvider>
+          </NotificationProvider>
+        </SafeAreaProvider>
+      </ErrorBoundary>
     </GestureHandlerRootView>
   );
 }
