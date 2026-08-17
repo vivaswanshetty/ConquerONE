@@ -68,9 +68,12 @@ const saveWorkoutCompleteLocal = async (day, target, durationSec, exercises = []
 
     const lastDate = await AsyncStorage.getItem(KEYS.LAST_WORKOUT_DATE);
     const lastFreeze = await AsyncStorage.getItem(KEYS.LAST_FREEZE_DATE);
+    const prevFreeze = await AsyncStorage.getItem(KEYS.PREVIOUS_FREEZE_DATE);
     const streakStr = await AsyncStorage.getItem(KEYS.STREAK);
 
     let streak = streakStr ? parseInt(streakStr) : 0;
+    const freezeDates = [lastFreeze, prevFreeze].filter(Boolean);
+
     const lastEffectiveDate = (lastFreeze && (!lastDate || new Date(lastFreeze) > new Date(lastDate)))
         ? lastFreeze
         : lastDate;
@@ -80,9 +83,13 @@ const saveWorkoutCompleteLocal = async (day, target, durationSec, exercises = []
         const todayDate = new Date(today);
         const diff = Math.floor((todayDate - last) / (1000 * 60 * 60 * 24));
 
-        if (diff === 1) {
+        if (diff === 0) {
+            // Multiple workouts in same day — streak count stays the same
+        } else if (diff === 1 || areAllInterveningDaysExcused(lastEffectiveDate, today, freezeDates)) {
+            // Consecutive day OR all intervening days were excused (Sundays / Freezes)
             streak += 1;
-        } else if (diff > 1) {
+        } else {
+            // Unexcused workout day was skipped
             streak = 1;
         }
     } else {
@@ -120,6 +127,37 @@ const saveWorkoutCompleteLocal = async (day, target, durationSec, exercises = []
 
     triggerAutoSync();
     return { streak, total, xpGained, totalXP, recordStreak };
+};
+
+/**
+ * Helper to check if all days strictly between `startDateStr` and `endDateStr`
+ * are excused (e.g. Sunday / scheduled rest day, or explicit streak freeze).
+ */
+const areAllInterveningDaysExcused = (startDateStr, endDateStr, freezeDates = []) => {
+    if (!startDateStr || !endDateStr) return true;
+    const start = new Date(startDateStr);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(endDateStr);
+    end.setHours(0, 0, 0, 0);
+
+    const diffDays = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays <= 1) return true;
+
+    // Check each intervening date between start and end
+    for (let i = 1; i < diffDays; i++) {
+        const checkDate = new Date(start);
+        checkDate.setDate(start.getDate() + i);
+        checkDate.setHours(0, 0, 0, 0);
+
+        const isSunday = checkDate.getDay() === 0;
+        const checkDateStr = checkDate.toISOString().split("T")[0];
+        const isFrozen = freezeDates.includes(checkDateStr);
+
+        if (!isSunday && !isFrozen) {
+            return false;
+        }
+    }
+    return true;
 };
 
 export const saveWorkoutComplete = async (day, target, durationSec, exercises = []) => {
@@ -163,22 +201,24 @@ export const checkAndCleanStreak = async () => {
     try {
         const lastDate = await AsyncStorage.getItem(KEYS.LAST_WORKOUT_DATE);
         const lastFreeze = await AsyncStorage.getItem(KEYS.LAST_FREEZE_DATE);
+        const prevFreeze = await AsyncStorage.getItem(KEYS.PREVIOUS_FREEZE_DATE);
         const streakStr = await AsyncStorage.getItem(KEYS.STREAK);
         let streak = streakStr ? parseInt(streakStr) : 0;
 
         if (streak === 0) return { wasReset: false, previousStreak: 0 };
 
+        const freezeDates = [lastFreeze, prevFreeze].filter(Boolean);
         const lastEffectiveDate = (lastFreeze && (!lastDate || new Date(lastFreeze) > new Date(lastDate)))
             ? lastFreeze
             : lastDate;
 
         if (lastEffectiveDate) {
             const today = new Date().toISOString().split("T")[0];
-            const last = new Date(lastEffectiveDate);
-            const todayDate = new Date(today);
-            const diff = Math.floor((todayDate - last) / (1000 * 60 * 60 * 24));
 
-            if (diff > 1) {
+            // If all intervening days were excused (Sundays / Freezes), streak remains intact
+            const allExcused = areAllInterveningDaysExcused(lastEffectiveDate, today, freezeDates);
+
+            if (!allExcused) {
                 // Streak is broken!
                 await AsyncStorage.setItem(KEYS.STREAK, "0");
                 if (hasCloudSession()) {

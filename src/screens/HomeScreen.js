@@ -832,8 +832,7 @@ export default function HomeScreen({ navigation, route }) {
                                         const dayNum = index + 1;
                                         const isCompleted = completedDays.includes(dayNum);
                                         const isDayFrozen = freezeDays.includes(dayNum);
-                                        const isToday = todayDay === dayNum;
-                                        const isFuture = dayNum > todayDay;
+                                        const isSunday = dayNum === 7;
 
                                         return (
                                             <View key={label} style={styles.gridCellWrapper}>
@@ -849,7 +848,7 @@ export default function HomeScreen({ navigation, route }) {
                                                             isCompleted && styles.gridCellCompleted,
                                                             isDayFrozen && styles.gridCellFrozen,
                                                             isToday && styles.gridCellToday,
-                                                            !isCompleted && !isDayFrozen && !isToday && dayNum < todayDay && styles.gridCellMissed,
+                                                            !isCompleted && !isDayFrozen && !isToday && dayNum < todayDay && (isSunday ? styles.gridCellRest : styles.gridCellMissed),
                                                             isFuture && { borderStyle: "dashed", borderColor: "rgba(255, 255, 255, 0.15)" }
                                                         ]}
                                                     >
@@ -867,6 +866,8 @@ export default function HomeScreen({ navigation, route }) {
                                                             </>
                                                         ) : isDayFrozen ? (
                                                             <Ionicons name="snow" size={9} color="#D1D1D1" />
+                                                        ) : isSunday && !isToday ? (
+                                                            <Ionicons name="moon-outline" size={8} color="#8E8E93" />
                                                         ) : (
                                                             isToday && !isCompleted && !isDayFrozen && <View style={styles.gridCellTodayDot} />
                                                         )}
@@ -1978,6 +1979,10 @@ const styles = StyleSheet.create({
     gridCellMissed: {
         borderColor: "rgba(255, 255, 255, 0.08)",
         backgroundColor: "rgba(255, 255, 255, 0.03)",
+    },
+    gridCellRest: {
+        borderColor: "rgba(255, 255, 255, 0.1)",
+        backgroundColor: "rgba(255, 255, 255, 0.04)",
     },
     gridCellTodayDot: {
         width: 4,

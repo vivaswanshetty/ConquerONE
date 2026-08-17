@@ -33,6 +33,32 @@ const subCol = (name) => collection(db, "users", uid(), name);
 
 // ─── Workout History ───────────────────────────────────────────────────────────
 
+const areAllInterveningDaysExcused = (startDateStr, endDateStr, freezeDates = []) => {
+    if (!startDateStr || !endDateStr) return true;
+    const start = new Date(startDateStr);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(endDateStr);
+    end.setHours(0, 0, 0, 0);
+
+    const diffDays = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays <= 1) return true;
+
+    for (let i = 1; i < diffDays; i++) {
+        const checkDate = new Date(start);
+        checkDate.setDate(start.getDate() + i);
+        checkDate.setHours(0, 0, 0, 0);
+
+        const isSunday = checkDate.getDay() === 0;
+        const checkDateStr = checkDate.toISOString().split("T")[0];
+        const isFrozen = freezeDates.includes(checkDateStr);
+
+        if (!isSunday && !isFrozen) {
+            return false;
+        }
+    }
+    return true;
+};
+
 /**
  * Save a completed workout session and update streak + total count.
  * This is the Firestore equivalent of `saveWorkoutComplete` in storage.js.
@@ -55,15 +81,25 @@ export const fssaveWorkoutComplete = async (day, target, durationSec, exercises 
         const snap = await getDoc(userDoc());
         const data = snap.exists() ? snap.data() : {};
         const lastDate = data.lastWorkoutDate || null;
+        const lastFreeze = data.lastFreezeDate || null;
         let streak = data.streak || 0;
+        const freezeDates = [lastFreeze].filter(Boolean);
 
-        if (lastDate) {
-            const last = new Date(lastDate);
+        const lastEffectiveDate = (lastFreeze && (!lastDate || new Date(lastFreeze) > new Date(lastDate)))
+            ? lastFreeze
+            : lastDate;
+
+        if (lastEffectiveDate) {
+            const last = new Date(lastEffectiveDate);
             const todayDate = new Date(today);
             const diff = Math.floor((todayDate - last) / (1000 * 60 * 60 * 24));
-            if (diff === 1) streak += 1;
-            else if (diff > 1) streak = 1;
-            // diff === 0: same day, keep current streak
+            if (diff === 0) {
+                // same day, keep current streak
+            } else if (diff === 1 || areAllInterveningDaysExcused(lastEffectiveDate, today, freezeDates)) {
+                streak += 1;
+            } else {
+                streak = 1;
+            }
         } else {
             streak = 1;
         }
