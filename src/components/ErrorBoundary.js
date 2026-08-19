@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import * as Updates from "expo-updates";
 
 /**
  * Global error boundary that catches unhandled JS errors and renders
@@ -19,8 +20,15 @@ export default class ErrorBoundary extends React.Component {
         console.error("[ErrorBoundary] Caught:", error, errorInfo);
     }
 
-    handleRecover = () => {
-        this.setState({ hasError: false, error: null });
+    handleRecover = async () => {
+        try {
+            this.setState({ hasError: false, error: null });
+            if (Updates && Updates.reloadAsync && !__DEV__) {
+                await Updates.reloadAsync().catch(() => {});
+            }
+        } catch (_) {
+            this.setState({ hasError: false, error: null });
+        }
     };
 
     render() {
@@ -33,7 +41,12 @@ export default class ErrorBoundary extends React.Component {
                         The app encountered an unexpected error.{"\n"}
                         Your workout data is safe.
                     </Text>
-                    <TouchableOpacity style={styles.button} onPress={this.handleRecover}>
+                    {this.state.error?.message ? (
+                        <Text style={styles.errorText} numberOfLines={2}>
+                            {String(this.state.error.message)}
+                        </Text>
+                    ) : null}
+                    <TouchableOpacity style={styles.button} onPress={this.handleRecover} activeOpacity={0.8}>
                         <Text style={styles.buttonText}>TAP TO RECOVER</Text>
                     </TouchableOpacity>
                 </View>
@@ -64,7 +77,15 @@ const styles = StyleSheet.create({
         fontSize: 14,
         textAlign: "center",
         lineHeight: 22,
-        marginBottom: 32,
+        marginBottom: 20,
+    },
+    errorText: {
+        color: "rgba(227, 30, 36, 0.8)",
+        fontSize: 11,
+        textAlign: "center",
+        fontFamily: "monospace",
+        marginBottom: 24,
+        paddingHorizontal: 16,
     },
     button: {
         backgroundColor: "#E31E24",

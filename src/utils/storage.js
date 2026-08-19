@@ -52,6 +52,37 @@ const readLocalLastWorkoutDate = async () => {
     return await AsyncStorage.getItem(KEYS.LAST_WORKOUT_DATE);
 };
 
+/**
+ * Helper to check if all days strictly between `startDateStr` and `endDateStr`
+ * are excused (e.g. Sunday / scheduled rest day, or explicit streak freeze).
+ */
+const areAllInterveningDaysExcused = (startDateStr, endDateStr, freezeDates = []) => {
+    if (!startDateStr || !endDateStr) return true;
+    const start = new Date(startDateStr);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(endDateStr);
+    end.setHours(0, 0, 0, 0);
+
+    const diffDays = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays <= 1) return true;
+
+    // Check each intervening date between start and end
+    for (let i = 1; i < diffDays; i++) {
+        const checkDate = new Date(start);
+        checkDate.setDate(start.getDate() + i);
+        checkDate.setHours(0, 0, 0, 0);
+
+        const isSunday = checkDate.getDay() === 0;
+        const checkDateStr = checkDate.toISOString().split("T")[0];
+        const isFrozen = freezeDates.includes(checkDateStr);
+
+        if (!isSunday && !isFrozen) {
+            return false;
+        }
+    }
+    return true;
+};
+
 const saveWorkoutCompleteLocal = async (day, target, durationSec, exercises = []) => {
     const today = new Date().toISOString().split("T")[0];
     const history = await readLocalHistory();
@@ -127,37 +158,6 @@ const saveWorkoutCompleteLocal = async (day, target, durationSec, exercises = []
 
     triggerAutoSync();
     return { streak, total, xpGained, totalXP, recordStreak };
-};
-
-/**
- * Helper to check if all days strictly between `startDateStr` and `endDateStr`
- * are excused (e.g. Sunday / scheduled rest day, or explicit streak freeze).
- */
-const areAllInterveningDaysExcused = (startDateStr, endDateStr, freezeDates = []) => {
-    if (!startDateStr || !endDateStr) return true;
-    const start = new Date(startDateStr);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(endDateStr);
-    end.setHours(0, 0, 0, 0);
-
-    const diffDays = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-    if (diffDays <= 1) return true;
-
-    // Check each intervening date between start and end
-    for (let i = 1; i < diffDays; i++) {
-        const checkDate = new Date(start);
-        checkDate.setDate(start.getDate() + i);
-        checkDate.setHours(0, 0, 0, 0);
-
-        const isSunday = checkDate.getDay() === 0;
-        const checkDateStr = checkDate.toISOString().split("T")[0];
-        const isFrozen = freezeDates.includes(checkDateStr);
-
-        if (!isSunday && !isFrozen) {
-            return false;
-        }
-    }
-    return true;
 };
 
 export const saveWorkoutComplete = async (day, target, durationSec, exercises = []) => {

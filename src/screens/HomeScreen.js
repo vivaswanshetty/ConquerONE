@@ -832,6 +832,8 @@ export default function HomeScreen({ navigation, route }) {
                                         const dayNum = index + 1;
                                         const isCompleted = completedDays.includes(dayNum);
                                         const isDayFrozen = freezeDays.includes(dayNum);
+                                        const isToday = todayDay === dayNum;
+                                        const isFuture = dayNum > todayDay;
                                         const isSunday = dayNum === 7;
 
                                         return (
