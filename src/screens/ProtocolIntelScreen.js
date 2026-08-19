@@ -8,17 +8,17 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { COLORS, SPACING, FAMILY } from "../utils/theme";
 import {
-    PLAN_SCIENCE, PLAN_RULES, PROGRESSION_SYSTEM, RESULTS_TIMELINE, PLAN_SECRET
+    PLAN_SCIENCE, PLAN_RULES, PROGRESSION_SYSTEM, RESULTS_TIMELINE, PLAN_SECRET, FOREARM_PROTOCOL_INFO
 } from "../data/workoutData";
 
 const { width } = Dimensions.get("window");
 
 export default function ProtocolIntelScreen({ navigation }) {
     const insets = useSafeAreaInsets();
-    const [activeTab, setActiveTab] = useState(0); // 0: Science, 1: Rules, 2: Progression, 3: Timeline
+    const [activeTab, setActiveTab] = useState(0); // 0: Science, 1: Forearms, 2: Rules, 3: Progression, 4: Timeline
     const fadeAnim = useRef(new Animated.Value(1)).current;
 
-    const TABS = ["SCIENCE", "RULES", "SYSTEM", "TIMELINE"];
+    const TABS = ["SCIENCE", "FOREARMS", "RULES", "SYSTEM", "TIMELINE"];
 
     const switchTab = (index) => {
         if (index === activeTab) return;
@@ -77,9 +77,10 @@ export default function ProtocolIntelScreen({ navigation }) {
             <ScrollView showsVerticalScrollIndicator={false} overScrollMode="never" contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}>
                 <Animated.View style={[styles.contentAnim, { opacity: fadeAnim }]}>
                     {activeTab === 0 && <ScienceTab />}
-                    {activeTab === 1 && <RulesTab />}
-                    {activeTab === 2 && <ProgressionTab />}
-                    {activeTab === 3 && <TimelineTab />}
+                    {activeTab === 1 && <ForearmsTab />}
+                    {activeTab === 2 && <RulesTab />}
+                    {activeTab === 3 && <ProgressionTab />}
+                    {activeTab === 4 && <TimelineTab />}
                 </Animated.View>
             </ScrollView>
         </View>
@@ -108,6 +109,63 @@ function ScienceTab() {
                     <Text style={styles.cardBody}>{item.meaning}</Text>
                 </View>
             ))}
+        </View>
+    );
+}
+
+/* ────────────── FOREARMS TAB ────────────── */
+function ForearmsTab() {
+    return (
+        <View style={styles.tabContent}>
+            <Text style={styles.tabHeaderTitle}>FOREARM PROTOCOL</Text>
+            <Text style={styles.tabHeaderDesc}>The complete breakdown of direct forearm training and muscle targets.</Text>
+
+            {/* The Honest Truth Card */}
+            <View style={[styles.premiumCard, { borderColor: "rgba(227,30,36,0.3)" }]}>
+                <LinearGradient
+                    colors={["rgba(227,30,36,0.05)", "transparent"]}
+                    style={StyleSheet.absoluteFill}
+                />
+                <View style={styles.cardHeader}>
+                    <View style={[styles.accentBadge, { backgroundColor: "rgba(227,30,36,0.15)", borderColor: COLORS.primary }]}>
+                        <Ionicons name="barbell-outline" size={14} color={COLORS.primary} />
+                    </View>
+                    <Text style={[styles.cardTitle, { color: COLORS.primary }]}>THE HONEST TRUTH</Text>
+                </View>
+                <Text style={styles.cardBody}>{FOREARM_PROTOCOL_INFO.truth}</Text>
+            </View>
+
+            {/* Muscle Targets */}
+            <Text style={[styles.tabHeaderTitle, { fontSize: 18, marginTop: 12, marginBottom: 12 }]}>THE 3 TARGETS</Text>
+            {FOREARM_PROTOCOL_INFO.targets.map((target, idx) => (
+                <View key={idx} style={styles.premiumCard}>
+                    <LinearGradient
+                        colors={["rgba(255,255,255,0.03)", "transparent"]}
+                        style={StyleSheet.absoluteFill}
+                    />
+                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                        <Text style={{ fontSize: 15, fontFamily: FAMILY.bold, color: COLORS.text }}>{target.muscle}</Text>
+                        <Text style={{ fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.primary }}>{target.where}</Text>
+                    </View>
+                    <Text style={{ fontSize: 12, fontFamily: FAMILY.medium, color: COLORS.textMuted, marginBottom: 4 }}>
+                        Exercise: <Text style={{ color: COLORS.textSub, fontFamily: FAMILY.bold }}>{target.exercise}</Text>
+                    </Text>
+                    <Text style={{ fontSize: 12, fontFamily: FAMILY.regular, color: COLORS.textSub }}>
+                        Target: {target.function}
+                    </Text>
+                </View>
+            ))}
+
+            {/* Bonus Hack Card */}
+            <View style={[styles.premiumCard, { borderColor: "rgba(255,255,255,0.12)", backgroundColor: "rgba(255,255,255,0.02)" }]}>
+                <View style={styles.cardHeader}>
+                    <View style={[styles.accentBadge, { backgroundColor: "rgba(255,255,255,0.08)" }]}>
+                        <Ionicons name="flash" size={14} color="#FF9500" />
+                    </View>
+                    <Text style={[styles.cardTitle, { color: "#FF9500" }]}>FOREARM HACK (TIME-UNDER-TENSION)</Text>
+                </View>
+                <Text style={styles.cardBody}>{FOREARM_PROTOCOL_INFO.bonusHack}</Text>
+            </View>
         </View>
     );
 }

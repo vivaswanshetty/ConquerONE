@@ -3,7 +3,7 @@
 export const WORKOUT_PLAN = [
     {
         day: 1,
-        target: "Chest & Triceps",
+        target: "Chest + Triceps",
         dayName: "Monday",
         emoji: "💪",
         color: "#E31E24",
@@ -21,9 +21,9 @@ export const WORKOUT_PLAN = [
                 primaryTarget: "Mid Chest",
                 image: null,
                 tips: [
-                    "Pyramid down in weight as reps go up.",
                     "Feet flat, arch back slightly, pinch shoulder blades.",
-                    "Bar touches mid-chest controlled, press up explosively."
+                    "Bar touches mid-chest controlled, press up explosively.",
+                    "Start with the bar and work up. Your #1 chest builder for life."
                 ],
                 equipment: "Barbell",
                 unilateral: false,
@@ -39,13 +39,31 @@ export const WORKOUT_PLAN = [
                 primaryTarget: "Upper Chest",
                 image: null,
                 tips: [
-                    "Set bench angle to 30–45 degrees.",
-                    "Get a full stretch at the bottom.",
+                    "Bench at 30–45°. Full stretch at bottom.",
+                    "Upper chest is the most visible from the front.",
                     "Maintain a controlled tempo throughout."
                 ],
                 equipment: "Dumbbells",
                 unilateral: false,
                 tag: "UPPER CHEST"
+            },
+            {
+                name: "Cable Crossover — High to Low",
+                sets: 3,
+                type: "reps",
+                repRange: "12-15",
+                activeTimeSec: 45,
+                restTimeSec: 60,
+                primaryTarget: "Lower + Inner Chest",
+                image: null,
+                tips: [
+                    "Cables at top, step forward, pull down and across.",
+                    "Constant tension. Better than machine chest press.",
+                    "Squeeze hard at peak contraction."
+                ],
+                equipment: "Cable Machine",
+                unilateral: false,
+                tag: "LOWER + INNER CHEST"
             },
             {
                 name: "Cable Fly — Low to High",
@@ -54,34 +72,16 @@ export const WORKOUT_PLAN = [
                 repRange: "12-15",
                 activeTimeSec: 45,
                 restTimeSec: 60,
-                primaryTarget: "Inner + Upper Chest",
+                primaryTarget: "Upper + Inner Chest",
                 image: null,
                 tips: [
-                    "Set cables at the lowest pulley, pull upward and across.",
-                    "Maintain constant tension throughout.",
-                    "Feel the deep squeeze at the top of the movement."
+                    "Cables at bottom, pull upward and across.",
+                    "Great pump finisher for inner and upper chest.",
+                    "Maintain constant tension throughout the arc."
                 ],
                 equipment: "Cable Machine",
                 unilateral: false,
-                tag: "INNER + UPPER"
-            },
-            {
-                name: "Machine Chest Press",
-                sets: 3,
-                type: "reps",
-                repRange: "12-15",
-                activeTimeSec: 45,
-                restTimeSec: 60,
-                primaryTarget: "Chest Pump",
-                image: null,
-                tips: [
-                    "Great finishing movement.",
-                    "Lets you push to failure safely.",
-                    "Focus on squeezing the chest at full extension."
-                ],
-                equipment: "Machine",
-                unilateral: false,
-                tag: "PUMP + ISOLATION"
+                tag: "UPPER + INNER CHEST"
             },
             {
                 name: "Cable Tricep Pushdown — Rope",
@@ -93,13 +93,13 @@ export const WORKOUT_PLAN = [
                 primaryTarget: "Triceps (Lateral Head)",
                 image: null,
                 tips: [
-                    "Keep your elbows glued to your sides.",
-                    "Flare the rope outward at the bottom.",
-                    "Triceps make up 2/3 of your arm size, prioritize them."
+                    "Elbows glued to sides. Flare rope outward at bottom.",
+                    "Triceps = 2/3 of arm size — they matter more than biceps.",
+                    "Control the return to 90 degrees."
                 ],
                 equipment: "Cable Machine",
                 unilateral: false,
-                tag: "LATERAL HEAD"
+                tag: "TRICEP LATERAL HEAD"
             },
             {
                 name: "Overhead Cable Tricep Extension",
@@ -111,25 +111,25 @@ export const WORKOUT_PLAN = [
                 primaryTarget: "Triceps (Long Head)",
                 image: null,
                 tips: [
-                    "Face away from the cable machine, arms overhead.",
-                    "The long head only gets fully stretched overhead.",
+                    "Face away from cable, arms overhead.",
+                    "Long head only fully stretches overhead — it's the biggest tricep head.",
                     "Control the stretch at the bottom before extending."
                 ],
                 equipment: "Cable Machine",
                 unilateral: false,
-                tag: "LONG HEAD"
+                tag: "TRICEP LONG HEAD"
             }
         ]
     },
     {
         day: 2,
-        target: "Back & Biceps",
+        target: "Back + Biceps + Forearms",
         dayName: "Tuesday",
         emoji: "🏋️",
         color: "#5856D6",
         gradient: ["#5856D6", "#2B2A6B"],
         headerImage: require("../../assets/back_header_premium.png"),
-        focus: "Barbell Row is king here. A thick back = the illusion of width even at your current weight.",
+        focus: "Barbell Row is king. Every pulling rep also trains your forearms indirectly — grip hard on every set.",
         exercises: [
             {
                 name: "Barbell Bent-Over Row",
@@ -141,9 +141,9 @@ export const WORKOUT_PLAN = [
                 primaryTarget: "Mid & Lower Back",
                 image: null,
                 tips: [
-                    "Hinge at the hips to 45 degrees, chest up, row to lower rib cage.",
-                    "Hits mid/lower traps, rhomboids, and lats simultaneously.",
-                    "This is the upper body squat. Never skip it."
+                    "Hinge to 45°, chest up, row to lower ribs.",
+                    "Hits mid traps, rhomboids, lats simultaneously.",
+                    "Every pulling rep trains your forearms indirectly — grip hard."
                 ],
                 equipment: "Barbell",
                 unilateral: false,
@@ -159,9 +159,9 @@ export const WORKOUT_PLAN = [
                 primaryTarget: "Lats (Width)",
                 image: null,
                 tips: [
-                    "Pull the bar to your upper chest.",
-                    "Drive your elbows DOWN, not backward.",
-                    "Full stretch at the top. This builds your V-taper."
+                    "Pull to upper chest, elbows drive DOWN not back.",
+                    "V-taper comes from lats. Full stretch at top.",
+                    "Hold contraction for 2 extra seconds on last set for forearms."
                 ],
                 equipment: "Lat Pulldown Machine",
                 unilateral: false,
@@ -174,30 +174,30 @@ export const WORKOUT_PLAN = [
                 repRange: "10-12",
                 activeTimeSec: 45,
                 restTimeSec: 90,
-                primaryTarget: "Mid Back (Thickness)",
+                primaryTarget: "Mid Back Thickness",
                 image: null,
                 tips: [
-                    "Pull to your belly button.",
-                    "Squeeze your shoulder blades hard together at peak contraction.",
-                    "Builds 3D back thickness."
+                    "Pull to belly button, squeeze blades hard together.",
+                    "Builds 3D mid-back thickness.",
+                    "Hold 2 sec at the end of every rep."
                 ],
                 equipment: "Cable Row Machine",
                 unilateral: false,
-                tag: "MID BACK"
+                tag: "MID BACK THICKNESS"
             },
             {
                 name: "Single Arm Dumbbell Row",
                 sets: 3,
                 type: "reps",
-                repRange: "10-12",
+                repRange: "10-12 each",
                 activeTimeSec: 45,
                 restTimeSec: 60,
                 primaryTarget: "Lats",
                 image: null,
                 tips: [
-                    "Drive your elbow to the ceiling, not backward.",
-                    "Get a full stretch at the bottom.",
-                    "Unilateral exercise: prevents stronger side compensation."
+                    "Drive elbow to ceiling. Full stretch at bottom.",
+                    "Unilateral — can't compensate with stronger side.",
+                    "Keep torso stable without rotating."
                 ],
                 equipment: "Dumbbell",
                 unilateral: true,
@@ -213,9 +213,9 @@ export const WORKOUT_PLAN = [
                 primaryTarget: "Rear Delts & Posture",
                 image: null,
                 tips: [
-                    "Set cable at face height, pull to ears.",
-                    "Externally rotate hands at the end of the pull.",
-                    "Critical for shoulder health and posture. Non-negotiable."
+                    "Cable at face height, pull to ears, externally rotate.",
+                    "Best exercise for posture + long-term shoulder health.",
+                    "Squeeze rear delts hard at peak contraction."
                 ],
                 equipment: "Cable Machine",
                 unilateral: false,
@@ -228,28 +228,64 @@ export const WORKOUT_PLAN = [
                 repRange: "8-12",
                 activeTimeSec: 45,
                 restTimeSec: 60,
-                primaryTarget: "Biceps",
+                primaryTarget: "Bicep Peak",
                 image: null,
                 tips: [
+                    "Control the negative (lower in 3 sec) — biceps grow more on the way down.",
                     "EZ bar is much easier on wrists than straight bar.",
-                    "Control the negative — biceps grow more on the way down.",
                     "Do not swing your torso."
                 ],
                 equipment: "EZ Bar",
                 unilateral: false,
                 tag: "BICEP PEAK"
+            },
+            {
+                name: "EZ Bar Reverse Curl",
+                sets: 4,
+                type: "reps",
+                repRange: "10-12",
+                activeTimeSec: 45,
+                restTimeSec: 60,
+                primaryTarget: "Brachioradialis & Forearms",
+                image: null,
+                tips: [
+                    "FOREARM FINISHER. Overhand grip on EZ bar, curl up.",
+                    "The #1 exercise for forearm thickness.",
+                    "Will feel hard vs regular curl — that's normal. It IS harder."
+                ],
+                equipment: "EZ Bar",
+                unilateral: false,
+                tag: "FOREARM — BRACHIORADIALIS"
+            },
+            {
+                name: "Dead Hang",
+                sets: 3,
+                type: "timer",
+                repRange: "30–45 sec",
+                activeTimeSec: 45,
+                restTimeSec: 45,
+                primaryTarget: "Grip Strength & Forearm Flexors",
+                image: null,
+                tips: [
+                    "FOREARM FINISHER. Hang from pull-up bar, fully relax hands.",
+                    "Builds grip strength + stretches forearm flexors hard.",
+                    "Decompresses spine and increases crushing grip endurance."
+                ],
+                equipment: "Pull-up Bar",
+                unilateral: false,
+                tag: "FOREARM — GRIP + STRETCH"
             }
         ]
     },
     {
         day: 3,
-        target: "Shoulders & Abs",
+        target: "Shoulders + Abs",
         dayName: "Wednesday",
         emoji: "⚡",
         color: "#FF9500",
         gradient: ["#FF9500", "#7A4700"],
         headerImage: require("../../assets/shoulders_header_premium.png"),
-        focus: "Overhead Press first, always. Shoulder width is the fastest visual transformation for your frame.",
+        focus: "Overhead Press first, always. Shoulder width is the fastest visual transformation at your frame.",
         exercises: [
             {
                 name: "Barbell Overhead Press (OHP)",
@@ -261,8 +297,8 @@ export const WORKOUT_PLAN = [
                 primaryTarget: "Shoulders (Full)",
                 image: null,
                 tips: [
-                    "Standing is harder and better for core strength.",
-                    "Bar starts at collarbone, press straight up.",
+                    "Standing is harder and better. Bar starts at collarbone, press straight up.",
+                    "The king of shoulder exercises.",
                     "Push your head slightly forward at the top (lockout)."
                 ],
                 equipment: "Barbell",
@@ -276,12 +312,12 @@ export const WORKOUT_PLAN = [
                 repRange: "12-15",
                 activeTimeSec: 45,
                 restTimeSec: 60,
-                primaryTarget: "Lateral Deltoids",
+                primaryTarget: "Shoulder Width",
                 image: null,
                 tips: [
-                    "Slight forward lean, lead with elbows, slight bend in arm.",
-                    "THIS gives you shoulder width.",
-                    "Do not cheat with momentum — it ruins the activation."
+                    "Slight forward lean, lead with elbows.",
+                    "THIS is what gives you width.",
+                    "No momentum — ruins the entire movement."
                 ],
                 equipment: "Dumbbells",
                 unilateral: false,
@@ -291,35 +327,35 @@ export const WORKOUT_PLAN = [
                 name: "Cable Lateral Raise",
                 sets: 3,
                 type: "reps",
-                repRange: "12-15",
+                repRange: "12-15 each",
                 activeTimeSec: 45,
                 restTimeSec: 60,
-                primaryTarget: "Lateral Deltoids (Tension)",
+                primaryTarget: "Lateral Deltoids (Constant Tension)",
                 image: null,
                 tips: [
-                    "Cable keeps constant tension at the bottom unlike dumbbells.",
-                    "Use cross-body setup, raise away from stack.",
-                    "One of the best isolation movements."
+                    "Cross-body cable, raise away.",
+                    "Keeps tension at the bottom unlike dumbbells.",
+                    "Control the eccentric descent."
                 ],
                 equipment: "Cable Machine",
                 unilateral: true,
-                tag: "WIDTH + TENSION"
+                tag: "WIDTH + CONSTANT TENSION"
             },
             {
-                name: "Rear Delt Fly — Machine or Cable",
+                name: "Rear Delt Fly — Pec Deck Reverse",
                 sets: 4,
                 type: "reps",
                 repRange: "15-20",
                 activeTimeSec: 45,
                 restTimeSec: 60,
-                primaryTarget: "Rear Deltoids",
+                primaryTarget: "Rear Delts",
                 image: null,
                 tips: [
-                    "Rear delts give shoulders a full 3D look from the side/back.",
-                    "Severely undertrained by most. Reverse pec deck is ideal.",
-                    "Keep hands high and elbows out."
+                    "Sit facing pec deck backwards.",
+                    "Rear delts make shoulders look full from side and back. Most neglected muscle.",
+                    "Lead with elbows, squeeze upper back."
                 ],
-                equipment: "Machine / Cables",
+                equipment: "Pec Deck Machine",
                 unilateral: false,
                 tag: "REAR DELT"
             },
@@ -333,9 +369,9 @@ export const WORKOUT_PLAN = [
                 primaryTarget: "Lower Abs",
                 image: null,
                 tips: [
-                    "Hang from pull-up bar, raise legs to 90 degrees.",
-                    "Perform strictly without swinging your body.",
-                    "The best lower ab exercise in existence."
+                    "Hang from pull-up bar, raise legs to 90° without swinging.",
+                    "Single best lower ab exercise.",
+                    "Curl pelvis upward at top for maximum contraction."
                 ],
                 equipment: "Pull-up Bar",
                 unilateral: false,
@@ -351,9 +387,9 @@ export const WORKOUT_PLAN = [
                 primaryTarget: "Upper Abs",
                 image: null,
                 tips: [
-                    "Use rope attachment, kneel down.",
-                    "Crunch down pulling your elbows to your knees.",
-                    "Abs need progressive resistance to grow, not just bodyweight."
+                    "Rope attachment, kneel, crunch elbows to knees.",
+                    "Abs need resistance to grow — bodyweight crunches alone won't do it.",
+                    "Exhale fully and hollow out core on contraction."
                 ],
                 equipment: "Cable Machine",
                 unilateral: false,
@@ -369,7 +405,7 @@ export const WORKOUT_PLAN = [
         color: "#FF2D55",
         gradient: ["#FF2D55", "#7A1528"],
         headerImage: require("../../assets/legs_header_premium.png"),
-        focus: "Barbell Squat is the most important exercise in this entire plan. Do not skip, do not half-rep.",
+        focus: "Barbell Squat is the most important exercise in this entire plan. Full depth or it doesn't count.",
         exercises: [
             {
                 name: "Barbell Back Squat",
@@ -381,9 +417,9 @@ export const WORKOUT_PLAN = [
                 primaryTarget: "Quads & Glutes",
                 image: null,
                 tips: [
-                    "Place bar on upper traps, chest up, knees track over toes.",
-                    "Squat below parallel. Full depth or it doesn't count.",
-                    "Squats raise testosterone and growth hormone system-wide."
+                    "Bar on upper traps, chest up, knees track toes, BELOW PARALLEL.",
+                    "Full depth raises testosterone system-wide.",
+                    "Never skip legs. Squats trigger systemic growth."
                 ],
                 equipment: "Barbell",
                 unilateral: false,
@@ -399,11 +435,11 @@ export const WORKOUT_PLAN = [
                 primaryTarget: "Hamstrings",
                 image: null,
                 tips: [
-                    "Drag bar down your legs, hinging at the hips.",
-                    "Feel the deep stretch in your hamstrings, drive hips through.",
-                    "If you feel it in your lower back, your hinge form is wrong."
+                    "Bar drags down your legs, hinge at hips, feel the hamstring stretch, drive hips through at the top.",
+                    "Keep a flat back throughout.",
+                    "Push hips back as far as possible."
                 ],
-                equipment: "Barbell / Dumbbells",
+                equipment: "Barbell",
                 unilateral: false,
                 tag: "HAMSTRINGS"
             },
@@ -417,9 +453,9 @@ export const WORKOUT_PLAN = [
                 primaryTarget: "Quad Volume",
                 image: null,
                 tips: [
-                    "Feet shoulder width apart, do not let knees cave inward.",
-                    "Go deep (at least 90 degrees).",
-                    "Add a drop set on your last working set."
+                    "Feet shoulder width, don't let knees cave, go to at least 90°.",
+                    "Drop set on last set.",
+                    "Drive through mid-foot and heels."
                 ],
                 equipment: "Leg Press Machine",
                 unilateral: false,
@@ -432,12 +468,12 @@ export const WORKOUT_PLAN = [
                 repRange: "10-12",
                 activeTimeSec: 45,
                 restTimeSec: 90,
-                primaryTarget: "Hamstrings (Isolation)",
+                primaryTarget: "Hamstrings",
                 image: null,
                 tips: [
-                    "Keep hips pressed firmly into pad throughout.",
-                    "Curl up explosively, lower slowly (3 seconds negative).",
-                    "The negative is where hamstrings grow most."
+                    "Curl explosively, lower slowly in 3 sec.",
+                    "The slow negative is where hamstrings actually grow.",
+                    "Keep hips anchored to pad."
                 ],
                 equipment: "Lying Leg Curl Machine",
                 unilateral: false,
@@ -453,9 +489,9 @@ export const WORKOUT_PLAN = [
                 primaryTarget: "Quad Isolation",
                 image: null,
                 tips: [
-                    "Full knee extension, squeeze at the top for 1 second.",
-                    "Great for quad definition and teardrop muscle.",
-                    "Do not use this as your only quad work."
+                    "Full extension, squeeze at top for 1 second.",
+                    "Builds quad definition and teardrop shape.",
+                    "Control the downward phase."
                 ],
                 equipment: "Leg Extension Machine",
                 unilateral: false,
@@ -471,9 +507,9 @@ export const WORKOUT_PLAN = [
                 primaryTarget: "Calves",
                 image: null,
                 tips: [
-                    "Full range of motion: stretch all the way down, rise to toes.",
-                    "Calves have slow-twitch fibres — they need high volume and range.",
-                    "Hold the contraction at the peak for a split second."
+                    "Full range — stretch all the way down, full tiptoe at top.",
+                    "Calves need high volume + full range to grow.",
+                    "Hold peak contraction for 1 full second."
                 ],
                 equipment: "Calf Raise Machine",
                 unilateral: false,
@@ -483,13 +519,13 @@ export const WORKOUT_PLAN = [
     },
     {
         day: 5,
-        target: "Chest & Back (Heavy)",
+        target: "Chest + Back (Heavy)",
         dayName: "Friday",
         emoji: "🔥",
         color: "#E31E24",
         gradient: ["#E31E24", "#5856D6"],
         headerImage: require("../../assets/back_header_premium.png"),
-        focus: "Heavy compound day. Different angles from Monday. No machines today — just barbells and cables.",
+        focus: "Heavy compound day. Different angles from Monday. Barbells and cables only — no machines.",
         exercises: [
             {
                 name: "Incline Barbell Press",
@@ -501,9 +537,9 @@ export const WORKOUT_PLAN = [
                 primaryTarget: "Upper Chest",
                 image: null,
                 tips: [
-                    "Upper chest is the weakest area for beginners and highly visible.",
-                    "30 degree incline, same arch/shoulder blade rules as bench.",
-                    "Controlled descent to upper collarbone region."
+                    "Upper chest = most visible + weakest in beginners. 30° incline.",
+                    "Same cues as flat bench.",
+                    "Lower controlled to upper chest collarbone level."
                 ],
                 equipment: "Barbell",
                 unilateral: false,
@@ -516,12 +552,12 @@ export const WORKOUT_PLAN = [
                 repRange: "6-10",
                 activeTimeSec: 45,
                 restTimeSec: 120,
-                primaryTarget: "Lats (Width)",
+                primaryTarget: "Lat Width",
                 image: null,
                 tips: [
-                    "Add weight via belt or hold dumbbell between feet if bodyweight is easy.",
+                    "Add weight via belt or DB between feet when bodyweight is easy.",
                     "The barbell squat of upper body pulling.",
-                    "Drive elbows down to engage lats. Full hang at bottom."
+                    "Full hang stretch at bottom, chin over bar."
                 ],
                 equipment: "Pull-up Bar + Weight",
                 unilateral: false,
@@ -537,9 +573,9 @@ export const WORKOUT_PLAN = [
                 primaryTarget: "Lower Chest",
                 image: null,
                 tips: [
-                    "Lean forward to hit the chest. Staying upright hits triceps.",
-                    "Add weight once bodyweight is easy.",
-                    "Hits lower chest in a way flat bench cannot."
+                    "Lean forward to target chest, not upright.",
+                    "Add weight when bodyweight is easy.",
+                    "Lower to 90 degrees elbow bend."
                 ],
                 equipment: "Dip Bars + Weight",
                 unilateral: false,
@@ -555,11 +591,11 @@ export const WORKOUT_PLAN = [
                 primaryTarget: "Back Thickness",
                 image: null,
                 tips: [
-                    "Chest-supported setup removes the lower back from the equation.",
-                    "Pure back work. Drive elbows back.",
-                    "Squeeze shoulder blades hard at the top of every rep."
+                    "Chest supported removes lower back. Pure back work.",
+                    "Drive elbows back, squeeze hard at top.",
+                    "Control the stretch forward."
                 ],
-                equipment: "T-Bar Row Machine / Barbell",
+                equipment: "T-Bar Row / Barbell",
                 unilateral: false,
                 tag: "BACK THICKNESS"
             },
@@ -570,28 +606,28 @@ export const WORKOUT_PLAN = [
                 repRange: "12-15",
                 activeTimeSec: 45,
                 restTimeSec: 60,
-                primaryTarget: "Lower & Inner Chest",
+                primaryTarget: "Lower Chest Finisher",
                 image: null,
                 tips: [
-                    "Set cables at the top, pull downward and across.",
-                    "Excellent finisher for the chest.",
-                    "Hits lower chest without putting excessive load on joints."
+                    "Cables at top, pull down and across.",
+                    "Ends chest day without further loading the joints.",
+                    "Squeeze lower pecs at bottom cross."
                 ],
                 equipment: "Cable Machine",
                 unilateral: false,
-                tag: "LOWER CHEST"
+                tag: "LOWER CHEST FINISHER"
             }
         ]
     },
     {
         day: 6,
-        target: "Arms & Abs",
+        target: "Arms + Forearms + Abs",
         dayName: "Saturday",
         emoji: "💪",
         color: "#007AFF",
         gradient: ["#007AFF", "#003D7A"],
         headerImage: require("../../assets/abs_header_premium.jpg"),
-        focus: "Pure arm day. Biceps and triceps are fresh, nothing pre-fatigued. Go heavy and feel every rep.",
+        focus: "Arms and forearms completely fresh today. The only day in the week with full dedicated forearm volume.",
         exercises: [
             {
                 name: "Barbell Curl",
@@ -603,9 +639,9 @@ export const WORKOUT_PLAN = [
                 primaryTarget: "Bicep Mass",
                 image: null,
                 tips: [
-                    "The absolute best mass builder for biceps.",
-                    "Elbows stay slightly forward at the top to keep tension.",
-                    "Control the negative (2–3 seconds down)."
+                    "Best mass builder for biceps. Elbows slightly forward at top.",
+                    "Control the negative 2–3 sec.",
+                    "No swinging torso."
                 ],
                 equipment: "Barbell",
                 unilateral: false,
@@ -618,16 +654,16 @@ export const WORKOUT_PLAN = [
                 repRange: "10-12",
                 activeTimeSec: 45,
                 restTimeSec: 60,
-                primaryTarget: "Bicep Peak (Long Head)",
+                primaryTarget: "Bicep Long Head (Peak)",
                 image: null,
                 tips: [
-                    "Set incline bench at 45–60 degrees, let arms hang straight down.",
-                    "This fully stretches the long head of the bicep for peak height.",
-                    "Slow, controlled reps. Keep elbows back."
+                    "Bench at 45–60°, arms hang straight.",
+                    "Fully stretches long head — gives you the bicep peak.",
+                    "Keep elbows pointing straight down."
                 ],
                 equipment: "Dumbbells + Incline Bench",
                 unilateral: false,
-                tag: "LONG HEAD STRETCH"
+                tag: "BICEP LONG HEAD"
             },
             {
                 name: "Hammer Curl",
@@ -639,13 +675,13 @@ export const WORKOUT_PLAN = [
                 primaryTarget: "Brachialis & Forearms",
                 image: null,
                 tips: [
-                    "Use a neutral grip (palms facing each other).",
-                    "Hits the brachialis, pushing the bicep UP for visual thickness.",
-                    "Also hits forearm brachioradialis."
+                    "Neutral grip. Hits brachialis which pushes the bicep UP.",
+                    "Also hits brachioradialis for forearm thickness.",
+                    "Strict form with no shoulder sway."
                 ],
                 equipment: "Dumbbells",
                 unilateral: false,
-                tag: "BRACHIALIS"
+                tag: "BRACHIALIS + FOREARM"
             },
             {
                 name: "Close Grip Bench Press",
@@ -657,16 +693,16 @@ export const WORKOUT_PLAN = [
                 primaryTarget: "Tricep Mass",
                 image: null,
                 tips: [
-                    "Hands shoulder-width apart, elbows tucked to ribs.",
-                    "The best compound mass builder for triceps.",
-                    "Allows heavier loading than isolation movements."
+                    "Hands shoulder-width, elbows tucked.",
+                    "Best mass builder for triceps bar none.",
+                    "Lower bar to lower sternum."
                 ],
                 equipment: "Barbell",
                 unilateral: false,
                 tag: "TRICEP MASS"
             },
             {
-                name: "Cable Pushdown — Bar",
+                name: "Cable Pushdown — Straight Bar",
                 sets: 3,
                 type: "reps",
                 repRange: "12-15",
@@ -675,13 +711,85 @@ export const WORKOUT_PLAN = [
                 primaryTarget: "Triceps (Lateral Head)",
                 image: null,
                 tips: [
-                    "Straight bar provides more lateral head activation.",
-                    "Elbows pinned to sides. Full extension at bottom.",
-                    "Control the release."
+                    "Elbows pinned. Full extension at bottom.",
+                    "Straight bar = more supination = more lateral head.",
+                    "Lock out hard at bottom."
                 ],
                 equipment: "Cable Machine",
                 unilateral: false,
-                tag: "LATERAL HEAD"
+                tag: "TRICEP LATERAL HEAD"
+            },
+            {
+                name: "EZ Bar Reverse Curl",
+                sets: 4,
+                type: "reps",
+                repRange: "10-12",
+                activeTimeSec: 45,
+                restTimeSec: 60,
+                primaryTarget: "Forearms (Brachioradialis)",
+                image: null,
+                tips: [
+                    "FOREARM. Overhand grip, curl up.",
+                    "The single best exercise for forearm thickness and visual size.",
+                    "Do not swing — keep elbows tight."
+                ],
+                equipment: "EZ Bar",
+                unilateral: false,
+                tag: "FOREARM — BRACHIORADIALIS"
+            },
+            {
+                name: "Barbell Wrist Curl",
+                sets: 3,
+                type: "reps",
+                repRange: "15-20",
+                activeTimeSec: 45,
+                restTimeSec: 45,
+                primaryTarget: "Forearms (Flexors)",
+                image: null,
+                tips: [
+                    "FOREARM. Sit on bench, forearms on thighs, let bar roll to fingertips, curl up.",
+                    "Inner forearm bulk.",
+                    "Use full range of motion."
+                ],
+                equipment: "Barbell / Dumbbell",
+                unilateral: false,
+                tag: "FOREARM — FLEXORS"
+            },
+            {
+                name: "Reverse Wrist Curl",
+                sets: 3,
+                type: "reps",
+                repRange: "15-20",
+                activeTimeSec: 45,
+                restTimeSec: 45,
+                primaryTarget: "Forearms (Extensors)",
+                image: null,
+                tips: [
+                    "FOREARM. Same position, overhand grip, extend wrist up.",
+                    "Outer forearm definition.",
+                    "Go much lighter than wrist curl."
+                ],
+                equipment: "Barbell / Dumbbell",
+                unilateral: false,
+                tag: "FOREARM — EXTENSORS"
+            },
+            {
+                name: "Farmer's Walk",
+                sets: 3,
+                type: "timer",
+                repRange: "30 sec walk",
+                activeTimeSec: 30,
+                restTimeSec: 60,
+                primaryTarget: "Forearms (Overall Thickness)",
+                image: null,
+                tips: [
+                    "FOREARM. Heaviest DBs you can hold for 30 sec, walk laps.",
+                    "The best overall forearm size + grip builder in existence.",
+                    "Grip should fail around 25–30 sec. That's the right weight."
+                ],
+                equipment: "Heavy Dumbbells",
+                unilateral: false,
+                tag: "FOREARM — OVERALL THICKNESS"
             },
             {
                 name: "Ab Wheel Rollout",
@@ -690,34 +798,16 @@ export const WORKOUT_PLAN = [
                 repRange: "8-12",
                 activeTimeSec: 45,
                 restTimeSec: 60,
-                primaryTarget: "Core Stability",
+                primaryTarget: "Full Core",
                 image: null,
                 tips: [
-                    "Hardest core exercise. Roll out until back is almost flat.",
-                    "Pull back in using ABS only, do not pull with hips.",
-                    "Builds core stability and visible abs simultaneously."
+                    "Hardest core exercise in the gym.",
+                    "Roll out until back flat, pull back using abs only.",
+                    "Do not pull from the hips."
                 ],
                 equipment: "Ab Wheel",
                 unilateral: false,
                 tag: "FULL CORE"
-            },
-            {
-                name: "Weighted Plank",
-                sets: 3,
-                type: "timer",
-                repRange: "45-60 sec",
-                activeTimeSec: 60,
-                restTimeSec: 60,
-                primaryTarget: "Core Strength",
-                image: null,
-                tips: [
-                    "Place a plate on your back.",
-                    "Squeeze glutes and abs simultaneously.",
-                    "Core is a muscle — it needs progressive resistance to grow."
-                ],
-                equipment: "Weight Plate + Plank",
-                unilateral: false,
-                tag: "CORE STABILITY"
             }
         ]
     }
@@ -747,51 +837,51 @@ export const PLAN_TIPS = [
 
 export const PLAN_SCIENCE = [
     {
-        principle: "Chest + Back hit 2x/week",
-        meaning: "Muscle protein synthesis peaks at 48 hours. Hitting each muscle twice weekly maximises growth stimulus."
+        principle: "Chest+Back hit 2x/week",
+        meaning: "Protein synthesis peaks at 48h — hitting each muscle twice weekly maximises growth."
     },
     {
-        principle: "Arms trained fresh on Wed",
-        meaning: "Biceps and triceps get direct work when fully recovered, not pre-fatigued from heavy compound movements."
+        principle: "Arms + Forearms on Sat",
+        meaning: "Both muscles fresh, not pre-fatigued. Dedicated forearm protocol added."
     },
     {
         principle: "Legs get their own day",
-        meaning: "Legs make up 40% of total muscle mass. Heavy squats trigger systemic anabolic hormone release."
+        meaning: "Legs = 40% total muscle mass. Squats raise testosterone system-wide."
     },
     {
         principle: "Fri is heavy compound day",
-        meaning: "Second chest + back session using different angles and no machines, keeping adaptation from plateauing."
+        meaning: "Different angles from Mon — stops adaptation from plateauing."
     },
     {
-        principle: "Sat is pure arms + abs",
-        meaning: "Arms get a second dedicated session. At 19, arms respond fast to targeted frequency."
+        principle: "Forearms trained 3x/week",
+        meaning: "Indirectly on back day + directly on arms day + dedicated finishers. Maximum stimulus."
     }
 ];
 
 export const PLAN_RULES = [
     {
         rule: "PROGRESSIVE OVERLOAD",
-        desc: "Every single session, beat at least ONE number from last week. One more rep. 2.5 kg more weight. Anything. This is the entire game of muscle growth."
+        desc: "Every session beat at least ONE number from last week. One more rep, 2.5kg more. This is the entire game."
     },
     {
         rule: "LOG EVERYTHING",
-        desc: "Open Notes/Log after every single set. Record weight and reps. If you don't track it, it didn't happen."
+        desc: "Notes app after every set — Exercise · Weight · Reps. No log = no progress."
     },
     {
         rule: "WARM-UP IS MANDATORY",
-        desc: "5 mins cardio + 2 warm-up sets of every main compound lift before working sets. Joint safety first, ego second."
+        desc: "5 min cardio + 2 warm-up sets of every compound. Joints first, ego second."
     },
     {
         rule: "REST TIMES ARE RULES",
-        desc: "Compounds: 2-3 mins rest. Isolation: 60-90 secs rest. Cutting rest short limits your strength and cuts gains short."
-    },
-    {
-        rule: "MIND-MUSCLE CONNECTION",
-        desc: "Feel the target muscle contract. If you cannot feel your chest contracting on bench press, the weight is too heavy or form is wrong."
+        desc: "Compounds: 2–3 min. Isolation: 60–90 sec. Cutting rest = cutting gains."
     },
     {
         rule: "NEVER SKIP LEGS",
-        desc: "Leg training raises testosterone and growth hormone system-wide. Squatting makes your entire body grow, not just your thighs."
+        desc: "Every guy skips legs. Don't be that guy. Squats raise testosterone system-wide."
+    },
+    {
+        rule: "FOREARM FINISHERS ARE NON-OPTIONAL",
+        desc: "Added at the end of Tue and Sat. Do not skip them — forearms need frequency."
     }
 ];
 
@@ -800,25 +890,25 @@ export const PROGRESSION_SYSTEM = [
         week: "W 1–2",
         setsReps: "5 × 10",
         isoReps: "12–15 reps",
-        focus: "Technique first. Film your lifts. Zero ego. Establish your baselines."
+        focus: "Technique first. Film every compound. Zero ego. Establish your baselines."
     },
     {
         week: "W 3–4",
         setsReps: "5 × 8",
         isoReps: "12–15 reps",
-        focus: "Add weight. First real progressive overload push begins."
+        focus: "Add weight. First real progressive overload weeks."
     },
     {
         week: "W 5–6",
         setsReps: "5 × 6",
         isoReps: "10–12 reps",
-        focus: "Go heavier. Strength phase begins. Weights and numbers jump here."
+        focus: "Go heavier. Strength phase begins. Numbers jump noticeably."
     },
     {
         week: "W 7–8",
         setsReps: "5 × 5",
         isoReps: "10–12 reps",
-        focus: "Peak strength phase. Max heavy lifting. Best muscle gains of the 12 weeks."
+        focus: "Peak strength phase. Max heavy lifting. Best gains of the 12 weeks."
     },
     {
         week: "W 9–10",
@@ -830,32 +920,58 @@ export const PROGRESSION_SYSTEM = [
         week: "W 11–12",
         setsReps: "4 × 10",
         isoReps: "12–15 reps",
-        focus: "Attempt PRs! Test your 1-rep maximums on all compound lifts."
+        focus: "Test your 1-rep max on all compound lifts."
     }
 ];
 
 export const RESULTS_TIMELINE = [
     {
         time: "Month 1",
-        result: "Strength jumps dramatically due to nervous system adaptation. Mirror look stays same."
+        result: "Strength jumps fast — nervous system learning. Mirror looks the same. Normal."
     },
     {
         time: "Month 2",
-        result: "People notice. Chest and shoulders show first at low body fat."
+        result: "People notice. Chest and shoulders show first. Forearms start looking more defined."
     },
     {
         time: "Month 3",
-        result: "Arms are measurably larger. Back gets that 3D wide V-taper. Scale up 2-3 kg minimum."
+        result: "Arms measurably bigger. Back 3D. Forearms noticeably thicker from the brachioradialis."
     },
     {
         time: "Month 6",
-        result: "Unrecognisable from start photos. 5-6 kg of actual muscle mass added."
+        result: "Unrecognisable from starting photos. 5–6 kg actual muscle. Forearms no longer a concern."
     },
     {
         time: "Month 12",
-        result: "8-12 kg of muscle added. On a 172cm frame, this is an extreme visual transformation."
+        result: "8–12 kg of muscle. At your body fat, every kg is visible. Forearms match the rest."
     }
 ];
+
+export const FOREARM_PROTOCOL_INFO = {
+    title: "FOREARM PROTOCOL — THE FULL BREAKDOWN",
+    truth: "Forearms are the most genetically determined muscle group. Muscle belly length and insertions are largely fixed. BUT the brachioradialis — the thick muscle on top of your forearm — DOES grow significantly with training. Wrist flexors and extensors add measurable thickness too. Expect real results in 4–6 months of consistent direct work. Not 4 weeks.",
+    targets: [
+        {
+            muscle: "Brachioradialis",
+            where: "Top of forearm — most visible",
+            exercise: "Reverse Curl, Hammer Curl",
+            function: "Forearm flexion with neutral grip"
+        },
+        {
+            muscle: "Wrist Flexors",
+            where: "Inner forearm (palm side)",
+            exercise: "Wrist Curl",
+            function: "Curl the wrist downward"
+        },
+        {
+            muscle: "Wrist Extensors",
+            where: "Outer forearm (back of hand)",
+            exercise: "Reverse Wrist Curl",
+            function: "Extend the wrist upward"
+        }
+    ],
+    bonusHack: "On your last set of every pulling exercise (rows, pulldowns, pull-ups) — hold the contraction for 2 extra seconds before releasing. This massively increases forearm time-under-tension with zero extra time added to your session. Grip strength = forearm size stimulus."
+};
 
 export const PLAN_SECRET = {
     title: "THE ONLY SECRET",
@@ -876,15 +992,18 @@ export const SUGGESTED_WEIGHTS = {
     "cable tricep pushdown — rope": "15–25 kg",
     "lat pulldown — wide grip": "35–50 kg",
     "seated cable row — close grip": "30–45 kg",
+    "barbell wrist curl": "10–15 kg",
     "wrist curl": "10–15 kg",
     "reverse wrist curl": "5–10 kg",
     "farmer's walk": "16–24 kg ea",
+    "dead hang": "Bodyweight (30–45 sec)",
+    "cable crossover — high to low": "10–20 kg",
     "cable fly — low to high": "10–20 kg",
-    "machine chest press": "20–40 kg",
     "overhead cable tricep extension": "10–20 kg",
     "single arm dumbbell row": "12–20 kg ea",
     "face pulls — cable": "10–20 kg",
     "cable lateral raise": "4–8 kg ea",
+    "rear delt fly — pec deck reverse": "10–20 kg",
     "rear delt fly — machine or cable": "10–20 kg",
     "hanging leg raise": "Bodyweight",
     "cable crunch": "15–25 kg",
@@ -893,22 +1012,17 @@ export const SUGGESTED_WEIGHTS = {
     "leg extension": "15–30 kg",
     "standing calf raise": "20–40 kg",
     "incline barbell press": "25–45 kg",
-    "weighted pull-ups": "Bodyweight",
-    "chest dip — weighted": "Bodyweight",
+    "weighted pull-ups": "Bodyweight (+2.5–10 kg)",
+    "chest dip — weighted": "Bodyweight (+2.5–10 kg)",
     "t-bar row or chest-supported row": "20–35 kg",
     "cable fly — high to low": "10–20 kg",
     "barbell curl": "15–25 kg",
     "incline dumbbell curl": "8–12 kg ea",
     "hammer curl": "10–14 kg ea",
     "close grip bench press": "25–45 kg",
+    "cable pushdown — straight bar": "15–25 kg",
     "cable pushdown — bar": "15–25 kg",
-    "ab wheel rollout": "Bodyweight",
-    "weighted plank": "Bodyweight",
-    "dead hang": "Bodyweight",
-    "barbell wrist curl": "10–15 kg",
-    "rear delt fly — pec deck reverse": "10–20 kg",
-    "cable crossover — high to low": "10–20 kg",
-    "cable pushdown — straight bar": "15–25 kg"
+    "ab wheel rollout": "Bodyweight"
 };
 
 export const getSuggestedWeight = (exerciseName) => {
