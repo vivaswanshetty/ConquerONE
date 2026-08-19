@@ -180,6 +180,45 @@ export default function WorkoutCalendar({ history = [], style }) {
         return historyByDate[selectedDateKey] || [];
     }, [historyByDate, selectedDateKey]);
 
+    // Analysis of currently selected date
+    const selectedDateInfo = useMemo(() => {
+        const [y, m, d] = selectedDateKey.split("-").map(Number);
+        const dateObj = new Date(y, m - 1, d);
+        dateObj.setHours(0, 0, 0, 0);
+
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+
+        const isToday = dateObj.getTime() === now.getTime();
+        const isFuture = dateObj.getTime() > now.getTime();
+        const isPast = dateObj.getTime() < now.getTime();
+        const dayOfWeek = dateObj.getDay(); // 0 is Sunday, 1 is Monday, ... 6 is Saturday
+
+        const isSunday = dayOfWeek === 0;
+
+        const SCHEDULED_PLAN = {
+            1: { target: "Chest + Triceps", color: "#E31E24" },
+            2: { target: "Back + Biceps + Forearms", color: "#5856D6" },
+            3: { target: "Shoulders + Abs", color: "#FF9500" },
+            4: { target: "Legs", color: "#FF2D55" },
+            5: { target: "Chest + Back (Heavy)", color: "#E31E24" },
+            6: { target: "Arms + Forearms + Abs", color: "#007AFF" },
+            0: { target: "Rest & Recovery", color: "#8E8E93" },
+        };
+
+        const plan = SCHEDULED_PLAN[dayOfWeek] || { target: "Workout", color: "#8E8E93" };
+
+        return {
+            dateObj,
+            isToday,
+            isFuture,
+            isPast,
+            isSunday,
+            dayOfWeek,
+            plan,
+        };
+    }, [selectedDateKey]);
+
     // Selected date label formatting
     const selectedDateTitle = useMemo(() => {
         const [y, m, d] = selectedDateKey.split("-").map(Number);
@@ -263,6 +302,11 @@ export default function WorkoutCalendar({ history = [], style }) {
                     const hasWorkout = dayWorkouts.length > 0;
                     const isSelected = cell.dateKey === selectedDateKey;
 
+                    const [y, m, d] = cell.dateKey.split("-").map(Number);
+                    const cellDate = new Date(y, m - 1, d);
+                    const isSunday = cellDate.getDay() === 0;
+                    const isPastMissed = !cell.isFuture && !cell.isToday && !isSunday && !hasWorkout;
+
                     return (
                         <TouchableOpacity
                             key={cell.key}
@@ -272,6 +316,7 @@ export default function WorkoutCalendar({ history = [], style }) {
                                 cell.isToday && styles.cellToday,
                                 hasWorkout && styles.cellWorkout,
                                 isSelected && styles.cellSelected,
+                                isPastMissed && styles.cellMissed,
                             ]}
                             activeOpacity={0.7}
                             onPress={() => {
@@ -289,13 +334,14 @@ export default function WorkoutCalendar({ history = [], style }) {
                                     cell.isToday && styles.cellTextToday,
                                     hasWorkout && styles.cellTextWorkout,
                                     isSelected && styles.cellTextSelected,
+                                    isPastMissed && styles.cellTextMissed,
                                 ]}
                             >
                                 {cell.dateNum}
                             </Text>
 
                             {/* Workout indicators */}
-                            {hasWorkout && (
+                            {hasWorkout ? (
                                 <View style={styles.workoutBadge}>
                                     {dayWorkouts.length > 1 ? (
                                         <Text style={styles.workoutCountText}>{dayWorkouts.length}</Text>
@@ -303,7 +349,11 @@ export default function WorkoutCalendar({ history = [], style }) {
                                         <View style={styles.workoutDot} />
                                     )}
                                 </View>
-                            )}
+                            ) : isSunday && !cell.isFuture ? (
+                                <View style={styles.restDotWrap}>
+                                    <Ionicons name="moon-outline" size={6} color="#636366" />
+                                </View>
+                            ) : null}
                         </TouchableOpacity>
                     );
                 })}
@@ -320,11 +370,45 @@ export default function WorkoutCalendar({ history = [], style }) {
                         <Ionicons name="calendar-outline" size={13} color={COLORS.primary} />
                         <Text style={styles.inspectorTitle}>{selectedDateTitle}</Text>
                     </View>
-                    <View style={styles.inspectorBadge}>
-                        <Text style={styles.inspectorBadgeText}>
+                    <View
+                        style={[
+                            styles.inspectorBadge,
+                            selectedDateWorkouts.length > 0 && {
+                                backgroundColor: "rgba(227, 30, 36, 0.15)",
+                                borderColor: "rgba(227, 30, 36, 0.4)",
+                            },
+                            selectedDateWorkouts.length === 0 && selectedDateInfo.isToday && {
+                                backgroundColor: "rgba(227, 30, 36, 0.15)",
+                                borderColor: "rgba(227, 30, 36, 0.4)",
+                            },
+                            selectedDateWorkouts.length === 0 && selectedDateInfo.isPast && !selectedDateInfo.isSunday && {
+                                backgroundColor: "rgba(255, 69, 58, 0.12)",
+                                borderColor: "rgba(255, 69, 58, 0.35)",
+                            },
+                            selectedDateWorkouts.length === 0 && selectedDateInfo.isSunday && {
+                                backgroundColor: "rgba(255, 255, 255, 0.05)",
+                                borderColor: "rgba(255, 255, 255, 0.1)",
+                            },
+                        ]}
+                    >
+                        <Text
+                            style={[
+                                styles.inspectorBadgeText,
+                                selectedDateWorkouts.length > 0 && { color: COLORS.primary },
+                                selectedDateWorkouts.length === 0 && selectedDateInfo.isToday && { color: COLORS.primary },
+                                selectedDateWorkouts.length === 0 && selectedDateInfo.isPast && !selectedDateInfo.isSunday && { color: "#FF453A" },
+                                selectedDateWorkouts.length === 0 && selectedDateInfo.isSunday && { color: "#8E8E93" },
+                            ]}
+                        >
                             {selectedDateWorkouts.length > 0
                                 ? `${selectedDateWorkouts.length} SESSION${selectedDateWorkouts.length > 1 ? "S" : ""}`
-                                : "REST DAY"}
+                                : selectedDateInfo.isSunday
+                                ? "REST DAY"
+                                : selectedDateInfo.isToday
+                                ? "TODAY'S TARGET"
+                                : selectedDateInfo.isFuture
+                                ? "UPCOMING"
+                                : "MISSED SESSION"}
                         </Text>
                     </View>
                 </View>
@@ -372,11 +456,39 @@ export default function WorkoutCalendar({ history = [], style }) {
                             );
                         })}
                     </View>
+                ) : selectedDateInfo.isSunday ? (
+                    <View style={styles.emptyRestState}>
+                        <Ionicons name="moon-outline" size={20} color="#8E8E93" />
+                        <Text style={[styles.emptyRestText, { color: "#8E8E93" }]}>SCHEDULED REST DAY</Text>
+                        <Text style={styles.emptyRestSub}>Planned recovery day. Protein synthesis & muscle repair.</Text>
+                    </View>
+                ) : selectedDateInfo.isToday ? (
+                    <View style={styles.emptyRestState}>
+                        <Ionicons name="barbell-outline" size={20} color={COLORS.primary} />
+                        <Text style={[styles.emptyRestText, { color: COLORS.text }]}>
+                            {selectedDateInfo.plan.target.toUpperCase()}
+                        </Text>
+                        <Text style={styles.emptyRestSub}>
+                            Pending workout for today. Complete your session to build your streak!
+                        </Text>
+                    </View>
+                ) : selectedDateInfo.isFuture ? (
+                    <View style={styles.emptyRestState}>
+                        <Ionicons name="calendar-outline" size={20} color="rgba(255,255,255,0.4)" />
+                        <Text style={[styles.emptyRestText, { color: COLORS.textSub }]}>
+                            {selectedDateInfo.plan.target.toUpperCase()}
+                        </Text>
+                        <Text style={styles.emptyRestSub}>
+                            Upcoming scheduled session on your 6-day split.
+                        </Text>
+                    </View>
                 ) : (
                     <View style={styles.emptyRestState}>
-                        <Ionicons name="moon-outline" size={20} color="rgba(255,255,255,0.2)" />
-                        <Text style={styles.emptyRestText}>REST & RECOVERY</Text>
-                        <Text style={styles.emptyRestSub}>No workout logged for this date.</Text>
+                        <Ionicons name="close-circle-outline" size={20} color="#FF453A" />
+                        <Text style={[styles.emptyRestText, { color: "#FF453A" }]}>NO WORKOUT LOGGED</Text>
+                        <Text style={styles.emptyRestSub}>
+                            Was scheduled for {selectedDateInfo.plan.target}. No session was recorded.
+                        </Text>
                     </View>
                 )}
             </View>
@@ -531,6 +643,9 @@ const styles = StyleSheet.create({
         borderColor: COLORS.text,
         backgroundColor: "rgba(255, 255, 255, 0.12)",
     },
+    cellMissed: {
+        backgroundColor: "rgba(255, 69, 58, 0.04)",
+    },
     todayGlow: {
         position: "absolute",
         top: 3,
@@ -558,6 +673,9 @@ const styles = StyleSheet.create({
     cellTextSelected: {
         color: "#FFFFFF",
     },
+    cellTextMissed: {
+        color: "rgba(255, 255, 255, 0.3)",
+    },
 
     workoutBadge: {
         position: "absolute",
@@ -575,6 +693,12 @@ const styles = StyleSheet.create({
         fontSize: 7,
         fontFamily: FAMILY.bold,
         color: COLORS.primary,
+    },
+    restDotWrap: {
+        position: "absolute",
+        bottom: 2,
+        alignItems: "center",
+        justifyContent: "center",
     },
 
     // Inspector Card
