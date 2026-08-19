@@ -30,7 +30,7 @@ The interface adheres to an **cyber-athletic** design system:
 - **Accent Theme:** Crimson Red (`#C8202A` / `#E31E24`)
 - **Glassmorphism:** Tinted overlays with subtle borders (`rgba(255,255,255,0.03)`) for high readability in gym environments.
 - **Typography:** Modern tech fonts including *Outfit*, *Urbanist*, *Syne*, and *Arimo*.
-- **Icon Artwork:** TWISTED BICEP logo enhanced with a custom outer red aura glow, scaled perfectly within the native squircle mask to avoid edge clipping.
+- **Icon Artwork:** Tactical Dumbbell & Speed Chevron emblem in Crimson Red (`#E31E24`) and Crisp White on pitch black, paired with extended modern typography.
 
 ---
 
