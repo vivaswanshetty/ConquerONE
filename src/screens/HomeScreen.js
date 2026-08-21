@@ -831,13 +831,13 @@ export default function HomeScreen({ navigation, route }) {
                         activeOpacity={0.8}
                         onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); navigation.navigate("Rank"); }}
                     >
-                        <Text style={styles.statLabelSmall}>Current Rank</Text>
+                        <Text style={styles.statLabelSmall}>Milestone</Text>
                         <Text style={styles.statValueSmall} numberOfLines={1} adjustsFontSizeToFit>{
-                            total >= 100 ? 'Legend' :
-                                total >= 50 ? 'Titan' :
-                                    total >= 25 ? 'Warrior' :
-                                        total >= 10 ? 'Chadlite' :
-                                            total >= 5 ? 'Rookie' : 'Recruit'
+                            total >= 100 ? 'Tier 6' :
+                                total >= 50 ? 'Tier 5' :
+                                    total >= 25 ? 'Tier 4' :
+                                        total >= 10 ? 'Tier 3' :
+                                            total >= 5 ? 'Tier 2' : 'Tier 1'
                         }</Text>
                     </TouchableOpacity>
                 </View>

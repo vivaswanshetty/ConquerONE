@@ -14,12 +14,12 @@ import { useAuth } from "../context/AuthContext";
 const { width } = Dimensions.get("window");
 
 const RANKS = [
-    { level: 1, title: "RECRUIT", icon: "shield-outline", min: 0, max: 4, color: "#6B7280", desc: "Every legend starts with a single rep. Welcome to the arena." },
-    { level: 2, title: "ROOKIE", icon: "star-outline", min: 5, max: 9, color: "#60A5FA", desc: "You've proven you're serious. Keep building momentum." },
-    { level: 3, title: "CHADLITE", icon: "trending-up", min: 10, max: 24, color: "#34D399", desc: "Others are taking notice. Your consistency is paying off." },
-    { level: 4, title: "WARRIOR", icon: "fitness", min: 25, max: 49, color: "#FBBF24", desc: "Battle-tested and relentless. You're in the top tier now." },
-    { level: 5, title: "TITAN", icon: "diamond-outline", min: 50, max: 99, color: "#F97316", desc: "An unstoppable force. Very few reach this stage." },
-    { level: 6, title: "LEGEND", icon: "trophy-outline", min: 100, max: 999, color: "#EF4444", desc: "The pinnacle. You've conquered everything. Pure excellence." },
+    { level: 1, title: "Tier 1 · 0+ Sessions", icon: "shield-outline", min: 0, max: 4, color: COLORS.accent, desc: "The foundation of your training habit begins with your initial workouts." },
+    { level: 2, title: "Tier 2 · 5+ Sessions", icon: "star-outline", min: 5, max: 9, color: COLORS.accent, desc: "Consistent routine established. Building steady momentum across the weekly split." },
+    { level: 3, title: "Tier 3 · 10+ Sessions", icon: "trending-up", min: 10, max: 24, color: COLORS.accent, desc: "Double-digit consistency. Progressive adaptation and habit formation taking hold." },
+    { level: 4, title: "Tier 4 · 25+ Sessions", icon: "fitness", min: 25, max: 49, color: COLORS.accent, desc: "Established workout cadence. High consistency and measurable volume gains." },
+    { level: 5, title: "Tier 5 · 50+ Sessions", icon: "diamond-outline", min: 50, max: 99, color: COLORS.accent, desc: "Major training milestone. Over fifty structured workouts completed." },
+    { level: 6, title: "Tier 6 · 100+ Sessions", icon: "trophy-outline", min: 100, max: 999, color: COLORS.accent, desc: "Century milestone achieved. 100+ workouts logged in your training history." },
 ];
 
 function getRankData(total) {
@@ -59,7 +59,6 @@ export default function RankScreen({ navigation }) {
 
     const current = getRankData(total);
     const nextRank = current.index < RANKS.length - 1 ? RANKS[current.index + 1] : null;
-    const levelNum = Math.min(Math.floor(total / 10) + 1, 99);
     const progressInRank = nextRank
         ? Math.min((total - current.min) / (nextRank.min - current.min), 1)
         : 1;
@@ -73,7 +72,7 @@ export default function RankScreen({ navigation }) {
                 <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
                     <Ionicons name="chevron-back" size={20} color={COLORS.text} />
                 </TouchableOpacity>
-                <Text style={s.headerTitle}>Rank & Progression</Text>
+                <Text style={s.headerTitle}>Milestones</Text>
                 <View style={{ width: 36 }} />
             </View>
 
@@ -85,15 +84,15 @@ export default function RankScreen({ navigation }) {
                 {/* ── Hero Card ── */}
                 <Animated.View style={[s.heroCard, { transform: [{ scale: scaleAnim }] }]}>
                     <View style={s.heroBadgeRow}>
-                        <Text style={s.heroEyebrow}>CURRENT RANK</Text>
+                        <Text style={s.heroEyebrow}>CURRENT MILESTONE</Text>
                         <View style={s.levelPill}>
-                            <Text style={s.levelPillText}>LVL {String(levelNum).padStart(2, '0')}</Text>
+                            <Text style={s.levelPillText}>{total} SESSIONS</Text>
                         </View>
                     </View>
 
                     <View style={s.heroIconRow}>
                         <View style={s.heroIconCircle}>
-                            <Ionicons name={current.icon} size={36} color={COLORS.text} />
+                            <Ionicons name={current.icon} size={32} color={COLORS.text} />
                         </View>
                     </View>
 
@@ -153,9 +152,9 @@ export default function RankScreen({ navigation }) {
                     </View>
                 )}
 
-                {/* ── Rank Ladder ── */}
+                {/* ── Milestone Ladder ── */}
                 <View style={s.ladderSection}>
-                    <Text style={s.sectionTitle}>RANK LADDER</Text>
+                    <Text style={s.sectionTitle}>MILESTONE TIERS</Text>
                     {RANKS.map((rank, i) => {
                         const isAchieved = total >= rank.min;
                         const isCurrent = rank.title === current.title;
@@ -187,12 +186,12 @@ export default function RankScreen({ navigation }) {
                     })}
                 </View>
 
-                {/* ── Motivational Footer ── */}
+                {/* ── Footer ── */}
                 <View style={s.footer}>
                     <Text style={s.footerText}>
                         {nextRank
-                            ? `${sessionsToNext} sessions away from ${nextRank.title}.\nEvery rep counts.`
-                            : `You've reached the pinnacle.\nYou are the standard.`
+                            ? `${sessionsToNext} sessions until ${nextRank.title}.`
+                            : `All milestones completed. Keep building consistency.`
                         }
                     </Text>
                 </View>
