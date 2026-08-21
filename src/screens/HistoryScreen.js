@@ -570,11 +570,11 @@ const styles = StyleSheet.create({
     },
     statsLeft: { flex: 1, gap: 12 },
     statSmall: {
-        flex: 1, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.card,
+        flex: 1, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.md,
         padding: 16, borderWidth: 1, borderColor: COLORS.border,
     },
     statLarge: {
-        flex: 1, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.card,
+        flex: 1, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.md,
         padding: 18, borderWidth: 1, borderColor: COLORS.border,
         justifyContent: "space-between",
     },
@@ -589,7 +589,7 @@ const styles = StyleSheet.create({
 
     card: {
         marginHorizontal: 20, backgroundColor: COLORS.bgCard,
-        borderRadius: RADIUS.card, borderWidth: 1, borderColor: COLORS.border,
+        borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border,
         padding: 18,
     },
 
@@ -599,7 +599,7 @@ const styles = StyleSheet.create({
         marginBottom: 8, marginLeft: 4
     },
     weekCard: {
-        backgroundColor: COLORS.bgCard, borderRadius: RADIUS.card,
+        backgroundColor: COLORS.bgCard, borderRadius: RADIUS.md,
         borderWidth: 1, borderColor: COLORS.border,
         paddingHorizontal: 16,
     },

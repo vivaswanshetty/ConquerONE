@@ -217,14 +217,14 @@ const s = StyleSheet.create({
 
     // Hero Card
     heroCard: {
-        marginHorizontal: 20, marginBottom: 16, borderRadius: RADIUS.card, padding: 22,
+        marginHorizontal: 20, marginBottom: 16, borderRadius: RADIUS.lg, padding: 22,
         borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bgCard,
         alignItems: 'center',
     },
     heroBadgeRow: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginBottom: 16 },
     heroEyebrow: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 1.5 },
     levelPill: {
-        paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.pill,
+        paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.sm,
         borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bg,
     },
     levelPillText: { fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.text },
@@ -251,7 +251,7 @@ const s = StyleSheet.create({
     // Stats
     statsRow: {
         flexDirection: 'row', marginHorizontal: 20, marginBottom: 20,
-        borderRadius: RADIUS.card, overflow: 'hidden',
+        borderRadius: RADIUS.md, overflow: 'hidden',
         borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bgCard,
     },
     statBox: {
@@ -268,7 +268,7 @@ const s = StyleSheet.create({
     sectionTitle: { fontSize: 11, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 1.5, marginBottom: 10 },
     nextCard: {
         flexDirection: 'row', alignItems: 'center', gap: 12,
-        borderRadius: RADIUS.card, padding: 14,
+        borderRadius: RADIUS.md, padding: 14,
         borderWidth: 1, borderColor: COLORS.border,
         backgroundColor: COLORS.bgCard,
     },
@@ -290,7 +290,7 @@ const s = StyleSheet.create({
     ladderRow: {
         flexDirection: 'row', alignItems: 'center', gap: 12,
         paddingVertical: 12, paddingHorizontal: 14, marginBottom: 6,
-        borderRadius: RADIUS.card, borderWidth: 1,
+        borderRadius: RADIUS.md, borderWidth: 1,
         borderColor: COLORS.border,
         backgroundColor: COLORS.bgCard,
     },
@@ -301,7 +301,7 @@ const s = StyleSheet.create({
     ladderTitle: { fontSize: 13, fontFamily: FAMILY.semibold },
     ladderSub: { fontSize: 10, fontFamily: FAMILY.regular, color: COLORS.textSub, marginTop: 2 },
     currentBadge: {
-        paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, borderWidth: 1, borderColor: COLORS.border,
+        paddingHorizontal: 6, paddingVertical: 2, borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.border,
         backgroundColor: 'rgba(237, 234, 227, 0.08)',
     },
     currentBadgeText: { fontSize: 8, fontFamily: FAMILY.monoBold, color: COLORS.text },

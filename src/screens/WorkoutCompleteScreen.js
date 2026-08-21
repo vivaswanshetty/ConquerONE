@@ -371,7 +371,7 @@ const styles = StyleSheet.create({
     statsRow: {
         flexDirection: "row", width: "100%",
         backgroundColor: COLORS.bgCard,
-        borderRadius: RADIUS.card, borderWidth: 1, borderColor: COLORS.border,
+        borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border,
         paddingVertical: 18, marginBottom: 24,
     },
     statBox: { flex: 1, alignItems: "center", justifyContent: "center", gap: 2 },
@@ -383,12 +383,12 @@ const styles = StyleSheet.create({
         width: "100%", paddingVertical: 12, paddingHorizontal: 16,
         marginBottom: 16, backgroundColor: COLORS.bgCard,
         borderWidth: 1, borderColor: COLORS.border,
-        borderRadius: RADIUS.card, flexDirection: "row", alignItems: "center", gap: 10,
+        borderRadius: RADIUS.md, flexDirection: "row", alignItems: "center", gap: 10,
     },
     streakText: { fontSize: 12, fontFamily: FAMILY.medium, color: COLORS.textSub, flex: 1 },
 
     prCard: {
-        width: "100%", borderRadius: RADIUS.card, borderWidth: 1, borderColor: COLORS.border,
+        width: "100%", borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border,
         backgroundColor: COLORS.bgCard, marginBottom: 16, overflow: "hidden",
     },
     prHeader: {
@@ -400,12 +400,12 @@ const styles = StyleSheet.create({
     prList: { paddingHorizontal: 16, paddingVertical: 12 },
     prRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 8 },
     prName: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.text, flex: 1, paddingRight: 8 },
-    prValBox: { backgroundColor: COLORS.bg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLORS.border },
+    prValBox: { backgroundColor: COLORS.bg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.border },
     prVal: { fontSize: 11, fontFamily: FAMILY.mono, color: COLORS.textSub },
 
     homeBtn: {
         width: "100%", backgroundColor: COLORS.primary, height: 56,
-        borderRadius: RADIUS.card, alignItems: "center", justifyContent: "center", marginTop: 24, marginBottom: 20,
+        borderRadius: RADIUS.md, alignItems: "center", justifyContent: "center", marginTop: 24, marginBottom: 20,
     },
     homeBtnText: { fontSize: 14, fontFamily: FAMILY.semibold, color: COLORS.text, letterSpacing: 0.5 },
 
@@ -417,7 +417,7 @@ const styles = StyleSheet.create({
     // Rank Up Card
     rankUpCard: {
         flexDirection: "row", alignItems: "center", gap: 14,
-        width: "100%", padding: 16, borderRadius: RADIUS.card, marginTop: 16,
+        width: "100%", padding: 16, borderRadius: RADIUS.md, marginTop: 16,
         borderWidth: 1, borderColor: COLORS.border,
         backgroundColor: COLORS.bgCard, overflow: "hidden",
     },

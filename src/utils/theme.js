@@ -133,12 +133,12 @@ export const SPACING = {
 
 export const RADIUS = {
     xs: 4,
-    sm: 6,
-    md: 8,
-    card: 8,
-    lg: 8,
-    xl: 10,
-    xxl: 12,
+    sm: 8,
+    md: 12,
+    card: 12,
+    lg: 16,
+    xl: 16,
+    xxl: 16,
     full: 999,
     pill: 999,
 };

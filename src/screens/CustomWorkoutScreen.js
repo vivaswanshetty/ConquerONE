@@ -138,11 +138,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20, paddingBottom: 24, paddingTop: 12,
     },
     backBtn: {
-        width: 48, height: 48, borderRadius: 14, backgroundColor: "rgba(255,255,255,0.04)",
+        width: 48, height: 48, borderRadius: RADIUS.md, backgroundColor: "rgba(255,255,255,0.04)",
         alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
     },
     headerTitle: { fontSize: 34, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: -1.5 },
-    countBadge: { backgroundColor: "rgba(255,255,255,0.05)", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
+    countBadge: { backgroundColor: "rgba(255,255,255,0.05)", paddingHorizontal: 12, paddingVertical: 6, borderRadius: RADIUS.sm },
     headerCount: { fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.accent, letterSpacing: 1 },
 
     filterSection: {
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     filterRow: { paddingHorizontal: 20, paddingVertical: 16, gap: 12 },
     chip: {
         paddingHorizontal: 18, paddingVertical: 10,
-        borderRadius: 14, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
+        borderRadius: RADIUS.sm, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
         backgroundColor: "rgba(255,255,255,0.02)",
     },
     chipActive: { backgroundColor: COLORS.text, borderColor: COLORS.text },
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
 
     list: {
         marginHorizontal: 20, backgroundColor: "rgba(255,255,255,0.03)",
-        borderRadius: 28, borderWidth: 1, borderColor: COLORS.border, overflow: "hidden",
+        borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border, overflow: "hidden",
     },
     exRow: {
         flexDirection: "row", alignItems: "center", justifyContent: "space-between",
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     exName: { fontSize: 13, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 0.5 },
     exMeta: { fontSize: 9, fontFamily: FAMILY.mono, color: COLORS.textMuted, marginTop: 4, letterSpacing: 1.5 },
     checkbox: {
-        width: 26, height: 26, borderRadius: 8, borderWidth: 2, borderColor: "rgba(255,255,255,0.1)",
+        width: 26, height: 26, borderRadius: RADIUS.sm, borderWidth: 2, borderColor: "rgba(255,255,255,0.1)",
         alignItems: "center", justifyContent: "center",
     },
     checkboxOn: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
     },
     fabBtn: {
         flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12,
-        backgroundColor: COLORS.primary, paddingVertical: 18, borderRadius: 16,
+        backgroundColor: COLORS.primary, paddingVertical: 18, borderRadius: RADIUS.lg,
     },
     fabText: { fontSize: 12, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 2 },
 });

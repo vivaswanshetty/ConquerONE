@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import * as Updates from "expo-updates";
+import { RADIUS } from "../utils/theme";
 
 /**
  * Global error boundary that catches unhandled JS errors and renders
@@ -91,7 +92,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#E31E24",
         paddingHorizontal: 32,
         paddingVertical: 14,
-        borderRadius: 12,
+        borderRadius: RADIUS.md,
     },
     buttonText: {
         color: "#fff",

@@ -4,7 +4,7 @@ import {
     StatusBar, Dimensions, Platform
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { COLORS, FAMILY } from "../utils/theme";
+import { COLORS, FAMILY, RADIUS } from "../utils/theme";
 
 const { width, height } = Dimensions.get("window");
 
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     },
     glassCard: {
         height: 60,
-        borderRadius: 16,
+        borderRadius: RADIUS.lg,
         overflow: "hidden",
         justifyContent: "center",
         alignItems: "center",

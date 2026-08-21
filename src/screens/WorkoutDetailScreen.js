@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
         alignSelf: "flex-start",
         backgroundColor: "rgba(237, 234, 227, 0.06)",
         paddingHorizontal: 8, paddingVertical: 3,
-        borderRadius: 4, marginBottom: 12,
+        borderRadius: RADIUS.sm, marginBottom: 12,
         borderWidth: 0.5, borderColor: COLORS.border,
     },
     heroBadgeText: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 1.5 },
@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
 
     metaStrip: {
         flexDirection: "row", alignItems: "center",
-        backgroundColor: COLORS.bgCard, borderRadius: RADIUS.card,
+        backgroundColor: COLORS.bgCard, borderRadius: RADIUS.md,
         marginHorizontal: SPACING.base, marginTop: -24, paddingVertical: 16, paddingHorizontal: 8,
         borderWidth: 1, borderColor: COLORS.border,
     },
@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
     cta: {
         flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
         backgroundColor: COLORS.primary, marginHorizontal: SPACING.base, marginTop: 20,
-        paddingVertical: 16, borderRadius: RADIUS.card,
+        paddingVertical: 16, borderRadius: RADIUS.md,
     },
     ctaText: { fontSize: 14, fontFamily: FAMILY.semibold, color: COLORS.text, letterSpacing: 0.5 },
 
@@ -384,7 +384,7 @@ const styles = StyleSheet.create({
     },
     exRow: {
         paddingHorizontal: 18, paddingVertical: 18,
-        backgroundColor: COLORS.bgCard, borderRadius: RADIUS.card,
+        backgroundColor: COLORS.bgCard, borderRadius: RADIUS.md,
         borderWidth: 1, borderColor: COLORS.border,
         overflow: "hidden",
     },
@@ -411,12 +411,12 @@ const styles = StyleSheet.create({
     exRowControls: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
 
     exExpanded: { paddingTop: 18, borderTopWidth: 1, borderTopColor: COLORS.border, marginTop: 16 },
-    exImgBox: { borderRadius: RADIUS.card, overflow: "hidden", height: 200, marginBottom: 20 },
+    exImgBox: { borderRadius: RADIUS.lg, overflow: "hidden", height: 200, marginBottom: 20 },
     exImg: { width: "100%", height: "100%" },
     exImgGrad: { position: "absolute", bottom: 0, left: 0, right: 0, height: 80 },
     exImgBadge: {
         position: "absolute", bottom: 12, left: 12,
-        backgroundColor: "rgba(10,10,11,0.85)", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4,
+        backgroundColor: "rgba(10,10,11,0.85)", paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADIUS.sm,
         borderWidth: 0.5, borderColor: COLORS.border,
     },
     exImgBadgeText: { fontSize: 10, color: COLORS.text, fontFamily: FAMILY.medium },
@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
     setsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 20 },
     setCell: {
         width: "31%", backgroundColor: COLORS.bg,
-        borderRadius: RADIUS.card, padding: 10, alignItems: "center",
+        borderRadius: RADIUS.sm, padding: 10, alignItems: "center",
         borderWidth: 1, borderColor: COLORS.border
     },
     setCellLabel: { fontSize: 9, color: COLORS.textSub, marginBottom: 2, fontFamily: FAMILY.mono },
@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
 
     noteRow: {
         flexDirection: "row", alignItems: "center", gap: 10,
-        backgroundColor: COLORS.bg, padding: 12, borderRadius: RADIUS.card,
+        backgroundColor: COLORS.bg, padding: 12, borderRadius: RADIUS.md,
         marginBottom: 20, borderWidth: 1, borderColor: COLORS.border
     },
     noteText: { fontSize: 12, color: COLORS.textSub, fontFamily: FAMILY.regular },
@@ -446,7 +446,7 @@ const styles = StyleSheet.create({
     // Edit Modal Styles
     modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.85)", justifyContent: "flex-end" },
     modalContent: {
-        backgroundColor: COLORS.bgCard, borderTopLeftRadius: 16, borderTopRightRadius: 16,
+        backgroundColor: COLORS.bgCard, borderTopLeftRadius: RADIUS.lg, borderTopRightRadius: RADIUS.lg,
         paddingHorizontal: 24, paddingTop: 24, paddingBottom: 12,
         borderWidth: 1, borderColor: COLORS.border, borderBottomWidth: 0,
     },
@@ -457,12 +457,12 @@ const styles = StyleSheet.create({
     inputBox: { flex: 1, gap: 8 },
     inputLabel: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 1 },
     input: {
-        backgroundColor: COLORS.bg, borderRadius: RADIUS.card, padding: 12,
+        backgroundColor: COLORS.bg, borderRadius: RADIUS.sm, padding: 12,
         color: COLORS.text, fontSize: 16, fontFamily: FAMILY.monoBold, textAlign: "center",
         borderWidth: 1, borderColor: COLORS.border,
     },
     saveBtn: {
-        backgroundColor: COLORS.primary, paddingVertical: 16, borderRadius: RADIUS.card,
+        backgroundColor: COLORS.primary, paddingVertical: 16, borderRadius: RADIUS.md,
         alignItems: "center",
     },
     saveBtnText: { fontSize: 13, fontFamily: FAMILY.semibold, color: COLORS.text, letterSpacing: 0.5 },

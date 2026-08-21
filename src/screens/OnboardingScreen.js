@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     },
     nextBtn: {
         paddingHorizontal: 36, paddingVertical: 16,
-        borderRadius: 14,
+        borderRadius: RADIUS.md,
         backgroundColor: "#fff",
     },
     nextBtnText: {
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     startBtn: {
         backgroundColor: "#fff",
         paddingVertical: 20,
-        borderRadius: 16,
+        borderRadius: RADIUS.lg,
         alignItems: "center",
     },
     startBtnText: {

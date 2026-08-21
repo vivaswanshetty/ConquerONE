@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Modal, TouchableOpacity, Animated, Platform } f
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { COLORS, FAMILY } from "../utils/theme";
+import { COLORS, FAMILY, RADIUS } from "../utils/theme";
 
 const NotificationContext = createContext(null);
 
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
         left: 20,
         right: 20,
         backgroundColor: "rgba(10, 10, 10, 0.95)",
-        borderRadius: 16,
+        borderRadius: RADIUS.md,
         borderWidth: 1,
         paddingHorizontal: 16,
         paddingVertical: 14,
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
         overflow: "hidden",
     },
     customToastText: {
-        fontFamily: FAMILY.mBold,
+        fontFamily: FAMILY.medium,
         fontSize: 9,
         color: COLORS.textSub,
         flex: 1,
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     dialogSheet: {
         width: "86%",
         backgroundColor: "#0A0A0A",
-        borderRadius: 24,
+        borderRadius: RADIUS.lg,
         borderWidth: 1,
         borderColor: "rgba(255,255,255,0.08)",
         padding: 28,
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
     },
     dialogTitle: {
         fontSize: 14,
-        fontFamily: FAMILY.mBold,
+        fontFamily: FAMILY.header,
         color: COLORS.text,
         letterSpacing: 1.5,
         marginBottom: 12,
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
     },
     dialogMessage: {
         fontSize: 12,
-        fontFamily: FAMILY.mReg,
+        fontFamily: FAMILY.regular,
         color: COLORS.textSub,
         lineHeight: 18,
         marginBottom: 28,
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
     modalCancelBtn: { 
         flex: 1, 
         paddingVertical: 16, 
-        borderRadius: 16, 
+        borderRadius: RADIUS.md, 
         backgroundColor: "rgba(255,255,255,0.03)", 
         alignItems: "center", 
         borderWidth: 1, 
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
     modalSaveBtn: { 
         flex: 2, 
         paddingVertical: 16, 
-        borderRadius: 16, 
+        borderRadius: RADIUS.md, 
         backgroundColor: COLORS.primary, 
         alignItems: "center" 
     },

@@ -86,7 +86,7 @@ const mc = StyleSheet.create({
     labelBox: { flexDirection: "row", alignItems: "center", gap: 8 },
     indicator: { width: 3, height: 12, borderRadius: 1.5 },
     label: { fontSize: 11, fontFamily: FAMILY.semibold, color: COLORS.textSub },
-    trendBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.pill, backgroundColor: COLORS.bg },
+    trendBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.sm, backgroundColor: COLORS.bg },
     trendText: { fontSize: 10, fontFamily: FAMILY.monoBold },
     empty: { height: 90, alignItems: "center", justifyContent: "center" },
     emptyText: { fontSize: 11, color: COLORS.textMuted, fontFamily: FAMILY.regular },
@@ -390,7 +390,7 @@ const styles = StyleSheet.create({
         alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: COLORS.border,
     },
     headerTitle: { fontSize: 24, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: -0.5 },
-    savedBadge: { backgroundColor: "rgba(237, 234, 227, 0.06)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLORS.border },
+    savedBadge: { backgroundColor: "rgba(237, 234, 227, 0.06)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.border },
     savedText: { fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.text },
 
     tabs: {
@@ -406,11 +406,11 @@ const styles = StyleSheet.create({
     sectionLabel: { fontSize: 11, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 1.5 },
     card: {
         marginHorizontal: 20, backgroundColor: COLORS.bgCard,
-        borderRadius: RADIUS.card, borderWidth: 1, borderColor: COLORS.border,
+        borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border,
         padding: 18,
     },
     saveBtn: {
-        backgroundColor: COLORS.primary, borderRadius: RADIUS.card,
+        backgroundColor: COLORS.primary, borderRadius: RADIUS.md,
         paddingVertical: 14, alignItems: "center", marginTop: 20,
     },
     saveBtnText: { fontSize: 13, fontFamily: FAMILY.semibold, color: COLORS.text, letterSpacing: 0.5 },

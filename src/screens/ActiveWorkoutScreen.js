@@ -304,7 +304,7 @@ const pm = StyleSheet.create({
         width: "100%", marginBottom: 32,
     },
     trophyBadge: {
-        width: 48, height: 48, borderRadius: 14,
+        width: 48, height: 48, borderRadius: RADIUS.md,
         backgroundColor: "rgba(227,30,36,0.05)", borderWidth: 1, borderColor: "rgba(227,30,36,0.2)",
         alignItems: "center", justifyContent: "center",
     },
@@ -320,7 +320,7 @@ const pm = StyleSheet.create({
     },
     inputBox: {
         flexDirection: "row", alignItems: "center",
-        backgroundColor: "rgba(255,255,255,0.02)", borderRadius: 16,
+        backgroundColor: "rgba(255,255,255,0.02)", borderRadius: RADIUS.md,
         paddingHorizontal: 16, paddingVertical: 12,
         borderWidth: 1.5, borderColor: COLORS.glassBorder,
     },
@@ -330,7 +330,7 @@ const pm = StyleSheet.create({
     },
     saveBtn: {
         width: "100%", backgroundColor: COLORS.primary,
-        borderRadius: 16, paddingVertical: 20,
+        borderRadius: RADIUS.md, paddingVertical: 20,
         alignItems: "center", marginBottom: 16,
         shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 6 },
         shadowOpacity: 0.3, shadowRadius: 15,
@@ -385,7 +385,7 @@ function PRToast({ visible, exerciseName, weightKg, reps, weightUnit }) {
 const pt = StyleSheet.create({
     toast: {
         position: "absolute", top: 16, left: 16, right: 16,
-        backgroundColor: "#0D0D0D", borderRadius: 24,
+        backgroundColor: "#0D0D0D", borderRadius: RADIUS.lg,
         flexDirection: "row", alignItems: "center", gap: 16,
         padding: 16, borderWidth: 1.5, borderColor: "rgba(227, 30, 36, 0.45)",
         elevation: 12, zIndex: 1000, overflow: "hidden",
@@ -395,7 +395,7 @@ const pt = StyleSheet.create({
         shadowRadius: 16,
     },
     trophyContainer: {
-        width: 38, height: 38, borderRadius: 12,
+        width: 38, height: 38, borderRadius: RADIUS.sm,
         backgroundColor: "rgba(227, 30, 36, 0.12)",
         alignItems: "center", justifyContent: "center",
         borderWidth: 1, borderColor: "rgba(227, 30, 36, 0.25)",
@@ -405,7 +405,7 @@ const pt = StyleSheet.create({
     name: { fontSize: 13, fontFamily: FAMILY.header, color: COLORS.text, marginTop: 4 },
     valBox: {
         backgroundColor: "rgba(255,255,255,0.06)",
-        paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10,
+        paddingHorizontal: 12, paddingVertical: 8, borderRadius: RADIUS.sm,
         borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
         justifyContent: "center", alignItems: "center", minWidth: 64
     },
@@ -531,7 +531,7 @@ const ro = StyleSheet.create({
         alignItems: "center", width: "100%", marginBottom: 32,
     },
     badge: {
-        paddingHorizontal: 12, paddingVertical: 6, borderRadius: 4,
+        paddingHorizontal: 12, paddingVertical: 6, borderRadius: RADIUS.sm,
         backgroundColor: COLORS.glassBg,
         borderWidth: 1, borderColor: COLORS.glassBorder,
     },
@@ -547,24 +547,24 @@ const ro = StyleSheet.create({
     timerUnit: { fontSize: 10, color: COLORS.textMuted, fontFamily: FAMILY.mono, letterSpacing: 3, marginBottom: 32 },
     nextCard: {
         width: "100%", backgroundColor: COLORS.glassBg,
-        borderRadius: 24, borderWidth: 1, borderColor: COLORS.glassBorder,
+        borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.glassBorder,
         padding: 24, alignItems: "center", marginBottom: 24,
     },
     nextLabel: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 2.5, marginBottom: 12 },
     nextName: { fontSize: 24, fontFamily: FAMILY.header, color: COLORS.text, textAlign: "center", marginBottom: 16, width: "100%" },
-    nextImgBox: { width: "100%", height: 140, borderRadius: 16, overflow: "hidden", backgroundColor: "rgba(255,255,255,0.03)" },
+    nextImgBox: { width: "100%", height: 140, borderRadius: RADIUS.lg, overflow: "hidden", backgroundColor: "rgba(255,255,255,0.03)" },
     nextImg: { width: "100%", height: "100%", opacity: 0.5 },
     tipCard: {
         width: "100%", minHeight: 54, alignItems: "center", justifyContent: "center",
         paddingHorizontal: 20, paddingVertical: 14, marginTop: 12,
-        backgroundColor: "rgba(255,255,255,0.02)", borderRadius: 16,
+        backgroundColor: "rgba(255,255,255,0.02)", borderRadius: RADIUS.md,
         borderWidth: 1, borderColor: COLORS.glassBorder,
     },
     tipText: {
         fontSize: 12, lineHeight: 18, fontFamily: FAMILY.regular, color: COLORS.textSub, textAlign: "center", letterSpacing: 0.5,
     },
     nextTargetBox: {
-        width: "100%", height: 140, borderRadius: 16, overflow: "hidden",
+        width: "100%", height: 140, borderRadius: RADIUS.md, overflow: "hidden",
         backgroundColor: "rgba(255,255,255,0.02)", alignItems: "center", justifyContent: "center",
         borderWidth: 1, borderColor: COLORS.glassBorder, padding: 16,
     },
@@ -1571,7 +1571,7 @@ const styles = StyleSheet.create({
     },
     calBadge: {
         backgroundColor: COLORS.bgCard,
-        paddingHorizontal: 10, paddingVertical: 5, borderRadius: RADIUS.pill,
+        paddingHorizontal: 10, paddingVertical: 5, borderRadius: RADIUS.sm,
         alignItems: "center", flexDirection: "row", gap: 4,
         borderWidth: 1, borderColor: COLORS.border,
     },
@@ -1586,7 +1586,7 @@ const styles = StyleSheet.create({
 
     phaseTag: {
         flexDirection: "row", alignItems: "center", gap: 6,
-        paddingHorizontal: 12, paddingVertical: 5, borderRadius: RADIUS.pill,
+        paddingHorizontal: 12, paddingVertical: 5, borderRadius: RADIUS.sm,
         borderWidth: 1, borderColor: COLORS.primary, backgroundColor: "rgba(122, 46, 34, 0.12)",
         marginTop: 32,
     },
@@ -1634,7 +1634,7 @@ const styles = StyleSheet.create({
         flex: 1, height: 64, marginHorizontal: 16,
     },
     ctrlMainWideInner: {
-        flex: 1, borderRadius: RADIUS.card, flexDirection: "row",
+        flex: 1, borderRadius: RADIUS.md, flexDirection: "row",
         alignItems: "center", justifyContent: "center", gap: 10,
         backgroundColor: COLORS.primary,
     },
@@ -1650,7 +1650,7 @@ const styles = StyleSheet.create({
 
     logPRBtn: {
         flexDirection: "row", alignItems: "center", gap: 8,
-        paddingVertical: 12, paddingHorizontal: 20, borderRadius: RADIUS.card,
+        paddingVertical: 12, paddingHorizontal: 20, borderRadius: RADIUS.md,
         backgroundColor: COLORS.bgCard,
         borderWidth: 1, borderColor: COLORS.border,
         marginTop: 36,
@@ -1659,7 +1659,7 @@ const styles = StyleSheet.create({
 
     formCard: {
         backgroundColor: COLORS.bgCard, marginTop: 32, marginHorizontal: 20,
-        marginBottom: 20, borderRadius: RADIUS.card, padding: 20,
+        marginBottom: 20, borderRadius: RADIUS.md, padding: 20,
         borderWidth: 1, borderColor: COLORS.border,
         width: width - 40,
     },
@@ -1669,14 +1669,14 @@ const styles = StyleSheet.create({
     tipDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: COLORS.textSub, marginTop: 8 },
     tipText: { fontSize: 13, color: COLORS.textSub, flex: 1, lineHeight: 20, fontFamily: FAMILY.regular },
     workImgBox: {
-        width: width - 64, height: 180, borderRadius: RADIUS.card,
+        width: width - 64, height: 180, borderRadius: RADIUS.lg,
         backgroundColor: COLORS.bgCard,
         marginTop: 28, overflow: "hidden",
         borderWidth: 1, borderColor: COLORS.border,
     },
     workImg: { width: "100%", height: "100%" },
     workInfoPanel: {
-        width: width - 64, height: 160, borderRadius: RADIUS.card,
+        width: width - 64, height: 160, borderRadius: RADIUS.md,
         backgroundColor: COLORS.bgCard,
         marginTop: 28, overflow: "hidden",
         borderWidth: 1, borderColor: COLORS.border,
@@ -1694,7 +1694,7 @@ const styles = StyleSheet.create({
     },
     infoPanelBadge: {
         flexDirection: "row", alignItems: "center", gap: 6,
-        paddingHorizontal: 10, paddingVertical: 5, borderRadius: RADIUS.pill,
+        paddingHorizontal: 10, paddingVertical: 5, borderRadius: RADIUS.sm,
         borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bg,
     },
     infoPanelBadgeText: {
@@ -1708,7 +1708,7 @@ const styles = StyleSheet.create({
     modalBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.85)", justifyContent: "center", alignItems: "center" },
     jumpModal: {
         width: width - 40, maxHeight: "70%", backgroundColor: COLORS.bgCard,
-        borderRadius: 12, padding: 24, borderWidth: 1, borderColor: COLORS.border,
+        borderRadius: RADIUS.md, padding: 24, borderWidth: 1, borderColor: COLORS.border,
     },
     jumpHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
     jumpTitle: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.text },
@@ -1716,14 +1716,14 @@ const styles = StyleSheet.create({
         flexDirection: "row", alignItems: "center", paddingVertical: 14, borderBottomWidth: 1,
         borderBottomColor: COLORS.border, gap: 14,
     },
-    jumpItemActive: { backgroundColor: "rgba(122, 46, 34, 0.08)", borderRadius: RADIUS.card, paddingHorizontal: 10, marginHorizontal: -10 },
-    jumpIndex: { width: 26, height: 26, borderRadius: 4, backgroundColor: COLORS.bg, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: COLORS.border },
+    jumpItemActive: { backgroundColor: "rgba(122, 46, 34, 0.08)", borderRadius: RADIUS.sm, paddingHorizontal: 10, marginHorizontal: -10 },
+    jumpIndex: { width: 26, height: 26, borderRadius: RADIUS.sm, backgroundColor: COLORS.bg, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: COLORS.border },
     jumpIndexText: { fontSize: 11, fontFamily: FAMILY.monoBold, color: COLORS.textSub },
     jumpName: { fontSize: 14, fontFamily: FAMILY.semibold, color: COLORS.text },
     jumpMeta: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.textMuted, marginTop: 2 },
     recentLogsCard: {
         backgroundColor: COLORS.bgCard, marginTop: 28, marginHorizontal: 20,
-        borderRadius: RADIUS.card, padding: 20,
+        borderRadius: RADIUS.md, padding: 20,
         borderWidth: 1, borderColor: COLORS.border,
         width: width - 40,
     },
@@ -1733,11 +1733,11 @@ const styles = StyleSheet.create({
     recentSetRow: {
         flexDirection: "row", alignItems: "center", gap: 8,
         backgroundColor: COLORS.bg, paddingHorizontal: 10, paddingVertical: 6,
-        borderRadius: RADIUS.card, borderWidth: 1, borderColor: COLORS.border,
+        borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.border,
     },
     recentSetBadge: {
         backgroundColor: "rgba(237, 234, 227, 0.06)", paddingHorizontal: 5, paddingVertical: 2,
-        borderRadius: 4,
+        borderRadius: RADIUS.sm,
     },
     recentSetBadgeText: { fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.text },
     recentSetText: { fontSize: 11, fontFamily: FAMILY.mono, color: COLORS.text },

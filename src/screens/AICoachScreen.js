@@ -11,7 +11,7 @@ import { ScrollView as GHScrollView } from "react-native-gesture-handler";
 import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { COLORS, FAMILY, SPACING } from "../utils/theme";
+import { COLORS, FAMILY, SPACING, RADIUS } from "../utils/theme";
 import { getGeminiCoachResponse } from "../utils/gemini";
 import * as Speech from "expo-speech";
 import { getSettings } from "../utils/settings";
@@ -303,7 +303,7 @@ const vmStyles = StyleSheet.create({
     },
     presetBtn: {
         flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-        paddingVertical: 14, borderRadius: 14,
+        paddingVertical: 14, borderRadius: RADIUS.md,
         backgroundColor: 'rgba(255,255,255,0.03)',
         borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
     },
@@ -320,7 +320,7 @@ const vmStyles = StyleSheet.create({
     previewBtn: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
         marginHorizontal: 20, marginTop: 28,
-        paddingVertical: 16, borderRadius: 16,
+        paddingVertical: 16, borderRadius: RADIUS.lg,
         backgroundColor: COLORS.primary,
     },
     previewText: {
@@ -331,20 +331,20 @@ const vmStyles = StyleSheet.create({
 const hm = StyleSheet.create({
     overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
     sheet: {
-        backgroundColor: '#0D0D0D', borderTopLeftRadius: 28, borderTopRightRadius: 28,
+        backgroundColor: '#0D0D0D', borderTopLeftRadius: RADIUS.lg, borderTopRightRadius: RADIUS.lg,
         borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)', maxHeight: '75%',
         paddingBottom: 40,
     },
     handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.15)', alignSelf: 'center', marginTop: 14, marginBottom: 20 },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24, marginBottom: 20 },
     title: { fontSize: 12, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: 2 },
-    clearBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+    clearBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: RADIUS.sm, backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
     clearText: { fontSize: 11, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 1 },
     empty: { alignItems: 'center', paddingVertical: 60 },
     emptyText: { fontSize: 13, fontFamily: FAMILY.medium, color: COLORS.textMuted },
     row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, marginBottom: 8 },
-    rowContent: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
-    rowIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.05)', alignItems: 'center', justifyContent: 'center' },
+    rowContent: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: RADIUS.md, padding: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
+    rowIcon: { width: 36, height: 36, borderRadius: RADIUS.sm, backgroundColor: 'rgba(255,255,255,0.05)', alignItems: 'center', justifyContent: 'center' },
     rowTitle: { fontSize: 13, fontFamily: FAMILY.semibold, color: COLORS.text, marginBottom: 4 },
     rowDate: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.textMuted },
     deleteBtn: { padding: 12, marginLeft: 8 },
@@ -901,7 +901,7 @@ const styles = StyleSheet.create({
     headerTitle: { fontSize: 20, fontFamily: FAMILY.header, color: "#fff", letterSpacing: -0.5 },
     headerActions: { flexDirection: 'row', gap: 8 },
     headerBtn: {
-        width: 40, height: 40, borderRadius: 13,
+        width: 40, height: 40, borderRadius: RADIUS.md,
         backgroundColor: "rgba(255,255,255,0.05)",
         alignItems: "center", justifyContent: "center",
         borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
@@ -926,12 +926,12 @@ const styles = StyleSheet.create({
     aiRow: { alignSelf: "flex-start", gap: 10, maxWidth: "88%" },
 
     aiAvatar: {
-        width: 30, height: 30, borderRadius: 10,
+        width: 30, height: 30, borderRadius: RADIUS.sm,
         backgroundColor: "rgba(255,255,255,0.05)", alignItems: "center", justifyContent: "center",
         borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", marginTop: 4, flexShrink: 0,
     },
 
-    bubble: { borderRadius: 20, padding: 14 },
+    bubble: { borderRadius: RADIUS.lg, padding: 14 },
     aiBubble: {
         backgroundColor: "rgba(255,255,255,0.05)", borderTopLeftRadius: 4,
         borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
@@ -953,7 +953,7 @@ const styles = StyleSheet.create({
     // Chips
     chipsRow: { paddingHorizontal: 14, paddingVertical: 10, gap: 8, alignItems: 'center' },
     chip: {
-        paddingHorizontal: 14, paddingVertical: 9, borderRadius: 20,
+        paddingHorizontal: 14, paddingVertical: 9, borderRadius: RADIUS.sm,
         backgroundColor: "rgba(255,255,255,0.05)",
         borderWidth: 1, borderColor: "rgba(255,255,255,0.1)",
     },
@@ -963,7 +963,7 @@ const styles = StyleSheet.create({
     inputContainer: { paddingHorizontal: 14, paddingTop: 8 },
     inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
     stopBtn: {
-        width: 40, height: 44, borderRadius: 14,
+        width: 40, height: 44, borderRadius: RADIUS.md,
         backgroundColor: 'rgba(255,255,255,0.04)',
         alignItems: 'center', justifyContent: 'center',
         borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)',
@@ -975,7 +975,7 @@ const styles = StyleSheet.create({
     },
     inputWrapper: {
         flex: 1, flexDirection: "row", alignItems: "flex-end", gap: 8,
-        backgroundColor: "rgba(255,255,255,0.05)", borderRadius: 24,
+        backgroundColor: "rgba(255,255,255,0.05)", borderRadius: RADIUS.lg,
         paddingLeft: 18, paddingRight: 8, paddingVertical: 8,
         borderWidth: 1, borderColor: "rgba(255,255,255,0.1)",
     },

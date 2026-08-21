@@ -17,7 +17,7 @@ import { auth } from "../utils/firebase";
 import { useAuth } from "../context/AuthContext";
 import { useNotification } from "../context/NotificationContext";
 import { getStreak, getTotalWorkouts, getStreakLocal, getTotalWorkoutsLocal } from "../utils/storage";
-import { COLORS, SPACING, FAMILY, APP_VERSION } from "../utils/theme";
+import { COLORS, SPACING, FAMILY, APP_VERSION, RADIUS } from "../utils/theme";
 import { uploadImage } from "../utils/cloudStorage";
 import { scheduleBirthdayWishes } from "../utils/notifications";
 import { requestHealthPermissions, getDailyStats, isHealthConnected, disconnectHealth } from "../utils/health";
@@ -55,7 +55,7 @@ function EditModal({ visible, title, value, onSave, onClose, multiChoice, choice
                     {isDate ? (
                         <View style={{ marginBottom: 24, alignItems: 'center' }}>
                             {Platform.OS === 'ios' ? (
-                                <View style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 14, width: '100%', overflow: 'hidden' }}>
+                                <View style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: RADIUS.md, width: '100%', overflow: 'hidden' }}>
                                     <DateTimePicker
                                         value={date}
                                         mode="date"
@@ -839,7 +839,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20, paddingBottom: 8,
     },
     backBtn: {
-        width: 48, height: 48, borderRadius: 14,
+        width: 48, height: 48, borderRadius: RADIUS.md,
         backgroundColor: "rgba(255,255,255,0.03)",
         alignItems: "center", justifyContent: "center",
         borderWidth: 1, borderColor: "rgba(255,255,255,0.06)",
@@ -920,14 +920,14 @@ const styles = StyleSheet.create({
     heroBadges: { flexDirection: "row", gap: 8 },
     rankBadge: {
         flexDirection: "row", alignItems: "center", gap: 6,
-        paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20,
+        paddingHorizontal: 14, paddingVertical: 7, borderRadius: RADIUS.sm,
         borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
         backgroundColor: "rgba(255,255,255,0.03)",
     },
     rankBadgeText: { fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.text, letterSpacing: 1 },
     dateBadge: {
         flexDirection: "row", alignItems: "center", gap: 5,
-        paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20,
+        paddingHorizontal: 12, paddingVertical: 7, borderRadius: RADIUS.sm,
         backgroundColor: "rgba(255,255,255,0.02)",
         borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
     },
@@ -939,7 +939,7 @@ const styles = StyleSheet.create({
     },
     statCard: {
         flex: 1, alignItems: "center", paddingVertical: 22, gap: 8,
-        backgroundColor: "rgba(13,13,13,0.75)", borderRadius: 20,
+        backgroundColor: "rgba(13,13,13,0.75)", borderRadius: RADIUS.md,
         borderWidth: 1, borderColor: "rgba(255,255,255,0.06)",
         overflow: "hidden",
     },
@@ -948,7 +948,7 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(13,13,13,0.75)",
     },
     statIconWrap: {
-        width: 36, height: 36, borderRadius: 12,
+        width: 36, height: 36, borderRadius: RADIUS.sm,
         backgroundColor: "rgba(255,255,255,0.03)",
         alignItems: "center", justifyContent: "center",
         marginBottom: 2,
@@ -964,7 +964,7 @@ const styles = StyleSheet.create({
     },
     card: {
         marginHorizontal: 20, marginBottom: 16,
-        backgroundColor: "rgba(13,13,13,0.75)", borderRadius: 20,
+        backgroundColor: "rgba(13,13,13,0.75)", borderRadius: RADIUS.md,
         borderWidth: 1, borderColor: "rgba(255,255,255,0.06)", overflow: "hidden",
     },
 
@@ -986,7 +986,7 @@ const styles = StyleSheet.create({
 
     // Legacy info row
     infoRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingVertical: 18 },
-    rowIconWrap: { width: 34, height: 34, borderRadius: 11, backgroundColor: "rgba(255,255,255,0.03)", alignItems: "center", justifyContent: "center", marginRight: 12, borderWidth: 0.5, borderColor: "rgba(255,255,255,0.05)" },
+    rowIconWrap: { width: 34, height: 34, borderRadius: RADIUS.sm, backgroundColor: "rgba(255,255,255,0.03)", alignItems: "center", justifyContent: "center", marginRight: 12, borderWidth: 0.5, borderColor: "rgba(255,255,255,0.05)" },
     rowContent: { flex: 1, marginRight: 12 },
     rowLabel: { fontSize: 13, fontFamily: FAMILY.medium, color: COLORS.text, marginBottom: 2 },
     rowValue: { fontSize: 15, fontFamily: FAMILY.monoBold, color: COLORS.text },
@@ -995,7 +995,7 @@ const styles = StyleSheet.create({
     // Verified Badge
     verifiedBadge: {
         flexDirection: 'row', alignItems: 'center', gap: 5,
-        paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6,
+        paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADIUS.sm,
         borderWidth: 1,
     },
     verifiedDot: { width: 4, height: 4, borderRadius: 2 },
@@ -1007,7 +1007,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20, paddingVertical: 18,
     },
     serviceIcon: {
-        width: 40, height: 40, borderRadius: 12,
+        width: 40, height: 40, borderRadius: RADIUS.sm,
         backgroundColor: "rgba(255,255,255,0.02)",
         alignItems: "center", justifyContent: "center",
         borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
@@ -1015,7 +1015,7 @@ const styles = StyleSheet.create({
     serviceTitle: { fontSize: 14, fontFamily: FAMILY.medium, color: COLORS.text },
     serviceSub: { fontSize: 11, fontFamily: FAMILY.regular, color: COLORS.textMuted },
     serviceAction: {
-        paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10,
+        paddingHorizontal: 14, paddingVertical: 8, borderRadius: RADIUS.sm,
         backgroundColor: "rgba(255,255,255,0.03)",
         borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
     },
@@ -1024,7 +1024,7 @@ const styles = StyleSheet.create({
     // Live syncing badges
     liveBadge: {
         flexDirection: "row", alignItems: "center", gap: 6,
-        paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10,
+        paddingHorizontal: 10, paddingVertical: 6, borderRadius: RADIUS.sm,
         backgroundColor: "rgba(34,197,94,0.06)",
         borderWidth: 1, borderColor: "rgba(34,197,94,0.12)",
     },
@@ -1039,7 +1039,7 @@ const styles = StyleSheet.create({
         gap: 4,
         paddingHorizontal: 6,
         paddingVertical: 2,
-        borderRadius: 4,
+        borderRadius: RADIUS.xs,
         backgroundColor: "rgba(34,197,94,0.06)",
         borderWidth: 0.5,
         borderColor: "rgba(34,197,94,0.15)",
@@ -1084,14 +1084,14 @@ const styles = StyleSheet.create({
     // Modal
     modalOverlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.85)" },
     modalSheet: {
-        backgroundColor: "#0A0A0A", borderTopLeftRadius: 32, borderTopRightRadius: 32,
+        backgroundColor: "#0A0A0A", borderTopLeftRadius: RADIUS.lg, borderTopRightRadius: RADIUS.lg,
         padding: 28, paddingBottom: 48,
         borderWidth: 1, borderColor: "rgba(255,255,255,0.06)",
     },
     modalHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: "rgba(255,255,255,0.1)", alignSelf: "center", marginBottom: 24 },
     modalTitle: { fontSize: 16, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: 0.2, marginBottom: 24 },
     modalInputWrap: {
-        backgroundColor: "rgba(255,255,255,0.02)", borderRadius: 16,
+        backgroundColor: "rgba(255,255,255,0.02)", borderRadius: RADIUS.sm,
         borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
         paddingHorizontal: 20, paddingVertical: 16, marginBottom: 28,
         flexDirection: "row", alignItems: "center",
@@ -1099,7 +1099,7 @@ const styles = StyleSheet.create({
     modalInput: { color: COLORS.text, fontFamily: FAMILY.regular, fontSize: 16, flex: 1, letterSpacing: 0.1 },
     choiceGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 28 },
     choiceBtn: {
-        paddingHorizontal: 20, paddingVertical: 14, borderRadius: 14,
+        paddingHorizontal: 20, paddingVertical: 14, borderRadius: RADIUS.sm,
         backgroundColor: "rgba(255,255,255,0.02)",
         borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
     },
@@ -1107,16 +1107,16 @@ const styles = StyleSheet.create({
     choiceBtnText: { fontSize: 10, fontFamily: FAMILY.medium, color: COLORS.textMuted, letterSpacing: 0.5 },
     choiceBtnTextActive: { color: COLORS.text },
     modalBtns: { flexDirection: "row", gap: 12 },
-    modalCancelBtn: { flex: 1, paddingVertical: 16, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.03)", alignItems: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.05)" },
+    modalCancelBtn: { flex: 1, paddingVertical: 16, borderRadius: RADIUS.md, backgroundColor: "rgba(255,255,255,0.03)", alignItems: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.05)" },
     modalCancelText: { fontSize: 12, fontFamily: FAMILY.medium, color: COLORS.textMuted, letterSpacing: 1 },
-    modalSaveBtn: { flex: 2, paddingVertical: 16, borderRadius: 16, backgroundColor: COLORS.primary, alignItems: "center" },
+    modalSaveBtn: { flex: 2, paddingVertical: 16, borderRadius: RADIUS.md, backgroundColor: COLORS.primary, alignItems: "center" },
     modalSaveText: { fontSize: 12, fontFamily: FAMILY.bold, color: "#fff", letterSpacing: 1 },
     miniActionBtn: {
         backgroundColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 10, paddingVertical: 6,
-        borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
+        borderRadius: RADIUS.sm, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
     },
     miniActionBtnText: { fontSize: 8, fontFamily: FAMILY.medium, color: COLORS.text, letterSpacing: 0.5 },
-    miniVerifyBtn: { backgroundColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
+    miniVerifyBtn: { backgroundColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: RADIUS.sm, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
     miniVerifyBtnText: { fontSize: 8, fontFamily: FAMILY.medium, color: COLORS.text, letterSpacing: 0.5 },
     chevronAction: { paddingLeft: 12 },
     customToast: {
@@ -1124,7 +1124,7 @@ const styles = StyleSheet.create({
         left: 20,
         right: 20,
         backgroundColor: "rgba(10, 10, 10, 0.95)",
-        borderRadius: 16,
+        borderRadius: RADIUS.md,
         borderWidth: 1,
         paddingHorizontal: 16,
         paddingVertical: 14,
@@ -1155,7 +1155,7 @@ const styles = StyleSheet.create({
     dialogSheet: {
         width: "86%",
         backgroundColor: "#0A0A0A",
-        borderRadius: 24,
+        borderRadius: RADIUS.lg,
         borderWidth: 1,
         borderColor: "rgba(255,255,255,0.08)",
         padding: 28,

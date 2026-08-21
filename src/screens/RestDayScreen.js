@@ -7,7 +7,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { COLORS, FAMILY, SPACING } from "../utils/theme";
+import { COLORS, FAMILY, SPACING, RADIUS } from "../utils/theme";
 
 const { width, height } = Dimensions.get("window");
 
@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
         zIndex: 10,
     },
     backBtn: {
-        width: 44, height: 44, borderRadius: 12,
+        width: 44, height: 44, borderRadius: RADIUS.md,
         backgroundColor: "rgba(255,255,255,0.05)",
         alignItems: "center", justifyContent: "center",
         borderWidth: 1, borderColor: "rgba(255,255,255,0.1)",
@@ -232,13 +232,13 @@ const styles = StyleSheet.create({
 
     tipsGrid: { paddingHorizontal: 24, gap: 16 },
     tipCard: {
-        borderRadius: 24, padding: 24,
+        borderRadius: RADIUS.lg, padding: 24,
         backgroundColor: "rgba(255,255,255,0.03)",
         borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
         overflow: "hidden",
     },
     tipIconWrap: {
-        width: 36, height: 36, borderRadius: 10,
+        width: 36, height: 36, borderRadius: RADIUS.sm,
         backgroundColor: "rgba(255,255,255,0.05)",
         alignItems: "center", justifyContent: "center",
         marginBottom: 20,
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
     tipDescSmall: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textSub, lineHeight: 20 },
 
     meditationCard: {
-        marginHorizontal: 24, marginTop: 32, borderRadius: 28,
+        marginHorizontal: 24, marginTop: 32, borderRadius: RADIUS.lg,
         height: 120, overflow: "hidden", flexDirection: "row",
         alignItems: "center", paddingHorizontal: 28,
         borderWidth: 1, borderColor: "rgba(255,255,255,0.1)",
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
         position: "absolute", bottom: 0, left: 0, right: 0, top: 0,
     },
     doneBtn: {
-        backgroundColor: COLORS.text, height: 60, borderRadius: 20,
+        backgroundColor: COLORS.text, height: 60, borderRadius: RADIUS.lg,
         alignItems: "center", justifyContent: "center",
         shadowColor: "#000", shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3, shadowRadius: 10, elevation: 5,

@@ -499,7 +499,7 @@ export default function WorkoutCalendar({ history = [], style }) {
 const styles = StyleSheet.create({
     container: {
         backgroundColor: COLORS.bgCard,
-        borderRadius: RADIUS.card,
+        borderRadius: RADIUS.md,
         borderWidth: 1,
         borderColor: COLORS.border,
         padding: 16,
@@ -536,7 +536,7 @@ const styles = StyleSheet.create({
     todayBtn: {
         paddingHorizontal: 10,
         paddingVertical: 4,
-        borderRadius: RADIUS.pill,
+        borderRadius: RADIUS.sm,
         backgroundColor: "rgba(237, 234, 227, 0.06)",
         borderWidth: 1,
         borderColor: COLORS.border,
@@ -563,7 +563,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "space-around",
         backgroundColor: COLORS.bg,
-        borderRadius: RADIUS.card,
+        borderRadius: RADIUS.md,
         borderWidth: 1,
         borderColor: COLORS.border,
         paddingVertical: 10,
@@ -617,7 +617,7 @@ const styles = StyleSheet.create({
         padding: 2,
         alignItems: "center",
         justifyContent: "center",
-        borderRadius: 6,
+        borderRadius: RADIUS.sm,
         marginVertical: 2,
         borderWidth: 1,
         borderColor: "transparent",
@@ -703,7 +703,7 @@ const styles = StyleSheet.create({
     // Inspector Card
     inspectorCard: {
         marginTop: 14,
-        borderRadius: RADIUS.card,
+        borderRadius: RADIUS.md,
         borderWidth: 1,
         borderColor: COLORS.border,
         backgroundColor: COLORS.bg,
@@ -726,7 +726,7 @@ const styles = StyleSheet.create({
     inspectorBadge: {
         paddingHorizontal: 6,
         paddingVertical: 2,
-        borderRadius: RADIUS.pill,
+        borderRadius: RADIUS.sm,
         backgroundColor: "rgba(237, 234, 227, 0.05)",
         borderWidth: 1,
         borderColor: COLORS.border,
@@ -742,7 +742,7 @@ const styles = StyleSheet.create({
     },
     workoutItem: {
         backgroundColor: COLORS.bgCard,
-        borderRadius: RADIUS.card,
+        borderRadius: RADIUS.md,
         padding: 12,
         borderWidth: 1,
         borderColor: COLORS.border,
@@ -774,7 +774,7 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(122, 46, 34, 0.1)",
         paddingHorizontal: 8,
         paddingVertical: 3,
-        borderRadius: RADIUS.pill,
+        borderRadius: RADIUS.sm,
         borderWidth: 1,
         borderColor: COLORS.border,
         maxWidth: 140,
@@ -783,7 +783,7 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(237, 234, 227, 0.05)",
         paddingHorizontal: 8,
         paddingVertical: 3,
-        borderRadius: RADIUS.pill,
+        borderRadius: RADIUS.sm,
     },
     exerciseChipText: {
         fontSize: 9,

@@ -8,7 +8,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
-import { COLORS, FAMILY, SPACING } from "../utils/theme";
+import { COLORS, FAMILY, SPACING, RADIUS } from "../utils/theme";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../utils/firebase";
 import { useNotification } from "../context/NotificationContext";
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     inputWrap: {
         flexDirection: "row", alignItems: "center",
         backgroundColor: "rgba(255,255,255,0.04)",
-        borderRadius: 14, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
+        borderRadius: RADIUS.md, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
         paddingHorizontal: 16, height: 52,
     },
     inputIcon: { marginRight: 10 },
@@ -262,12 +262,12 @@ const styles = StyleSheet.create({
 
     errorBox: {
         flexDirection: "row", alignItems: "center", gap: 8,
-        backgroundColor: "rgba(227,30,36,0.08)", borderRadius: 10,
+        backgroundColor: "rgba(227,30,36,0.08)", borderRadius: RADIUS.sm,
         padding: 12, borderWidth: 1, borderColor: "rgba(227,30,36,0.2)",
     },
     errorText: { fontSize: 12, fontFamily: FAMILY.regular, color: COLORS.primary, flex: 1 },
 
-    ctaBtn: { borderRadius: 16, overflow: "hidden", marginTop: 8 },
+    ctaBtn: { borderRadius: RADIUS.lg, overflow: "hidden", marginTop: 8 },
     ctaGradient: { paddingVertical: 18, alignItems: "center" },
     ctaText: { fontSize: 13, fontFamily: FAMILY.bold, color: "#fff", letterSpacing: 2 },
 
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
     socialRow: { flexDirection: "row", gap: 12 },
     socialBtn: {
         flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center",
-        gap: 8, backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 14,
+        gap: 8, backgroundColor: "rgba(255,255,255,0.03)", borderRadius: RADIUS.md,
         paddingVertical: 14, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)"
     },
     socialBtnText: { fontSize: 10, fontFamily: FAMILY.medium, color: COLORS.text, letterSpacing: 1 },

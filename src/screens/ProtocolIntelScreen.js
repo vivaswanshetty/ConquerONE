@@ -6,7 +6,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { COLORS, SPACING, FAMILY } from "../utils/theme";
+import { COLORS, SPACING, FAMILY, RADIUS } from "../utils/theme";
 import {
     PLAN_SCIENCE, PLAN_RULES, PROGRESSION_SYSTEM, RESULTS_TIMELINE, PLAN_SECRET, FOREARM_PROTOCOL_INFO
 } from "../data/workoutData";
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20, paddingBottom: 16, paddingTop: 12,
     },
     backBtn: {
-        width: 48, height: 48, borderRadius: 14, backgroundColor: "rgba(255,255,255,0.04)",
+        width: 48, height: 48, borderRadius: RADIUS.md, backgroundColor: "rgba(255,255,255,0.04)",
         alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
     },
     headerTitleWrap: { alignItems: "center" },
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
     },
     tabScroll: { paddingHorizontal: 16, gap: 8, alignItems: "center" },
     tabBtn: {
-        paddingHorizontal: 16, height: 38, borderRadius: 10,
+        paddingHorizontal: 16, height: 38, borderRadius: RADIUS.sm,
         alignItems: "center", justifyContent: "center",
         backgroundColor: "rgba(255,255,255,0.02)",
         borderWidth: 1, borderColor: "rgba(255,255,255,0.05)"
@@ -311,13 +311,13 @@ const styles = StyleSheet.create({
 
     // Premium Card
     premiumCard: {
-        backgroundColor: "rgba(255,255,255,0.02)", borderRadius: 24,
+        backgroundColor: "rgba(255,255,255,0.02)", borderRadius: RADIUS.lg,
         padding: 24, borderWidth: 1, borderColor: "rgba(255,255,255,0.06)",
         marginBottom: 16, overflow: "hidden"
     },
     cardHeader: { flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 14 },
     accentBadge: {
-        width: 30, height: 30, borderRadius: 8,
+        width: 30, height: 30, borderRadius: RADIUS.sm,
         backgroundColor: "rgba(255,255,255,0.05)", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
         alignItems: "center", justifyContent: "center"
     },

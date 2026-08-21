@@ -812,10 +812,10 @@ const styles = StyleSheet.create({
         alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: COLORS.border,
     },
     headerTitle: { flex: 1, textAlign: "center", fontSize: 24, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: -0.5 },
-    savedBadge: { backgroundColor: "rgba(237, 234, 227, 0.06)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLORS.border },
+    savedBadge: { backgroundColor: "rgba(237, 234, 227, 0.06)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.border },
     savedText: { fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.text },
 
-    betaBadge: { backgroundColor: "rgba(237, 234, 227, 0.05)", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, borderWidth: 1, borderColor: COLORS.border },
+    betaBadge: { backgroundColor: "rgba(237, 234, 227, 0.05)", paddingHorizontal: 6, paddingVertical: 2, borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.border },
     betaText: { fontSize: 9, fontFamily: FAMILY.mono, color: COLORS.textMuted },
 
     sectionLabelRow: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 20, marginTop: 32, marginBottom: 12 },
@@ -823,7 +823,7 @@ const styles = StyleSheet.create({
 
     card: {
         marginHorizontal: 20, backgroundColor: COLORS.bgCard,
-        borderRadius: RADIUS.card, borderWidth: 1, borderColor: COLORS.border, overflow: "hidden",
+        borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, overflow: "hidden",
     },
     divider: { height: 1, backgroundColor: COLORS.border, marginHorizontal: 20 },
 
@@ -852,7 +852,7 @@ const styles = StyleSheet.create({
     chipLabel: { fontSize: 13, fontFamily: FAMILY.medium, color: COLORS.text },
     chipSub: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.textMuted },
     chipRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
-    chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bg, flexDirection: "row", alignItems: "center" },
+    chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bg, flexDirection: "row", alignItems: "center" },
     chipActive: { backgroundColor: "rgba(237, 234, 227, 0.15)", borderColor: COLORS.border },
     chipCustom: { borderStyle: "dashed", borderColor: COLORS.border },
     chipText: { fontSize: 11, fontFamily: FAMILY.mono, color: COLORS.textSub },
@@ -886,13 +886,13 @@ const styles = StyleSheet.create({
     },
     resetBtn: {
         marginHorizontal: 20, marginTop: 32, paddingVertical: 14,
-        borderRadius: RADIUS.card, borderWidth: 1, borderColor: COLORS.border,
+        borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border,
         alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 8,
         backgroundColor: COLORS.bgCard,
     },
     resetText: { fontSize: 11, fontFamily: FAMILY.medium, color: COLORS.textSub },
 
-    dangerCard: { marginHorizontal: 20, borderRadius: RADIUS.card, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bgCard, overflow: "hidden" },
+    dangerCard: { marginHorizontal: 20, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bgCard, overflow: "hidden" },
     dangerRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 18, paddingVertical: 16 },
     dangerDivider: { height: 1, backgroundColor: COLORS.border, marginHorizontal: 18 },
     dangerInfo: { flex: 1 },
@@ -908,10 +908,10 @@ const styles = StyleSheet.create({
     creditVersion: { fontSize: 9, fontFamily: FAMILY.mono, color: COLORS.textMuted, marginTop: 4 },
 
     modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.85)", justifyContent: "flex-end" },
-    modalSheet: { backgroundColor: COLORS.bgCard, borderTopLeftRadius: 16, borderTopRightRadius: 16, padding: 24, paddingBottom: 40, borderWidth: 1, borderColor: COLORS.border },
+    modalSheet: { backgroundColor: COLORS.bgCard, borderTopLeftRadius: RADIUS.lg, borderTopRightRadius: RADIUS.lg, padding: 24, paddingBottom: 40, borderWidth: 1, borderColor: COLORS.border },
     modalHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: COLORS.border, alignSelf: "center", marginBottom: 20 },
     modalTitle: { fontSize: 16, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: -0.2, marginBottom: 16 },
     legalBody: { fontSize: 12, fontFamily: FAMILY.regular, color: COLORS.textSub, lineHeight: 18, marginBottom: 20 },
-    modalCloseBtn: { paddingVertical: 14, borderRadius: RADIUS.card, backgroundColor: COLORS.primary, alignItems: "center" },
+    modalCloseBtn: { paddingVertical: 14, borderRadius: RADIUS.md, backgroundColor: COLORS.primary, alignItems: "center" },
     modalCloseText: { fontSize: 13, fontFamily: FAMILY.semibold, color: COLORS.text },
 });
