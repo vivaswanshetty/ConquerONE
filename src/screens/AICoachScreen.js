@@ -106,7 +106,6 @@ function MessageBubble({ msg, onSpeak }) {
     const isUser = msg.role === "user";
     return (
         <Animated.View style={[styles.msgRow, isUser ? styles.userRow : styles.aiRow, { opacity: fade, transform: [{ translateY: slide }] }]}>
-            {!isUser && <View style={styles.aiAvatar}><Ionicons name="flash" size={12} color={COLORS.accent} /></View>}
             <View style={[styles.bubble, isUser ? styles.userBubble : styles.aiBubble]}>
                 <MarkDownText content={msg.content} style={[styles.msgText, isUser ? styles.userText : styles.aiText]} />
                 <View style={styles.bubbleFooter}>
@@ -732,7 +731,7 @@ export default function AICoachScreen({ navigation }) {
         <View style={[styles.container, { paddingTop: insets.top }]}>
             {/* Ambient glow */}
             <LinearGradient
-                colors={["rgba(227,30,36,0.1)", "transparent"]}
+                colors={["rgba(237,234,227,0.04)", "transparent"]}
                 style={[StyleSheet.absoluteFill, { height: 250 }]}
             />
 
@@ -742,8 +741,7 @@ export default function AICoachScreen({ navigation }) {
                     <Ionicons name="chevron-back" size={22} color={COLORS.text} />
                 </TouchableOpacity>
                 <View style={styles.headerCenter}>
-                    <Text style={styles.headerSub}>PERSONAL COACH</Text>
-                    <Text style={styles.headerTitle}>CONQUER AI</Text>
+                    <Text style={styles.headerTitle}>AI Coach</Text>
                 </View>
                 <View style={styles.headerActions}>
                     {/* Voice Selection */}
@@ -759,14 +757,6 @@ export default function AICoachScreen({ navigation }) {
                         <Ionicons name="add" size={20} color={COLORS.text} />
                     </TouchableOpacity>
                 </View>
-            </View>
-
-            {/* Status row */}
-            <View style={styles.statusRow}>
-                <View style={styles.statusDot} />
-                <Text style={styles.statusText}>AI ACTIVE · GEMINI POWERED</Text>
-                <View style={{ flex: 1 }} />
-                <Text style={styles.msgCount}>{messages.length - 1} MESSAGES</Text>
             </View>
 
             {/* ── Chat + Input ── */}
@@ -786,7 +776,6 @@ export default function AICoachScreen({ navigation }) {
                     {messages.map(msg => <MessageBubble key={msg.id} msg={msg} onSpeak={handleSpeak} />)}
                     {loading && (
                         <View style={styles.aiRow}>
-                            <View style={styles.aiAvatar}><ActivityIndicator size="small" color={COLORS.accent} /></View>
                             <View style={[styles.bubble, styles.aiBubble, { paddingVertical: 12 }]}>
                                 <TypingDots />
                             </View>
@@ -921,25 +910,19 @@ const styles = StyleSheet.create({
     chatBody: { flex: 1 },
     chatContent: { padding: 16, paddingBottom: 20, gap: 4 },
 
-    msgRow: { flexDirection: "row", marginBottom: 14 },
-    userRow: { alignSelf: "flex-end", justifyContent: "flex-end", maxWidth: "80%" },
-    aiRow: { alignSelf: "flex-start", gap: 10, maxWidth: "88%" },
+    msgRow: { flexDirection: "row", marginBottom: 12 },
+    userRow: { alignSelf: "flex-end", justifyContent: "flex-end", maxWidth: "82%" },
+    aiRow: { alignSelf: "flex-start", maxWidth: "86%" },
 
-    aiAvatar: {
-        width: 30, height: 30, borderRadius: RADIUS.sm,
-        backgroundColor: "rgba(255,255,255,0.05)", alignItems: "center", justifyContent: "center",
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", marginTop: 4, flexShrink: 0,
-    },
-
-    bubble: { borderRadius: RADIUS.lg, padding: 14 },
+    bubble: { borderRadius: RADIUS.md, padding: 14 },
     aiBubble: {
-        backgroundColor: "rgba(255,255,255,0.05)", borderTopLeftRadius: 4,
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
+        backgroundColor: COLORS.bgCard,
+        borderWidth: 1, borderColor: COLORS.border,
+        borderTopLeftRadius: RADIUS.sm,
     },
     userBubble: {
-        backgroundColor: COLORS.primary, borderTopRightRadius: 4,
-        shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.35, shadowRadius: 12, elevation: 5,
+        backgroundColor: COLORS.primary,
+        borderTopRightRadius: RADIUS.sm,
     },
 
     msgText: { fontSize: 14, lineHeight: 22, fontFamily: FAMILY.medium },

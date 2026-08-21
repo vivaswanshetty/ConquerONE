@@ -152,20 +152,18 @@ function EditModal({ visible, title, value, onSave, onClose, multiChoice, choice
 
 
 
-function ActionRow({ icon, label, onPress, color, last, sublabel }) {
-    const c = color || COLORS.text;
-    const labelColor = color || COLORS.text;
+function ActionRow({ icon, label, onPress, last, sublabel }) {
     return (
         <TouchableOpacity
             style={[styles.infoRow, !last && styles.rowBorder]}
             onPress={onPress}
             activeOpacity={0.7}
         >
-            <View style={[styles.rowIconWrap, color && { backgroundColor: `${color}18` }]}>
-                <Ionicons name={icon} size={14} color={c} />
+            <View style={styles.rowIconWrap}>
+                <Ionicons name={icon} size={16} color={COLORS.textSub} />
             </View>
             <View style={styles.rowContent}>
-                <Text style={[styles.rowLabel, { color: labelColor }]}>{label}</Text>
+                <Text style={styles.rowLabel}>{label}</Text>
                 {sublabel && <Text style={styles.rowSublabel}>{sublabel}</Text>}
             </View>
             <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.15)" />
@@ -705,11 +703,11 @@ export default function ProfileScreen({ navigation }) {
                 <SectionTitle title="CONNECTED SERVICES" />
                 <Card>
                     <View style={[styles.serviceRow, styles.rowBorder]}>
-                        <View style={[styles.serviceIcon, healthStatus === "active" && { backgroundColor: 'rgba(66,133,244,0.08)', borderColor: 'rgba(66,133,244,0.15)' }]}>
+                        <View style={styles.serviceIcon}>
                             <Ionicons
-                                name={healthStatus === "active" ? "heart" : "fitness-outline"}
+                                name={healthStatus === "active" ? "heart-outline" : "fitness-outline"}
                                 size={18}
-                                color={healthStatus === "active" ? "#4285F4" : COLORS.textMuted}
+                                color={COLORS.textSub}
                             />
                         </View>
                         <View style={{ flex: 1, marginRight: 8 }}>
@@ -727,14 +725,14 @@ export default function ProfileScreen({ navigation }) {
                             </Text>
                         </View>
                         <TouchableOpacity
-                            style={[styles.serviceAction, healthStatus === "active" && { backgroundColor: 'rgba(239,68,68,0.06)', borderColor: 'rgba(239,68,68,0.15)' }]}
+                            style={[styles.serviceAction, healthStatus === "active" && { backgroundColor: 'rgba(237,234,227,0.06)', borderColor: COLORS.border }]}
                             onPress={handleSyncNow}
                             activeOpacity={0.7}
                         >
                             {syncing ? (
                                 <ActivityIndicator size="small" color={COLORS.text} />
                             ) : (
-                                <Text style={[styles.serviceActionText, healthStatus === "active" && { color: '#EF4444' }]}>
+                                <Text style={styles.serviceActionText}>
                                     {healthStatus === "active" ? "DISCONNECT" : "CONNECT"}
                                 </Text>
                             )}
@@ -742,8 +740,8 @@ export default function ProfileScreen({ navigation }) {
                     </View>
 
                     <View style={styles.serviceRow}>
-                        <View style={[styles.serviceIcon, { backgroundColor: 'rgba(34,197,94,0.06)', borderColor: 'rgba(34,197,94,0.1)' }]}>
-                            <Ionicons name="cloud-done-outline" size={18} color="#22c55e" />
+                        <View style={styles.serviceIcon}>
+                            <Ionicons name="cloud-done-outline" size={18} color={COLORS.textSub} />
                         </View>
                         <View style={{ flex: 1 }}>
                             <Text style={styles.serviceTitle}>Firebase Sync</Text>
@@ -1023,37 +1021,29 @@ const styles = StyleSheet.create({
     
     // Live syncing badges
     liveBadge: {
-        flexDirection: "row", alignItems: "center", gap: 6,
-        paddingHorizontal: 10, paddingVertical: 6, borderRadius: RADIUS.sm,
-        backgroundColor: "rgba(34,197,94,0.06)",
-        borderWidth: 1, borderColor: "rgba(34,197,94,0.12)",
+        flexDirection: "row", alignItems: "center", gap: 5,
+        paddingVertical: 4,
     },
     liveDot: {
-        width: 6, height: 6, borderRadius: 3, backgroundColor: "#22c55e",
+        width: 4, height: 4, borderRadius: 2, backgroundColor: COLORS.accent,
     },
-    liveBadgeText: { fontSize: 8, fontFamily: FAMILY.monoBold, color: "#22c55e", letterSpacing: 1 },
-    
+    liveBadgeText: { fontSize: 8, fontFamily: FAMILY.mono, color: COLORS.textSub, letterSpacing: 1 },
+
     liveBadgeMini: {
         flexDirection: "row",
         alignItems: "center",
         gap: 4,
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-        borderRadius: RADIUS.xs,
-        backgroundColor: "rgba(34,197,94,0.06)",
-        borderWidth: 0.5,
-        borderColor: "rgba(34,197,94,0.15)",
     },
     liveDotMini: {
         width: 4,
         height: 4,
         borderRadius: 2,
-        backgroundColor: "#22c55e",
+        backgroundColor: COLORS.accent,
     },
     liveBadgeTextMini: {
-        fontSize: 7,
-        fontFamily: FAMILY.monoBold,
-        color: "#22c55e",
+        fontSize: 8,
+        fontFamily: FAMILY.mono,
+        color: COLORS.textSub,
         letterSpacing: 0.5,
     },
 
