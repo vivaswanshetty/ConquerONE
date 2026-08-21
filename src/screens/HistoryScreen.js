@@ -133,25 +133,25 @@ const lc = StyleSheet.create({
 function BreakdownBar({ day, count, max }) {
     const pct = max > 0 ? count / max : 0;
     return (
-        <View style={bd.row}>
-            <Text style={bd.label}>{day.target.split(" ")[0].toUpperCase()}</Text>
-            <View style={bd.track}>
-                <View style={[bd.fill, { width: `${pct * 100}%`, backgroundColor: COLORS.primary }]} />
+        <View style={bb.row}>
+            <Text style={bb.label}>{day.target.split(" ")[0].toUpperCase()}</Text>
+            <View style={bb.track}>
+                <View style={[bb.fill, { width: `${pct * 100}%`, backgroundColor: COLORS.primary }]} />
             </View>
-            <View style={bd.countBox}>
-                <Text style={bd.count}>{count}</Text>
+            <View style={bb.countBox}>
+                <Text style={bb.count}>{count}</Text>
             </View>
         </View>
     );
 }
 
-const bd = StyleSheet.create({
-    row: { flexDirection: "row", alignItems: "center", paddingVertical: 14, gap: 16 },
-    label: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, width: 80, letterSpacing: 1.5 },
-    track: { flex: 1, height: 4, backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 2, overflow: "hidden" },
+const bb = StyleSheet.create({
+    row: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 12 },
+    label: { fontSize: 11, fontFamily: FAMILY.medium, color: COLORS.textSub, width: 84 },
+    track: { flex: 1, height: 4, backgroundColor: COLORS.bg, borderRadius: 2, overflow: "hidden", borderWidth: 0.5, borderColor: COLORS.border },
     fill: { height: "100%", borderRadius: 2 },
-    countBox: { width: 30, alignItems: "flex-end" },
-    count: { fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.text },
+    countBox: { width: 28, alignItems: "flex-end" },
+    count: { fontSize: 11, fontFamily: FAMILY.monoBold, color: COLORS.text },
 });
 
 /* ── PR card ────────────────────────────────────────────────── */
@@ -159,14 +159,14 @@ function PRCard({ pr }) {
     return (
         <View style={pr_s.card}>
             <View style={pr_s.info}>
-                <Text style={pr_s.target}>{pr.target.toUpperCase()}</Text>
+                <Text style={pr_s.target}>{pr.target}</Text>
                 <Text style={pr_s.date}>
-                    {toDate(pr.completedAt).toLocaleDateString("en-US", { day: "numeric", month: "short" }).toUpperCase()}
+                    {toDate(pr.completedAt).toLocaleDateString("en-US", { day: "numeric", month: "short" })}
                 </Text>
             </View>
             <View style={pr_s.right}>
                 <Text style={pr_s.duration}>{formatDuration(pr.durationSec)}</Text>
-                <Text style={pr_s.label}>BEST TIME</Text>
+                <Text style={pr_s.label}>Best Time</Text>
             </View>
         </View>
     );
@@ -175,23 +175,23 @@ function PRCard({ pr }) {
 const pr_s = StyleSheet.create({
     card: {
         flexDirection: "row", alignItems: "center",
-        paddingVertical: 20, paddingHorizontal: 24,
-        borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.03)",
+        paddingVertical: 14, paddingHorizontal: 18,
+        borderBottomWidth: 1, borderBottomColor: COLORS.border,
     },
     info: { flex: 1 },
-    target: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 0.5 },
-    date: { fontSize: 9, color: COLORS.textMuted, marginTop: 4, fontFamily: FAMILY.bold, letterSpacing: 1.5 },
+    target: { fontSize: 13, fontFamily: FAMILY.semibold, color: COLORS.text },
+    date: { fontSize: 10, color: COLORS.textMuted, marginTop: 2, fontFamily: FAMILY.mono },
     right: { alignItems: "flex-end" },
-    duration: { fontSize: 18, fontFamily: FAMILY.display, color: COLORS.primary, letterSpacing: -0.5 },
-    label: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1, marginTop: 4 },
+    duration: { fontSize: 15, fontFamily: FAMILY.monoBold, color: COLORS.primary },
+    label: { fontSize: 10, fontFamily: FAMILY.regular, color: COLORS.textSub, marginTop: 2 },
 });
 
 /* ── History row ────────────────────────────────────────────── */
 function HistoryRow({ entry, isLast }) {
     const [expanded, setExpanded] = useState(false);
     const date = toDate(entry.completedAt);
-    const dateStr = date.toLocaleDateString("en-US", { day: "numeric", month: "short" }).toUpperCase();
-    const timeStr = date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false }).toUpperCase();
+    const dateStr = date.toLocaleDateString("en-US", { day: "numeric", month: "short" });
+    const timeStr = date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
 
     const hasExercises = entry.exercises && entry.exercises.length > 0;
 
@@ -203,20 +203,20 @@ function HistoryRow({ entry, isLast }) {
             <View style={[hr.row, isLast && !expanded && { borderBottomWidth: 0 }]}>
                 <View style={[hr.indicator, expanded && { backgroundColor: COLORS.primary, opacity: 1 }]} />
                 <View style={hr.left}>
-                    <Text style={hr.target}>{entry.target.toUpperCase()}</Text>
+                    <Text style={hr.target}>{entry.target}</Text>
                     <Text style={hr.date}>{dateStr} · {timeStr}</Text>
                 </View>
                 <View style={hr.right}>
                     <Text style={hr.duration}>{formatDuration(entry.durationSec)}</Text>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                         <Text style={hr.dayLabel}>
-                            {entry.day === 0 ? `CUSTOM · ${entry.exercises?.length || 0} EX` : `DAY ${entry.day}`}
+                            {entry.day === 0 ? `Custom · ${entry.exercises?.length || 0} ex` : `Day 0${entry.day}`}
                         </Text>
                         {hasExercises && (
                             <Ionicons
                                 name={expanded ? "chevron-up" : "chevron-down"}
                                 size={12}
-                                color={COLORS.textMuted}
+                                color={COLORS.textSub}
                             />
                         )}
                     </View>
@@ -230,15 +230,15 @@ function HistoryRow({ entry, isLast }) {
                             <View style={hr.detailRow}>
                                 <View style={hr.detailDot} />
                                 <Text style={hr.detailText}>
-                                    {ex.name.toUpperCase()}{ex.side ? ` (${ex.side})` : ""}
+                                    {ex.name}{ex.side ? ` (${ex.side})` : ""}
                                 </Text>
-                                <Text style={hr.detailSets}>{ex.sets} SETS</Text>
+                                <Text style={hr.detailSets}>{ex.sets} sets</Text>
                             </View>
                             {ex.loggedSets && ex.loggedSets.some(s => s.completed) ? (
                                 <View style={hr.loggedSetsBox}>
                                     {ex.loggedSets.filter(s => s.completed).map((s, sIdx) => (
                                         <View key={sIdx} style={hr.loggedSetRow}>
-                                            <Text style={hr.loggedSetLabel}>SET {s.set}</Text>
+                                            <Text style={hr.loggedSetLabel}>Set {s.set}</Text>
                                             <View style={hr.loggedSetValBox}>
                                                 <Text style={hr.loggedSetVal}>
                                                     {s.weightKg > 0 ? `${s.weightKg} kg` : "Bodyweight"}
@@ -251,7 +251,7 @@ function HistoryRow({ entry, isLast }) {
                             ) : null}
                         </View>
                     ))}
-                    <View style={{ height: 16 }} />
+                    <View style={{ height: 12 }} />
                 </View>
             )}
         </TouchableOpacity>
@@ -261,27 +261,27 @@ function HistoryRow({ entry, isLast }) {
 const hr = StyleSheet.create({
     row: {
         flexDirection: "row", alignItems: "center",
-        paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.03)",
-        gap: 20,
+        paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: COLORS.border,
+        gap: 14,
     },
-    indicator: { width: 3, height: 32, borderRadius: 1.5, backgroundColor: COLORS.primary, opacity: 0.3 },
+    indicator: { width: 3, height: 28, borderRadius: 1.5, backgroundColor: COLORS.border },
     left: { flex: 1 },
-    target: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.textSub, letterSpacing: 0.5 },
-    date: { fontSize: 9, color: COLORS.textMuted, marginTop: 4, fontFamily: FAMILY.bold, letterSpacing: 1.5 },
+    target: { fontSize: 14, fontFamily: FAMILY.semibold, color: COLORS.text },
+    date: { fontSize: 10, color: COLORS.textMuted, marginTop: 2, fontFamily: FAMILY.mono },
     right: { alignItems: "flex-end" },
-    duration: { fontSize: 15, fontFamily: FAMILY.display, color: COLORS.text, letterSpacing: -0.2 },
-    dayLabel: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, marginTop: 4, letterSpacing: 1.5 },
+    duration: { fontSize: 14, fontFamily: FAMILY.monoBold, color: COLORS.text },
+    dayLabel: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.textSub, marginTop: 2 },
     detailLines: {
-        paddingLeft: 23,
-        paddingBottom: 8,
+        paddingLeft: 18,
+        paddingBottom: 6,
         borderBottomWidth: 1,
-        borderBottomColor: "rgba(255,255,255,0.03)",
+        borderBottomColor: COLORS.border,
     },
     detailRow: {
         flexDirection: "row",
         alignItems: "center",
-        paddingVertical: 6,
-        gap: 12,
+        paddingVertical: 4,
+        gap: 8,
     },
     detailDot: {
         width: 3,
@@ -290,54 +290,50 @@ const hr = StyleSheet.create({
         backgroundColor: COLORS.textMuted,
     },
     detailText: {
-        fontSize: 10,
-        fontFamily: FAMILY.bold,
-        color: COLORS.textMuted,
+        fontSize: 11,
+        fontFamily: FAMILY.regular,
+        color: COLORS.textSub,
         flex: 1,
-        letterSpacing: 0.5,
     },
     detailSets: {
-        fontSize: 9,
-        fontFamily: FAMILY.bold,
+        fontSize: 10,
+        fontFamily: FAMILY.mono,
         color: COLORS.textMuted,
-        opacity: 0.5,
     },
     exerciseContainer: {
-        paddingVertical: 6,
+        paddingVertical: 4,
         borderBottomWidth: 1,
-        borderBottomColor: "rgba(255,255,255,0.01)",
+        borderBottomColor: COLORS.border,
     },
     loggedSetsBox: {
-        paddingLeft: 15,
+        paddingLeft: 12,
         paddingTop: 4,
-        paddingBottom: 6,
-        gap: 6,
+        paddingBottom: 4,
+        gap: 4,
     },
     loggedSetRow: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 12,
+        gap: 8,
     },
     loggedSetLabel: {
-        fontSize: 8,
-        fontFamily: FAMILY.bold,
+        fontSize: 9,
+        fontFamily: FAMILY.mono,
         color: COLORS.textMuted,
         width: 32,
-        letterSpacing: 0.5,
     },
     loggedSetValBox: {
-        backgroundColor: "rgba(255,255,255,0.02)",
+        backgroundColor: COLORS.bg,
         paddingHorizontal: 8,
-        paddingVertical: 3,
-        borderRadius: 6,
-        borderWidth: 0.5,
-        borderColor: "rgba(255,255,255,0.04)",
+        paddingVertical: 2,
+        borderRadius: RADIUS.pill,
+        borderWidth: 1,
+        borderColor: COLORS.border,
     },
     loggedSetVal: {
-        fontSize: 9,
-        fontFamily: FAMILY.bold,
+        fontSize: 10,
+        fontFamily: FAMILY.mono,
         color: COLORS.textSub,
-        letterSpacing: 0.5,
     },
 });
 
@@ -466,7 +462,6 @@ export default function HistoryScreen({ navigation }) {
                                 <Text style={styles.statLabel}>STREAK</Text>
                             </View>
                             <Text style={styles.statValue}>{streak}D</Text>
-                            <LinearGradient colors={["rgba(227,30,36,0.1)", "transparent"]} style={styles.statMiniGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
                         </View>
                         <View style={styles.statSmall}>
                             <View style={styles.statSmallTop}>
@@ -474,19 +469,14 @@ export default function HistoryScreen({ navigation }) {
                                 <Text style={styles.statLabel}>SESSIONS</Text>
                             </View>
                             <Text style={styles.statValue}>{total}</Text>
-                            <LinearGradient colors={["rgba(255,255,255,0.05)", "transparent"]} style={styles.statMiniGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
                         </View>
                     </View>
                     <View style={styles.statLarge}>
-                        <View style={styles.statLargeBg}>
-                            <Ionicons name="analytics" size={120} color={COLORS.text} />
-                        </View>
                         <View style={styles.statSmallTop}>
                             <Ionicons name="time" size={16} color={COLORS.primary} />
                             <Text style={styles.statLabel}>TOTAL DURATION</Text>
                         </View>
                         <Text style={[styles.statValue, { fontSize: 34 }]}>{totalMin}m</Text>
-                        <LinearGradient colors={["rgba(227,30,36,0.08)", "transparent"]} style={styles.statMiniGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
                     </View>
                 </View>
 
@@ -567,56 +557,54 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: COLORS.bg },
     header: {
         flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-        paddingHorizontal: 20, paddingBottom: 24, paddingTop: 12,
+        paddingHorizontal: 20, paddingBottom: 16, paddingTop: 8,
     },
     backBtn: {
-        width: 48, height: 48, borderRadius: 14, backgroundColor: "rgba(255,255,255,0.04)",
-        alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
+        width: 36, height: 36, borderRadius: RADIUS.pill, backgroundColor: COLORS.bgCard,
+        alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: COLORS.border,
     },
-    headerTitle: { fontSize: 26, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -1.2 },
+    headerTitle: { fontSize: 24, fontFamily: FAMILY.display, color: COLORS.text, letterSpacing: -0.5 },
 
     statsRow: {
-        flexDirection: "row", marginHorizontal: 20, marginTop: 8, gap: 16,
+        flexDirection: "row", marginHorizontal: 20, marginTop: 4, gap: 12,
     },
-    statsLeft: { flex: 1, gap: 16 },
+    statsLeft: { flex: 1, gap: 12 },
     statSmall: {
-        flex: 1, backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 24,
-        padding: 20, borderWidth: 1, borderColor: COLORS.border, overflow: "hidden",
+        flex: 1, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.card,
+        padding: 16, borderWidth: 1, borderColor: COLORS.border,
     },
     statLarge: {
-        flex: 1, backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 24,
-        padding: 24, borderWidth: 1, borderColor: "rgba(255,255,255,0.1)",
-        justifyContent: "space-between", overflow: "hidden",
+        flex: 1, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.card,
+        padding: 18, borderWidth: 1, borderColor: COLORS.border,
+        justifyContent: "space-between",
     },
-    statSmallTop: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
-    statMiniGrad: { ...StyleSheet.absoluteFillObject, opacity: 0.5 },
-    statLargeBg: { position: "absolute", bottom: -24, right: -24, opacity: 0.05 },
-    statValue: { fontSize: 26, fontFamily: FAMILY.display, color: COLORS.text, letterSpacing: -1 },
-    statLabel: { fontSize: 8, color: COLORS.textMuted, letterSpacing: 2, fontFamily: FAMILY.bold, flex: 1 },
+    statSmallTop: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 },
+    statValue: { fontSize: 22, fontFamily: FAMILY.monoBold, color: COLORS.text, letterSpacing: -0.5 },
+    statLabel: { fontSize: 9, color: COLORS.textSub, fontFamily: FAMILY.semibold, flex: 1 },
 
     sectionLabel: {
-        fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted,
-        letterSpacing: 3, marginHorizontal: 24, marginTop: 48, marginBottom: 20
+        fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.textMuted,
+        letterSpacing: 1.5, marginHorizontal: 20, marginTop: 32, marginBottom: 12
     },
 
     card: {
-        marginHorizontal: 20, backgroundColor: "rgba(255,255,255,0.03)",
-        borderRadius: 28, borderWidth: 1, borderColor: COLORS.border,
-        padding: 24,
+        marginHorizontal: 20, backgroundColor: COLORS.bgCard,
+        borderRadius: RADIUS.card, borderWidth: 1, borderColor: COLORS.border,
+        padding: 18,
     },
 
-    weekContainer: { marginHorizontal: 20, marginBottom: 32 },
+    weekContainer: { marginHorizontal: 20, marginBottom: 20 },
     weekLabel: {
-        fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.primary,
-        letterSpacing: 2.5, marginBottom: 16, marginLeft: 8
+        fontSize: 11, fontFamily: FAMILY.semibold, color: COLORS.textSub,
+        marginBottom: 8, marginLeft: 4
     },
     weekCard: {
-        backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 28,
+        backgroundColor: COLORS.bgCard, borderRadius: RADIUS.card,
         borderWidth: 1, borderColor: COLORS.border,
-        paddingHorizontal: 24,
+        paddingHorizontal: 16,
     },
 
-    empty: { alignItems: "center", paddingTop: 100, paddingHorizontal: 40 },
-    emptyTitle: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.textSub, letterSpacing: 2, marginBottom: 16 },
-    emptySub: { fontSize: 13, color: COLORS.textMuted, textAlign: "center", lineHeight: 22, fontFamily: FAMILY.regular, opacity: 0.6 },
+    empty: { alignItems: "center", paddingTop: 80, paddingHorizontal: 40 },
+    emptyTitle: { fontSize: 13, fontFamily: FAMILY.semibold, color: COLORS.textSub, marginBottom: 8 },
+    emptySub: { fontSize: 12, color: COLORS.textMuted, textAlign: "center", lineHeight: 18, fontFamily: FAMILY.regular },
 });

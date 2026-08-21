@@ -548,36 +548,29 @@ export default function HomeScreen({ navigation, route }) {
                 <View style={styles.headerRow}>
                     <View style={styles.headerTop}>
                         <View style={{ flex: 1, justifyContent: 'center' }}>
-                            <Text style={styles.greeting}>{greeting.toUpperCase()},</Text>
-                            <MetallicText
-                                text={displayName.toUpperCase()}
-                                style={styles.name}
-                                height={42}
-                            />
+                            <Text style={styles.greeting}>{greeting}</Text>
+                            <Text style={styles.name}>{displayName}</Text>
                         </View>
 
                         <View style={styles.avatarContainer}>
-                            <Animated.View style={[styles.avatarGlowRing, { opacity: avatarGlow }]} />
-                            <Animated.View style={{ transform: [{ scale: avatarScale }] }}>
-                                <TouchableOpacity
-                                    style={styles.profileCircle}
-                                    onPressIn={handleAvatarPressIn}
-                                    onPressOut={handleAvatarPressOut}
-                                    activeOpacity={1}
-                                >
-                                    {profile?.photoURL ? (
-                                        <Image source={{ uri: profile.photoURL }} style={styles.headerAvatar} />
-                                    ) : (
-                                        <View style={styles.avatarPlaceholder}>
-                                            <Text style={styles.avatarText}>{displayName[0].toUpperCase()}</Text>
-                                        </View>
-                                    )}
-                                </TouchableOpacity>
-                            </Animated.View>
+                            <TouchableOpacity
+                                style={styles.profileCircle}
+                                onPressIn={handleAvatarPressIn}
+                                onPressOut={handleAvatarPressOut}
+                                activeOpacity={0.85}
+                            >
+                                {profile?.photoURL ? (
+                                    <Image source={{ uri: profile.photoURL }} style={styles.headerAvatar} />
+                                ) : (
+                                    <View style={styles.avatarPlaceholder}>
+                                        <Text style={styles.avatarText}>{displayName[0]?.toUpperCase()}</Text>
+                                    </View>
+                                )}
+                            </TouchableOpacity>
                         </View>
                     </View>
 
-                    {/* HUD Action Shortcut Bar */}
+                    {/* Action Shortcut Bar */}
                     <ScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
@@ -585,25 +578,25 @@ export default function HomeScreen({ navigation, route }) {
                         contentContainerStyle={styles.hudShortcutBarContent}
                     >
                         <TouchableOpacity style={styles.hudShortcutBtn} onPress={() => navigation.navigate("AICoach")} activeOpacity={0.7}>
-                            <Ionicons name="flash" size={13} color={COLORS.primary} style={{ marginRight: 6 }} />
-                            <Text style={[styles.hudShortcutBtnText, { color: COLORS.primary }]}>COACH</Text>
+                            <Ionicons name="sparkles" size={13} color={COLORS.primary} style={{ marginRight: 6 }} />
+                            <Text style={[styles.hudShortcutBtnText, { color: COLORS.text }]}>Coach</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.hudShortcutBtn} onPress={() => navigation.navigate("History")} activeOpacity={0.7}>
                             <Ionicons name="time-outline" size={13} color={COLORS.textSub} style={{ marginRight: 6 }} />
-                            <Text style={styles.hudShortcutBtnText}>HISTORY</Text>
+                            <Text style={styles.hudShortcutBtnText}>History</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.hudShortcutBtn} onPress={() => navigation.navigate("Settings")} activeOpacity={0.7}>
                             <Ionicons name="settings-outline" size={13} color={COLORS.textSub} style={{ marginRight: 6 }} />
-                            <Text style={styles.hudShortcutBtnText}>SETTINGS</Text>
+                            <Text style={styles.hudShortcutBtnText}>Settings</Text>
                         </TouchableOpacity>
                         {isFrozen && (
                             <TouchableOpacity
-                                style={[styles.hudShortcutBtn, { backgroundColor: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.18)' }]}
+                                style={[styles.hudShortcutBtn, { backgroundColor: 'rgba(237, 234, 227, 0.06)', borderColor: 'rgba(237, 234, 227, 0.18)' }]}
                                 onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setFreezeModal(true); }}
                                 activeOpacity={0.7}
                             >
-                                <Ionicons name="snow" size={12} color="#D1D1D1" style={{ marginRight: 6 }} />
-                                <Text style={[styles.hudShortcutBtnText, { color: "#D1D1D1" }]}>FROZEN</Text>
+                                <Ionicons name="snow" size={12} color={COLORS.text} style={{ marginRight: 6 }} />
+                                <Text style={[styles.hudShortcutBtnText, { color: COLORS.text }]}>Streak Frozen</Text>
                             </TouchableOpacity>
                         )}
                     </ScrollView>
@@ -619,21 +612,16 @@ export default function HomeScreen({ navigation, route }) {
                             navigation.navigate("ActiveWorkout", { day: activeSession.day, resume: true });
                         }}
                     >
-                        <LinearGradient
-                            colors={["rgba(227, 30, 36, 0.25)", "rgba(13, 13, 13, 0.95)"]}
-                            style={StyleSheet.absoluteFill}
-                            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0.5 }}
-                        />
                         <View style={styles.resumeIconBox}>
-                            <Ionicons name="play" size={20} color={COLORS.primary} />
+                            <Ionicons name="play" size={18} color={COLORS.primary} />
                         </View>
                         <View style={{ flex: 1 }}>
                             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                                 <View style={styles.resumeDot} />
-                                <Text style={styles.resumeTag}>WORKOUT IN PROGRESS</Text>
+                                <Text style={styles.resumeTag}>SESSION IN PROGRESS</Text>
                             </View>
-                            <Text style={styles.resumeTitle}>{String(activeSession.day?.dayName || activeSession.day?.target || activeSession.day?.day || "ACTIVE WORKOUT").toUpperCase()}</Text>
-                            <Text style={styles.resumeSub}>Tap to resume session where you left off.</Text>
+                            <Text style={styles.resumeTitle}>{String(activeSession.day?.dayName || activeSession.day?.target || activeSession.day?.day || "Active Workout")}</Text>
+                            <Text style={styles.resumeSub}>Tap to pick up where you left off</Text>
                         </View>
                         <TouchableOpacity
                             style={styles.resumeDiscardBtn}
@@ -662,22 +650,20 @@ export default function HomeScreen({ navigation, route }) {
                             resizeMode="cover"
                         >
                             <LinearGradient
-                                colors={["rgba(0,0,0,0.2)", "rgba(0,0,0,0.6)", "rgba(0,0,0,0.95)"]}
+                                colors={["rgba(10,10,11,0.15)", "rgba(10,10,11,0.65)", "rgba(10,10,11,0.96)"]}
                                 style={StyleSheet.absoluteFill}
                             />
-
-                            <View style={styles.heroLeftAccent} />
 
                             <View style={styles.heroContent}>
                                 <View>
                                     <View style={styles.heroBadge}>
-                                        <Text style={styles.heroBadgeText}>TODAY'S PROTOCOL</Text>
+                                        <Text style={styles.heroBadgeText}>TODAY'S TARGET</Text>
                                     </View>
                                     <Text style={styles.heroTitle} numberOfLines={1} adjustsFontSizeToFit>
-                                        {todayWorkout.target.toUpperCase()}
+                                        {todayWorkout.target}
                                     </Text>
-                                    <Text style={[styles.heroSub, completedDays.includes(todayDay) && { color: "#FFFFFF", fontFamily: FAMILY.bold }]}>
-                                        {completedDays.includes(todayDay) ? "✓ SESSION DONE" : "READY FOR SESSION"}
+                                    <Text style={[styles.heroSub, completedDays.includes(todayDay) && { color: COLORS.text, fontFamily: FAMILY.medium }]}>
+                                        {completedDays.includes(todayDay) ? "✓ Session completed" : `Day 0${todayWorkout.day} · 6-Day Split`}
                                     </Text>
                                 </View>
 
@@ -685,29 +671,29 @@ export default function HomeScreen({ navigation, route }) {
                                     <View style={{ flexDirection: "row", gap: 16 }}>
                                         <View style={styles.heroMeta}>
                                             <Text style={styles.heroMetaLabel}>VOLUME</Text>
-                                            <Text style={styles.heroMetaValue}>{todayWorkout.exercises.length} EXERCISES</Text>
+                                            <Text style={styles.heroMetaValue}>{todayWorkout.exercises.length} EX</Text>
                                         </View>
                                         <View style={styles.heroMeta}>
                                             <Text style={styles.heroMetaLabel}>DURATION</Text>
-                                            <Text style={styles.heroMetaValue}>{totalTime(todayWorkout)} MINS</Text>
+                                            <Text style={styles.heroMetaValue}>{totalTime(todayWorkout)} MIN</Text>
                                         </View>
                                     </View>
 
                                     <TouchableOpacity
                                         style={styles.heroCta}
-                                        activeOpacity={0.8}
+                                        activeOpacity={0.85}
                                         onPress={() => {
                                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                                             navigation.navigate("WorkoutDetail", { day: todayWorkout });
                                         }}
                                     >
                                         <Text style={styles.heroCtaText}>
-                                            {completedDays.includes(todayDay) ? "HIT AGAIN" : "START SESSION"}
+                                            {completedDays.includes(todayDay) ? "Log Again" : "Start Session"}
                                         </Text>
                                         <Ionicons
                                             name={completedDays.includes(todayDay) ? "refresh-outline" : "play"}
-                                            size={11}
-                                            color="#fff"
+                                            size={12}
+                                            color="#EDEAE3"
                                         />
                                     </TouchableOpacity>
                                 </View>
@@ -718,36 +704,26 @@ export default function HomeScreen({ navigation, route }) {
                     <RestDayCard navigation={navigation} />
                 )}
 
-                {/* Tactical Readout HUD Card */}
+                {/* Level & XP HUD Card */}
                 <View style={styles.hudCard}>
-                    <LinearGradient
-                        colors={[COLORS.glassBg, "rgba(5, 5, 5, 0.95)"]}
-                        style={StyleSheet.absoluteFill}
-                    />
-                    <View style={[styles.cardLeftAccent, { backgroundColor: COLORS.primary }]} />
                     <View style={styles.hudHeader}>
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                            <View style={styles.hudDot} />
-                            <Text style={styles.hudTitle}>TACTICAL READOUT</Text>
+                            <Text style={styles.hudTitle}>Level {Math.min(Math.floor(xp / 100) + 1, 99)}</Text>
                         </View>
                         <View style={styles.hudStatusBadge}>
-                            <View style={styles.hudStatusDot} />
-                            <Text style={styles.hudStatusText}>SYS ACTIVE</Text>
+                            <Text style={styles.hudStatusText}>
+                                {total >= 100 ? 'Legend' :
+                                    total >= 50 ? 'Titan' :
+                                        total >= 25 ? 'Warrior' :
+                                            total >= 10 ? 'Chadlite' :
+                                                total >= 5 ? 'Rookie' : 'Recruit'}
+                            </Text>
                         </View>
                     </View>
 
                     <View style={styles.hudBody}>
                         <View style={{ flex: 1 }}>
-                            <View style={styles.hudLevelRow}>
-                                <Text style={styles.hudLevelLabel}>XP CONVERGENCE</Text>
-                                <View style={styles.hudLevelBadge}>
-                                    <Text style={styles.hudLevelValue}>
-                                        LVL {String(Math.min(Math.floor(xp / 100) + 1, 99)).padStart(2, '0')}
-                                    </Text>
-                                </View>
-                            </View>
-                            
-                            {/* Segmented Tactical HUD Progress Bar */}
+                            {/* Segmented HUD Progress Bar */}
                             <View style={styles.segmentedBarRow}>
                                 {Array.from({ length: 10 }).map((_, idx) => {
                                     const progressPercent = xp % 100;
@@ -765,10 +741,8 @@ export default function HomeScreen({ navigation, route }) {
                                         <View key={idx} style={styles.segmentContainer}>
                                             <View style={styles.segmentBg} />
                                             {fillWidth > 0 && (
-                                                <LinearGradient
-                                                    colors={[COLORS.primary, '#9A1016']}
-                                                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                                                    style={[styles.segmentFill, { width: `${fillWidth}%` }]}
+                                                <View
+                                                    style={[styles.segmentFill, { width: `${fillWidth}%`, backgroundColor: COLORS.primary }]}
                                                 />
                                             )}
                                         </View>
@@ -778,55 +752,44 @@ export default function HomeScreen({ navigation, route }) {
 
                             <View style={styles.hudFooterRow}>
                                 <Text style={styles.hudSubText}>
-                                    {xp % 100}/100 XP TO NEXT LEVEL
+                                    {xp % 100} / 100 XP
                                 </Text>
                                 <Text style={styles.hudRankText}>
-                                    {total >= 100 ? 'LEGEND' :
-                                        total >= 50 ? 'TITAN' :
-                                            total >= 25 ? 'WARRIOR' :
-                                                total >= 10 ? 'CHADLITE' :
-                                                    total >= 5 ? 'ROOKIE' : 'RECRUIT'}
+                                    {100 - (xp % 100)} XP to Next Level
                                 </Text>
                             </View>
                         </View>
                     </View>
                 </View>
 
-                {/* ── Streak Intelligence HUD Card ── */}
+                {/* ── Streak Intelligence Card ── */}
                 {(() => {
                     const tierInfo = getStreakTierInfo(streak);
                     return (
                         <TouchableOpacity
                             style={styles.streakIntelligenceCard}
-                            activeOpacity={0.9}
+                            activeOpacity={0.88}
                             onPress={() => {
                                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                                 setStreakAnalyticsVisible(true);
                             }}
                         >
-                            <LinearGradient
-                                colors={[COLORS.glassBg, "rgba(5, 5, 5, 0.95)"]}
-                                style={StyleSheet.absoluteFill}
-                            />
-                            <View style={[styles.cardLeftAccent, { backgroundColor: tierInfo.color || COLORS.accent }]} />
                             <View style={styles.streakIntelligenceLeft}>
                                 <View style={styles.streakIconContainer}>
-                                    <LinearGradient
-                                        colors={["rgba(227, 30, 36, 0.15)", "rgba(5, 5, 5, 0)"]}
-                                        style={StyleSheet.absoluteFill}
-                                    />
-                                    <Ionicons name="flame" size={16} color={tierInfo.color} />
+                                    <Ionicons name="flame" size={16} color={COLORS.primary} />
                                 </View>
-                                <Text style={[styles.streakTierName, { color: tierInfo.color }]}>
+                                <Text style={styles.streakTierName}>
                                     {tierInfo.name}
                                 </Text>
-                                <Text style={styles.streakValue}>{streak} <Text style={{ fontSize: 10, color: COLORS.textMuted, fontFamily: FAMILY.mono }}>DAYS</Text></Text>
-                                <View style={[styles.multiplierBadge, { backgroundColor: `${tierInfo.color}10`, borderColor: `${tierInfo.color}35` }]}>
-                                    <Text style={[styles.multiplierText, { color: tierInfo.color }]}>{tierInfo.multiplier} MULTIPLIER</Text>
+                                <Text style={styles.streakValue}>
+                                    {streak} <Text style={{ fontSize: 11, color: COLORS.textSub, fontFamily: FAMILY.regular }}>{streak === 1 ? 'day' : 'days'}</Text>
+                                </Text>
+                                <View style={styles.multiplierBadge}>
+                                    <Text style={styles.multiplierText}>{tierInfo.multiplier}x XP</Text>
                                 </View>
                             </View>
                             <View style={styles.streakIntelligenceRight}>
-                                <Text style={styles.gridTitle}>7-DAY CONSISTENCY</Text>
+                                <Text style={styles.gridTitle}>7-Day Consistency</Text>
                                 <View style={styles.gridContainer}>
                                     {DAY_LABELS.map((label, index) => {
                                         const dayNum = index + 1;
@@ -840,40 +803,23 @@ export default function HomeScreen({ navigation, route }) {
                                             <View key={label} style={styles.gridCellWrapper}>
                                                 <View
                                                     style={[
-                                                        styles.gridCellRing,
-                                                        isToday && styles.gridCellRingToday
+                                                        styles.gridCell,
+                                                        isCompleted && styles.gridCellCompleted,
+                                                        isDayFrozen && styles.gridCellFrozen,
+                                                        isToday && styles.gridCellToday,
+                                                        !isCompleted && !isDayFrozen && !isToday && dayNum < todayDay && (isSunday ? styles.gridCellRest : styles.gridCellMissed),
+                                                        isFuture && { borderColor: COLORS.border }
                                                     ]}
                                                 >
-                                                    <View
-                                                        style={[
-                                                            styles.gridCell,
-                                                            isCompleted && styles.gridCellCompleted,
-                                                            isDayFrozen && styles.gridCellFrozen,
-                                                            isToday && styles.gridCellToday,
-                                                            !isCompleted && !isDayFrozen && !isToday && dayNum < todayDay && (isSunday ? styles.gridCellRest : styles.gridCellMissed),
-                                                            isFuture && { borderStyle: "dashed", borderColor: "rgba(255, 255, 255, 0.15)" }
-                                                        ]}
-                                                    >
-                                                        {isCompleted ? (
-                                                            <>
-                                                                <Ionicons name="checkmark" size={9} color="#fff" />
-                                                                {isDayFrozen && (
-                                                                    <Ionicons
-                                                                        name="snow"
-                                                                        size={6}
-                                                                        color="#D1D1D1"
-                                                                        style={{ position: "absolute", bottom: -2, right: -2 }}
-                                                                    />
-                                                                )}
-                                                            </>
-                                                        ) : isDayFrozen ? (
-                                                            <Ionicons name="snow" size={9} color="#D1D1D1" />
-                                                        ) : isSunday && !isToday ? (
-                                                            <Ionicons name="moon-outline" size={8} color="#8E8E93" />
-                                                        ) : (
-                                                            isToday && !isCompleted && !isDayFrozen && <View style={styles.gridCellTodayDot} />
-                                                        )}
-                                                    </View>
+                                                    {isCompleted ? (
+                                                        <Ionicons name="checkmark" size={11} color="#EDEAE3" />
+                                                    ) : isDayFrozen ? (
+                                                        <Ionicons name="snow" size={10} color={COLORS.textSub} />
+                                                    ) : isSunday && !isToday ? (
+                                                        <Ionicons name="moon-outline" size={9} color={COLORS.textMuted} />
+                                                    ) : (
+                                                        isToday && !isCompleted && !isDayFrozen && <View style={styles.gridCellTodayDot} />
+                                                    )}
                                                 </View>
                                                 <Text style={[styles.gridCellLabel, isToday && { color: COLORS.primary, fontFamily: FAMILY.bold }]}>{label[0]}</Text>
                                             </View>
@@ -888,58 +834,40 @@ export default function HomeScreen({ navigation, route }) {
                 {/* ── Stats: Total & Rank ── */}
                 <View style={styles.statsRow}>
                     <View style={styles.statSmallWidth}>
-                        <LinearGradient
-                            colors={[COLORS.glassBg, "rgba(5, 5, 5, 0.95)"]}
-                            style={StyleSheet.absoluteFill}
-                        />
-                        <View style={[styles.cardTopAccent, { backgroundColor: COLORS.accent }]} />
-                        <View style={styles.statSmallTop}>
-                            <View style={styles.statIconWrap}>
-                                <Ionicons name="fitness" size={11} color={COLORS.accent} />
-                            </View>
-                            <Text style={styles.statLabelSmall}>TOTAL SESSIONS</Text>
-                        </View>
-                        <Text style={styles.statValueSmall}>{total} <Text style={{ fontSize: 8, color: COLORS.textMuted, fontFamily: FAMILY.mono }}>COMPLETED</Text></Text>
+                        <Text style={styles.statLabelSmall}>Total Sessions</Text>
+                        <Text style={styles.statValueSmall}>{total}</Text>
                     </View>
-                    <TouchableOpacity style={styles.statSmallWidth} activeOpacity={0.8} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); navigation.navigate("Rank"); }}>
-                        <LinearGradient
-                            colors={[COLORS.glassBg, "rgba(5, 5, 5, 0.95)"]}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={StyleSheet.absoluteFill}
-                        />
-                        <View style={[styles.cardTopAccent, { backgroundColor: COLORS.primary }]} />
-                        <View style={styles.statSmallTop}>
-                            <View style={styles.statIconWrap}>
-                                <Ionicons name="trending-up" size={11} color={COLORS.primary} />
-                            </View>
-                            <Text style={styles.statLabelSmall}>CURRENT RANK</Text>
-                        </View>
+                    <TouchableOpacity
+                        style={styles.statSmallWidth}
+                        activeOpacity={0.8}
+                        onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); navigation.navigate("Rank"); }}
+                    >
+                        <Text style={styles.statLabelSmall}>Current Rank</Text>
                         <Text style={styles.statValueSmall} numberOfLines={1} adjustsFontSizeToFit>{
-                            total >= 100 ? 'LEGEND' :
-                                total >= 50 ? 'TITAN' :
-                                    total >= 25 ? 'WARRIOR' :
-                                        total >= 10 ? 'CHADLITE' :
-                                            total >= 5 ? 'ROOKIE' : 'RECRUIT'
+                            total >= 100 ? 'Legend' :
+                                total >= 50 ? 'Titan' :
+                                    total >= 25 ? 'Warrior' :
+                                        total >= 10 ? 'Chadlite' :
+                                            total >= 5 ? 'Rookie' : 'Recruit'
                         }</Text>
                     </TouchableOpacity>
                 </View>
 
                 {/* ── Moments (Highlights) ── */}
                 <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionLabel}>MOMENTS</Text>
+                    <Text style={styles.sectionLabel}>Moments</Text>
                 </View>
                 <MomentsGallery streak={streak} total={total} profile={profile} />
 
                 {/* ── Weekly Plan ── */}
                 <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionLabel}>WEEKLY PLAN</Text>
+                    <Text style={styles.sectionLabel}>Your Week</Text>
                 </View>
                 <GestureScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
                     overScrollMode="never"
-                    contentContainerStyle={{ paddingHorizontal: SPACING.base, gap: 12 }}
+                    contentContainerStyle={{ paddingHorizontal: SPACING.base, gap: 10 }}
                 >
                     {WORKOUT_PLAN.map((day, i) => {
                         const isToday = todayDay === day.day;
@@ -950,21 +878,10 @@ export default function HomeScreen({ navigation, route }) {
                                 onPress={() => handleWeekCellPress(day)}
                                 activeOpacity={0.75}
                             >
-                                {isToday ? (
-                                    <LinearGradient
-                                        colors={["rgba(227,30,36,0.12)", "transparent"]}
-                                        style={StyleSheet.absoluteFill}
-                                    />
-                                ) : (
-                                    <LinearGradient
-                                        colors={["rgba(255,255,255,0.015)", "transparent"]}
-                                        style={StyleSheet.absoluteFill}
-                                    />
-                                )}
-                                <Text style={[styles.weekDay, isToday && styles.weekDayActive]}>{DAY_LABELS[i].toUpperCase()}</Text>
-                                <Text style={styles.weekTarget} numberOfLines={1}>{day.target.toUpperCase()}</Text>
+                                <Text style={[styles.weekDay, isToday && styles.weekDayActive]}>{DAY_LABELS[i]}</Text>
+                                <Text style={styles.weekTarget} numberOfLines={2}>{day.target}</Text>
                                 {isToday && (
-                                    <Animated.View style={[styles.activeIndicator, { opacity: dotOpacity }]} />
+                                    <View style={styles.activeIndicator} />
                                 )}
                             </GestureTouchableOpacity>
                         );
@@ -977,18 +894,14 @@ export default function HomeScreen({ navigation, route }) {
                         }}
                         activeOpacity={0.7}
                     >
-                        <LinearGradient
-                            colors={["rgba(255,255,255,0.015)", "transparent"]}
-                            style={StyleSheet.absoluteFill}
-                        />
-                        <Text style={styles.weekDay}>SUN</Text>
-                        <Text style={styles.weekTarget}>REST</Text>
+                        <Text style={styles.weekDay}>Sun</Text>
+                        <Text style={styles.weekTarget}>Rest & Recovery</Text>
                     </GestureTouchableOpacity>
                 </GestureScrollView>
 
                 {/* ── Workout Library ── */}
                 <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionLabel}>WORKOUT LIBRARY</Text>
+                    <Text style={styles.sectionLabel}>Workout Library</Text>
                 </View>
                 <View style={styles.dayList}>
                     {WORKOUT_PLAN.map((day) => (
@@ -999,28 +912,20 @@ export default function HomeScreen({ navigation, route }) {
                                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                                 navigation.navigate("WorkoutDetail", { day });
                             }}
-                            activeOpacity={0.7}
+                            activeOpacity={0.75}
                         >
-                            <View style={[styles.dayRowAccent, { backgroundColor: getMuscleColor(day.target) }]} />
-                            <LinearGradient
-                                colors={["rgba(255,255,255,0.015)", "transparent"]}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 0 }}
-                                style={StyleSheet.absoluteFill}
-                            />
                             <View style={styles.dayRowLeft}>
                                 <View style={styles.dayNumRow}>
                                     <Text style={styles.dayNum}>0{day.day}</Text>
-                                    <View style={styles.dayDot} />
                                     <View style={styles.muscleBadge}>
-                                        <Text style={styles.muscleBadgeText}>{day.target.toUpperCase()}</Text>
+                                        <Text style={styles.muscleBadgeText}>{day.target}</Text>
                                     </View>
                                 </View>
-                                <Text style={styles.dayTargetTitle}>{day.target.toUpperCase()}</Text>
-                                <Text style={styles.dayMeta}>{day.exercises.length} EX · {totalTime(day)} MIN · {day.exercises[0]?.equipment.toUpperCase()}</Text>
+                                <Text style={styles.dayTargetTitle}>{day.target}</Text>
+                                <Text style={styles.dayMeta}>{day.exercises.length} Exercises · {totalTime(day)} Min</Text>
                             </View>
                             <View style={styles.dayRowRight}>
-                                <Ionicons name="chevron-forward" size={18} color={COLORS.textMuted} />
+                                <Ionicons name="chevron-forward" size={18} color={COLORS.textSub} />
                             </View>
                         </TouchableOpacity>
                     ))}
@@ -1028,7 +933,7 @@ export default function HomeScreen({ navigation, route }) {
 
                 {/* ── Protocol Handbook ── */}
                 <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionLabel}>PROTOCOL HANDBOOK</Text>
+                    <Text style={styles.sectionLabel}>Protocol Handbook</Text>
                 </View>
                 <TouchableOpacity
                     style={styles.customCard}
@@ -1038,42 +943,30 @@ export default function HomeScreen({ navigation, route }) {
                     }}
                     activeOpacity={0.8}
                 >
-                    <LinearGradient
-                        colors={["rgba(255,255,255,0.05)", "rgba(227,30,36,0.03)"]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={StyleSheet.absoluteFill}
-                    />
                     <View style={{ flex: 1 }}>
-                        <Text style={styles.customTitle}>PLAN INTEL</Text>
-                        <Text style={styles.customSub}>THE SCIENCE · THE RULES · THE 12-WEEK SYSTEM</Text>
+                        <Text style={styles.customTitle}>Plan Intelligence</Text>
+                        <Text style={styles.customSub}>The Science · Rules · 12-Week System</Text>
                     </View>
                     <View style={styles.customIconWrap}>
-                        <Ionicons name="book-outline" size={20} color={COLORS.primary} />
+                        <Ionicons name="book-outline" size={18} color={COLORS.text} />
                     </View>
                 </TouchableOpacity>
 
                 {/* ── Custom Workout ── */}
                 <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionLabel}>CUSTOM WORKOUT</Text>
+                    <Text style={styles.sectionLabel}>Custom Workout</Text>
                 </View>
                 <TouchableOpacity
                     style={styles.customCard}
                     onPress={() => navigation.navigate("CustomWorkout")}
                     activeOpacity={0.8}
                 >
-                    <LinearGradient
-                        colors={["rgba(255,255,255,0.05)", "rgba(227,30,36,0.02)"]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={StyleSheet.absoluteFill}
-                    />
                     <View style={{ flex: 1 }}>
-                        <Text style={styles.customTitle}>CRAFT SESSION</Text>
-                        <Text style={styles.customSub}>DESIGN YOUR PERFECT WORKOUT</Text>
+                        <Text style={styles.customTitle}>Craft Session</Text>
+                        <Text style={styles.customSub}>Design and log your bespoke workout</Text>
                     </View>
                     <View style={styles.customIconWrap}>
-                        <Ionicons name="flash-outline" size={20} color={COLORS.primary} />
+                        <Ionicons name="flash-outline" size={18} color={COLORS.text} />
                     </View>
                 </TouchableOpacity>
 
@@ -1631,175 +1524,94 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: COLORS.bg },
     headerRow: {
         paddingHorizontal: SPACING.base,
-        marginBottom: 24,
+        marginBottom: 20,
     },
-    headerTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 },
+    headerTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
 
-    // Avatar breathing styles
+    // Avatar
     avatarContainer: {
-        width: 46,
-        height: 46,
+        width: 44,
+        height: 44,
         alignItems: "center",
         justifyContent: "center",
         marginLeft: 4,
     },
-    avatarGlowRing: {
-        position: "absolute",
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        borderWidth: 1.5,
-        borderColor: COLORS.primary,
-        shadowColor: COLORS.primary,
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.8,
-        shadowRadius: 6,
-    },
     profileCircle: {
-        width: 38, height: 38, borderRadius: 19,
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
-        overflow: "hidden", backgroundColor: "rgba(255,255,255,0.04)",
+        width: 40, height: 40, borderRadius: RADIUS.pill,
+        borderWidth: 1, borderColor: COLORS.border,
+        overflow: "hidden", backgroundColor: COLORS.bgCard,
         alignItems: "center", justifyContent: "center",
     },
     headerAvatar: { width: "100%", height: "100%" },
     avatarPlaceholder: { width: "100%", height: "100%", alignItems: "center", justifyContent: "center" },
-    avatarText: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.textSub },
+    avatarText: { fontSize: 14, fontFamily: FAMILY.bold, color: COLORS.text },
 
-    greeting: { fontSize: 10, color: COLORS.primary, fontFamily: FAMILY.bold, letterSpacing: 4, marginBottom: 4 },
+    greeting: { fontSize: 13, color: COLORS.textSub, fontFamily: FAMILY.regular, marginBottom: 2 },
     name: {
-        fontSize: 34,
-        color: "#FFFFFF",
-        fontFamily: FAMILY.bold,
+        fontSize: 28,
+        color: COLORS.text,
+        fontFamily: FAMILY.display,
         letterSpacing: -0.5,
-        lineHeight: 38,
+        lineHeight: 32,
     },
 
-    // Tactical HUD Level Card
+    // HUD Level Card
     hudCard: {
         marginHorizontal: SPACING.base,
-        marginTop: 24,
-        borderRadius: 22,
+        marginTop: 12,
+        borderRadius: RADIUS.card,
         borderWidth: 1,
-        height: 135,
-        borderColor: "rgba(255, 255, 255, 0.08)",
-        backgroundColor: "transparent",
+        borderColor: COLORS.border,
+        backgroundColor: COLORS.bgCard,
         padding: 16,
         justifyContent: "center",
-        overflow: "hidden",
-        shadowColor: COLORS.primary,
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.12,
-        shadowRadius: 15,
-        elevation: 6,
-    },
-    cardLeftAccent: {
-        position: 'absolute',
-        left: 0,
-        top: 0,
-        bottom: 0,
-        width: 3.5,
-    },
-    cardTopAccent: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: 2.5,
     },
     hudHeader: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
         borderBottomWidth: 1,
-        borderBottomColor: "rgba(255, 255, 255, 0.06)",
-        paddingBottom: 6,
-        marginBottom: 8,
-    },
-    hudDot: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
-        backgroundColor: COLORS.primary,
-        shadowColor: COLORS.primary,
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.9,
-        shadowRadius: 4,
+        borderBottomColor: COLORS.border,
+        paddingBottom: 10,
+        marginBottom: 12,
     },
     hudTitle: {
-        fontSize: 9,
-        fontFamily: FAMILY.bold,
-        color: COLORS.textSub,
-        letterSpacing: 2.5,
+        fontSize: 14,
+        fontFamily: FAMILY.display,
+        color: COLORS.text,
+        letterSpacing: -0.2,
     },
     hudStatusBadge: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 5,
         paddingHorizontal: 8,
         paddingVertical: 3,
-        borderRadius: 6,
-        backgroundColor: "rgba(227, 30, 36, 0.08)",
-        borderWidth: 0.8,
-        borderColor: "rgba(227, 30, 36, 0.35)",
-    },
-    hudStatusDot: {
-        width: 4,
-        height: 4,
-        borderRadius: 2,
-        backgroundColor: COLORS.primary,
+        borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(237, 234, 227, 0.06)",
+        borderWidth: 1,
+        borderColor: COLORS.border,
     },
     hudStatusText: {
-        fontSize: 7.5,
-        fontFamily: FAMILY.mono,
-        color: COLORS.primary,
-        letterSpacing: 1.5,
+        fontSize: 10,
+        fontFamily: FAMILY.medium,
+        color: COLORS.textSub,
     },
     hudBody: {
         flexDirection: "row",
-    },
-    hudLevelRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 8,
-    },
-    hudLevelLabel: {
-        fontSize: 8,
-        fontFamily: FAMILY.semibold,
-        color: COLORS.textMuted,
-        letterSpacing: 1.5,
-    },
-    hudLevelBadge: {
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        backgroundColor: "rgba(255, 255, 255, 0.05)",
-        borderRadius: 4,
-        borderWidth: 0.5,
-        borderColor: "rgba(255, 255, 255, 0.1)",
-    },
-    hudLevelValue: {
-        fontSize: 12,
-        fontFamily: FAMILY.mono,
-        color: COLORS.text,
-        letterSpacing: 1,
     },
     hudFooterRow: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        marginTop: 2,
+        marginTop: 4,
     },
     hudSubText: {
-        fontSize: 8,
-        fontFamily: FAMILY.regular,
-        color: COLORS.textMuted,
-        letterSpacing: 1,
+        fontSize: 11,
+        fontFamily: FAMILY.mono,
+        color: COLORS.text,
     },
     hudRankText: {
-        fontSize: 9,
-        fontFamily: FAMILY.bold,
-        color: "#FFFFFF",
-        letterSpacing: 1.5,
+        fontSize: 11,
+        fontFamily: FAMILY.regular,
+        color: COLORS.textSub,
     },
     
     // Segmented HUD Bar Styles
@@ -1807,162 +1619,119 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         width: '100%',
-        height: 8,
+        height: 6,
         marginBottom: 10,
     },
     segmentContainer: {
         flex: 1,
         height: '100%',
         marginHorizontal: 1.5,
-        borderRadius: 1.5,
+        borderRadius: 2,
         overflow: 'hidden',
         position: 'relative',
     },
     segmentBg: {
         position: 'absolute',
         top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: 'rgba(255, 255, 255, 0.06)',
-        borderRadius: 1.5,
+        backgroundColor: "rgba(237, 234, 227, 0.08)",
+        borderRadius: 2,
     },
     segmentFill: {
         height: '100%',
-        borderRadius: 1.5,
+        borderRadius: 2,
     },
 
-    levelFill: { height: "100%", borderRadius: 3 },
-    headerSmallActions: { flexDirection: "row", alignItems: "center" },
-    iconBtnSm: {
-        width: 36, height: 36, borderRadius: 12, backgroundColor: "#0D0D0D",
-        alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)"
-    },
-
-    // Asymmetric Stats Grid
+    // Stats Grid
     statsRow: {
-        flexDirection: "row", marginHorizontal: SPACING.base, marginBottom: 36,
-        height: 88, gap: 12, marginTop: 12,
-    },
-    statsLeft: { flex: 1, gap: 12 },
-    statSmall: {
-        flex: 1, padding: 16,
-        backgroundColor: "transparent", borderRadius: 22,
-        borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.08)",
-        justifyContent: "center", alignItems: "center", overflow: "hidden",
+        flexDirection: "row", marginHorizontal: SPACING.base, marginBottom: 24,
+        height: 76, gap: 10, marginTop: 12,
     },
     statSmallWidth: {
-        flex: 1, paddingHorizontal: 16, paddingVertical: 14,
-        backgroundColor: "transparent", borderRadius: 22,
-        borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.08)",
-        justifyContent: "center", alignItems: "center", overflow: "hidden",
-        shadowColor: COLORS.primary,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-        elevation: 2,
+        flex: 1, paddingHorizontal: 16, paddingVertical: 12,
+        backgroundColor: COLORS.bgCard, borderRadius: RADIUS.card,
+        borderWidth: 1, borderColor: COLORS.border,
+        justifyContent: "center", alignItems: "flex-start",
     },
-    statSmallTop: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 8 },
-    statIconWrap: { width: 20, height: 20, borderRadius: 6, backgroundColor: "rgba(255,255,255,0.04)", alignItems: "center", justifyContent: "center", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.08)" },
-    statLabelSmall: { fontSize: 8, color: COLORS.textMuted, fontFamily: FAMILY.bold, letterSpacing: 2 },
-    statValueSmall: { fontSize: 16, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -0.5, textAlign: "center" },
+    statLabelSmall: { fontSize: 11, color: COLORS.textSub, fontFamily: FAMILY.medium, marginBottom: 4 },
+    statValueSmall: { fontSize: 20, fontFamily: FAMILY.monoBold, color: COLORS.text },
 
     // Streak Intelligence Card Styles
     streakIntelligenceCard: {
         marginHorizontal: SPACING.base,
-        marginTop: 16,
+        marginTop: 12,
         padding: 16,
-        height: 135,
-        borderRadius: 22,
+        borderRadius: RADIUS.card,
         borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.08)",
-        backgroundColor: "transparent",
+        borderColor: COLORS.border,
+        backgroundColor: COLORS.bgCard,
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        overflow: "hidden",
-        shadowColor: COLORS.primary,
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.12,
-        shadowRadius: 15,
-        elevation: 6,
     },
     streakIntelligenceLeft: {
         flex: 1.1,
-        alignItems: "center",
+        alignItems: "flex-start",
         justifyContent: "center",
     },
     streakIconContainer: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
+        width: 28,
+        height: 28,
+        borderRadius: RADIUS.pill,
         justifyContent: "center",
         alignItems: "center",
-        overflow: "hidden",
-        borderWidth: 1,
-        borderColor: "rgba(227, 30, 36, 0.25)",
+        backgroundColor: "rgba(122, 46, 34, 0.15)",
         marginBottom: 6,
     },
     streakTierName: {
-        fontFamily: FAMILY.bold,
-        fontSize: 9,
-        letterSpacing: 2,
-        color: COLORS.primary,
+        fontFamily: FAMILY.semibold,
+        fontSize: 11,
+        color: COLORS.text,
         marginBottom: 2,
     },
     streakValue: {
-        fontFamily: FAMILY.bold,
-        fontSize: 26,
+        fontFamily: FAMILY.monoBold,
+        fontSize: 24,
         color: COLORS.text,
-        marginBottom: 4,
-        textAlign: "center",
+        marginBottom: 6,
     },
     multiplierBadge: {
         paddingHorizontal: 8,
-        paddingVertical: 3,
-        borderRadius: 6,
-        borderWidth: 0.8,
-        alignSelf: "center",
+        paddingVertical: 2,
+        borderRadius: RADIUS.pill,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        backgroundColor: "rgba(237, 234, 227, 0.04)",
     },
     multiplierText: {
         fontFamily: FAMILY.mono,
-        fontSize: 8,
-        letterSpacing: 1,
+        fontSize: 9,
+        color: COLORS.textSub,
     },
     streakIntelligenceRight: {
         flex: 1.9,
         alignItems: "flex-end",
     },
     gridTitle: {
-        fontFamily: FAMILY.bold,
-        fontSize: 8,
-        color: COLORS.textMuted,
-        letterSpacing: 1.5,
-        marginBottom: 8,
+        fontFamily: FAMILY.medium,
+        fontSize: 11,
+        color: COLORS.textSub,
+        marginBottom: 10,
     },
     gridContainer: {
         flexDirection: "row",
-        gap: 4,
+        gap: 5,
     },
     gridCellWrapper: {
         alignItems: "center",
         gap: 4,
     },
-    gridCellRing: {
-        width: 26,
-        height: 26,
-        borderRadius: 13,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    gridCellRingToday: {
-        borderWidth: 1.2,
-        borderColor: "rgba(227, 30, 36, 0.5)",
-    },
     gridCell: {
-        width: 20,
-        height: 20,
-        borderRadius: 10,
+        width: 22,
+        height: 22,
+        borderRadius: 6,
         borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.15)",
-        backgroundColor: "#000000",
+        borderColor: COLORS.border,
+        backgroundColor: COLORS.bg,
         justifyContent: "center",
         alignItems: "center",
     },
@@ -1971,20 +1740,20 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.primary,
     },
     gridCellFrozen: {
-        borderColor: "#D1D1D1",
-        backgroundColor: "rgba(255, 255, 255, 0.2)",
+        borderColor: COLORS.border,
+        backgroundColor: "rgba(237, 234, 227, 0.15)",
     },
     gridCellToday: {
         borderColor: COLORS.text,
         borderWidth: 1.5,
     },
     gridCellMissed: {
-        borderColor: "rgba(255, 255, 255, 0.08)",
-        backgroundColor: "rgba(255, 255, 255, 0.03)",
+        borderColor: COLORS.border,
+        backgroundColor: "rgba(237, 234, 227, 0.02)",
     },
     gridCellRest: {
-        borderColor: "rgba(255, 255, 255, 0.1)",
-        backgroundColor: "rgba(255, 255, 255, 0.04)",
+        borderColor: COLORS.border,
+        backgroundColor: "rgba(237, 234, 227, 0.04)",
     },
     gridCellTodayDot: {
         width: 4,
@@ -1994,31 +1763,32 @@ const styles = StyleSheet.create({
     },
     gridCellLabel: {
         fontFamily: FAMILY.mono,
-        fontSize: 7,
+        fontSize: 8,
         color: COLORS.textMuted,
     },
 
     // Streak Analytics Modal Styles
     modalOverlay: {
         flex: 1,
-        backgroundColor: "rgba(0, 0, 0, 0.75)",
+        backgroundColor: "rgba(0, 0, 0, 0.8)",
         justifyContent: "flex-end",
     },
     modalSheet: {
         width: "100%",
         height: "82%",
-        borderTopLeftRadius: 28,
-        borderTopRightRadius: 28,
+        borderTopLeftRadius: 16,
+        borderTopRightRadius: 16,
         borderWidth: 1,
-        borderColor: COLORS.glassBorder,
+        borderColor: COLORS.border,
+        backgroundColor: COLORS.bgCard,
         overflow: "hidden",
         paddingTop: 12,
     },
     dragHandle: {
-        width: 40,
+        width: 36,
         height: 4,
         borderRadius: 2,
-        backgroundColor: "rgba(255, 255, 255, 0.2)",
+        backgroundColor: "rgba(237, 234, 227, 0.2)",
         alignSelf: "center",
         marginBottom: 16,
     },
@@ -2029,19 +1799,18 @@ const styles = StyleSheet.create({
         paddingHorizontal: 24,
         paddingBottom: 16,
         borderBottomWidth: 1,
-        borderBottomColor: "rgba(255, 255, 255, 0.05)",
+        borderBottomColor: COLORS.border,
     },
     modalHeaderTitle: {
-        fontFamily: FAMILY.bold,
-        fontSize: 12,
+        fontFamily: FAMILY.display,
+        fontSize: 16,
         color: COLORS.text,
-        letterSpacing: 2,
     },
     modalCloseBtn: {
         width: 32,
         height: 32,
-        borderRadius: 16,
-        backgroundColor: "rgba(255, 255, 255, 0.05)",
+        borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(237, 234, 227, 0.06)",
         justifyContent: "center",
         alignItems: "center",
     },
@@ -2057,42 +1826,40 @@ const styles = StyleSheet.create({
     },
     metricCard: {
         flex: 1,
-        backgroundColor: "rgba(255, 255, 255, 0.02)",
-        borderRadius: 16,
+        backgroundColor: COLORS.bg,
+        borderRadius: RADIUS.card,
         borderWidth: 1,
-        borderColor: COLORS.glassBorder,
+        borderColor: COLORS.border,
         padding: 16,
     },
     metricLabel: {
-        fontFamily: FAMILY.mono,
-        fontSize: 7,
-        color: COLORS.textMuted,
-        letterSpacing: 1.5,
+        fontFamily: FAMILY.regular,
+        fontSize: 11,
+        color: COLORS.textSub,
     },
     metricValue: {
-        fontFamily: FAMILY.bold,
+        fontFamily: FAMILY.monoBold,
         fontSize: 22,
         marginVertical: 4,
+        color: COLORS.text,
     },
     metricSub: {
-        fontFamily: FAMILY.bold,
-        fontSize: 7,
+        fontFamily: FAMILY.regular,
+        fontSize: 9,
         color: COLORS.textMuted,
-        letterSpacing: 1,
     },
     chartWrapper: {
-        backgroundColor: "rgba(255, 255, 255, 0.02)",
-        borderRadius: 20,
+        backgroundColor: COLORS.bg,
+        borderRadius: RADIUS.card,
         borderWidth: 1,
-        borderColor: COLORS.glassBorder,
+        borderColor: COLORS.border,
         padding: 16,
         marginBottom: 20,
     },
     chartTitle: {
-        fontFamily: FAMILY.mono,
-        fontSize: 8,
-        color: COLORS.textMuted,
-        letterSpacing: 1.5,
+        fontFamily: FAMILY.semibold,
+        fontSize: 12,
+        color: COLORS.text,
         marginBottom: 12,
     },
     svgContainer: {
@@ -2107,17 +1874,16 @@ const styles = StyleSheet.create({
     },
     chartLabelText: {
         fontFamily: FAMILY.mono,
-        fontSize: 7,
+        fontSize: 8,
         color: COLORS.textMuted,
     },
     modalSection: {
         marginBottom: 20,
     },
     modalSectionTitle: {
-        fontFamily: FAMILY.mono,
-        fontSize: 8,
-        color: COLORS.textMuted,
-        letterSpacing: 2,
+        fontFamily: FAMILY.semibold,
+        fontSize: 13,
+        color: COLORS.text,
         marginBottom: 12,
     },
     tierRow: {
@@ -2125,42 +1891,44 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         alignItems: "center",
         padding: 14,
-        borderRadius: 16,
+        borderRadius: RADIUS.card,
         borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.03)",
-        backgroundColor: "rgba(255, 255, 255, 0.01)",
+        borderColor: COLORS.border,
+        backgroundColor: COLORS.bg,
         marginBottom: 8,
     },
     tierRowActive: {
-        backgroundColor: "rgba(255, 255, 255, 0.03)",
-        borderWidth: 1.5,
+        borderColor: COLORS.primary,
+        backgroundColor: "rgba(122, 46, 34, 0.08)",
     },
     tierRowName: {
-        fontFamily: FAMILY.bold,
-        fontSize: 11,
-        letterSpacing: 1,
+        fontFamily: FAMILY.semibold,
+        fontSize: 13,
+        color: COLORS.text,
     },
     tierRowRange: {
-        fontFamily: FAMILY.regular,
-        fontSize: 9,
-        color: COLORS.textMuted,
+        fontFamily: FAMILY.mono,
+        fontSize: 10,
+        color: COLORS.textSub,
     },
     tierMultiplierBadge: {
         paddingHorizontal: 10,
         paddingVertical: 4,
-        borderRadius: 6,
+        borderRadius: RADIUS.pill,
+        borderWidth: 1,
+        borderColor: COLORS.border,
     },
     tierMultiplierText: {
         fontFamily: FAMILY.mono,
-        fontSize: 8,
+        fontSize: 9,
         fontWeight: "bold",
     },
     freezeActionSection: {
         flexDirection: "row",
-        backgroundColor: "rgba(255, 255, 255, 0.02)",
-        borderRadius: 20,
+        backgroundColor: COLORS.bg,
+        borderRadius: RADIUS.card,
         borderWidth: 1,
-        borderColor: COLORS.glassBorder,
+        borderColor: COLORS.border,
         padding: 16,
         alignItems: "center",
         justifyContent: "space-between",
@@ -2171,29 +1939,27 @@ const styles = StyleSheet.create({
         marginRight: 8,
     },
     freezeSectionTitle: {
-        fontFamily: FAMILY.mono,
-        fontSize: 8,
-        color: COLORS.textMuted,
-        letterSpacing: 1.5,
+        fontFamily: FAMILY.semibold,
+        fontSize: 13,
+        color: COLORS.text,
         marginBottom: 4,
     },
     freezeSectionDesc: {
         fontFamily: FAMILY.regular,
-        fontSize: 8,
-        color: COLORS.textMuted,
-        lineHeight: 12,
+        fontSize: 11,
+        color: COLORS.textSub,
+        lineHeight: 16,
     },
     previousFreezeText: {
-        fontFamily: FAMILY.bold,
-        fontSize: 7.5,
-        color: "#60A5FA",
-        letterSpacing: 0.5,
+        fontFamily: FAMILY.mono,
+        fontSize: 9,
+        color: COLORS.textSub,
         marginTop: 6,
     },
     freezeToggleButton: {
-        paddingHorizontal: 12,
+        paddingHorizontal: 14,
         height: 38,
-        borderRadius: 12,
+        borderRadius: RADIUS.card,
         backgroundColor: COLORS.primary,
         flexDirection: "row",
         alignItems: "center",
@@ -2201,103 +1967,68 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     freezeToggleButtonActive: {
-        backgroundColor: "rgba(96, 165, 250, 0.15)",
+        backgroundColor: "rgba(237, 234, 227, 0.12)",
         borderWidth: 1,
-        borderColor: "rgba(96, 165, 250, 0.3)",
+        borderColor: COLORS.border,
     },
     freezeToggleText: {
-        fontFamily: FAMILY.bold,
-        fontSize: 8,
-        color: "#FFFFFF",
-        letterSpacing: 0.5,
+        fontFamily: FAMILY.semibold,
+        fontSize: 11,
+        color: COLORS.text,
     },
-
-    statLarge: {
-        flex: 1.4, padding: 20,
-        backgroundColor: COLORS.glassBg, borderRadius: 24,
-        borderWidth: 1, borderColor: COLORS.glassBorder,
-        justifyContent: "space-between", overflow: "hidden",
-    },
-    statLargeTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
-    statValueLarge: { fontSize: 24, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -1, marginTop: 4 },
-    intensityBadge: { width: 32, height: 32, borderRadius: 10, backgroundColor: "rgba(227,30,36,0.08)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(227,30,36,0.15)" },
-    sparklineContainer: { flexDirection: "row", alignItems: "flex-end", gap: 4, height: 24, marginBottom: 4 },
-    sparklineBar: { width: 4, borderRadius: 2, backgroundColor: COLORS.primary },
-    statSubText: { fontSize: 8, color: COLORS.textMuted, fontFamily: FAMILY.bold, letterSpacing: 1.5 },
 
     // Section headers
     sectionHeader: {
         flexDirection: "row", justifyContent: "space-between", alignItems: "baseline",
-        paddingHorizontal: SPACING.base, marginBottom: 16, marginTop: 24,
+        paddingHorizontal: SPACING.base, marginBottom: 12, marginTop: 24,
     },
     sectionLabel: {
-        fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 3,
+        fontSize: 16, fontFamily: FAMILY.display, color: COLORS.text, letterSpacing: -0.2,
     },
 
-    // Hero HUD card
+    // Hero card
     heroCard: {
         width: width - (SPACING.base * 2),
         alignSelf: "center",
-        height: 220, borderRadius: 24,
+        height: 210, borderRadius: RADIUS.card,
         overflow: "hidden", backgroundColor: COLORS.bgCard,
-        borderWidth: 1, borderColor: "rgba(227, 30, 36, 0.22)",
-        shadowColor: COLORS.primary,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.12,
-        shadowRadius: 16,
-        elevation: 6,
+        borderWidth: 1, borderColor: COLORS.border,
     },
-    heroLeftAccent: {
-        position: "absolute",
-        left: 0,
-        top: 0,
-        bottom: 0,
-        width: 5,
-        backgroundColor: COLORS.primary,
-        shadowColor: COLORS.primary,
-        shadowOffset: { width: 4, height: 0 },
-        shadowOpacity: 0.8,
-        shadowRadius: 10,
-    },
-    heroContent: { flex: 1, paddingVertical: 18, paddingHorizontal: 16, justifyContent: "space-between", paddingLeft: 20 },
-    heroHeader: { flex: 1 },
+    heroContent: { flex: 1, paddingVertical: 18, paddingHorizontal: 18, justifyContent: "space-between" },
     heroBadge: {
         alignSelf: "flex-start",
-        backgroundColor: "rgba(255,255,255,0.06)",
-        paddingHorizontal: 10, paddingVertical: 4,
-        borderRadius: 4, marginBottom: 14,
-        borderWidth: 0.5, borderColor: "rgba(255,255,255,0.12)",
+        backgroundColor: "rgba(237, 234, 227, 0.06)",
+        paddingHorizontal: 8, paddingVertical: 3,
+        borderRadius: 4, marginBottom: 10,
+        borderWidth: 0.5, borderColor: COLORS.border,
     },
-    heroBadgeText: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 2 },
-    heroTitle: { fontSize: 38, fontFamily: FAMILY.bold, color: COLORS.text, lineHeight: 42, letterSpacing: -1 },
-    heroSub: { fontSize: 12, fontFamily: FAMILY.regular, color: COLORS.textSub, marginTop: 10, letterSpacing: 1 },
+    heroBadgeText: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 1.5 },
+    heroTitle: { fontSize: 32, fontFamily: FAMILY.display, color: COLORS.text, lineHeight: 36, letterSpacing: -0.5 },
+    heroSub: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textSub, marginTop: 6 },
 
     heroMetaRow: {
         flexDirection: "row", alignItems: "center", justifyContent: "space-between",
         marginTop: 14,
     },
-    heroMeta: { gap: 4 },
-    heroMetaLabel: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2 },
-    heroMetaValue: { fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.text },
+    heroMeta: { gap: 2 },
+    heroMetaLabel: { fontSize: 8, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 1 },
+    heroMetaValue: { fontSize: 11, fontFamily: FAMILY.mono, color: COLORS.text },
 
     heroCta: {
         flexDirection: "row", alignItems: "center", gap: 6,
-        backgroundColor: COLORS.primary, paddingHorizontal: 12, paddingVertical: 9,
-        borderRadius: 12,
-        shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.25, shadowRadius: 8, elevation: 4,
-        borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.15)",
+        backgroundColor: COLORS.primary, paddingHorizontal: 14, paddingVertical: 9,
+        borderRadius: RADIUS.card,
     },
-    heroCtaText: { fontSize: 10.5, fontFamily: FAMILY.bold, color: "#fff", letterSpacing: 1.2 },
+    heroCtaText: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.text, letterSpacing: 0.2 },
 
     // Rest Card
     restCard: {
-        marginHorizontal: SPACING.base, borderRadius: 24, overflow: "hidden",
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.06)", minHeight: 240, backgroundColor: COLORS.bgCard,
+        marginHorizontal: SPACING.base, borderRadius: RADIUS.card, overflow: "hidden",
+        borderWidth: 1, borderColor: COLORS.border, minHeight: 220, backgroundColor: COLORS.bgCard,
     },
-    restContent: { paddingVertical: 18, paddingHorizontal: 22, paddingBottom: 22, flex: 1 },
+    restContent: { paddingVertical: 18, paddingHorizontal: 20, paddingBottom: 20, flex: 1 },
     hudShortcutBar: {
-        marginTop: 18,
+        marginTop: 14,
     },
     hudShortcutBarContent: {
         flexDirection: "row",
@@ -2308,216 +2039,197 @@ const styles = StyleSheet.create({
     hudShortcutBtn: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "#0D0D0D",
+        backgroundColor: COLORS.bgCard,
         borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.12)",
-        borderRadius: 14,
-        paddingVertical: 8,
+        borderColor: COLORS.border,
+        borderRadius: RADIUS.pill,
+        paddingVertical: 7,
         paddingHorizontal: 14,
     },
     hudShortcutBtnText: {
-        fontSize: 10,
-        fontFamily: FAMILY.bold,
+        fontSize: 11,
+        fontFamily: FAMILY.medium,
         color: COLORS.text,
-        letterSpacing: 2,
     },
     restEyebrow: {
-        fontSize: 10, fontFamily: FAMILY.bold,
-        color: COLORS.primary, letterSpacing: 3, marginBottom: 12,
+        fontSize: 9, fontFamily: FAMILY.semibold,
+        color: COLORS.textSub, letterSpacing: 1.5, marginBottom: 8,
     },
     restTitle: {
-        fontSize: 38, fontFamily: FAMILY.bold,
-        color: COLORS.text, lineHeight: 42, marginBottom: 28, letterSpacing: -1,
+        fontSize: 30, fontFamily: FAMILY.display,
+        color: COLORS.text, lineHeight: 34, marginBottom: 20, letterSpacing: -0.5,
     },
-    restTimeline: { gap: 12 },
+    restTimeline: { gap: 10 },
     restPoint: {
-        flexDirection: "row", alignItems: "center", gap: 14,
+        flexDirection: "row", alignItems: "center", gap: 12,
     },
-    restDot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: "rgba(255,255,255,0.2)" },
-    restPointText: { fontSize: 11, fontFamily: FAMILY.medium, color: COLORS.textSub, flex: 1, letterSpacing: 0.5 },
+    restDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: COLORS.textSub },
+    restPointText: { fontSize: 12, fontFamily: FAMILY.regular, color: COLORS.textSub, flex: 1 },
 
     // Week Grid
     weekCell: {
-        width: 108, paddingVertical: 24, paddingHorizontal: 12,
-        borderRadius: 20, backgroundColor: COLORS.bgCard,
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.04)", alignItems: "center", gap: 8,
+        width: 104, paddingVertical: 18, paddingHorizontal: 12,
+        borderRadius: RADIUS.card, backgroundColor: COLORS.bgCard,
+        borderWidth: 1, borderColor: COLORS.border, alignItems: "center", gap: 6,
         overflow: "hidden",
     },
     weekCellActive: {
-        backgroundColor: "rgba(227,30,36,0.04)",
-        borderColor: "rgba(227,30,36,0.25)",
+        backgroundColor: "rgba(122, 46, 34, 0.08)",
+        borderColor: COLORS.primary,
     },
-    weekDay: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2 },
+    weekDay: { fontSize: 11, fontFamily: FAMILY.mono, color: COLORS.textMuted },
     weekDayActive: { color: COLORS.text },
-    weekTarget: { fontSize: 11, color: COLORS.text, fontFamily: FAMILY.bold, textAlign: "center", width: "100%", marginTop: 4 },
+    weekTarget: { fontSize: 12, color: COLORS.text, fontFamily: FAMILY.medium, textAlign: "center", width: "100%" },
     activeIndicator: {
-        position: "absolute", bottom: 12, width: 4, height: 4,
+        position: "absolute", bottom: 8, width: 4, height: 4,
         borderRadius: 2, backgroundColor: COLORS.primary
     },
 
     // Library List Items
     dayList: {
-        marginHorizontal: SPACING.base, gap: 12,
+        marginHorizontal: SPACING.base, gap: 10,
     },
     dayRow: {
         flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-        paddingHorizontal: 24, paddingVertical: 22, backgroundColor: COLORS.glassBg,
-        borderRadius: 22, borderWidth: 1, borderColor: COLORS.glassBorder,
-        minHeight: 104, overflow: "hidden",
+        paddingHorizontal: 18, paddingVertical: 16, backgroundColor: COLORS.bgCard,
+        borderRadius: RADIUS.card, borderWidth: 1, borderColor: COLORS.border,
+        minHeight: 84,
     },
-    dayRowAccent: {
-        position: "absolute",
-        left: 0,
-        top: 0,
-        bottom: 0,
-        width: 4,
-    },
-    dayRowLeft: { flex: 1, paddingLeft: 8 },
-    dayNumRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 8 },
-    dayNum: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 2 },
-    dayDot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: "rgba(255,255,255,0.15)" },
-    muscleBadge: { backgroundColor: "rgba(255,255,255,0.04)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
-    muscleBadgeText: { fontSize: 7, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1 },
-    dayTargetTitle: { fontSize: 22, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -0.5 },
-    dayMeta: { fontSize: 10, color: COLORS.textMuted, marginTop: 8, fontFamily: FAMILY.bold, letterSpacing: 1 },
-    dayRowRight: { opacity: 0.3 },
+    dayRowLeft: { flex: 1 },
+    dayNumRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
+    dayNum: { fontSize: 10, fontFamily: FAMILY.monoBold, color: COLORS.primary },
+    muscleBadge: { backgroundColor: "rgba(237, 234, 227, 0.05)", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
+    muscleBadgeText: { fontSize: 8, fontFamily: FAMILY.medium, color: COLORS.textSub },
+    dayTargetTitle: { fontSize: 17, fontFamily: FAMILY.semibold, color: COLORS.text, letterSpacing: -0.2 },
+    dayMeta: { fontSize: 11, color: COLORS.textSub, marginTop: 4, fontFamily: FAMILY.monoRegular },
+    dayRowRight: { opacity: 0.6 },
 
     customCard: {
-        marginHorizontal: SPACING.base, backgroundColor: COLORS.glassBg, borderRadius: 24,
-        borderWidth: 1, borderColor: COLORS.glassBorder,
-        padding: 28, overflow: "hidden",
+        marginHorizontal: SPACING.base, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.card,
+        borderWidth: 1, borderColor: COLORS.border,
+        padding: 20,
         flexDirection: "row", justifyContent: "space-between", alignItems: "center",
     },
-    customTitle: { fontSize: 22, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 1 },
-    customSub: { fontSize: 10, color: COLORS.textMuted, marginTop: 8, fontFamily: FAMILY.bold, letterSpacing: 1.5 },
+    customTitle: { fontSize: 16, fontFamily: FAMILY.semibold, color: COLORS.text },
+    customSub: { fontSize: 11, color: COLORS.textSub, marginTop: 4, fontFamily: FAMILY.regular },
     customIconWrap: {
-        width: 44, height: 44, borderRadius: 22,
-        backgroundColor: "rgba(227,30,36,0.08)",
+        width: 36, height: 36, borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(237, 234, 227, 0.05)",
         alignItems: "center", justifyContent: "center",
-        borderWidth: 1, borderColor: "rgba(227,30,36,0.15)",
+        borderWidth: 1, borderColor: COLORS.border,
     },
 
     // Moments
     momentCard: {
-        width: 200, height: 120, padding: 20, borderRadius: 24,
-        backgroundColor: COLORS.glassBg, borderWidth: 1, borderColor: COLORS.glassBorder,
+        width: 180, height: 110, padding: 16, borderRadius: RADIUS.card,
+        backgroundColor: COLORS.bgCard, borderWidth: 1, borderColor: COLORS.border,
         justifyContent: "space-between", overflow: "hidden"
     },
-    momentIconWrap: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center" },
-    momentTitle: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2, marginBottom: 6 },
-    momentSub: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -0.2 },
+    momentIconWrap: { width: 32, height: 32, borderRadius: RADIUS.pill, backgroundColor: "rgba(237, 234, 227, 0.06)", alignItems: "center", justifyContent: "center" },
+    momentTitle: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 1, marginBottom: 4 },
+    momentSub: { fontSize: 13, fontFamily: FAMILY.semibold, color: COLORS.text },
 
     // Moment Detail
     momentDetailBlur: { flex: 1, justifyContent: "center", alignItems: "center" },
     momentDetailContent: { width: '90%', maxWidth: 400 },
-    momentDetailCard: { borderRadius: 36, padding: 28, alignItems: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", backgroundColor: "#0B0B0B" },
-    closeMomentBtn: { position: "absolute", top: 20, right: 20, padding: 8, backgroundColor: "rgba(255,255,255,0.04)", borderRadius: 20 },
-    momentDetailIconWrap: { width: 80, height: 80, borderRadius: 40, backgroundColor: "rgba(255,255,255,0.03)", alignItems: "center", justifyContent: "center", marginBottom: 24 },
-    momentDetailTitle: { fontSize: 11, fontFamily: FAMILY.bold, letterSpacing: 4, marginBottom: 12 },
-    momentDetailSub: { fontSize: 22, fontFamily: FAMILY.display, color: "#fff", textAlign: "center", marginBottom: 20, lineHeight: 28 },
-    momentDetailDesc: { fontSize: 14, fontFamily: FAMILY.medium, color: COLORS.textSub, textAlign: "center", lineHeight: 22, opacity: 0.8, marginBottom: 32 },
-    momentActionBtn: { width: '100%', height: 56, borderRadius: 18, alignItems: "center", justifyContent: "center" },
-    momentActionText: { fontSize: 12, fontFamily: FAMILY.bold, color: "#fff", letterSpacing: 2 },
-    momentShareBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", marginTop: 18, paddingVertical: 10 },
-    momentShareText: { fontSize: 9, fontFamily: FAMILY.bold, color: "rgba(255,255,255,0.4)", letterSpacing: 2 },
+    momentDetailCard: { borderRadius: 12, padding: 24, alignItems: "center", borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bgCard },
+    closeMomentBtn: { position: "absolute", top: 16, right: 16, padding: 8, backgroundColor: "rgba(237, 234, 227, 0.06)", borderRadius: RADIUS.pill },
+    momentDetailIconWrap: { width: 64, height: 64, borderRadius: RADIUS.pill, backgroundColor: "rgba(237, 234, 227, 0.06)", alignItems: "center", justifyContent: "center", marginBottom: 20 },
+    momentDetailTitle: { fontSize: 10, fontFamily: FAMILY.semibold, letterSpacing: 2, marginBottom: 8, color: COLORS.textSub },
+    momentDetailSub: { fontSize: 20, fontFamily: FAMILY.display, color: COLORS.text, textAlign: "center", marginBottom: 16, lineHeight: 24 },
+    momentDetailDesc: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textSub, textAlign: "center", lineHeight: 20, marginBottom: 24 },
+    momentActionBtn: { width: '100%', height: 48, borderRadius: RADIUS.card, backgroundColor: COLORS.primary, alignItems: "center", justifyContent: "center" },
+    momentActionText: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.text },
+    momentShareBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", marginTop: 14, paddingVertical: 8 },
+    momentShareText: { fontSize: 10, fontFamily: FAMILY.medium, color: COLORS.textSub },
 
     // Freeze Modal
-    freezeOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+    freezeOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 20 },
     freezeModalContent: {
-        width: '100%', borderRadius: 28, padding: 28, alignItems: 'center',
-        borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.2)', overflow: 'hidden',
+        width: '100%', borderRadius: 12, padding: 24, alignItems: 'center',
+        borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bgCard,
     },
-    iceEffect: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255, 255, 255, 0.03)', opacity: 0.5 },
-    freezeModalHeader: { alignItems: 'center', marginBottom: 20 },
     snowCircle: {
-        width: 72, height: 72, borderRadius: 36, backgroundColor: 'rgba(255, 255, 255, 0.06)',
-        alignItems: 'center', justifyContent: 'center', marginBottom: 18,
-        borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.2)',
+        width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(237, 234, 227, 0.06)',
+        alignItems: 'center', justifyContent: 'center', marginBottom: 16,
+        borderWidth: 1, borderColor: COLORS.border,
     },
-    freezeStatus: { fontSize: 9, fontFamily: FAMILY.bold, color: '#D1D1D1', letterSpacing: 3, marginBottom: 8 },
-    freezeTitle: { fontSize: 20, fontFamily: FAMILY.bold, color: '#fff', textAlign: 'center', lineHeight: 26 },
+    freezeStatus: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 2, marginBottom: 6 },
+    freezeTitle: { fontSize: 18, fontFamily: FAMILY.display, color: COLORS.text, textAlign: 'center', lineHeight: 22 },
     freezeDesc: {
-        fontSize: 14, fontFamily: FAMILY.regular, color: COLORS.textSub,
-        textAlign: 'center', lineHeight: 22, marginBottom: 28, opacity: 0.8
+        fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textSub,
+        textAlign: 'center', lineHeight: 20, marginBottom: 20
     },
     protectionBadge: {
-        flexDirection: 'row', alignItems: 'center', gap: 8,
-        backgroundColor: 'rgba(255, 255, 255, 0.06)', paddingHorizontal: 14, paddingVertical: 8,
-        borderRadius: 10, marginBottom: 32, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.15)'
+        flexDirection: 'row', alignItems: 'center', gap: 6,
+        backgroundColor: 'rgba(237, 234, 227, 0.05)', paddingHorizontal: 12, paddingVertical: 6,
+        borderRadius: RADIUS.pill, marginBottom: 24, borderWidth: 1, borderColor: COLORS.border
     },
-    protectionText: { fontSize: 9, fontFamily: FAMILY.bold, color: '#D1D1D1', letterSpacing: 1 },
+    protectionText: { fontSize: 10, fontFamily: FAMILY.medium, color: COLORS.textSub },
     freezeCloseBtn: {
-        width: '100%', height: 56, borderRadius: 16, backgroundColor: '#fff',
+        width: '100%', height: 48, borderRadius: RADIUS.card, backgroundColor: COLORS.primary,
         alignItems: 'center', justifyContent: 'center'
     },
-    freezeCloseText: { fontSize: 13, fontFamily: FAMILY.bold, color: '#000', letterSpacing: 2 },
-    unfreezeLink: { marginTop: 20, paddingVertical: 8 },
-    unfreezeLinkText: { fontSize: 10, fontFamily: FAMILY.bold, color: 'rgba(255,255,255,0.4)', letterSpacing: 2 },
+    freezeCloseText: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.text },
+    unfreezeLink: { marginTop: 14, paddingVertical: 6 },
+    unfreezeLinkText: { fontSize: 11, fontFamily: FAMILY.regular, color: COLORS.textMuted },
+    
     // Footer
-    footer: { alignItems: "center", marginTop: 48, paddingHorizontal: SPACING.base },
-    footerDivider: { width: 40, height: 1, backgroundColor: "rgba(255,255,255,0.08)", marginBottom: 20 },
-    footerVersion: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 3, marginBottom: 6 },
-    footerAuthor: { fontSize: 7, fontFamily: FAMILY.medium, color: "rgba(255,255,255,0.2)", letterSpacing: 1.5 },
+    footer: { alignItems: "center", marginTop: 40, paddingHorizontal: SPACING.base },
+    footerDivider: { width: 32, height: 1, backgroundColor: COLORS.border, marginBottom: 16 },
+    footerVersion: { fontSize: 9, fontFamily: FAMILY.mono, color: COLORS.textMuted, marginBottom: 4 },
+    footerAuthor: { fontSize: 8, fontFamily: FAMILY.regular, color: COLORS.textMuted },
 
     // Streak Reset Modal Styles
-    resetOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+    resetOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 20 },
     resetModalContent: {
-        width: '100%', borderRadius: 28, padding: 28, alignItems: 'center',
-        borderWidth: 1, borderColor: "rgba(227, 30, 36, 0.3)", overflow: 'hidden',
-        shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.25, shadowRadius: 20,
+        width: '100%', borderRadius: 12, padding: 24, alignItems: 'center',
+        borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bgCard,
     },
-    resetGlowEffect: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(227, 30, 36, 0.03)', opacity: 0.5 },
-    resetModalHeader: { alignItems: 'center', marginBottom: 20 },
     brokenFlameCircle: {
-        width: 72, height: 72, borderRadius: 36, backgroundColor: 'rgba(227, 30, 36, 0.08)',
-        alignItems: 'center', justifyContent: 'center', marginBottom: 18,
-        borderWidth: 1, borderColor: 'rgba(227, 30, 36, 0.25)',
+        width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(122, 46, 34, 0.15)',
+        alignItems: 'center', justifyContent: 'center', marginBottom: 16,
+        borderWidth: 1, borderColor: COLORS.border,
     },
-    resetStatus: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 3, marginBottom: 8 },
-    resetTitle: { fontSize: 20, fontFamily: FAMILY.bold, color: '#fff', textAlign: 'center', lineHeight: 26 },
+    resetStatus: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.primary, letterSpacing: 2, marginBottom: 6 },
+    resetTitle: { fontSize: 18, fontFamily: FAMILY.display, color: COLORS.text, textAlign: 'center', lineHeight: 22 },
     resetDesc: {
-        fontSize: 14, fontFamily: FAMILY.regular, color: COLORS.textSub,
-        textAlign: 'center', lineHeight: 22, marginBottom: 28, opacity: 0.8
+        fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textSub,
+        textAlign: 'center', lineHeight: 20, marginBottom: 20
     },
     warningBadge: {
-        flexDirection: 'row', alignItems: 'center', gap: 8,
-        backgroundColor: 'rgba(227, 30, 36, 0.08)', paddingHorizontal: 14, paddingVertical: 8,
-        borderRadius: 10, marginBottom: 32, borderWidth: 1, borderColor: 'rgba(227, 30, 36, 0.18)'
+        flexDirection: 'row', alignItems: 'center', gap: 6,
+        backgroundColor: 'rgba(122, 46, 34, 0.1)', paddingHorizontal: 12, paddingVertical: 6,
+        borderRadius: RADIUS.pill, marginBottom: 24, borderWidth: 1, borderColor: COLORS.border
     },
-    warningBadgeText: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 1 },
+    warningBadgeText: { fontSize: 10, fontFamily: FAMILY.medium, color: COLORS.primary },
     resetCloseBtn: {
-        width: '100%', height: 56, borderRadius: 16, backgroundColor: COLORS.primary,
+        width: '100%', height: 48, borderRadius: RADIUS.card, backgroundColor: COLORS.primary,
         alignItems: 'center', justifyContent: 'center',
-        shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.3, shadowRadius: 12,
-        elevation: 4,
     },
-    resetCloseText: { fontSize: 13, fontFamily: FAMILY.bold, color: '#fff', letterSpacing: 2 },
+    resetCloseText: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.text },
 
     // Resume Card Styles
     resumeCard: {
-        width: "100%", backgroundColor: COLORS.glassBg,
-        borderRadius: 20, borderWidth: 1.5, borderColor: "rgba(227,30,36,0.4)",
-        padding: 16, flexDirection: "row", alignItems: "center", gap: 14,
-        marginBottom: 20, overflow: "hidden",
-        elevation: 8, shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.3, shadowRadius: 12,
+        width: "100%", backgroundColor: COLORS.bgCard,
+        borderRadius: RADIUS.card, borderWidth: 1, borderColor: COLORS.primary,
+        padding: 14, flexDirection: "row", alignItems: "center", gap: 12,
+        marginBottom: 16,
     },
     resumeIconBox: {
-        width: 44, height: 44, borderRadius: 14,
-        backgroundColor: "rgba(227,30,36,0.15)", borderWidth: 1, borderColor: "rgba(227,30,36,0.3)",
+        width: 36, height: 36, borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(122, 46, 34, 0.15)", borderWidth: 1, borderColor: COLORS.border,
         alignItems: "center", justifyContent: "center",
     },
     resumeDot: {
         width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.primary,
     },
-    resumeTag: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 1.5 },
-    resumeTitle: { fontSize: 16, fontFamily: FAMILY.display, color: COLORS.text, marginTop: 2 },
-    resumeSub: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, marginTop: 2 },
+    resumeTag: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.primary, letterSpacing: 1 },
+    resumeTitle: { fontSize: 15, fontFamily: FAMILY.semibold, color: COLORS.text, marginTop: 2 },
+    resumeSub: { fontSize: 11, fontFamily: FAMILY.regular, color: COLORS.textSub, marginTop: 2 },
     resumeDiscardBtn: {
-        width: 28, height: 28, borderRadius: 14,
-        backgroundColor: "rgba(255,255,255,0.05)", borderWidth: 1, borderColor: COLORS.glassBorder,
+        width: 26, height: 26, borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(237, 234, 227, 0.05)", borderWidth: 1, borderColor: COLORS.border,
         alignItems: "center", justifyContent: "center",
     },
 });

@@ -80,7 +80,7 @@ export default function WorkoutDetailScreen({ navigation, route }) {
                         resizeMode="cover"
                     >
                         <LinearGradient
-                            colors={["rgba(0,0,0,0.2)", "rgba(0,0,0,0.92)"]}
+                            colors={["rgba(10,10,11,0.2)", "rgba(10,10,11,0.92)"]}
                             style={StyleSheet.absoluteFill}
                         />
 
@@ -96,37 +96,37 @@ export default function WorkoutDetailScreen({ navigation, route }) {
                             <View style={styles.heroBadge}>
                                 <Text style={styles.heroBadgeText}>{day.dayName.toUpperCase()}</Text>
                             </View>
-                            <Text style={styles.heroTitle} numberOfLines={2} adjustsFontSizeToFit>{day.target.toUpperCase()}</Text>
-                            <Text style={styles.heroSub}>EXERCISE PLAN · DAY 0{day.day}</Text>
+                            <Text style={styles.heroTitle} numberOfLines={2} adjustsFontSizeToFit>{day.target}</Text>
+                            <Text style={styles.heroSub}>Day 0{day.day} · 6-Day Split</Text>
                         </View>
                     </ImageBackground>
                 </View>
 
                 {/* ── Stats Strip ── */}
                 <View style={styles.metaStrip}>
-                    <MetaItem icon="barbell-outline" val={`${day.exercises.length}`} label="EXERCISES" />
+                    <MetaItem icon="barbell-outline" val={`${day.exercises.length}`} label="Exercises" />
                     <View style={styles.metaDivider} />
-                    <MetaItem icon="time-outline" val={`${totalTime(day)}M`} label="DURATION" />
+                    <MetaItem icon="time-outline" val={`${totalTime(day)}m`} label="Duration" />
                     <View style={styles.metaDivider} />
-                    <MetaItem icon="flame-outline" val={`${estimateCalories(totalTime(day))}`} label="KCAL EST." accent />
+                    <MetaItem icon="flame-outline" val={`${estimateCalories(totalTime(day))}`} label="Calories" />
                     <View style={styles.metaDivider} />
-                    <MetaItem icon="flash" val="ELITE" label="PROTOCOL" accent />
+                    <MetaItem icon="flash" val="Elite" label="Protocol" accent />
                 </View>
 
                 {/* ── CTA ── */}
                 <TouchableOpacity
-                    style={[styles.cta, { backgroundColor: COLORS.primary }]}
+                    style={styles.cta}
                     onPress={() => navigation.navigate("ActiveWorkout", { day })}
                     activeOpacity={0.85}
                 >
-                    <Text style={[styles.ctaText, { color: "#fff" }]}>START WORKOUT</Text>
-                    <Ionicons name="play" size={14} color="#fff" />
+                    <Text style={styles.ctaText}>Start Workout</Text>
+                    <Ionicons name="play" size={14} color="#EDEAE3" />
                 </TouchableOpacity>
 
                 {/* ── Exercise List ── */}
                 <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionLabel}>EXERCISE LIST</Text>
-                    <Text style={styles.sectionCount}>{day.exercises.length} TOTAL</Text>
+                    <Text style={styles.sectionLabel}>Exercise List</Text>
+                    <Text style={styles.sectionCount}>{day.exercises.length} Total</Text>
                 </View>
 
                 <View style={styles.exList}>
@@ -191,13 +191,13 @@ function EditModal({ visible, exercise, onClose, onSave, insets }) {
                     style={styles.modalContent}
                 >
                     <View style={styles.modalHeader}>
-                        <Text style={styles.modalTitle}>CUSTOMIZE PROTOCOL</Text>
+                        <Text style={styles.modalTitle}>Customize Protocol</Text>
                         <TouchableOpacity onPress={onClose}>
                             <Ionicons name="close" size={24} color={COLORS.text} />
                         </TouchableOpacity>
                     </View>
 
-                    <Text style={styles.modalExName}>{exercise.name.toUpperCase()}</Text>
+                    <Text style={styles.modalExName}>{exercise.name}</Text>
 
                     <View style={styles.inputGrid}>
                         <View style={styles.inputBox}>
@@ -233,7 +233,7 @@ function EditModal({ visible, exercise, onClose, onSave, insets }) {
                     </View>
 
                     <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-                        <Text style={styles.saveBtnText}>APPLY CHANGES</Text>
+                        <Text style={styles.saveBtnText}>Apply Changes</Text>
                     </TouchableOpacity>
                     <View style={{ height: insets.bottom }} />
                 </KeyboardAvoidingView>
@@ -244,7 +244,7 @@ function EditModal({ visible, exercise, onClose, onSave, insets }) {
 function MetaItem({ icon, val, label, accent }) {
     return (
         <View style={styles.metaItem}>
-            <Ionicons name={icon} size={14} color={accent ? COLORS.primary : COLORS.textMuted} />
+            <Ionicons name={icon} size={14} color={accent ? COLORS.primary : COLORS.textSub} />
             <View style={styles.metaInfo}>
                 <Text style={[styles.metaVal, accent && { color: COLORS.primary }]} adjustsFontSizeToFit numberOfLines={1}>{val}</Text>
                 <Text style={styles.metaLabel} adjustsFontSizeToFit numberOfLines={1}>{label}</Text>
@@ -256,7 +256,6 @@ function MetaItem({ icon, val, label, accent }) {
 function ExerciseRow({ ex, index, total, expanded, onPress, onEdit, dayTarget }) {
     const isReps = ex.type === "reps" || (ex.type !== "timer" && ex.name.toLowerCase() !== "plank");
     const numLabel = String(index + 1).padStart(2, '0');
-    const targetColor = getMuscleColor(ex.primaryTarget || dayTarget || "");
 
     return (
         <TouchableOpacity
@@ -264,20 +263,19 @@ function ExerciseRow({ ex, index, total, expanded, onPress, onEdit, dayTarget })
             onPress={onPress}
             activeOpacity={0.75}
         >
-            <View style={[styles.exRowAccent, { backgroundColor: targetColor }]} />
             {/* ── Collapsed Row ── */}
             <View style={styles.exRowHeader}>
                 {/* Left: number */}
-                <Text style={[styles.exRowNum, { color: COLORS.primary }]}>{numLabel}</Text>
+                <Text style={styles.exRowNum}>{numLabel}</Text>
 
                 {/* Centre: name + meta */}
                 <View style={styles.exRowInfo}>
                     <Text style={styles.exRowName} numberOfLines={2}>{ex.name}</Text>
                     <View style={styles.exRowMeta}>
                         <Text style={styles.exRowMetaText}>
-                            {ex.primaryTarget.toUpperCase()}
-                            <Text style={styles.exRowDot}>  /  </Text>
-                            {ex.equipment.toUpperCase()}
+                            {ex.primaryTarget}
+                            <Text style={styles.exRowDot}> · </Text>
+                            {ex.equipment}
                         </Text>
                     </View>
                 </View>
@@ -287,12 +285,12 @@ function ExerciseRow({ ex, index, total, expanded, onPress, onEdit, dayTarget })
                     {/* Rep / Work chip */}
                     <View style={styles.chipPill}>
                         <Text style={styles.chipPillText}>
-                            {isReps ? `${ex.repRange || '12-15'} REPS` : `${ex.activeTimeSec}S WORK`}
+                            {isReps ? `${ex.repRange || '12-15'} reps` : `${ex.activeTimeSec}s`}
                         </Text>
                     </View>
                     {/* Rest chip */}
                     <View style={[styles.chipPill, styles.chipPillMuted]}>
-                        <Text style={[styles.chipPillText, { color: COLORS.textMuted }]}>{ex.restTimeSec}S REST</Text>
+                        <Text style={[styles.chipPillText, { color: COLORS.textMuted }]}>{ex.restTimeSec}s rest</Text>
                     </View>
                     {/* Controls row */}
                     <View style={styles.exRowControls}>
@@ -303,12 +301,12 @@ function ExerciseRow({ ex, index, total, expanded, onPress, onEdit, dayTarget })
                                 onEdit();
                             }}
                         >
-                            <Ionicons name="options-outline" size={12} color={COLORS.primary} />
+                            <Ionicons name="options-outline" size={12} color={COLORS.textSub} />
                         </TouchableOpacity>
                         <Ionicons
                             name={expanded ? "chevron-up" : "chevron-down"}
                             size={14}
-                            color={COLORS.textMuted}
+                            color={COLORS.textSub}
                         />
                     </View>
                 </View>
@@ -320,9 +318,9 @@ function ExerciseRow({ ex, index, total, expanded, onPress, onEdit, dayTarget })
                     {ex.image && (
                         <View style={styles.exImgBox}>
                             <Image source={ex.image} style={styles.exImg} resizeMode="cover" />
-                            <LinearGradient colors={["transparent", "rgba(0,0,0,0.8)"]} style={styles.exImgGrad} />
+                            <LinearGradient colors={["transparent", "rgba(10,10,11,0.8)"]} style={styles.exImgGrad} />
                             <View style={styles.exImgBadge}>
-                                <Text style={styles.exImgBadgeText}>{ex.equipment.toUpperCase()}</Text>
+                                <Text style={styles.exImgBadgeText}>{ex.equipment}</Text>
                             </View>
                         </View>
                     )}
@@ -335,7 +333,7 @@ function ExerciseRow({ ex, index, total, expanded, onPress, onEdit, dayTarget })
                                 <Text style={styles.setCellWork}>
                                     {isReps ? (ex.repRange || '12-15') : (ex.activeTimeSec + 's')}
                                 </Text>
-                                {i < ex.sets - 1 && <Text style={styles.setCellRest}>REST {ex.restTimeSec}S</Text>}
+                                {i < ex.sets - 1 && <Text style={styles.setCellRest}>{ex.restTimeSec}s rest</Text>}
                             </View>
                         ))}
                     </View>
@@ -343,20 +341,20 @@ function ExerciseRow({ ex, index, total, expanded, onPress, onEdit, dayTarget })
                     {ex.unilateral && (
                         <View style={styles.noteRow}>
                             <Ionicons name="swap-horizontal" size={16} color={COLORS.primary} />
-                            <Text style={styles.noteText}>BILATERAL: TIMERS RUN INDEPENDENTLY</Text>
+                            <Text style={styles.noteText}>Bilateral: Timers run independently</Text>
                         </View>
                     )}
 
                     {getSuggestedWeight(ex.name) ? (
-                        <View style={[styles.noteRow, { borderColor: "rgba(227, 30, 36, 0.25)", backgroundColor: "rgba(227, 30, 36, 0.03)", marginBottom: 24 }]}>
+                        <View style={[styles.noteRow, { borderColor: COLORS.border, backgroundColor: COLORS.bg, marginBottom: 20 }]}>
                             <Ionicons name="trending-up-outline" size={16} color={COLORS.primary} />
                             <Text style={[styles.noteText, { color: COLORS.text }]}>
-                                SUGGESTED WEIGHT: <Text style={{ fontFamily: FAMILY.bold, color: COLORS.primary }}>{getSuggestedWeight(ex.name)}</Text>
+                                Suggested Weight: <Text style={{ fontFamily: FAMILY.monoBold, color: COLORS.text }}>{getSuggestedWeight(ex.name)}</Text>
                             </Text>
                         </View>
                     ) : null}
 
-                    <Text style={styles.formLabel}>TECHNIQUE TIPS</Text>
+                    <Text style={styles.formLabel}>Technique Tips</Text>
 
                     {ex.tips.map((tip, i) => (
                         <View key={i} style={styles.tipRow}>
@@ -370,165 +368,144 @@ function ExerciseRow({ ex, index, total, expanded, onPress, onEdit, dayTarget })
     );
 }
 
-
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: COLORS.bg },
-    hero: { height: 420, justifyContent: "flex-end", backgroundColor: COLORS.bgCard },
+    hero: { height: 400, justifyContent: "flex-end", backgroundColor: COLORS.bgCard },
     heroBg: { ...StyleSheet.absoluteFillObject, justifyContent: "flex-end" },
-    heroIconWrap: {
-        position: "absolute",
-        top: -40, right: -40,
-    },
     backBtn: {
-        position: "absolute", left: SPACING.base, width: 44, height: 44,
-        borderRadius: 14, backgroundColor: "rgba(255,255,255,0.05)",
-        alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)",
+        position: "absolute", left: SPACING.base, width: 40, height: 40,
+        borderRadius: RADIUS.pill, backgroundColor: COLORS.bgCard,
+        alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: COLORS.border,
     },
-    heroText: { paddingHorizontal: 32, paddingBottom: 40 },
+    heroText: { paddingHorizontal: 24, paddingBottom: 36 },
     heroBadge: {
         alignSelf: "flex-start",
-        backgroundColor: "rgba(255,255,255,0.1)",
-        paddingHorizontal: 12, paddingVertical: 6,
-        borderRadius: 4, marginBottom: 16,
-        borderWidth: 0.5, borderColor: "rgba(255,255,255,0.2)"
+        backgroundColor: "rgba(237, 234, 227, 0.06)",
+        paddingHorizontal: 8, paddingVertical: 3,
+        borderRadius: 4, marginBottom: 12,
+        borderWidth: 0.5, borderColor: COLORS.border,
     },
-    heroBadgeText: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 2 },
-    heroTitle: { fontSize: 42, fontFamily: FAMILY.display, color: COLORS.text, lineHeight: 46, letterSpacing: -1 },
-    heroSub: { fontSize: 12, color: COLORS.textMuted, fontFamily: FAMILY.bold, marginTop: 12, letterSpacing: 1.5, opacity: 0.6 },
+    heroBadgeText: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 1.5 },
+    heroTitle: { fontSize: 36, fontFamily: FAMILY.display, color: COLORS.text, lineHeight: 40, letterSpacing: -0.5 },
+    heroSub: { fontSize: 13, color: COLORS.textSub, fontFamily: FAMILY.regular, marginTop: 8 },
 
     metaStrip: {
         flexDirection: "row", alignItems: "center",
-        backgroundColor: COLORS.glassBg, borderRadius: 24,
-        marginHorizontal: 12, marginTop: -32, paddingVertical: 20, paddingHorizontal: 8,
-        borderWidth: 1, borderColor: COLORS.glassBorder,
-        shadowColor: "#000", shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 20,
+        backgroundColor: COLORS.bgCard, borderRadius: RADIUS.card,
+        marginHorizontal: SPACING.base, marginTop: -24, paddingVertical: 16, paddingHorizontal: 8,
+        borderWidth: 1, borderColor: COLORS.border,
     },
     metaItem: {
-        flex: 1, alignItems: "center", justifyContent: "center", gap: 8,
+        flex: 1, alignItems: "center", justifyContent: "center", gap: 6,
     },
-    metaDivider: { width: 1, height: 20, backgroundColor: "rgba(255,255,255,0.08)" },
+    metaDivider: { width: 1, height: 20, backgroundColor: COLORS.border },
     metaInfo: { alignItems: "center" },
-    metaVal: { fontSize: 16, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -0.2 },
-    metaLabel: { fontSize: 9, color: COLORS.textMuted, marginTop: 4, fontFamily: FAMILY.bold, letterSpacing: 1.5 },
+    metaVal: { fontSize: 14, fontFamily: FAMILY.monoBold, color: COLORS.text },
+    metaLabel: { fontSize: 10, color: COLORS.textSub, marginTop: 2, fontFamily: FAMILY.regular },
 
     cta: {
-        flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12,
-        backgroundColor: COLORS.text, marginHorizontal: SPACING.base, marginTop: 24,
-        paddingVertical: 20, borderRadius: 16,
+        flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+        backgroundColor: COLORS.primary, marginHorizontal: SPACING.base, marginTop: 20,
+        paddingVertical: 16, borderRadius: RADIUS.card,
     },
-    ctaText: { fontSize: 14, fontFamily: FAMILY.bold, color: "#000", letterSpacing: 2 },
+    ctaText: { fontSize: 14, fontFamily: FAMILY.semibold, color: COLORS.text, letterSpacing: 0.5 },
 
     sectionHeader: {
         flexDirection: "row", justifyContent: "space-between", alignItems: "baseline",
-        paddingHorizontal: SPACING.base, marginTop: 48, marginBottom: 20,
+        paddingHorizontal: SPACING.base, marginTop: 36, marginBottom: 14,
     },
-    sectionLabel: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 3 },
-    sectionCount: { fontSize: 11, color: COLORS.textMuted, fontFamily: FAMILY.medium },
+    sectionLabel: { fontSize: 16, fontFamily: FAMILY.display, color: COLORS.text, letterSpacing: -0.2 },
+    sectionCount: { fontSize: 12, color: COLORS.textSub, fontFamily: FAMILY.mono },
 
     exList: {
-        marginHorizontal: SPACING.base, gap: 12,
+        marginHorizontal: SPACING.base, gap: 10,
     },
     exRow: {
-        position: "relative",
-        paddingHorizontal: 20, paddingVertical: 22,
-        backgroundColor: COLORS.glassBg, borderRadius: 24,
-        borderWidth: 1, borderColor: COLORS.glassBorder,
+        paddingHorizontal: 18, paddingVertical: 18,
+        backgroundColor: COLORS.bgCard, borderRadius: RADIUS.card,
+        borderWidth: 1, borderColor: COLORS.border,
         overflow: "hidden",
     },
-    exRowAccent: {
-        position: "absolute",
-        left: 0,
-        top: 0,
-        bottom: 0,
-        width: 4,
-    },
-    exRowHeader: { flexDirection: "row", alignItems: "center", gap: 14 },
-    exRowNum: { width: 28, fontSize: 11, color: COLORS.accent, fontFamily: FAMILY.bold, letterSpacing: 1 },
+    exRowHeader: { flexDirection: "row", alignItems: "center", gap: 12 },
+    exRowNum: { width: 24, fontSize: 12, color: COLORS.primary, fontFamily: FAMILY.monoBold },
     exRowInfo: { flex: 1, minWidth: 0 },
-    exRowName: { fontSize: 16, fontFamily: FAMILY.display, color: COLORS.text, letterSpacing: 0.3, flexWrap: 'wrap' },
-    exRowMeta: { flexDirection: "row", marginTop: 6 },
+    exRowName: { fontSize: 15, fontFamily: FAMILY.semibold, color: COLORS.text, letterSpacing: -0.2 },
+    exRowMeta: { flexDirection: "row", marginTop: 4 },
     exRowMetaText: {
-        fontSize: 9,
-        color: COLORS.textMuted,
-        fontFamily: FAMILY.bold,
-        letterSpacing: 1.5,
-        lineHeight: 14,
+        fontSize: 11,
+        color: COLORS.textSub,
+        fontFamily: FAMILY.regular,
     },
-    exRowDot: { fontSize: 9, color: COLORS.borderLight, opacity: 0.5 },
-    // New right-side layout
-    exRowRight: { alignItems: 'flex-end', gap: 6, flexShrink: 0 },
+    exRowDot: { fontSize: 11, color: COLORS.textMuted },
+    exRowRight: { alignItems: 'flex-end', gap: 4, flexShrink: 0 },
     chipPill: {
-        paddingHorizontal: 10, paddingVertical: 5,
-        borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.05)',
-        borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
-        alignItems: 'center', minWidth: 80,
+        paddingHorizontal: 8, paddingVertical: 3,
+        borderRadius: RADIUS.pill, backgroundColor: COLORS.bg,
+        borderWidth: 1, borderColor: COLORS.border,
+        alignItems: 'center', minWidth: 70,
     },
-    chipPillMuted: { backgroundColor: 'transparent', borderColor: 'rgba(255,255,255,0.05)' },
-    chipPillText: { fontSize: 10, color: COLORS.textSub, fontFamily: FAMILY.bold, letterSpacing: 0.5 },
-    exRowControls: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 },
+    chipPillMuted: { backgroundColor: 'transparent', borderColor: 'transparent' },
+    chipPillText: { fontSize: 10, color: COLORS.text, fontFamily: FAMILY.mono },
+    exRowControls: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
 
-    exExpanded: { paddingTop: 24, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.05)", marginTop: 20 },
-    exImgBox: { borderRadius: 16, overflow: "hidden", height: 220, marginBottom: 24 },
+    exExpanded: { paddingTop: 18, borderTopWidth: 1, borderTopColor: COLORS.border, marginTop: 16 },
+    exImgBox: { borderRadius: RADIUS.card, overflow: "hidden", height: 200, marginBottom: 20 },
     exImg: { width: "100%", height: "100%" },
     exImgGrad: { position: "absolute", bottom: 0, left: 0, right: 0, height: 80 },
     exImgBadge: {
-        position: "absolute", bottom: 16, left: 16,
-        backgroundColor: "rgba(0,0,0,0.8)", paddingHorizontal: 10, paddingVertical: 6, borderRadius: 4,
+        position: "absolute", bottom: 12, left: 12,
+        backgroundColor: "rgba(10,10,11,0.85)", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4,
+        borderWidth: 0.5, borderColor: COLORS.border,
     },
-    exImgBadgeText: { fontSize: 9, color: "#fff", fontFamily: FAMILY.bold, letterSpacing: 1 },
+    exImgBadgeText: { fontSize: 10, color: COLORS.text, fontFamily: FAMILY.medium },
 
-    setsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 24 },
+    setsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 20 },
     setCell: {
-        width: "31%", backgroundColor: COLORS.glassBg,
-        borderRadius: 12, padding: 12, alignItems: "center",
-        borderWidth: 1, borderColor: COLORS.glassBorder
+        width: "31%", backgroundColor: COLORS.bg,
+        borderRadius: RADIUS.card, padding: 10, alignItems: "center",
+        borderWidth: 1, borderColor: COLORS.border
     },
-    setCellLabel: { fontSize: 8, color: COLORS.textMuted, marginBottom: 4, fontFamily: FAMILY.bold, letterSpacing: 1 },
-    setCellWork: { fontSize: 18, fontFamily: FAMILY.display, color: COLORS.text },
-    setCellRest: { fontSize: 9, color: COLORS.textMuted, marginTop: 4, fontFamily: FAMILY.bold },
+    setCellLabel: { fontSize: 9, color: COLORS.textSub, marginBottom: 2, fontFamily: FAMILY.mono },
+    setCellWork: { fontSize: 15, fontFamily: FAMILY.monoBold, color: COLORS.text },
+    setCellRest: { fontSize: 9, color: COLORS.textMuted, marginTop: 2, fontFamily: FAMILY.mono },
 
     noteRow: {
-        flexDirection: "row", alignItems: "center", gap: 12,
-        backgroundColor: "rgba(255,255,255,0.03)", padding: 14, borderRadius: 12,
-        marginBottom: 24, borderWidth: 1, borderColor: "rgba(255,255,255,0.05)"
+        flexDirection: "row", alignItems: "center", gap: 10,
+        backgroundColor: COLORS.bg, padding: 12, borderRadius: RADIUS.card,
+        marginBottom: 20, borderWidth: 1, borderColor: COLORS.border
     },
-    noteText: { fontSize: 11, color: COLORS.textSub, fontFamily: FAMILY.medium, letterSpacing: 0.5 },
+    noteText: { fontSize: 12, color: COLORS.textSub, fontFamily: FAMILY.regular },
 
-    formLabel: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2.5, marginBottom: 16 },
-    tipRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, marginBottom: 12 },
-    tipDot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: COLORS.primary, marginTop: 10 },
-    tipText: { fontSize: 14, color: COLORS.textSub, flex: 1, lineHeight: 22, fontFamily: FAMILY.regular },
+    formLabel: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.text, marginBottom: 12 },
+    tipRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 10 },
+    tipDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: COLORS.primary, marginTop: 8 },
+    tipText: { fontSize: 13, color: COLORS.textSub, flex: 1, lineHeight: 20, fontFamily: FAMILY.regular },
 
     // Edit Modal Styles
     modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.85)", justifyContent: "flex-end" },
     modalContent: {
-        backgroundColor: COLORS.glassBg, borderTopLeftRadius: 32, borderTopRightRadius: 32,
-        paddingHorizontal: 32, paddingTop: 32, paddingBottom: 12,
-        borderWidth: 1, borderColor: COLORS.glassBorder, borderBottomWidth: 0,
+        backgroundColor: COLORS.bgCard, borderTopLeftRadius: 16, borderTopRightRadius: 16,
+        paddingHorizontal: 24, paddingTop: 24, paddingBottom: 12,
+        borderWidth: 1, borderColor: COLORS.border, borderBottomWidth: 0,
     },
-    modalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 32 },
-    modalTitle: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 3 },
-    modalExName: { fontSize: 24, fontFamily: FAMILY.display, color: COLORS.text, marginBottom: 40 },
-    inputGrid: { flexDirection: "row", gap: 16, marginBottom: 40 },
-    inputBox: { flex: 1, gap: 12 },
-    inputLabel: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1.5 },
+    modalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
+    modalTitle: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.textSub },
+    modalExName: { fontSize: 20, fontFamily: FAMILY.display, color: COLORS.text, marginBottom: 28 },
+    inputGrid: { flexDirection: "row", gap: 12, marginBottom: 28 },
+    inputBox: { flex: 1, gap: 8 },
+    inputLabel: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 1 },
     input: {
-        backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 12, padding: 16,
-        color: COLORS.text, fontSize: 18, fontFamily: FAMILY.display, textAlign: "center",
-        borderWidth: 1, borderColor: COLORS.glassBorder,
+        backgroundColor: COLORS.bg, borderRadius: RADIUS.card, padding: 12,
+        color: COLORS.text, fontSize: 16, fontFamily: FAMILY.monoBold, textAlign: "center",
+        borderWidth: 1, borderColor: COLORS.border,
     },
     saveBtn: {
-        backgroundColor: COLORS.primary, paddingVertical: 20, borderRadius: 16,
+        backgroundColor: COLORS.primary, paddingVertical: 16, borderRadius: RADIUS.card,
         alignItems: "center",
-        shadowColor: COLORS.primary,
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.3,
-        shadowRadius: 15,
-        elevation: 5,
     },
-    saveBtnText: { fontSize: 12, fontFamily: FAMILY.bold, color: "#fff", letterSpacing: 2 },
+    saveBtnText: { fontSize: 13, fontFamily: FAMILY.semibold, color: COLORS.text, letterSpacing: 0.5 },
     editBtnSmall: {
-        width: 32, height: 32, borderRadius: 8, backgroundColor: "rgba(227,30,36,0.1)",
-        alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(227,30,36,0.2)",
+        width: 28, height: 28, borderRadius: RADIUS.pill, backgroundColor: COLORS.bg,
+        alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: COLORS.border,
     },
 });

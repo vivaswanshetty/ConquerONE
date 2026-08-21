@@ -210,17 +210,14 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
                     </View>
 
                     {(() => {
-                        let multiplierText = "Tier I Multiplier (1.0x)";
-                        let badgeColor = "#EF4444";
+                        let multiplierText = "1.0x";
+                        let badgeColor = COLORS.primary;
                         if (xpGained === 20) {
-                            multiplierText = "Tier IV Multiplier (2.0x)";
-                            badgeColor = "#A855F7";
+                            multiplierText = "2.0x";
                         } else if (xpGained === 15) {
-                            multiplierText = "Tier III Multiplier (1.5x)";
-                            badgeColor = "#EAB308";
+                            multiplierText = "1.5x";
                         } else if (xpGained === 12) {
-                            multiplierText = "Tier II Multiplier (1.2x)";
-                            badgeColor = "#F97316";
+                            multiplierText = "1.2x";
                         }
 
                         if (xpGained > 0) {
@@ -228,7 +225,6 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
                                 <Animated.View style={[
                                     styles.xpAwardBanner,
                                     {
-                                        borderColor: `${badgeColor}40`,
                                         opacity: xpAnim,
                                         transform: [
                                             { scale: xpAnim.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1] }) },
@@ -236,14 +232,10 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
                                         ]
                                     }
                                 ]}>
-                                    <LinearGradient
-                                        colors={[`${badgeColor}15`, "rgba(0, 0, 0, 0.4)"]}
-                                        style={StyleSheet.absoluteFill}
-                                    />
-                                    <Ionicons name="sparkles" size={12} color={badgeColor} />
+                                    <Ionicons name="sparkles" size={12} color={COLORS.primary} />
                                     <Text style={styles.xpAwardText}>
-                                        <Text style={{ fontFamily: FAMILY.bold, color: "#FFFFFF" }}>+{xpGained} XP GAINED</Text>
-                                        <Text style={{ color: COLORS.textMuted }}> · {multiplierText} active</Text>
+                                        <Text style={{ fontFamily: FAMILY.monoBold, color: COLORS.text }}>+{xpGained} XP</Text>
+                                        <Text style={{ color: COLORS.textSub }}> · {multiplierText} multiplier</Text>
                                     </Text>
                                 </Animated.View>
                             );
@@ -251,27 +243,24 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
                         return null;
                     })()}
 
-                    <Text style={styles.completedLabel}>PROTOCOL ACHIEVED</Text>
-                    <Text style={styles.completedTitle} numberOfLines={2} adjustsFontSizeToFit>{day.target.toUpperCase()}</Text>
+                    <Text style={styles.completedLabel}>SESSION COMPLETE</Text>
+                    <Text style={styles.completedTitle} numberOfLines={2} adjustsFontSizeToFit>{day.target}</Text>
 
                     {/* Symmetric Stats Row */}
                     <View style={styles.statsRow}>
                         <View style={styles.statBox}>
                             <Text style={styles.statLabel}>DURATION</Text>
                             <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{formatDuration(durationSec)}</Text>
-                            <Ionicons name="time-outline" size={14} color={COLORS.primary} style={styles.statIcon} />
                         </View>
                         <View style={[styles.statBox, styles.statBoxCenter]}>
                             <Text style={styles.statLabel}>STREAK</Text>
-                            <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{streak}D</Text>
-                            <Ionicons name="flame-outline" size={14} color={COLORS.primary} style={styles.statIcon} />
+                            <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{streak}d</Text>
                         </View>
                         <View style={styles.statBox}>
                             <Text style={styles.statLabel}>{showCalories ? "CALORIES" : "SESSIONS"}</Text>
                             <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
                                 {showCalories ? `${caloriesBurned}` : total}
                             </Text>
-                            <Ionicons name="medal-outline" size={14} color={COLORS.primary} style={styles.statIcon} />
                         </View>
                     </View>
 
@@ -280,8 +269,8 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
                             opacity: streakAnim,
                             transform: [{ translateY: streakAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }],
                         }]}>
-                            <Ionicons name="flame" size={18} color={COLORS.primary} />
-                            <Text style={styles.streakText}>{streak}-DAY STREAK. CONSISTENCY IS KEY.</Text>
+                            <Ionicons name="flame" size={16} color={COLORS.primary} />
+                            <Text style={styles.streakText}>{streak}-day streak active</Text>
                         </Animated.View>
                     )}
 
@@ -290,15 +279,11 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
                             opacity: rankAnim,
                             transform: [{ scale: rankAnim.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1] }) }],
                         }]}>
-                            <LinearGradient
-                                colors={[`${rankUp.color}20`, 'transparent']}
-                                style={[StyleSheet.absoluteFill, { borderRadius: 20 }]}
-                            />
-                            <View style={[styles.rankUpIcon, { borderColor: `${rankUp.color}50` }]}>
-                                <Ionicons name={rankUp.icon} size={28} color={rankUp.color} />
+                            <View style={[styles.rankUpIcon, { borderColor: COLORS.border }]}>
+                                <Ionicons name={rankUp.icon} size={24} color={rankUp.color} />
                             </View>
                             <View style={{ flex: 1 }}>
-                                <Text style={styles.rankUpLabel}>RANK UP!</Text>
+                                <Text style={styles.rankUpLabel}>RANK PROMOTION</Text>
                                 <Text style={[styles.rankUpTitle, { color: rankUp.color }]}>{rankUp.title}</Text>
                                 <Text style={styles.rankUpDesc}>{rankUp.desc}</Text>
                             </View>
@@ -308,18 +293,18 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
                     {newPRs.length > 0 && (
                         <Animated.View style={[styles.prCard, { opacity: prAnim, transform: [{ scale: prScale }] }]}>
                             <View style={styles.prHeader}>
-                                <Ionicons name="trophy" size={16} color={COLORS.primary} />
-                                <Text style={styles.prTitle}>NEW RECORDS BROKEN</Text>
+                                <Ionicons name="trophy" size={14} color={COLORS.primary} />
+                                <Text style={styles.prTitle}>New Personal Records</Text>
                             </View>
                             <View style={styles.prList}>
                                 {newPRs.map((pr, i) => (
                                     <View key={i} style={styles.prRow}>
-                                        <Text style={styles.prName} numberOfLines={1}>{pr.name.toUpperCase()}</Text>
+                                        <Text style={styles.prName} numberOfLines={1}>{pr.name}</Text>
                                         <View style={styles.prValBox}>
                                             <Text style={styles.prVal}>
-                                                {pr.weightKg > 0 ? `${pr.weightKg}KG` : ""}
+                                                {pr.weightKg > 0 ? `${pr.weightKg}kg` : ""}
                                                 {pr.weightKg > 0 && pr.reps > 0 ? " · " : ""}
-                                                {pr.reps > 0 ? `${pr.reps} REPS` : ""}
+                                                {pr.reps > 0 ? `${pr.reps} reps` : ""}
                                             </Text>
                                         </View>
                                     </View>
@@ -328,17 +313,17 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
                         </Animated.View>
                     )}
 
-                    <TouchableOpacity style={[styles.homeBtn, { backgroundColor: COLORS.primary }]} onPress={() => navigation.navigate("Main")} activeOpacity={0.85}>
-                        <Text style={styles.homeBtnText}>DONE</Text>
+                    <TouchableOpacity style={styles.homeBtn} onPress={() => navigation.navigate("Main")} activeOpacity={0.85}>
+                        <Text style={styles.homeBtnText}>Done</Text>
                     </TouchableOpacity>
 
                     <View style={styles.linkRow}>
                         <TouchableOpacity style={styles.histLink} onPress={() => navigation.navigate("History")} activeOpacity={0.7}>
-                            <Text style={styles.histLinkText}>HISTORY</Text>
+                            <Text style={styles.histLinkText}>History</Text>
                         </TouchableOpacity>
                         <View style={styles.linkDiv} />
                         <TouchableOpacity style={styles.histLink} onPress={() => navigation.navigate("Progress")} activeOpacity={0.7}>
-                            <Text style={styles.histLinkText}>PROGRESS</Text>
+                            <Text style={styles.histLinkText}>Progress</Text>
                         </TouchableOpacity>
                     </View>
                 </Animated.View>
@@ -348,20 +333,20 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#000" },
+    container: { flex: 1, backgroundColor: COLORS.bg },
     scrollContent: { flexGrow: 1, justifyContent: "center" },
-    content: { alignItems: "center", paddingHorizontal: 24 },
+    content: { alignItems: "center", paddingHorizontal: 20 },
 
     iconRingWrap: {
-        width: 140, height: 140, borderRadius: 70,
+        width: 100, height: 100, borderRadius: 50,
         alignItems: "center", justifyContent: "center",
-        backgroundColor: "rgba(255,255,255,0.03)",
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
+        backgroundColor: COLORS.bgCard,
+        borderWidth: 1, borderColor: COLORS.border,
         overflow: "hidden",
     },
     iconRingInner: {
-        width: 110, height: 110, borderRadius: 55,
-        backgroundColor: "rgba(255,255,255,0.04)",
+        width: 80, height: 80, borderRadius: 40,
+        backgroundColor: COLORS.bg,
         alignItems: "center", justifyContent: "center",
         zIndex: 2,
     },
@@ -369,104 +354,98 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         position: "relative",
-        width: 180,
-        height: 180,
-        marginBottom: 20,
+        width: 120,
+        height: 120,
+        marginBottom: 16,
     },
     haloCircle: {
         position: "absolute",
-        width: 140,
-        height: 140,
-        borderRadius: 70,
-        borderWidth: 2,
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        borderWidth: 1,
     },
 
-    completedLabel: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 4, marginBottom: 16 },
-    completedTitle: { fontSize: 38, fontFamily: FAMILY.header, color: COLORS.text, textAlign: "center", letterSpacing: -1, lineHeight: 42, width: "100%", marginBottom: 40 },
+    completedLabel: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 2, marginBottom: 8 },
+    completedTitle: { fontSize: 30, fontFamily: FAMILY.display, color: COLORS.text, textAlign: "center", letterSpacing: -0.5, lineHeight: 34, width: "100%", marginBottom: 28 },
 
     statsRow: {
         flexDirection: "row", width: "100%",
-        backgroundColor: COLORS.glassBg,
-        borderRadius: 24, borderWidth: 1, borderColor: COLORS.glassBorder,
-        paddingVertical: 24, marginBottom: 40,
-        shadowColor: "#000", shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.2, shadowRadius: 20,
+        backgroundColor: COLORS.bgCard,
+        borderRadius: RADIUS.card, borderWidth: 1, borderColor: COLORS.border,
+        paddingVertical: 18, marginBottom: 24,
     },
-    statBox: { flex: 1, alignItems: "center", justifyContent: "center", gap: 4 },
-    statBoxCenter: { borderLeftWidth: 1, borderRightWidth: 1, borderColor: COLORS.glassBorder },
-    statLabel: { fontSize: 7, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2, marginBottom: 4 },
-    statValue: { fontSize: 22, fontFamily: FAMILY.display, color: COLORS.text, letterSpacing: -0.5 },
-    statIcon: { position: "absolute", bottom: -12, opacity: 0.2 },
+    statBox: { flex: 1, alignItems: "center", justifyContent: "center", gap: 2 },
+    statBoxCenter: { borderLeftWidth: 1, borderRightWidth: 1, borderColor: COLORS.border },
+    statLabel: { fontSize: 8, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 1.5, marginBottom: 2 },
+    statValue: { fontSize: 20, fontFamily: FAMILY.monoBold, color: COLORS.text, letterSpacing: -0.5 },
 
     streakRow: {
-        width: "100%", paddingVertical: 18, paddingHorizontal: 20,
-        marginBottom: 20, backgroundColor: COLORS.glassBg,
-        borderWidth: 1, borderColor: "rgba(227, 30, 36, 0.25)",
-        borderRadius: 20, flexDirection: "row", alignItems: "center", gap: 16,
+        width: "100%", paddingVertical: 12, paddingHorizontal: 16,
+        marginBottom: 16, backgroundColor: COLORS.bgCard,
+        borderWidth: 1, borderColor: COLORS.border,
+        borderRadius: RADIUS.card, flexDirection: "row", alignItems: "center", gap: 10,
     },
-    streakText: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textSub, flex: 1, letterSpacing: 1 },
+    streakText: { fontSize: 12, fontFamily: FAMILY.medium, color: COLORS.textSub, flex: 1 },
 
     prCard: {
-        width: "100%", borderRadius: 24, borderWidth: 1, borderColor: COLORS.glassBorder,
-        backgroundColor: COLORS.glassBg, marginBottom: 20, overflow: "hidden",
+        width: "100%", borderRadius: RADIUS.card, borderWidth: 1, borderColor: COLORS.border,
+        backgroundColor: COLORS.bgCard, marginBottom: 16, overflow: "hidden",
     },
     prHeader: {
-        flexDirection: "row", alignItems: "center", gap: 12,
-        paddingHorizontal: 24, paddingVertical: 20, borderBottomWidth: 1, borderBottomColor: COLORS.glassBorder,
-        backgroundColor: "rgba(255,255,255,0.01)",
+        flexDirection: "row", alignItems: "center", gap: 8,
+        paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: COLORS.border,
+        backgroundColor: COLORS.bg,
     },
-    prTitle: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 2 },
-    prList: { paddingHorizontal: 24, paddingVertical: 16 },
-    prRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 10 },
-    prName: { fontSize: 12, fontFamily: FAMILY.bold, color: COLORS.textSub, flex: 1, paddingRight: 8 },
-    prValBox: { backgroundColor: "rgba(255,255,255,0.03)", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: COLORS.glassBorder },
-    prVal: { fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 0.5 },
+    prTitle: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.text },
+    prList: { paddingHorizontal: 16, paddingVertical: 12 },
+    prRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 8 },
+    prName: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.text, flex: 1, paddingRight: 8 },
+    prValBox: { backgroundColor: COLORS.bg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLORS.border },
+    prVal: { fontSize: 11, fontFamily: FAMILY.mono, color: COLORS.textSub },
 
     homeBtn: {
-        width: "100%", backgroundColor: COLORS.primary, height: 64,
-        borderRadius: 20, alignItems: "center", justifyContent: "center", marginTop: 40, marginBottom: 32,
-        shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.3, shadowRadius: 15,
-        elevation: 5,
+        width: "100%", backgroundColor: COLORS.primary, height: 56,
+        borderRadius: RADIUS.card, alignItems: "center", justifyContent: "center", marginTop: 24, marginBottom: 20,
     },
-    homeBtnText: { fontSize: 13, fontFamily: FAMILY.bold, color: "#fff", letterSpacing: 2 },
+    homeBtnText: { fontSize: 14, fontFamily: FAMILY.semibold, color: COLORS.text, letterSpacing: 0.5 },
 
-    linkRow: { flexDirection: "row", alignItems: "center", gap: 40 },
-    histLink: { paddingVertical: 10 },
-    histLinkText: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2 },
-    linkDiv: { width: 1, height: 12, backgroundColor: "rgba(255,255,255,0.1)" },
+    linkRow: { flexDirection: "row", alignItems: "center", gap: 32 },
+    histLink: { paddingVertical: 8 },
+    histLinkText: { fontSize: 12, fontFamily: FAMILY.medium, color: COLORS.textSub },
+    linkDiv: { width: 1, height: 12, backgroundColor: COLORS.border },
 
     // Rank Up Card
     rankUpCard: {
-        flexDirection: "row", alignItems: "center", gap: 16,
-        width: "100%", padding: 18, borderRadius: 20, marginTop: 20,
-        borderWidth: 1, borderColor: COLORS.glassBorder,
-        backgroundColor: COLORS.glassBg, overflow: "hidden",
+        flexDirection: "row", alignItems: "center", gap: 14,
+        width: "100%", padding: 16, borderRadius: RADIUS.card, marginTop: 16,
+        borderWidth: 1, borderColor: COLORS.border,
+        backgroundColor: COLORS.bgCard, overflow: "hidden",
     },
     rankUpIcon: {
-        width: 52, height: 52, borderRadius: 16, borderWidth: 2,
+        width: 44, height: 44, borderRadius: RADIUS.pill, borderWidth: 1,
         alignItems: "center", justifyContent: "center",
-        backgroundColor: "rgba(0,0,0,0.3)",
+        backgroundColor: COLORS.bg,
     },
-    rankUpLabel: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2 },
-    rankUpTitle: { fontSize: 20, fontFamily: FAMILY.bold, letterSpacing: 1, marginTop: 2 },
-    rankUpDesc: { fontSize: 10, fontFamily: FAMILY.regular, color: COLORS.textSub, marginTop: 4 },
+    rankUpLabel: { fontSize: 8, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 1.5 },
+    rankUpTitle: { fontSize: 16, fontFamily: FAMILY.display, letterSpacing: -0.2, marginTop: 2 },
+    rankUpDesc: { fontSize: 11, fontFamily: FAMILY.regular, color: COLORS.textSub, marginTop: 2 },
     xpAwardBanner: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
-        gap: 8,
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 12,
+        gap: 6,
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: RADIUS.pill,
         borderWidth: 1,
-        marginBottom: 24,
-        overflow: "hidden",
+        borderColor: COLORS.border,
+        backgroundColor: COLORS.bgCard,
+        marginBottom: 16,
     },
     xpAwardText: {
-        fontSize: 9,
-        fontFamily: FAMILY.bold,
-        letterSpacing: 0.5,
+        fontSize: 11,
+        fontFamily: FAMILY.regular,
     },
 });
 

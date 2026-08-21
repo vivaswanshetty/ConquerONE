@@ -12,6 +12,21 @@ import * as Updates from "expo-updates";
 
 // ── Font assets (these are pre-resolved require() calls to .ttf files) ──
 import {
+  Archivo_700Bold,
+  Archivo_900Black,
+} from "@expo-google-fonts/archivo";
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from "@expo-google-fonts/inter";
+import {
+  JetBrainsMono_400Regular,
+  JetBrainsMono_600SemiBold,
+  JetBrainsMono_700Bold,
+} from "@expo-google-fonts/jetbrains-mono";
+import {
   Outfit_300Light,
   Outfit_400Regular,
   Outfit_500Medium,
@@ -21,7 +36,6 @@ import { Syne_700Bold } from "@expo-google-fonts/syne";
 import { Arimo_400Regular, Arimo_700Bold } from "@expo-google-fonts/arimo";
 import { Urbanist_900Black } from "@expo-google-fonts/urbanist";
 import { SpaceGrotesk_700Bold } from "@expo-google-fonts/space-grotesk";
-import { Inter_700Bold } from "@expo-google-fonts/inter";
 import {
   Montserrat_400Regular,
   Montserrat_600SemiBold,
@@ -76,7 +90,7 @@ const transition = ({ current }) => ({
 
 const screenOptions = {
   headerShown: false,
-  cardStyle: { backgroundColor: "#000000" },
+  cardStyle: { backgroundColor: "#0A0A0B" },
   gestureEnabled: true,
   cardStyleInterpolator: transition,
 };
@@ -117,7 +131,7 @@ function AppStack() {
 function RootNavigator({ fontsLoaded }) {
   const { user, loading } = useAuth();
 
-  if (loading || !fontsLoaded) return <View style={{ flex: 1, backgroundColor: "#000" }} />;
+  if (loading || !fontsLoaded) return <View style={{ flex: 1, backgroundColor: "#0A0A0B" }} />;
 
   return user ? <AppStack /> : <AuthStack />;
 }
@@ -125,28 +139,34 @@ function RootNavigator({ fontsLoaded }) {
 /*
  * ─── Font Loading Strategy ─────────────────────────────────────
  *
- * CRITICAL fonts (block splash): Only the 3 fonts used on the first
- * visible screen (HomeScreen / OnboardingScreen). This cuts boot time
- * because we load 3 fonts instead of 8 before showing the first frame.
- *
- * DEFERRED fonts: Loaded silently in the background after the splash
- * hides and the app is already interactive. These are only needed on
- * secondary screens (WorkoutDetail, WorkoutComplete, Rank, etc.)
+ * CRITICAL fonts (block splash): Core typography for instant first-frame render
+ * without layout shifts or font swapping.
+ *   - Inter (Grotesk Body)
+ *   - Archivo (Condensed Display)
+ *   - JetBrains Mono (Precision Instruments)
  */
 const CRITICAL_FONTS = {
+  Inter_400Regular,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  Archivo_700Bold,
+  JetBrainsMono_600SemiBold,
   Arimo_400Regular,
   Arimo_700Bold,
-  Outfit_400Regular,
-  SpaceGrotesk_700Bold,
 };
 
 const DEFERRED_FONTS = {
+  Inter_500Medium,
+  Archivo_900Black,
+  JetBrainsMono_400Regular,
+  JetBrainsMono_700Bold,
   Outfit_300Light,
+  Outfit_400Regular,
   Outfit_500Medium,
   Outfit_600SemiBold,
   Urbanist_900Black,
   Syne_700Bold,
-  Inter_700Bold,
+  SpaceGrotesk_700Bold,
   Montserrat_400Regular,
   Montserrat_600SemiBold,
   Montserrat_700Bold,

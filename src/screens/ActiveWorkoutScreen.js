@@ -1276,14 +1276,14 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                     <Ionicons name="close" size={20} color={COLORS.text} />
                 </TouchableOpacity>
                 <View style={styles.topCenter}>
-                    <Text style={styles.topTitle}>{(activeDay?.target || "WORKOUT").toUpperCase()}</Text>
-                    <Text style={styles.topSub}>WORKOUT {pct}% COMPLETE</Text>
+                    <Text style={styles.topTitle}>{activeDay?.target || "Workout"}</Text>
+                    <Text style={styles.topSub}>{pct}% Complete</Text>
                 </View>
                 {/* Calorie counter */}
                 {settings.showCalories ? (
                     <View style={styles.calBadge}>
                         <Text style={styles.calValue}>{calories}</Text>
-                        <Text style={styles.calUnit}>KCAL</Text>
+                        <Text style={styles.calUnit}>kcal</Text>
                     </View>
                 ) : (
                     <View style={{ width: 52 }} />
@@ -1301,11 +1301,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
             <View style={styles.progressTrack}>
                 <View style={[styles.progressFill, {
                     width: `${pct}%`,
-                    backgroundColor: isWork ? COLORS.primary : "#fff",
-                    shadowColor: isWork ? COLORS.primary : "#fff",
-                    shadowOffset: { width: 0, height: 0 },
-                    shadowOpacity: 0.5,
-                    shadowRadius: 10,
+                    backgroundColor: isWork ? COLORS.primary : COLORS.text,
                 }]} />
             </View>
 
@@ -1331,7 +1327,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                             <View style={[styles.ctrlMainInner, { backgroundColor: COLORS.primary }]}>
                                 <Ionicons
                                     name={!running ? "play" : paused ? "play" : "pause"}
-                                    size={28} color="#fff"
+                                    size={28} color="#EDEAE3"
                                 />
                             </View>
                         </TouchableOpacity>
@@ -1346,19 +1342,19 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                     <Animated.View style={{ opacity: fadeAnim, alignItems: "center" }}>
 
                         {/* Phase tag */}
-                        <View style={[styles.phaseTag, { backgroundColor: "rgba(227,30,36,0.05)", borderColor: "rgba(227,30,36,0.15)" }]}>
-                            <View style={[styles.phaseTagDot, { backgroundColor: COLORS.primary }]} />
-                            <Text style={[styles.phaseTagText, { color: COLORS.primary }]}>WORKING</Text>
+                        <View style={styles.phaseTag}>
+                            <View style={styles.phaseTagDot} />
+                            <Text style={styles.phaseTagText}>WORKING SET</Text>
                         </View>
 
                         {/* Exercise name */}
-                        <Text style={styles.exName}>{ex.name.toUpperCase()}</Text>
-                        {ex.side && <Text style={styles.sideLabel}>{ex.side} SIDE</Text>}
+                        <Text style={styles.exName}>{ex.name}</Text>
+                        {ex.side && <Text style={styles.sideLabel}>{ex.side} Side</Text>}
 
-                        {/* Set indicator with tactical tracks */}
+                        {/* Set indicator */}
                         {currentPhase.type === "active" && (
                             <View style={styles.setIndicator}>
-                                <Text style={styles.setLabel}>SET {String(currentPhase.set).padStart(2, '0')} / {String(ex.sets).padStart(2, '0')}</Text>
+                                <Text style={styles.setLabel}>Set {String(currentPhase.set).padStart(2, '0')} of {String(ex.sets).padStart(2, '0')}</Text>
                                 <View style={styles.setDots}>
                                     {activeSetPhases.map((_, i) => (
                                         <View key={i} style={[
@@ -1398,20 +1394,12 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                         {/* Reference Image during work */}
                         {ex.image ? (
                             <View style={styles.workImgBox}>
-                                <LinearGradient
-                                    colors={["transparent", "rgba(0,0,0,0.4)"]}
-                                    style={StyleSheet.absoluteFill}
-                                />
                                 <Image source={ex.image} style={styles.workImg} resizeMode="contain" />
                             </View>
                         ) : (
                             <View style={styles.workInfoPanel}>
-                                <LinearGradient
-                                    colors={["rgba(255,255,255,0.03)", "rgba(227,30,36,0.01)"]}
-                                    style={StyleSheet.absoluteFill}
-                                />
-                                <Text style={styles.infoPanelLabel}>TARGET INTEL</Text>
-                                <Text style={styles.infoPanelTitle}>{ex.primaryTarget ? ex.primaryTarget.toUpperCase() : "TARGET MUSCLE"}</Text>
+                                <Text style={styles.infoPanelLabel}>TARGET MUSCLE</Text>
+                                <Text style={styles.infoPanelTitle}>{ex.primaryTarget || "Target Muscle"}</Text>
                                 <ScrollView
                                     horizontal
                                     showsHorizontalScrollIndicator={false}
@@ -1420,18 +1408,18 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                                 >
                                     <View style={styles.infoPanelBadge}>
                                         <Ionicons name="barbell-outline" size={12} color={COLORS.primary} />
-                                        <Text style={styles.infoPanelBadgeText}>{ex.equipment ? ex.equipment.toUpperCase() : "EQUIPMENT"}</Text>
+                                        <Text style={styles.infoPanelBadgeText}>{ex.equipment || "Equipment"}</Text>
                                     </View>
                                     {ex.tag && (
-                                        <View style={[styles.infoPanelBadge, { borderColor: "rgba(255,255,255,0.15)", backgroundColor: "transparent" }]}>
+                                        <View style={[styles.infoPanelBadge, { borderColor: COLORS.border, backgroundColor: "transparent" }]}>
                                             <Ionicons name="bookmark-outline" size={12} color={COLORS.textSub} />
                                             <Text style={[styles.infoPanelBadgeText, { color: COLORS.textSub }]}>{ex.tag}</Text>
                                         </View>
                                     )}
                                     {getSuggestedWeight(ex.name) ? (
-                                        <View style={[styles.infoPanelBadge, { borderColor: "rgba(227, 30, 36, 0.35)", backgroundColor: "rgba(227, 30, 36, 0.05)" }]}>
+                                        <View style={[styles.infoPanelBadge, { borderColor: COLORS.primary, backgroundColor: "rgba(122, 46, 34, 0.1)" }]}>
                                             <Ionicons name="trending-up-outline" size={12} color={COLORS.primary} />
-                                            <Text style={[styles.infoPanelBadgeText, { color: COLORS.primary }]}>SUGGESTED: {getSuggestedWeight(ex.name).toUpperCase()}</Text>
+                                            <Text style={[styles.infoPanelBadgeText, { color: COLORS.text }]}>Suggested: {getSuggestedWeight(ex.name)}</Text>
                                         </View>
                                     ) : null}
                                 </ScrollView>
@@ -1448,20 +1436,17 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
 
                             {currentPhase.isReps && running && !paused ? (
                                 <TouchableOpacity style={styles.ctrlMainWide} onPress={handleSkip} activeOpacity={0.85}>
-                                    <LinearGradient
-                                        colors={[COLORS.primary, "#C41E24"]}
-                                        style={styles.ctrlMainWideInner}
-                                    >
-                                        <Text style={styles.ctrlMainWideText}>SET COMPLETE</Text>
-                                        <Ionicons name="checkmark-circle" size={20} color="#fff" />
-                                    </LinearGradient>
+                                    <View style={styles.ctrlMainWideInner}>
+                                        <Text style={styles.ctrlMainWideText}>Set Complete</Text>
+                                        <Ionicons name="checkmark-circle" size={18} color="#EDEAE3" />
+                                    </View>
                                 </TouchableOpacity>
                             ) : (
                                 <TouchableOpacity style={styles.ctrlMain} onPress={handlePlayPause} activeOpacity={0.85}>
                                     <View style={[styles.ctrlMainInner, { backgroundColor: COLORS.primary }]}>
                                         <Ionicons
                                             name={!running ? "play" : paused ? "play" : "pause"}
-                                            size={28} color="#fff"
+                                            size={28} color="#EDEAE3"
                                         />
                                     </View>
                                 </TouchableOpacity>
@@ -1477,7 +1462,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                             <View style={styles.recentLogsCard}>
                                 <View style={styles.recentLogsHeader}>
                                     <Ionicons name="time-outline" size={14} color={COLORS.textMuted} />
-                                    <Text style={styles.recentLogsLabel}>RECENT LOGS ({recentLogs.date})</Text>
+                                    <Text style={styles.recentLogsLabel}>Recent Logs ({recentLogs.date})</Text>
                                 </View>
                                 <View style={styles.recentLogsSets}>
                                     {recentLogs.loggedSets.map((s, i) => (
@@ -1486,7 +1471,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                                                 <Text style={styles.recentSetBadgeText}>S{s.set}</Text>
                                             </View>
                                             <Text style={styles.recentSetText}>
-                                                {s.weightKg > 0 ? displayWeight(s.weightKg, settings.weightUnit) : "—"} × {s.reps} REPS
+                                                {s.weightKg > 0 ? displayWeight(s.weightKg, settings.weightUnit) : "—"} × {s.reps} reps
                                             </Text>
                                         </View>
                                     ))}
@@ -1497,12 +1482,12 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                         {/* Log PR button */}
                         {settings.setLoggingEnabled && (
                             <TouchableOpacity
-                                style={[styles.logPRBtn, { borderColor: COLORS.primaryDim, backgroundColor: "rgba(227,30,36,0.05)" }]}
+                                style={styles.logPRBtn}
                                 onPress={() => setPRModal({ visible: true, exerciseName: ex.name })}
                                 activeOpacity={0.8}
                             >
-                                <Ionicons name="clipboard-outline" size={18} color={COLORS.primary} />
-                                <Text style={[styles.logPRText, { color: COLORS.primary }]}>LOG YOUR PERFORMANCE</Text>
+                                <Ionicons name="clipboard-outline" size={16} color={COLORS.text} />
+                                <Text style={styles.logPRText}>Log Performance</Text>
                             </TouchableOpacity>
                         )}
 
@@ -1510,13 +1495,13 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                         {isWork && ex.tips?.length > 0 && (
                             <View style={styles.formCard}>
                                 <View style={styles.formLabelRow}>
-                                    <Ionicons name="shield-checkmark" size={14} color={COLORS.textMuted} />
-                                    <Text style={styles.formLabel}>TECHNIQUE TIPS</Text>
+                                    <Ionicons name="shield-checkmark" size={14} color={COLORS.textSub} />
+                                    <Text style={styles.formLabel}>Technique Tips</Text>
                                 </View>
                                 {ex.tips.map((tip, i) => (
                                     <View key={i} style={styles.tipRow}>
                                         <View style={styles.tipDot} />
-                                        <Text style={styles.tipText}>{tip.toUpperCase()}</Text>
+                                        <Text style={styles.tipText}>{tip}</Text>
                                     </View>
                                 ))}
                             </View>
@@ -1574,188 +1559,186 @@ const styles = StyleSheet.create({
 
     topBar: {
         flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-        paddingHorizontal: 20, paddingBottom: 16,
+        paddingHorizontal: 20, paddingBottom: 12,
     },
     topCenter: { alignItems: "center", flex: 1 },
-    topTitle: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 2 },
-    topSub: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2.5, marginTop: 4 },
+    topTitle: { fontSize: 15, fontFamily: FAMILY.display, color: COLORS.text, letterSpacing: -0.2 },
+    topSub: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.textSub, marginTop: 2 },
     quitBtn: {
-        width: 36, height: 36, borderRadius: 10,
-        backgroundColor: COLORS.glassBg, alignItems: "center", justifyContent: "center",
-        borderWidth: 1, borderColor: COLORS.glassBorder,
+        width: 36, height: 36, borderRadius: RADIUS.pill,
+        backgroundColor: COLORS.bgCard, alignItems: "center", justifyContent: "center",
+        borderWidth: 1, borderColor: COLORS.border,
     },
     calBadge: {
-        backgroundColor: COLORS.glassBg,
-        paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8,
-        alignItems: "center",
-        borderWidth: 1, borderColor: "rgba(227,30,36,0.2)",
+        backgroundColor: COLORS.bgCard,
+        paddingHorizontal: 10, paddingVertical: 5, borderRadius: RADIUS.pill,
+        alignItems: "center", flexDirection: "row", gap: 4,
+        borderWidth: 1, borderColor: COLORS.border,
     },
-    calValue: { fontSize: 13, color: COLORS.text, fontFamily: FAMILY.bold },
-    calUnit: { fontSize: 7, color: COLORS.textMuted, fontFamily: FAMILY.bold, letterSpacing: 1 },
+    calValue: { fontSize: 12, color: COLORS.text, fontFamily: FAMILY.monoBold },
+    calUnit: { fontSize: 10, color: COLORS.textSub, fontFamily: FAMILY.regular },
 
-    progressTrack: { height: 4, backgroundColor: "rgba(255,255,255,0.04)", width: "100%" },
+    progressTrack: { height: 3, backgroundColor: "rgba(237, 234, 227, 0.08)", width: "100%" },
     progressFill: { height: "100%", backgroundColor: COLORS.primary },
 
     restContainer: { flex: 1, backgroundColor: COLORS.bg, justifyContent: "space-between", paddingBottom: 28 },
     restContent: { flex: 1, width: "100%" },
 
     phaseTag: {
-        flexDirection: "row", alignItems: "center", gap: 8,
-        paddingHorizontal: 14, paddingVertical: 8, borderRadius: 6,
-        borderWidth: 1, marginTop: 40,
+        flexDirection: "row", alignItems: "center", gap: 6,
+        paddingHorizontal: 12, paddingVertical: 5, borderRadius: RADIUS.pill,
+        borderWidth: 1, borderColor: COLORS.primary, backgroundColor: "rgba(122, 46, 34, 0.12)",
+        marginTop: 32,
     },
-    phaseTagDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: COLORS.accent },
-    phaseTagText: { fontSize: 9, fontFamily: FAMILY.bold, letterSpacing: 2 },
+    phaseTagDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: COLORS.primary },
+    phaseTagText: { fontSize: 9, fontFamily: FAMILY.semibold, letterSpacing: 1.5, color: COLORS.text },
 
     exName: {
-        fontSize: 36, fontFamily: FAMILY.display, color: COLORS.text,
-        textAlign: "center", marginTop: 24, paddingHorizontal: 40,
-        lineHeight: 40, letterSpacing: -0.5, width: "100%"
+        fontSize: 30, fontFamily: FAMILY.display, color: COLORS.text,
+        textAlign: "center", marginTop: 16, paddingHorizontal: 32,
+        lineHeight: 34, letterSpacing: -0.5, width: "100%"
     },
     sideLabel: {
-        fontSize: 12, fontFamily: FAMILY.bold, color: COLORS.primary,
-        marginTop: 12, letterSpacing: 3,
+        fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.primary,
+        marginTop: 8,
     },
 
-    setIndicator: { marginTop: 48, alignItems: "center" },
-    setLabel: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2, marginBottom: 16 },
+    setIndicator: { marginTop: 32, alignItems: "center" },
+    setLabel: { fontSize: 11, fontFamily: FAMILY.mono, color: COLORS.textSub, marginBottom: 12 },
     setDots: { flexDirection: "row", gap: 6 },
-    dot: { width: 24, height: 3, borderRadius: 1.5, backgroundColor: "rgba(255,255,255,0.05)" },
-    dotActive: { backgroundColor: COLORS.primary, width: 32 },
-    dotDone: { backgroundColor: "rgba(255,255,255,0.2)" },
+    dot: { width: 22, height: 3, borderRadius: 1.5, backgroundColor: "rgba(237, 234, 227, 0.1)" },
+    dotActive: { backgroundColor: COLORS.primary, width: 28 },
+    dotDone: { backgroundColor: "rgba(237, 234, 227, 0.3)" },
 
     timerWrap: {
-        marginTop: 64, width: RING, height: RING,
+        marginTop: 48, width: RING, height: RING,
         alignItems: "center", justifyContent: "center",
     },
     timerInner: { position: "absolute", alignItems: "center" },
-    timerNum: { fontSize: 72, fontFamily: FAMILY.display, letterSpacing: -2 },
-    timerUnit: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 3, marginTop: -4 },
+    timerNum: { fontSize: 60, fontFamily: FAMILY.monoBold, letterSpacing: -1 },
+    timerUnit: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 2, marginTop: -2 },
 
     controls: {
         flexDirection: "row", alignItems: "center", justifyContent: "center",
-        gap: 32, marginTop: 16, paddingBottom: 8,
+        gap: 28, marginTop: 16, paddingBottom: 8,
     },
     ctrlMain: {
-        width: 88, height: 88, borderRadius: 44,
+        width: 80, height: 80, borderRadius: 40,
         alignItems: "center", justifyContent: "center",
     },
     ctrlMainInner: {
-        width: 72, height: 72, borderRadius: 36,
+        width: 68, height: 68, borderRadius: 34,
         alignItems: "center", justifyContent: "center",
     },
     ctrlMainWide: {
-        flex: 1, height: 72, marginHorizontal: 16,
+        flex: 1, height: 64, marginHorizontal: 16,
     },
     ctrlMainWideInner: {
-        flex: 1, borderRadius: 18, flexDirection: "row",
-        alignItems: "center", justifyContent: "center", gap: 12,
-        shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.4, shadowRadius: 12, elevation: 8,
+        flex: 1, borderRadius: RADIUS.card, flexDirection: "row",
+        alignItems: "center", justifyContent: "center", gap: 10,
+        backgroundColor: COLORS.primary,
     },
     ctrlMainWideText: {
-        fontSize: 14, fontFamily: FAMILY.bold, color: "#fff", letterSpacing: 2.5,
+        fontSize: 14, fontFamily: FAMILY.semibold, color: COLORS.text, letterSpacing: 0.5,
     },
     ctrlSec: {
-        width: 48, height: 48, borderRadius: 24,
-        backgroundColor: "rgba(255,255,255,0.05)",
+        width: 44, height: 44, borderRadius: RADIUS.pill,
+        backgroundColor: COLORS.bgCard, borderWidth: 1, borderColor: COLORS.border,
         alignItems: "center", justifyContent: "center",
     },
     ctrlSecDisabled: { opacity: 0.2 },
 
     logPRBtn: {
-        flexDirection: "row", alignItems: "center", gap: 10,
-        paddingVertical: 14, paddingHorizontal: 24, borderRadius: 14,
-        backgroundColor: COLORS.glassBg,
-        borderWidth: 1, borderColor: "rgba(227,30,36,0.25)",
-        marginTop: 48,
-        shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1, shadowRadius: 8,
+        flexDirection: "row", alignItems: "center", gap: 8,
+        paddingVertical: 12, paddingHorizontal: 20, borderRadius: RADIUS.card,
+        backgroundColor: COLORS.bgCard,
+        borderWidth: 1, borderColor: COLORS.border,
+        marginTop: 36,
     },
-    logPRText: { fontSize: 10, color: COLORS.accent, fontFamily: FAMILY.bold, letterSpacing: 1.5 },
+    logPRText: { fontSize: 12, color: COLORS.text, fontFamily: FAMILY.semibold },
 
     formCard: {
-        backgroundColor: COLORS.glassBg, marginTop: 40, marginHorizontal: 24,
-        marginBottom: 24, borderRadius: 24, padding: 24,
-        borderWidth: 1, borderColor: COLORS.glassBorder,
-        width: width - 48,
+        backgroundColor: COLORS.bgCard, marginTop: 32, marginHorizontal: 20,
+        marginBottom: 20, borderRadius: RADIUS.card, padding: 20,
+        borderWidth: 1, borderColor: COLORS.border,
+        width: width - 40,
     },
-    formLabelRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 20 },
-    formLabel: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2.5 },
-    tipRow: { flexDirection: "row", alignItems: "flex-start", gap: 16, marginBottom: 16 },
-    tipDot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: COLORS.primary, marginTop: 8 },
-    tipText: { fontSize: 13, color: COLORS.textSub, flex: 1, lineHeight: 22, fontFamily: FAMILY.regular },
+    formLabelRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 },
+    formLabel: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.text },
+    tipRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, marginBottom: 12 },
+    tipDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: COLORS.primary, marginTop: 8 },
+    tipText: { fontSize: 13, color: COLORS.textSub, flex: 1, lineHeight: 20, fontFamily: FAMILY.regular },
     workImgBox: {
-        width: width - 80, height: 180, borderRadius: 20,
-        backgroundColor: "rgba(255,255,255,0.02)",
-        marginTop: 32, overflow: "hidden",
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
+        width: width - 64, height: 180, borderRadius: RADIUS.card,
+        backgroundColor: COLORS.bgCard,
+        marginTop: 28, overflow: "hidden",
+        borderWidth: 1, borderColor: COLORS.border,
     },
-    workImg: { width: "100%", height: "100%", opacity: 0.8 },
+    workImg: { width: "100%", height: "100%" },
     workInfoPanel: {
-        width: width - 80, height: 180, borderRadius: 20,
-        backgroundColor: COLORS.glassBg,
-        marginTop: 32, overflow: "hidden",
-        borderWidth: 1, borderColor: COLORS.glassBorder,
-        alignItems: "center", justifyContent: "center", padding: 20,
+        width: width - 64, height: 160, borderRadius: RADIUS.card,
+        backgroundColor: COLORS.bgCard,
+        marginTop: 28, overflow: "hidden",
+        borderWidth: 1, borderColor: COLORS.border,
+        alignItems: "center", justifyContent: "center", padding: 18,
     },
     infoPanelLabel: {
-        fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 2, marginBottom: 8,
+        fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 1.5, marginBottom: 6,
     },
     infoPanelTitle: {
-        fontSize: 20, fontFamily: FAMILY.display, color: COLORS.text, textAlign: "center", marginBottom: 16, letterSpacing: -0.5, lineHeight: 24,
+        fontSize: 18, fontFamily: FAMILY.display, color: COLORS.text, textAlign: "center", marginBottom: 14, letterSpacing: -0.3, lineHeight: 22,
     },
     infoPanelBadgeRow: {
-        flexDirection: "row", gap: 10, justifyContent: "center", alignItems: "center",
-        flexGrow: 1, paddingHorizontal: 16,
+        flexDirection: "row", gap: 8, justifyContent: "center", alignItems: "center",
+        flexGrow: 1, paddingHorizontal: 12,
     },
     infoPanelBadge: {
         flexDirection: "row", alignItems: "center", gap: 6,
-        paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8,
-        borderWidth: 1, borderColor: COLORS.glassBorder, backgroundColor: "rgba(255,255,255,0.02)",
+        paddingHorizontal: 10, paddingVertical: 5, borderRadius: RADIUS.pill,
+        borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bg,
     },
     infoPanelBadgeText: {
-        fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 0.5,
+        fontSize: 10, fontFamily: FAMILY.medium, color: COLORS.textSub,
     },
     jumpBtn: {
-        width: 40, height: 40, borderRadius: 12,
-        backgroundColor: COLORS.glassBg, alignItems: "center", justifyContent: "center",
-        borderWidth: 1, borderColor: COLORS.glassBorder,
+        width: 36, height: 36, borderRadius: RADIUS.pill,
+        backgroundColor: COLORS.bgCard, alignItems: "center", justifyContent: "center",
+        borderWidth: 1, borderColor: COLORS.border,
     },
     modalBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.85)", justifyContent: "center", alignItems: "center" },
     jumpModal: {
         width: width - 40, maxHeight: "70%", backgroundColor: COLORS.bgCard,
-        borderRadius: 32, padding: 32, borderWidth: 1, borderColor: COLORS.border,
+        borderRadius: 12, padding: 24, borderWidth: 1, borderColor: COLORS.border,
     },
-    jumpHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 24 },
-    jumpTitle: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 3 },
+    jumpHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
+    jumpTitle: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.text },
     jumpItem: {
-        flexDirection: "row", alignItems: "center", paddingVertical: 16, borderBottomWidth: 1,
-        borderBottomColor: "rgba(255,255,255,0.04)", gap: 16,
+        flexDirection: "row", alignItems: "center", paddingVertical: 14, borderBottomWidth: 1,
+        borderBottomColor: COLORS.border, gap: 14,
     },
-    jumpItemActive: { backgroundColor: "rgba(227,30,36,0.05)", borderRadius: 16, paddingHorizontal: 12, marginHorizontal: -12 },
-    jumpIndex: { width: 28, height: 28, borderRadius: 8, backgroundColor: "rgba(255,255,255,0.05)", alignItems: "center", justifyContent: "center" },
-    jumpIndexText: { fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.textSub },
-    jumpName: { fontSize: 14, fontFamily: FAMILY.display, color: COLORS.textSub, letterSpacing: 0.5 },
-    jumpMeta: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, marginTop: 4, letterSpacing: 0.5 },
+    jumpItemActive: { backgroundColor: "rgba(122, 46, 34, 0.08)", borderRadius: RADIUS.card, paddingHorizontal: 10, marginHorizontal: -10 },
+    jumpIndex: { width: 26, height: 26, borderRadius: 4, backgroundColor: COLORS.bg, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: COLORS.border },
+    jumpIndexText: { fontSize: 11, fontFamily: FAMILY.monoBold, color: COLORS.textSub },
+    jumpName: { fontSize: 14, fontFamily: FAMILY.semibold, color: COLORS.text },
+    jumpMeta: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.textMuted, marginTop: 2 },
     recentLogsCard: {
-        backgroundColor: COLORS.glassBg, marginTop: 32, marginHorizontal: 24,
-        borderRadius: 24, padding: 24,
-        borderWidth: 1, borderColor: COLORS.glassBorder,
-        width: width - 48,
+        backgroundColor: COLORS.bgCard, marginTop: 28, marginHorizontal: 20,
+        borderRadius: RADIUS.card, padding: 20,
+        borderWidth: 1, borderColor: COLORS.border,
+        width: width - 40,
     },
-    recentLogsHeader: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 20 },
-    recentLogsLabel: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2.5 },
-    recentLogsSets: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+    recentLogsHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 },
+    recentLogsLabel: { fontSize: 11, fontFamily: FAMILY.medium, color: COLORS.textSub },
+    recentLogsSets: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
     recentSetRow: {
         flexDirection: "row", alignItems: "center", gap: 8,
-        backgroundColor: "rgba(255,255,255,0.02)", paddingHorizontal: 12, paddingVertical: 8,
-        borderRadius: 10, borderWidth: 1, borderColor: COLORS.glassBorder,
+        backgroundColor: COLORS.bg, paddingHorizontal: 10, paddingVertical: 6,
+        borderRadius: RADIUS.card, borderWidth: 1, borderColor: COLORS.border,
     },
     recentSetBadge: {
-        backgroundColor: COLORS.primaryDim, paddingHorizontal: 6, paddingVertical: 2,
-        borderRadius: 4, borderWidth: 1, borderColor: "rgba(227,30,36,0.2)",
+        backgroundColor: "rgba(122, 46, 34, 0.15)", paddingHorizontal: 5, paddingVertical: 2,
+        borderRadius: 4,
     },
-    recentSetBadgeText: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.primary },
-    recentSetText: { fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.textSub, letterSpacing: 0.5 },
+    recentSetBadgeText: { fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.primary },
+    recentSetText: { fontSize: 11, fontFamily: FAMILY.mono, color: COLORS.text },
 });
