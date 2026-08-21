@@ -213,7 +213,7 @@ const s = StyleSheet.create({
         alignItems: 'center', justifyContent: 'center',
         borderWidth: 1, borderColor: COLORS.border,
     },
-    headerTitle: { fontSize: 24, fontFamily: FAMILY.display, color: COLORS.text, letterSpacing: -0.5 },
+    headerTitle: { fontSize: 24, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: -0.5 },
 
     // Hero Card
     heroCard: {
@@ -235,7 +235,7 @@ const s = StyleSheet.create({
         borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center',
         backgroundColor: COLORS.bg,
     },
-    heroTitle: { fontSize: 26, fontFamily: FAMILY.display, color: COLORS.text, letterSpacing: -0.5, marginBottom: 2 },
+    heroTitle: { fontSize: 26, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: -0.5, marginBottom: 2 },
     heroName: { fontSize: 11, fontFamily: FAMILY.medium, color: COLORS.textSub, marginBottom: 10 },
     heroDesc: { fontSize: 12, fontFamily: FAMILY.regular, color: COLORS.textSub, textAlign: 'center', lineHeight: 18, marginBottom: 18, paddingHorizontal: 10 },
 

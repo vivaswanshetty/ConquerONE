@@ -895,9 +895,9 @@ const styles = StyleSheet.create({
         alignItems: "center", justifyContent: "center",
     },
     avatarProgressText: {
-        fontSize: 14, fontFamily: FAMILY.mBold, color: "#fff",
+        fontSize: 14, fontFamily: FAMILY.monoBold, color: "#fff",
     },
-    initials: { fontSize: 32, fontFamily: FAMILY.mBold, color: COLORS.textMuted },
+    initials: { fontSize: 32, fontFamily: FAMILY.header, color: COLORS.textMuted },
     cameraBtn: {
         position: "absolute", bottom: 6, right: 6, width: 32, height: 32, borderRadius: 16,
         backgroundColor: COLORS.primary, alignItems: "center", justifyContent: "center",
@@ -906,15 +906,15 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.4, shadowRadius: 6, elevation: 5,
     },
     heroGreeting: {
-        fontSize: 12, fontFamily: FAMILY.mReg, color: COLORS.textMuted,
+        fontSize: 12, fontFamily: FAMILY.medium, color: COLORS.textMuted,
         letterSpacing: 0.5, marginBottom: 4,
     },
     heroName: {
-        fontSize: 28, fontFamily: FAMILY.mBold, color: COLORS.text,
+        fontSize: 28, fontFamily: FAMILY.header, color: COLORS.text,
         marginBottom: 4,
     },
     heroEmail: {
-        fontSize: 12, fontFamily: FAMILY.mReg, color: COLORS.textMuted,
+        fontSize: 12, fontFamily: FAMILY.regular, color: COLORS.textMuted,
         marginBottom: 18,
     },
     heroBadges: { flexDirection: "row", gap: 8 },
@@ -924,14 +924,14 @@ const styles = StyleSheet.create({
         borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
         backgroundColor: "rgba(255,255,255,0.03)",
     },
-    rankBadgeText: { fontSize: 9, fontFamily: FAMILY.mBold, color: COLORS.text, letterSpacing: 1 },
+    rankBadgeText: { fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.text, letterSpacing: 1 },
     dateBadge: {
         flexDirection: "row", alignItems: "center", gap: 5,
         paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20,
         backgroundColor: "rgba(255,255,255,0.02)",
         borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
     },
-    dateBadgeText: { fontSize: 9, fontFamily: FAMILY.mSemi, color: COLORS.textMuted, letterSpacing: 0.5 },
+    dateBadgeText: { fontSize: 9, fontFamily: FAMILY.mono, color: COLORS.textMuted, letterSpacing: 0.5 },
 
     // Stats Grid
     statsRow: {
@@ -954,12 +954,12 @@ const styles = StyleSheet.create({
         marginBottom: 2,
         borderWidth: 0.5, borderColor: "rgba(255,255,255,0.05)",
     },
-    statValue: { fontSize: 24, fontFamily: FAMILY.mBold, color: COLORS.text },
-    statLabel: { fontSize: 8, fontFamily: FAMILY.mSemi, color: COLORS.textMuted, letterSpacing: 1.2 },
+    statValue: { fontSize: 24, fontFamily: FAMILY.monoBold, color: COLORS.text },
+    statLabel: { fontSize: 8, fontFamily: FAMILY.medium, color: COLORS.textMuted, letterSpacing: 1.2 },
 
     // Sections
     sectionTitle: {
-        fontSize: 10, fontFamily: FAMILY.mBold, color: COLORS.textMuted,
+        fontSize: 10, fontFamily: FAMILY.semibold, color: COLORS.textMuted,
         letterSpacing: 1.5, marginHorizontal: 20, marginBottom: 14, marginTop: 24,
     },
     card: {
@@ -976,11 +976,11 @@ const styles = StyleSheet.create({
     rowBorder: { borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.04)" },
     detailContent: { flex: 1, marginRight: 12 },
     detailValue: {
-        fontSize: 15, fontFamily: FAMILY.mBold, color: COLORS.text,
+        fontSize: 15, fontFamily: FAMILY.monoBold, color: COLORS.text,
         marginBottom: 3,
     },
     detailLabel: {
-        fontSize: 9, fontFamily: FAMILY.mSemi, color: COLORS.textMuted,
+        fontSize: 9, fontFamily: FAMILY.medium, color: COLORS.textMuted,
         letterSpacing: 1,
     },
 
@@ -988,9 +988,9 @@ const styles = StyleSheet.create({
     infoRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingVertical: 18 },
     rowIconWrap: { width: 34, height: 34, borderRadius: 11, backgroundColor: "rgba(255,255,255,0.03)", alignItems: "center", justifyContent: "center", marginRight: 12, borderWidth: 0.5, borderColor: "rgba(255,255,255,0.05)" },
     rowContent: { flex: 1, marginRight: 12 },
-    rowLabel: { fontSize: 13, fontFamily: FAMILY.mBold, color: COLORS.text, marginBottom: 2 },
-    rowValue: { fontSize: 15, fontFamily: FAMILY.mBold, color: COLORS.text },
-    rowSublabel: { fontSize: 11, fontFamily: FAMILY.mReg, color: COLORS.textSub, marginTop: 2 },
+    rowLabel: { fontSize: 13, fontFamily: FAMILY.medium, color: COLORS.text, marginBottom: 2 },
+    rowValue: { fontSize: 15, fontFamily: FAMILY.monoBold, color: COLORS.text },
+    rowSublabel: { fontSize: 11, fontFamily: FAMILY.regular, color: COLORS.textSub, marginTop: 2 },
 
     // Verified Badge
     verifiedBadge: {
@@ -999,7 +999,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
     },
     verifiedDot: { width: 4, height: 4, borderRadius: 2 },
-    verifiedText: { fontSize: 8, fontFamily: FAMILY.mBold, letterSpacing: 0.5 },
+    verifiedText: { fontSize: 8, fontFamily: FAMILY.medium, letterSpacing: 0.5 },
 
     // Connected Services
     serviceRow: {
@@ -1012,14 +1012,14 @@ const styles = StyleSheet.create({
         alignItems: "center", justifyContent: "center",
         borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
     },
-    serviceTitle: { fontSize: 14, fontFamily: FAMILY.mBold, color: COLORS.text },
-    serviceSub: { fontSize: 11, fontFamily: FAMILY.mReg, color: COLORS.textMuted },
+    serviceTitle: { fontSize: 14, fontFamily: FAMILY.medium, color: COLORS.text },
+    serviceSub: { fontSize: 11, fontFamily: FAMILY.regular, color: COLORS.textMuted },
     serviceAction: {
         paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10,
         backgroundColor: "rgba(255,255,255,0.03)",
         borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
     },
-    serviceActionText: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 1 },
+    serviceActionText: { fontSize: 9, fontFamily: FAMILY.medium, color: COLORS.text, letterSpacing: 1 },
     
     // Live syncing badges
     liveBadge: {
@@ -1031,7 +1031,7 @@ const styles = StyleSheet.create({
     liveDot: {
         width: 6, height: 6, borderRadius: 3, backgroundColor: "#22c55e",
     },
-    liveBadgeText: { fontSize: 8, fontFamily: FAMILY.mBold, color: "#22c55e", letterSpacing: 1 },
+    liveBadgeText: { fontSize: 8, fontFamily: FAMILY.monoBold, color: "#22c55e", letterSpacing: 1 },
     
     liveBadgeMini: {
         flexDirection: "row",
@@ -1052,7 +1052,7 @@ const styles = StyleSheet.create({
     },
     liveBadgeTextMini: {
         fontSize: 7,
-        fontFamily: FAMILY.mBold,
+        fontFamily: FAMILY.monoBold,
         color: "#22c55e",
         letterSpacing: 0.5,
     },
@@ -1062,7 +1062,7 @@ const styles = StyleSheet.create({
         flexDirection: "row", alignItems: "center", gap: 12,
         paddingHorizontal: 20, paddingVertical: 18,
     },
-    dangerText: { fontSize: 14, fontFamily: FAMILY.mBold, color: COLORS.primary },
+    dangerText: { fontSize: 14, fontFamily: FAMILY.medium, color: COLORS.primary },
 
     footerSection: {
         alignItems: 'center', paddingVertical: 48, gap: 8,
@@ -1072,14 +1072,14 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.04)', marginBottom: 16,
     },
     footerBrand: {
-        fontSize: 11, fontFamily: FAMILY.mBold, color: 'rgba(255,255,255,0.15)',
+        fontSize: 11, fontFamily: FAMILY.header, color: 'rgba(255,255,255,0.15)',
         letterSpacing: 3,
     },
     footerAuthor: {
-        fontSize: 10, fontFamily: FAMILY.mReg, color: 'rgba(255,255,255,0.08)',
+        fontSize: 10, fontFamily: FAMILY.regular, color: 'rgba(255,255,255,0.08)',
         letterSpacing: 0.5,
     },
-    version: { fontSize: 9, fontFamily: FAMILY.mReg, color: "rgba(255,255,255,0.06)", letterSpacing: 1.5 },
+    version: { fontSize: 9, fontFamily: FAMILY.mono, color: "rgba(255,255,255,0.06)", letterSpacing: 1.5 },
 
     // Modal
     modalOverlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.85)" },
@@ -1089,14 +1089,14 @@ const styles = StyleSheet.create({
         borderWidth: 1, borderColor: "rgba(255,255,255,0.06)",
     },
     modalHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: "rgba(255,255,255,0.1)", alignSelf: "center", marginBottom: 24 },
-    modalTitle: { fontSize: 16, fontFamily: FAMILY.mBold, color: COLORS.text, letterSpacing: 0.2, marginBottom: 24 },
+    modalTitle: { fontSize: 16, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: 0.2, marginBottom: 24 },
     modalInputWrap: {
         backgroundColor: "rgba(255,255,255,0.02)", borderRadius: 16,
         borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
         paddingHorizontal: 20, paddingVertical: 16, marginBottom: 28,
         flexDirection: "row", alignItems: "center",
     },
-    modalInput: { color: COLORS.text, fontFamily: FAMILY.mReg, fontSize: 16, flex: 1, letterSpacing: 0.1 },
+    modalInput: { color: COLORS.text, fontFamily: FAMILY.regular, fontSize: 16, flex: 1, letterSpacing: 0.1 },
     choiceGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 28 },
     choiceBtn: {
         paddingHorizontal: 20, paddingVertical: 14, borderRadius: 14,
@@ -1104,20 +1104,20 @@ const styles = StyleSheet.create({
         borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
     },
     choiceBtnActive: { backgroundColor: "rgba(237,234,227,0.08)", borderColor: COLORS.border },
-    choiceBtnText: { fontSize: 10, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 0.5 },
+    choiceBtnText: { fontSize: 10, fontFamily: FAMILY.medium, color: COLORS.textMuted, letterSpacing: 0.5 },
     choiceBtnTextActive: { color: COLORS.text },
     modalBtns: { flexDirection: "row", gap: 12 },
     modalCancelBtn: { flex: 1, paddingVertical: 16, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.03)", alignItems: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.05)" },
-    modalCancelText: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 1 },
+    modalCancelText: { fontSize: 12, fontFamily: FAMILY.medium, color: COLORS.textMuted, letterSpacing: 1 },
     modalSaveBtn: { flex: 2, paddingVertical: 16, borderRadius: 16, backgroundColor: COLORS.primary, alignItems: "center" },
-    modalSaveText: { fontSize: 12, fontFamily: FAMILY.accent, color: "#fff", letterSpacing: 1 },
+    modalSaveText: { fontSize: 12, fontFamily: FAMILY.bold, color: "#fff", letterSpacing: 1 },
     miniActionBtn: {
         backgroundColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 10, paddingVertical: 6,
         borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
     },
-    miniActionBtnText: { fontSize: 8, fontFamily: FAMILY.accent, color: COLORS.text, letterSpacing: 0.5 },
+    miniActionBtnText: { fontSize: 8, fontFamily: FAMILY.medium, color: COLORS.text, letterSpacing: 0.5 },
     miniVerifyBtn: { backgroundColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
-    miniVerifyBtnText: { fontSize: 8, fontFamily: FAMILY.accent, color: COLORS.text, letterSpacing: 0.5 },
+    miniVerifyBtnText: { fontSize: 8, fontFamily: FAMILY.medium, color: COLORS.text, letterSpacing: 0.5 },
     chevronAction: { paddingLeft: 12 },
     customToast: {
         position: "absolute",
@@ -1140,7 +1140,7 @@ const styles = StyleSheet.create({
         overflow: "hidden",
     },
     customToastText: {
-        fontFamily: FAMILY.mBold,
+        fontFamily: FAMILY.medium,
         fontSize: 9,
         color: COLORS.textSub,
         flex: 1,
@@ -1168,7 +1168,7 @@ const styles = StyleSheet.create({
     },
     dialogTitle: {
         fontSize: 14,
-        fontFamily: FAMILY.mBold,
+        fontFamily: FAMILY.header,
         color: COLORS.text,
         letterSpacing: 1.5,
         marginBottom: 12,
@@ -1176,7 +1176,7 @@ const styles = StyleSheet.create({
     },
     dialogMessage: {
         fontSize: 12,
-        fontFamily: FAMILY.mReg,
+        fontFamily: FAMILY.regular,
         color: COLORS.textSub,
         lineHeight: 18,
         marginBottom: 28,

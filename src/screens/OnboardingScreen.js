@@ -151,12 +151,12 @@ const styles = StyleSheet.create({
         justifyContent: "center",
     },
     eyebrow: {
-        fontSize: 10, fontFamily: FAMILY.bold,
+        fontSize: 10, fontFamily: FAMILY.semibold,
         color: COLORS.textMuted,
         letterSpacing: 4, marginBottom: 20,
     },
     title: {
-        fontSize: 72, fontFamily: FAMILY.display,
+        fontSize: 72, fontFamily: FAMILY.header,
         color: "#fff", letterSpacing: -3, lineHeight: 68,
         marginBottom: 28,
     },
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
     },
     skipText: {
-        fontSize: 12, fontFamily: FAMILY.bold,
+        fontSize: 12, fontFamily: FAMILY.medium,
         color: "rgba(255,255,255,0.3)", letterSpacing: 2,
     },
     nextBtn: {

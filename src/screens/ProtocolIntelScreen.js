@@ -144,11 +144,11 @@ function ForearmsTab() {
                         style={StyleSheet.absoluteFill}
                     />
                     <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                        <Text style={{ fontSize: 15, fontFamily: FAMILY.bold, color: COLORS.text }}>{target.muscle}</Text>
-                        <Text style={{ fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.textSub }}>{target.where}</Text>
+                        <Text style={{ fontSize: 15, fontFamily: FAMILY.semibold, color: COLORS.text }}>{target.muscle}</Text>
+                        <Text style={{ fontSize: 11, fontFamily: FAMILY.medium, color: COLORS.textSub }}>{target.where}</Text>
                     </View>
                     <Text style={{ fontSize: 12, fontFamily: FAMILY.medium, color: COLORS.textMuted, marginBottom: 4 }}>
-                        Exercise: <Text style={{ color: COLORS.textSub, fontFamily: FAMILY.bold }}>{target.exercise}</Text>
+                        Exercise: <Text style={{ color: COLORS.textSub, fontFamily: FAMILY.semibold }}>{target.exercise}</Text>
                     </Text>
                     <Text style={{ fontSize: 12, fontFamily: FAMILY.regular, color: COLORS.textSub }}>
                         Target: {target.function}
@@ -277,8 +277,8 @@ const styles = StyleSheet.create({
         alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
     },
     headerTitleWrap: { alignItems: "center" },
-    headerLabel: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 3 },
-    headerTitle: { fontSize: 22, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -0.5, marginTop: 2 },
+    headerLabel: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 3 },
+    headerTitle: { fontSize: 22, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: -0.5, marginTop: 2 },
     
     // Tab bar
     tabContainer: {
@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(237,234,227,0.08)",
         borderColor: COLORS.border
     },
-    tabText: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textSub, letterSpacing: 1.5 },
+    tabText: { fontSize: 10, fontFamily: FAMILY.medium, color: COLORS.textSub, letterSpacing: 1.5 },
     tabTextActive: { color: COLORS.text },
     activeTabIndicator: {
         position: "absolute", bottom: -8, width: 4, height: 4,
@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
     // Content layouts
     contentAnim: { flex: 1 },
     tabContent: { paddingHorizontal: 20 },
-    tabHeaderTitle: { fontSize: 26, fontFamily: FAMILY.display, color: COLORS.text, letterSpacing: -1, marginBottom: 8 },
+    tabHeaderTitle: { fontSize: 26, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: -1, marginBottom: 8 },
     tabHeaderDesc: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textSub, lineHeight: 18, marginBottom: 24, opacity: 0.8 },
 
     // Premium Card
@@ -321,18 +321,18 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(255,255,255,0.05)", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
         alignItems: "center", justifyContent: "center"
     },
-    accentBadgeText: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textSub },
-    cardTitle: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.textSub, letterSpacing: 1, flex: 1 },
+    accentBadgeText: { fontSize: 10, fontFamily: FAMILY.monoBold, color: COLORS.textSub },
+    cardTitle: { fontSize: 13, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 1, flex: 1 },
     cardBody: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textSub, lineHeight: 20 },
 
     // Progression layout
     cardRow: { flexDirection: "row", alignItems: "center" },
     progressionMeta: { width: 84, gap: 4 },
-    progressionWeek: { fontSize: 18, fontFamily: FAMILY.display, color: COLORS.text, letterSpacing: -0.5 },
-    progressionReps: { fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 0.5 },
-    progressionIso: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textSub, opacity: 0.7 },
+    progressionWeek: { fontSize: 18, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: -0.5 },
+    progressionReps: { fontSize: 11, fontFamily: FAMILY.monoBold, color: COLORS.text, letterSpacing: 0.5 },
+    progressionIso: { fontSize: 9, fontFamily: FAMILY.mono, color: COLORS.textSub, opacity: 0.7 },
     dividerVertical: { width: 1, height: 60, backgroundColor: "rgba(255,255,255,0.06)" },
-    progressionLabel: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2, marginBottom: 6 },
+    progressionLabel: { fontSize: 8, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 2, marginBottom: 6 },
     progressionDesc: { fontSize: 12, fontFamily: FAMILY.regular, color: COLORS.textSub, lineHeight: 18 },
 
     // Timeline layout
@@ -340,6 +340,6 @@ const styles = StyleSheet.create({
     timelinePoint: { alignItems: "center", width: 16 },
     timelineDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.accent, marginTop: 24, zIndex: 2 },
     timelineLine: { width: 1, flex: 1, backgroundColor: "rgba(255,255,255,0.05)" },
-    timelineTime: { fontSize: 14, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 1, marginBottom: 6 },
+    timelineTime: { fontSize: 14, fontFamily: FAMILY.monoBold, color: COLORS.text, letterSpacing: 1, marginBottom: 6 },
     timelineResult: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textSub, lineHeight: 18 }
 });

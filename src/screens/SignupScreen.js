@@ -325,13 +325,13 @@ const styles = StyleSheet.create({
     scroll: { paddingHorizontal: SPACING.base, flexGrow: 1 },
 
     header: { marginBottom: 40 },
-    eyebrow: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 4, marginBottom: 12 },
-    title: { fontSize: 48, fontFamily: FAMILY.display, color: COLORS.text, letterSpacing: -2, lineHeight: 48 },
+    eyebrow: { fontSize: 10, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 4, marginBottom: 12 },
+    title: { fontSize: 48, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: -2, lineHeight: 48 },
 
     form: { gap: 18, marginBottom: 32 },
 
     fieldGroup: { gap: 8 },
-    fieldLabel: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2 },
+    fieldLabel: { fontSize: 9, fontFamily: FAMILY.medium, color: COLORS.textMuted, letterSpacing: 2 },
     optional: { color: "rgba(255,255,255,0.2)", fontFamily: FAMILY.regular },
 
     inputWrap: {
@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
         borderColor: COLORS.accent,
         backgroundColor: "rgba(237,234,227,0.08)",
     },
-    genderBtnText: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1 },
+    genderBtnText: { fontSize: 9, fontFamily: FAMILY.medium, color: COLORS.textMuted, letterSpacing: 1 },
     genderBtnTextActive: { color: COLORS.text },
 
     errorBox: {
@@ -371,11 +371,11 @@ const styles = StyleSheet.create({
 
     footer: { flexDirection: "row", justifyContent: "center", alignItems: "center" },
     footerText: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textMuted },
-    footerLink: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.accent, letterSpacing: 1 },
+    footerLink: { fontSize: 13, fontFamily: FAMILY.semibold, color: COLORS.accent, letterSpacing: 1 },
 
     divider: { flexDirection: "row", alignItems: "center", gap: 12, marginVertical: 20 },
     line: { flex: 1, height: 1, backgroundColor: "rgba(255,255,255,0.06)" },
-    dividerText: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2 },
+    dividerText: { fontSize: 9, fontFamily: FAMILY.medium, color: COLORS.textMuted, letterSpacing: 2 },
 
     socialRow: { flexDirection: "row", gap: 12 },
     socialBtn: {
@@ -383,5 +383,5 @@ const styles = StyleSheet.create({
         gap: 8, backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 14,
         paddingVertical: 14, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)"
     },
-    socialBtnText: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 1 },
+    socialBtnText: { fontSize: 10, fontFamily: FAMILY.medium, color: COLORS.text, letterSpacing: 1 },
 });

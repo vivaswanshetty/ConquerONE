@@ -141,9 +141,9 @@ const styles = StyleSheet.create({
         width: 48, height: 48, borderRadius: 14, backgroundColor: "rgba(255,255,255,0.04)",
         alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
     },
-    headerTitle: { fontSize: 34, fontFamily: FAMILY.display, color: COLORS.text, letterSpacing: -1.5 },
+    headerTitle: { fontSize: 34, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: -1.5 },
     countBadge: { backgroundColor: "rgba(255,255,255,0.05)", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
-    headerCount: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.accent, letterSpacing: 1 },
+    headerCount: { fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.accent, letterSpacing: 1 },
 
     filterSection: {
         height: 72,
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(255,255,255,0.02)",
     },
     chipActive: { backgroundColor: COLORS.text, borderColor: COLORS.text },
-    chipText: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1.5 },
+    chipText: { fontSize: 10, fontFamily: FAMILY.medium, color: COLORS.textMuted, letterSpacing: 1.5 },
     chipTextActive: { color: "#000" },
 
     list: {
@@ -173,8 +173,8 @@ const styles = StyleSheet.create({
     exRowBorder: { borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.03)" },
     exRowOn: { backgroundColor: "rgba(255,255,255,0.03)" },
     exInfo: { flex: 1 },
-    exName: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.textSub, letterSpacing: 0.5 },
-    exMeta: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, marginTop: 4, letterSpacing: 1.5 },
+    exName: { fontSize: 13, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 0.5 },
+    exMeta: { fontSize: 9, fontFamily: FAMILY.mono, color: COLORS.textMuted, marginTop: 4, letterSpacing: 1.5 },
     checkbox: {
         width: 26, height: 26, borderRadius: 8, borderWidth: 2, borderColor: "rgba(255,255,255,0.1)",
         alignItems: "center", justifyContent: "center",

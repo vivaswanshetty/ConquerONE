@@ -124,9 +124,9 @@ function LineChart({ data }) {
 const lc = StyleSheet.create({
     wrap: { paddingTop: 4 },
     header: { marginBottom: 24 },
-    title: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textSub, letterSpacing: 2 },
+    title: { fontSize: 10, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 2 },
     labels: { flexDirection: "row", justifyContent: "space-between", marginTop: 12 },
-    label: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1.5 },
+    label: { fontSize: 8, fontFamily: FAMILY.mono, color: COLORS.textMuted, letterSpacing: 1.5 },
 });
 
 /* ── Muscle breakdown bar ───────────────────────────────────── */
@@ -563,7 +563,7 @@ const styles = StyleSheet.create({
         width: 36, height: 36, borderRadius: RADIUS.pill, backgroundColor: COLORS.bgCard,
         alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: COLORS.border,
     },
-    headerTitle: { fontSize: 24, fontFamily: FAMILY.display, color: COLORS.text, letterSpacing: -0.5 },
+    headerTitle: { fontSize: 24, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: -0.5 },
 
     statsRow: {
         flexDirection: "row", marginHorizontal: 20, marginTop: 4, gap: 12,
@@ -580,7 +580,7 @@ const styles = StyleSheet.create({
     },
     statSmallTop: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 },
     statValue: { fontSize: 22, fontFamily: FAMILY.monoBold, color: COLORS.text, letterSpacing: -0.5 },
-    statLabel: { fontSize: 9, color: COLORS.textSub, fontFamily: FAMILY.semibold, flex: 1 },
+    statLabel: { fontSize: 9, color: COLORS.textSub, fontFamily: FAMILY.medium, flex: 1 },
 
     sectionLabel: {
         fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.textMuted,
@@ -595,7 +595,7 @@ const styles = StyleSheet.create({
 
     weekContainer: { marginHorizontal: 20, marginBottom: 20 },
     weekLabel: {
-        fontSize: 11, fontFamily: FAMILY.semibold, color: COLORS.textSub,
+        fontSize: 11, fontFamily: FAMILY.mono, color: COLORS.textSub,
         marginBottom: 8, marginLeft: 4
     },
     weekCard: {

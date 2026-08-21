@@ -210,11 +210,11 @@ const styles = StyleSheet.create({
         marginBottom: 40,
     },
     eyebrow: {
-        fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted,
+        fontSize: 10, fontFamily: FAMILY.semibold, color: COLORS.textMuted,
         letterSpacing: 4, marginBottom: 16,
     },
     title: {
-        fontSize: 48, fontFamily: FAMILY.display, color: COLORS.text,
+        fontSize: 48, fontFamily: FAMILY.header, color: COLORS.text,
         lineHeight: 52, letterSpacing: -1,
     },
     subtitle: {
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
         paddingBottom: 8, borderBottomWidth: 2, borderBottomColor: COLORS.text,
     },
     zentab: { paddingBottom: 8 },
-    zentabText: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 2 },
+    zentabText: { fontSize: 10, fontFamily: FAMILY.semibold, color: COLORS.text, letterSpacing: 2 },
 
     tipsGrid: { paddingHorizontal: 24, gap: 16 },
     tipCard: {
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
         alignItems: "center", justifyContent: "center",
         marginBottom: 20,
     },
-    tipTitle: { fontSize: 12, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 2, marginBottom: 10 },
+    tipTitle: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.text, letterSpacing: 2, marginBottom: 10 },
     tipDesc: { fontSize: 14, fontFamily: FAMILY.regular, color: COLORS.textSub, lineHeight: 22 },
     tipDescSmall: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textSub, lineHeight: 20 },
 
@@ -254,9 +254,9 @@ const styles = StyleSheet.create({
         borderWidth: 1, borderColor: "rgba(255,255,255,0.1)",
     },
     meditationContent: { flex: 1 },
-    medHeader: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2, marginBottom: 8 },
-    medTitle: { fontSize: 20, fontFamily: FAMILY.display, color: COLORS.text, marginBottom: 4 },
-    medSub: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1 },
+    medHeader: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 2, marginBottom: 8 },
+    medTitle: { fontSize: 20, fontFamily: FAMILY.header, color: COLORS.text, marginBottom: 4 },
+    medSub: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.textMuted, letterSpacing: 1 },
     medIcon: { marginLeft: 16 },
 
     footer: {

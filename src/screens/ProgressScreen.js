@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
         width: 36, height: 36, borderRadius: RADIUS.pill, backgroundColor: COLORS.bgCard,
         alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: COLORS.border,
     },
-    headerTitle: { fontSize: 24, fontFamily: FAMILY.display, color: COLORS.text, letterSpacing: -0.5 },
+    headerTitle: { fontSize: 24, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: -0.5 },
     savedBadge: { backgroundColor: "rgba(237, 234, 227, 0.06)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLORS.border },
     savedText: { fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.text },
 

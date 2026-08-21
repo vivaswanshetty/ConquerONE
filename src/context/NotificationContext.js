@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
     },
     modalSaveText: { 
         fontSize: 12, 
-        fontFamily: FAMILY.accent, 
+        fontFamily: FAMILY.bold, 
         color: "#fff", 
         letterSpacing: 1 
     },

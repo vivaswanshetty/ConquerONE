@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
         borderWidth: 0.5, borderColor: COLORS.border,
     },
     heroBadgeText: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 1.5 },
-    heroTitle: { fontSize: 36, fontFamily: FAMILY.display, color: COLORS.text, lineHeight: 40, letterSpacing: -0.5 },
+    heroTitle: { fontSize: 36, fontFamily: FAMILY.header, color: COLORS.text, lineHeight: 40, letterSpacing: -0.5 },
     heroSub: { fontSize: 13, color: COLORS.textSub, fontFamily: FAMILY.regular, marginTop: 8 },
 
     metaStrip: {
@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
         flexDirection: "row", justifyContent: "space-between", alignItems: "baseline",
         paddingHorizontal: SPACING.base, marginTop: 36, marginBottom: 14,
     },
-    sectionLabel: { fontSize: 16, fontFamily: FAMILY.display, color: COLORS.text, letterSpacing: -0.2 },
+    sectionLabel: { fontSize: 16, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: -0.2 },
     sectionCount: { fontSize: 12, color: COLORS.textSub, fontFamily: FAMILY.mono },
 
     exList: {
@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
     },
     modalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
     modalTitle: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.textSub },
-    modalExName: { fontSize: 20, fontFamily: FAMILY.display, color: COLORS.text, marginBottom: 28 },
+    modalExName: { fontSize: 20, fontFamily: FAMILY.header, color: COLORS.text, marginBottom: 28 },
     inputGrid: { flexDirection: "row", gap: 12, marginBottom: 28 },
     inputBox: { flex: 1, gap: 8 },
     inputLabel: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 1 },

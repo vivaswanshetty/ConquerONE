@@ -524,7 +524,7 @@ const styles = StyleSheet.create({
     },
     monthTitle: {
         fontSize: 14,
-        fontFamily: FAMILY.display,
+        fontFamily: FAMILY.header,
         color: COLORS.text,
         letterSpacing: -0.2,
     },

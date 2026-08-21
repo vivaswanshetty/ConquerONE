@@ -90,13 +90,14 @@ export const FONTS = {
 import { Platform } from "react-native";
 
 export const FAMILY = {
-    // Condensed display typeface for screen titles & large numbers only
-    display: "Archivo_700Bold",
-    header: "Archivo_900Black",
-    archivoBold: "Archivo_700Bold",
-    archivoBlack: "Archivo_900Black",
+    // ── Standardized Display Typeface for Screen Titles & Hero Numbers (Urbanist) ──
+    header: "Urbanist_900Black",
+    display: "Urbanist_900Black",
+    urbanist: "Urbanist_900Black",
+    urbanistBold: "Urbanist_700Bold",
+    urbanistBlack: "Urbanist_900Black",
 
-    // Clean Grotesk for body & UI text (Inter)
+    // ── Clean Grotesk for Body & UI Text (Inter) ──
     light: "Inter_400Regular",
     regular: "Inter_400Regular",
     medium: "Inter_500Medium",
@@ -105,12 +106,12 @@ export const FAMILY = {
     black: "Inter_700Bold",
     accent: "Inter_600SemiBold",
 
-    // Precision Instrument Monospace for numbers, reps, weights, timers, sets
+    // ── Precision Instrument Monospace for Numbers, Reps, Weights, Timers, Sets, Kcal, Streak ──
     mono: "JetBrainsMono_600SemiBold",
     monoRegular: "JetBrainsMono_400Regular",
     monoBold: "JetBrainsMono_700Bold",
 
-    // Fallbacks for secondary screens
+    // ── Fallbacks for secondary screens ──
     mReg: "Inter_400Regular",
     mSemi: "Inter_600SemiBold",
     mBold: "Inter_700Bold",

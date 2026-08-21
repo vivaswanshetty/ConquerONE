@@ -53,7 +53,7 @@ function MarkDownText({ content, style }) {
                 if (isBullet) cur = cur.slice(2);
                 const parts = cur.split(/(\*\*.*?\*\*)/g).map((part, pIdx) => {
                     if (part.startsWith('**') && part.endsWith('**')) {
-                        return <Text key={pIdx} style={[style, { fontFamily: FAMILY.bold, color: '#fff' }]}>{part.slice(2, -2)}</Text>;
+                        return <Text key={pIdx} style={[style, { fontFamily: FAMILY.semibold, color: '#fff' }]}>{part.slice(2, -2)}</Text>;
                     }
                     return part;
                 });
@@ -295,7 +295,7 @@ function VoiceSettingsModal({ visible, voices, selectedVoice, onSelect, onClose,
 
 const vmStyles = StyleSheet.create({
     sectionLabel: {
-        fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted,
+        fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textMuted,
         letterSpacing: 2.5, marginHorizontal: 24, marginTop: 24, marginBottom: 12,
     },
     presetRow: {
@@ -312,7 +312,7 @@ const vmStyles = StyleSheet.create({
         borderColor: 'rgba(237,234,227,0.2)',
     },
     presetLabel: {
-        fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1,
+        fontSize: 10, fontFamily: FAMILY.medium, color: COLORS.textMuted, letterSpacing: 1,
     },
     presetLabelActive: {
         color: COLORS.text,
@@ -324,7 +324,7 @@ const vmStyles = StyleSheet.create({
         backgroundColor: COLORS.primary,
     },
     previewText: {
-        fontSize: 11, fontFamily: FAMILY.bold, color: '#fff', letterSpacing: 1.5,
+        fontSize: 11, fontFamily: FAMILY.semibold, color: '#fff', letterSpacing: 1.5,
     },
 });
 
@@ -337,16 +337,16 @@ const hm = StyleSheet.create({
     },
     handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.15)', alignSelf: 'center', marginTop: 14, marginBottom: 20 },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24, marginBottom: 20 },
-    title: { fontSize: 12, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 2 },
+    title: { fontSize: 12, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: 2 },
     clearBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
-    clearText: { fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.textSub, letterSpacing: 1 },
+    clearText: { fontSize: 11, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 1 },
     empty: { alignItems: 'center', paddingVertical: 60 },
     emptyText: { fontSize: 13, fontFamily: FAMILY.medium, color: COLORS.textMuted },
     row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, marginBottom: 8 },
     rowContent: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
     rowIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.05)', alignItems: 'center', justifyContent: 'center' },
-    rowTitle: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.text, marginBottom: 4 },
-    rowDate: { fontSize: 10, fontFamily: FAMILY.medium, color: COLORS.textMuted },
+    rowTitle: { fontSize: 13, fontFamily: FAMILY.semibold, color: COLORS.text, marginBottom: 4 },
+    rowDate: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.textMuted },
     deleteBtn: { padding: 12, marginLeft: 8 },
 });
 
@@ -897,8 +897,8 @@ const styles = StyleSheet.create({
         gap: 12,
     },
     headerCenter: { flex: 1 },
-    headerSub: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2.5, marginBottom: 2 },
-    headerTitle: { fontSize: 20, fontFamily: FAMILY.display, color: "#fff", letterSpacing: -0.5 },
+    headerSub: { fontSize: 8, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 2.5, marginBottom: 2 },
+    headerTitle: { fontSize: 20, fontFamily: FAMILY.header, color: "#fff", letterSpacing: -0.5 },
     headerActions: { flexDirection: 'row', gap: 8 },
     headerBtn: {
         width: 40, height: 40, borderRadius: 13,
@@ -914,8 +914,8 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.04)',
     },
     statusDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#22c55e' },
-    statusText: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1 },
-    msgCount: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1 },
+    statusText: { fontSize: 9, fontFamily: FAMILY.medium, color: COLORS.textMuted, letterSpacing: 1 },
+    msgCount: { fontSize: 9, fontFamily: FAMILY.mono, color: COLORS.textMuted, letterSpacing: 1 },
 
     // Chat
     chatBody: { flex: 1 },
@@ -947,7 +947,7 @@ const styles = StyleSheet.create({
     userText: { color: "#fff" },
 
     bubbleFooter: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", marginTop: 8, gap: 8 },
-    timeText: { fontSize: 9, color: "rgba(255,255,255,0.28)", fontFamily: FAMILY.bold, letterSpacing: 0.5 },
+    timeText: { fontSize: 9, color: "rgba(255,255,255,0.28)", fontFamily: FAMILY.mono, letterSpacing: 0.5 },
     speakBtn: { opacity: 0.6 },
 
     // Chips
@@ -957,7 +957,7 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(255,255,255,0.05)",
         borderWidth: 1, borderColor: "rgba(255,255,255,0.1)",
     },
-    chipText: { fontSize: 10, color: "#8E8E93", fontFamily: FAMILY.bold, letterSpacing: 0.6 },
+    chipText: { fontSize: 10, color: "#8E8E93", fontFamily: FAMILY.medium, letterSpacing: 0.6 },
 
     // Input
     inputContainer: { paddingHorizontal: 14, paddingTop: 8 },

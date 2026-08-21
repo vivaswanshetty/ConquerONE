@@ -811,7 +811,7 @@ const styles = StyleSheet.create({
         width: 36, height: 36, borderRadius: RADIUS.pill, backgroundColor: COLORS.bgCard,
         alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: COLORS.border,
     },
-    headerTitle: { flex: 1, textAlign: "center", fontSize: 24, fontFamily: FAMILY.display, color: COLORS.text, letterSpacing: -0.5 },
+    headerTitle: { flex: 1, textAlign: "center", fontSize: 24, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: -0.5 },
     savedBadge: { backgroundColor: "rgba(237, 234, 227, 0.06)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLORS.border },
     savedText: { fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.text },
 
@@ -910,7 +910,7 @@ const styles = StyleSheet.create({
     modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.85)", justifyContent: "flex-end" },
     modalSheet: { backgroundColor: COLORS.bgCard, borderTopLeftRadius: 16, borderTopRightRadius: 16, padding: 24, paddingBottom: 40, borderWidth: 1, borderColor: COLORS.border },
     modalHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: COLORS.border, alignSelf: "center", marginBottom: 20 },
-    modalTitle: { fontSize: 16, fontFamily: FAMILY.display, color: COLORS.text, letterSpacing: -0.2, marginBottom: 16 },
+    modalTitle: { fontSize: 16, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: -0.2, marginBottom: 16 },
     legalBody: { fontSize: 12, fontFamily: FAMILY.regular, color: COLORS.textSub, lineHeight: 18, marginBottom: 20 },
     modalCloseBtn: { paddingVertical: 14, borderRadius: RADIUS.card, backgroundColor: COLORS.primary, alignItems: "center" },
     modalCloseText: { fontSize: 13, fontFamily: FAMILY.semibold, color: COLORS.text },

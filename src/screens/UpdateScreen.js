@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 32,
-        fontFamily: FAMILY.display,
+        fontFamily: FAMILY.header,
         color: COLORS.text,
         textAlign: "center",
         letterSpacing: 2,
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
     },
     subtitle: {
         fontSize: 10,
-        fontFamily: FAMILY.bold,
+        fontFamily: FAMILY.medium,
         color: COLORS.textSub,
         letterSpacing: 4,
         marginTop: 16,
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
     },
     cardText: {
         fontSize: 11,
-        fontFamily: FAMILY.bold,
+        fontFamily: FAMILY.semibold,
         color: COLORS.text,
         letterSpacing: 1.5,
         opacity: 0.8,

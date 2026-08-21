@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
     },
 
     completedLabel: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 2, marginBottom: 8 },
-    completedTitle: { fontSize: 30, fontFamily: FAMILY.display, color: COLORS.text, textAlign: "center", letterSpacing: -0.5, lineHeight: 34, width: "100%", marginBottom: 28 },
+    completedTitle: { fontSize: 30, fontFamily: FAMILY.header, color: COLORS.text, textAlign: "center", letterSpacing: -0.5, lineHeight: 34, width: "100%", marginBottom: 28 },
 
     statsRow: {
         flexDirection: "row", width: "100%",
@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.bg,
     },
     rankUpLabel: { fontSize: 8, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 1.5 },
-    rankUpTitle: { fontSize: 16, fontFamily: FAMILY.display, letterSpacing: -0.2, marginTop: 2 },
+    rankUpTitle: { fontSize: 16, fontFamily: FAMILY.header, letterSpacing: -0.2, marginTop: 2 },
     rankUpDesc: { fontSize: 11, fontFamily: FAMILY.regular, color: COLORS.textSub, marginTop: 2 },
     xpAwardBanner: {
         flexDirection: "row",

@@ -157,7 +157,7 @@ export default function LoginScreen({ navigation }) {
                                 onPress={handleForgotPassword}
                                 style={{ alignSelf: 'flex-end', marginTop: 8 }}
                             >
-                                <Text style={{ fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1 }}>FORGOT PASSWORD?</Text>
+                                <Text style={{ fontSize: 11, fontFamily: FAMILY.medium, color: COLORS.textMuted, letterSpacing: 1 }}>FORGOT PASSWORD?</Text>
                             </TouchableOpacity>
                         </View>
 
@@ -240,14 +240,14 @@ const styles = StyleSheet.create({
     scroll: { paddingHorizontal: SPACING.base, flexGrow: 1, justifyContent: "center" },
 
     header: { marginBottom: 48 },
-    eyebrow: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 4, marginBottom: 12 },
-    title: { fontSize: 52, fontFamily: FAMILY.display, color: COLORS.text, letterSpacing: -2, lineHeight: 52, marginBottom: 10 },
+    eyebrow: { fontSize: 10, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 4, marginBottom: 12 },
+    title: { fontSize: 52, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: -2, lineHeight: 52, marginBottom: 10 },
     subtitle: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textMuted },
 
     form: { gap: 20, marginBottom: 40 },
 
     fieldGroup: { gap: 8 },
-    fieldLabel: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2 },
+    fieldLabel: { fontSize: 9, fontFamily: FAMILY.medium, color: COLORS.textMuted, letterSpacing: 2 },
     inputWrap: {
         flexDirection: "row", alignItems: "center",
         backgroundColor: "rgba(255,255,255,0.04)",
@@ -273,11 +273,11 @@ const styles = StyleSheet.create({
 
     footer: { flexDirection: "row", justifyContent: "center", alignItems: "center" },
     footerText: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textMuted },
-    footerLink: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.accent, letterSpacing: 1 },
+    footerLink: { fontSize: 13, fontFamily: FAMILY.semibold, color: COLORS.accent, letterSpacing: 1 },
 
     divider: { flexDirection: "row", alignItems: "center", gap: 12, marginVertical: 20 },
     line: { flex: 1, height: 1, backgroundColor: "rgba(255,255,255,0.06)" },
-    dividerText: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2 },
+    dividerText: { fontSize: 9, fontFamily: FAMILY.medium, color: COLORS.textMuted, letterSpacing: 2 },
 
     socialRow: { flexDirection: "row", gap: 12 },
     socialBtn: {
@@ -285,9 +285,9 @@ const styles = StyleSheet.create({
         gap: 8, backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 14,
         paddingVertical: 14, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)"
     },
-    socialBtnText: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 1 },
+    socialBtnText: { fontSize: 10, fontFamily: FAMILY.medium, color: COLORS.text, letterSpacing: 1 },
 
     signatureWrap: { marginTop: 60, alignItems: "center", opacity: 0.25 },
-    signatureText: { fontSize: 7, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 3 },
+    signatureText: { fontSize: 7, fontFamily: FAMILY.medium, color: COLORS.textMuted, letterSpacing: 3 },
     signatureHighlight: { color: COLORS.accent },
 });
