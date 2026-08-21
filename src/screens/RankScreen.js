@@ -8,7 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getStreak, getTotalWorkouts } from "../utils/storage";
-import { COLORS, FAMILY, SPACING } from "../utils/theme";
+import { COLORS, FAMILY, SPACING, RADIUS } from "../utils/theme";
 import { useAuth } from "../context/AuthContext";
 
 const { width } = Dimensions.get("window");
