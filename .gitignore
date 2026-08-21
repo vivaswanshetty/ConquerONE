@@ -45,3 +45,5 @@ yarn-error.*
 # Gym Plan PDF
 Vivaswan_Elite_Gym_Plan.pdf
 
+# Claude
+.claude/

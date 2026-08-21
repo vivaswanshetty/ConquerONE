@@ -9,7 +9,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { WORKOUT_PLAN } from "../data/workoutData";
-import { COLORS, FONTS, SPACING, RADIUS, FAMILY, GRADIENTS, APP_VERSION } from "../utils/theme";
+import { COLORS, FONTS, SPACING, RADIUS, FAMILY, GRADIENTS, TRACKING, APP_VERSION } from "../utils/theme";
 import {
     getStreak, getTotalWorkouts, getLastWorkoutDate,
     getLastFreezeDate, withdrawStreakFreeze, checkAndCleanStreak,
@@ -22,6 +22,10 @@ import MaskedView from "@react-native-masked-view/masked-view";
 import * as Haptics from "expo-haptics";
 import Svg, { Circle, Path, Defs, LinearGradient as SvgGradient, Stop, Text as SvgText } from "react-native-svg";
 import WorkoutCalendar from "../components/WorkoutCalendar";
+import {
+    Card, SectionHeader, Pill, StatTile, ProgressDots,
+    AnimatedNumber, PrimaryButton, SecondaryButton, Reveal, withAlpha,
+} from "../components/ui";
 
 
 // Auth
@@ -29,6 +33,19 @@ import { useAuth } from "../context/AuthContext";
 
 const { width } = Dimensions.get("window");
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+const RANK_FOR = (total) =>
+    total >= 100 ? "Legend"
+        : total >= 50 ? "Titan"
+            : total >= 25 ? "Warrior"
+                : total >= 10 ? "Chadlite"
+                    : total >= 5 ? "Rookie" : "Recruit";
+
+/** Sentence case for copy that arrives as ALL CAPS from the data layer. */
+const sentence = (s = "") =>
+    String(s)
+        .toLowerCase()
+        .replace(/(^|[\s/&·-])([a-z])/g, (_, pre, ch) => pre + ch.toUpperCase());
 
 function totalTime(day) {
     let s = 0;
@@ -42,11 +59,20 @@ function totalTime(day) {
 
 function getMuscleColor(target) {
     const t = target.toUpperCase();
-    if (t.includes("CHEST") || t.includes("TRICEPS") || t.includes("PUSH")) return COLORS.primary; // Crimson
-    if (t.includes("BACK") || t.includes("BICEPS") || t.includes("PULL")) return "#FF9500"; // Gold
-    if (t.includes("LEGS") || t.includes("QUADS") || t.includes("LOWER")) return "#D1D1D1"; // Silver/Titanium
-    if (t.includes("SHOULDERS") || t.includes("CORE") || t.includes("ARMS")) return "#30B0C7"; // Steel teal
-    return "#8E8E93";
+    if (t.includes("CHEST") || t.includes("TRICEPS") || t.includes("PUSH")) return COLORS.softMove;
+    if (t.includes("BACK") || t.includes("BICEPS") || t.includes("PULL")) return COLORS.softEnergy;
+    if (t.includes("LEGS") || t.includes("QUADS") || t.includes("LOWER")) return COLORS.softViolet;
+    if (t.includes("SHOULDERS") || t.includes("CORE") || t.includes("ARMS")) return COLORS.softSky;
+    return COLORS.softFocus;
+}
+
+function getMuscleIcon(target) {
+    const t = target.toUpperCase();
+    if (t.includes("CHEST") || t.includes("TRICEPS") || t.includes("PUSH")) return "body-outline";
+    if (t.includes("BACK") || t.includes("BICEPS") || t.includes("PULL")) return "barbell-outline";
+    if (t.includes("LEGS") || t.includes("QUADS") || t.includes("LOWER")) return "walk-outline";
+    if (t.includes("SHOULDERS") || t.includes("CORE") || t.includes("ARMS")) return "fitness-outline";
+    return "flash-outline";
 }
 
 function GradientText({ text, style, colors = GRADIENTS.diamond, height = 50 }) {
@@ -160,36 +186,36 @@ const getWeeklyHistoryData = (history) => {
 const getStreakTierInfo = (streak) => {
     if (streak >= 10) {
         return {
-            name: "TITAN",
+            name: "Titan",
             multiplier: "2.0x",
-            color: "#E31E24",
+            color: COLORS.softViolet,
             badge: "Tier IV",
             desc: "Titan Multiplier active. You reward 20 XP per session.",
             range: "10+ Days"
         };
     } else if (streak >= 5) {
         return {
-            name: "OVERLOAD",
+            name: "Overload",
             multiplier: "1.5x",
-            color: "#E31E24",
+            color: COLORS.softGold,
             badge: "Tier III",
             desc: "Overload Multiplier active. You reward 15 XP per session.",
             range: "5–9 Days"
         };
     } else if (streak >= 3) {
         return {
-            name: "IGNITION",
+            name: "Ignition",
             multiplier: "1.2x",
-            color: "#FFFFFF",
+            color: COLORS.softEnergy,
             badge: "Tier II",
             desc: "Ignition Multiplier active. You reward 12 XP per session.",
             range: "3–4 Days"
         };
     } else {
         return {
-            name: "SPARK",
+            name: "Spark",
             multiplier: "1.0x",
-            color: streak > 0 ? "#E31E24" : "#8E8E93",
+            color: streak > 0 ? COLORS.softMove : COLORS.softTextSub,
             badge: "Tier I",
             desc: "Spark Multiplier active. You reward 10 XP per session.",
             range: "1–2 Days"
@@ -229,21 +255,21 @@ const renderSvgChart = (weeklyData) => {
         fillD += ` L ${points[points.length - 1].x} ${chartHeight - padding} L ${points[0].x} ${chartHeight - padding} Z`;
     }
 
-    const labels = ["3 Wks Ago", "2 Wks Ago", "1 Wk Ago", "This Wk"];
+    const labels = ["3 wks ago", "2 wks ago", "1 wk ago", "This week"];
 
     return (
         <View style={styles.chartWrapper}>
-            <Text style={styles.chartTitle}>WEEKLY CONSISTENCY (4-WEEK PROFILE)</Text>
+            <Text style={styles.chartTitle}>Weekly consistency</Text>
             <View style={styles.svgContainer}>
                 <Svg width={chartWidth} height={chartHeight}>
                     <Defs>
                         <SvgGradient id="chartGlow" x1="0" y1="0" x2="0" y2="1">
-                            <Stop offset="0%" stopColor={COLORS.primary} stopOpacity="0.4" />
-                            <Stop offset="100%" stopColor={COLORS.primary} stopOpacity="0.0" />
+                            <Stop offset="0%" stopColor={COLORS.softMove} stopOpacity="0.35" />
+                            <Stop offset="100%" stopColor={COLORS.softMove} stopOpacity="0.0" />
                         </SvgGradient>
                         <SvgGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
-                            <Stop offset="0%" stopColor={COLORS.primary} />
-                            <Stop offset="100%" stopColor="#FF4D4D" />
+                            <Stop offset="0%" stopColor={COLORS.softMove} />
+                            <Stop offset="100%" stopColor={COLORS.softEnergy} />
                         </SvgGradient>
                     </Defs>
 
@@ -273,6 +299,8 @@ const renderSvgChart = (weeklyData) => {
                             fill="none"
                             stroke="url(#lineGrad)"
                             strokeWidth={3}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
                         />
                     )}
 
@@ -282,24 +310,23 @@ const renderSvgChart = (weeklyData) => {
                             <Circle
                                 cx={p.x}
                                 cy={p.y}
-                                r={4}
-                                fill="#FFFFFF"
+                                r={9}
+                                fill={COLORS.softMove}
+                                fillOpacity={0.22}
                             />
                             <Circle
                                 cx={p.x}
                                 cy={p.y}
-                                r={8}
-                                fill={COLORS.primary}
-                                fillOpacity={0.3}
+                                r={4}
+                                fill={COLORS.softText}
                             />
                             <SvgText
                                 x={p.x}
-                                y={p.y - 10}
-                                fill="#FFFFFF"
-                                fontSize="9"
-                                fontWeight="bold"
+                                y={p.y - 13}
+                                fill={COLORS.softText}
+                                fontSize="11"
                                 textAnchor="middle"
-                                fontFamily={FAMILY.mono}
+                                fontFamily={FAMILY.softBold}
                             >
                                 {p.value}
                             </SvgText>
@@ -309,7 +336,7 @@ const renderSvgChart = (weeklyData) => {
             </View>
             <View style={styles.chartLabelsRow}>
                 {labels.map((lbl) => (
-                    <Text key={lbl} style={styles.chartLabelText}>{lbl.toUpperCase()}</Text>
+                    <Text key={lbl} style={styles.chartLabelText}>{lbl}</Text>
                 ))}
             </View>
         </View>
@@ -322,7 +349,7 @@ export default function HomeScreen({ navigation, route }) {
     const [streak, setStreak] = useState(0);
     const [total, setTotal] = useState(0);
     const [todayDay, setTodayDay] = useState(1);
-    const [greeting, setGreeting] = useState("COMMANDER");
+    const [greeting, setGreeting] = useState("Hello");
     const [isFrozen, setIsFrozen] = useState(false);
     const [lastFreezeDate, setLastFreezeDate] = useState(null);
     const [previousFreezeDate, setPreviousFreezeDate] = useState(null);
@@ -344,7 +371,7 @@ export default function HomeScreen({ navigation, route }) {
     const dotOpacity = useRef(new Animated.Value(0.4)).current;
     const sparkAnims = useRef([4, 6, 3, 8, 5, 9, 7].map(() => new Animated.Value(0))).current;
 
-    const displayName = profile?.fullName?.split(" ")[0] || user?.displayName?.split(" ")[0] || "ATHLETE";
+    const displayName = profile?.fullName?.split(" ")[0] || user?.displayName?.split(" ")[0] || "Athlete";
 
     useFocusEffect(useCallback(() => {
         loadStats(false); // Instantly load local cache on focus (0ms latency, no blocking)
@@ -531,10 +558,10 @@ export default function HomeScreen({ navigation, route }) {
             <StatusBar barStyle="light-content" backgroundColor="#000" translucent />
 
             {/* Ambient Glow */}
-            <View style={StyleSheet.absoluteFill}>
+            <View style={StyleSheet.absoluteFill} pointerEvents="none">
                 <LinearGradient
-                    colors={["rgba(227,30,36,0.12)", "transparent", "transparent"]}
-                    style={{ height: width * 1.2, width: width, position: "absolute", top: -width * 0.2 }}
+                    colors={GRADIENTS.ambient}
+                    style={{ height: width * 1.25, width: width, position: "absolute", top: -width * 0.25 }}
                 />
             </View>
 
@@ -542,399 +569,316 @@ export default function HomeScreen({ navigation, route }) {
                 style={{ opacity: fadeAnim }}
                 showsVerticalScrollIndicator={false}
                 overScrollMode="never"
-                contentContainerStyle={{ paddingTop: insets.top + SPACING.base, paddingBottom: 16 }}
+                contentContainerStyle={{ paddingTop: insets.top + SPACING.base, paddingBottom: 28 }}
             >
                 {/* ── Header ── */}
-                <View style={styles.headerRow}>
-                    <View style={styles.headerTop}>
-                        <View style={{ flex: 1, justifyContent: 'center' }}>
-                            <Text style={styles.greeting}>{greeting.toUpperCase()},</Text>
-                            <MetallicText
-                                text={displayName.toUpperCase()}
-                                style={styles.name}
-                                height={42}
+                <Reveal delay={0}>
+                    <View style={styles.headerRow}>
+                        <View style={styles.headerTop}>
+                            <View style={{ flex: 1, justifyContent: 'center' }}>
+                                <Text style={styles.greeting}>{greeting}</Text>
+                                <Text style={styles.name} numberOfLines={1} adjustsFontSizeToFit>
+                                    {displayName}
+                                </Text>
+                            </View>
+
+                            <View style={styles.avatarContainer}>
+                                <Animated.View style={{ transform: [{ scale: avatarScale }] }}>
+                                    <TouchableOpacity
+                                        style={styles.profileCircle}
+                                        onPressIn={handleAvatarPressIn}
+                                        onPressOut={handleAvatarPressOut}
+                                        activeOpacity={1}
+                                    >
+                                        {profile?.photoURL ? (
+                                            <Image source={{ uri: profile.photoURL }} style={styles.headerAvatar} />
+                                        ) : (
+                                            <View style={styles.avatarPlaceholder}>
+                                                <Text style={styles.avatarText}>{displayName[0].toUpperCase()}</Text>
+                                            </View>
+                                        )}
+                                    </TouchableOpacity>
+                                </Animated.View>
+                            </View>
+                        </View>
+
+                        {/* Quick shortcuts */}
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            style={styles.hudShortcutBar}
+                            contentContainerStyle={styles.hudShortcutBarContent}
+                        >
+                            <Pill
+                                label="Coach"
+                                icon="sparkles"
+                                color={COLORS.softMove}
+                                bg={COLORS.softMoveDim}
+                                onPress={() => navigation.navigate("AICoach")}
                             />
-                        </View>
-
-                        <View style={styles.avatarContainer}>
-                            <Animated.View style={[styles.avatarGlowRing, { opacity: avatarGlow }]} />
-                            <Animated.View style={{ transform: [{ scale: avatarScale }] }}>
-                                <TouchableOpacity
-                                    style={styles.profileCircle}
-                                    onPressIn={handleAvatarPressIn}
-                                    onPressOut={handleAvatarPressOut}
-                                    activeOpacity={1}
-                                >
-                                    {profile?.photoURL ? (
-                                        <Image source={{ uri: profile.photoURL }} style={styles.headerAvatar} />
-                                    ) : (
-                                        <View style={styles.avatarPlaceholder}>
-                                            <Text style={styles.avatarText}>{displayName[0].toUpperCase()}</Text>
-                                        </View>
-                                    )}
-                                </TouchableOpacity>
-                            </Animated.View>
-                        </View>
+                            <Pill
+                                label="History"
+                                icon="time-outline"
+                                color={COLORS.softTextSub}
+                                onPress={() => navigation.navigate("History")}
+                            />
+                            <Pill
+                                label="Settings"
+                                icon="options-outline"
+                                color={COLORS.softTextSub}
+                                onPress={() => navigation.navigate("Settings")}
+                            />
+                            {isFrozen && (
+                                <Pill
+                                    label="Streak frozen"
+                                    icon="snow"
+                                    color={COLORS.softSky}
+                                    bg={COLORS.softSkyDim}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                        setFreezeModal(true);
+                                    }}
+                                />
+                            )}
+                        </ScrollView>
                     </View>
-
-                    {/* HUD Action Shortcut Bar */}
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        style={styles.hudShortcutBar}
-                        contentContainerStyle={styles.hudShortcutBarContent}
-                    >
-                        <TouchableOpacity style={styles.hudShortcutBtn} onPress={() => navigation.navigate("AICoach")} activeOpacity={0.7}>
-                            <Ionicons name="flash" size={13} color={COLORS.primary} style={{ marginRight: 6 }} />
-                            <Text style={[styles.hudShortcutBtnText, { color: COLORS.primary }]}>COACH</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.hudShortcutBtn} onPress={() => navigation.navigate("History")} activeOpacity={0.7}>
-                            <Ionicons name="time-outline" size={13} color={COLORS.textSub} style={{ marginRight: 6 }} />
-                            <Text style={styles.hudShortcutBtnText}>HISTORY</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.hudShortcutBtn} onPress={() => navigation.navigate("Settings")} activeOpacity={0.7}>
-                            <Ionicons name="settings-outline" size={13} color={COLORS.textSub} style={{ marginRight: 6 }} />
-                            <Text style={styles.hudShortcutBtnText}>SETTINGS</Text>
-                        </TouchableOpacity>
-                        {isFrozen && (
-                            <TouchableOpacity
-                                style={[styles.hudShortcutBtn, { backgroundColor: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.18)' }]}
-                                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setFreezeModal(true); }}
-                                activeOpacity={0.7}
-                            >
-                                <Ionicons name="snow" size={12} color="#D1D1D1" style={{ marginRight: 6 }} />
-                                <Text style={[styles.hudShortcutBtnText, { color: "#D1D1D1" }]}>FROZEN</Text>
-                            </TouchableOpacity>
-                        )}
-                    </ScrollView>
-                </View>
+                </Reveal>
 
                 {/* Active Workout Resume Banner */}
                 {activeSession && activeSession.day && Array.isArray(activeSession.day.exercises) && (
-                    <TouchableOpacity
-                        style={styles.resumeCard}
-                        activeOpacity={0.9}
-                        onPress={() => {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                            navigation.navigate("ActiveWorkout", { day: activeSession.day, resume: true });
-                        }}
-                    >
-                        <LinearGradient
-                            colors={["rgba(227, 30, 36, 0.25)", "rgba(13, 13, 13, 0.95)"]}
-                            style={StyleSheet.absoluteFill}
-                            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0.5 }}
-                        />
-                        <View style={styles.resumeIconBox}>
-                            <Ionicons name="play" size={20} color={COLORS.primary} />
-                        </View>
-                        <View style={{ flex: 1 }}>
-                            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                                <View style={styles.resumeDot} />
-                                <Text style={styles.resumeTag}>WORKOUT IN PROGRESS</Text>
-                            </View>
-                            <Text style={styles.resumeTitle}>{String(activeSession.day?.dayName || activeSession.day?.target || activeSession.day?.day || "ACTIVE WORKOUT").toUpperCase()}</Text>
-                            <Text style={styles.resumeSub}>Tap to resume session where you left off.</Text>
-                        </View>
-                        <TouchableOpacity
-                            style={styles.resumeDiscardBtn}
-                            onPress={async () => {
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                await clearActiveWorkoutSession();
-                                setActiveSession(null);
+                    <Reveal delay={40}>
+                        <Card
+                            style={styles.resumeCard}
+                            tint={COLORS.softMove}
+                            radius={RADIUS.card}
+                            padding={18}
+                            onPress={() => {
+                                navigation.navigate("ActiveWorkout", { day: activeSession.day, resume: true });
                             }}
-                            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                         >
-                            <Ionicons name="close" size={16} color={COLORS.textMuted} />
-                        </TouchableOpacity>
-                    </TouchableOpacity>
+                            <View style={styles.resumeInner}>
+                                <View style={styles.resumeIconBox}>
+                                    <Ionicons name="play" size={20} color={COLORS.softMove} />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
+                                        <View style={styles.resumeDot} />
+                                        <Text style={styles.resumeTag}>In progress</Text>
+                                    </View>
+                                    <Text style={styles.resumeTitle} numberOfLines={1}>
+                                        {sentence(String(activeSession.day?.dayName || activeSession.day?.target || activeSession.day?.day || "Active workout"))}
+                                    </Text>
+                                    <Text style={styles.resumeSub}>Tap to pick up where you left off</Text>
+                                </View>
+                                <TouchableOpacity
+                                    style={styles.resumeDiscardBtn}
+                                    onPress={async () => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        await clearActiveWorkoutSession();
+                                        setActiveSession(null);
+                                    }}
+                                    hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                                >
+                                    <Ionicons name="close" size={16} color={COLORS.softTextMuted} />
+                                </TouchableOpacity>
+                            </View>
+                        </Card>
+                    </Reveal>
                 )}
 
                 {/* ── Today's Workout Hero Card (Focal Point) ── */}
-                {todayWorkout ? (
-                    <TouchableOpacity
-                        style={styles.heroCard}
-                        activeOpacity={0.9}
-                        onPress={() => navigation.navigate("WorkoutDetail", { day: todayWorkout })}
-                    >
-                        <ImageBackground
-                            source={todayWorkout.headerImage || require("../../assets/home_hero_bg.png")}
-                            style={StyleSheet.absoluteFill}
-                            resizeMode="cover"
+                <Reveal delay={90}>
+                    {todayWorkout ? (
+                        <TouchableOpacity
+                            style={styles.heroCard}
+                            activeOpacity={0.92}
+                            onPress={() => navigation.navigate("WorkoutDetail", { day: todayWorkout })}
                         >
-                            <LinearGradient
-                                colors={["rgba(0,0,0,0.2)", "rgba(0,0,0,0.6)", "rgba(0,0,0,0.95)"]}
+                            <ImageBackground
+                                source={todayWorkout.headerImage || require("../../assets/home_hero_bg.png")}
                                 style={StyleSheet.absoluteFill}
-                            />
+                                resizeMode="cover"
+                            >
+                                <LinearGradient
+                                    colors={GRADIENTS.softHero}
+                                    locations={[0, 0.55, 1]}
+                                    style={StyleSheet.absoluteFill}
+                                />
 
-                            <View style={styles.heroLeftAccent} />
-
-                            <View style={styles.heroContent}>
-                                <View>
-                                    <View style={styles.heroBadge}>
-                                        <Text style={styles.heroBadgeText}>TODAY'S PROTOCOL</Text>
-                                    </View>
-                                    <Text style={styles.heroTitle} numberOfLines={1} adjustsFontSizeToFit>
-                                        {todayWorkout.target.toUpperCase()}
-                                    </Text>
-                                    <Text style={[styles.heroSub, completedDays.includes(todayDay) && { color: "#FFFFFF", fontFamily: FAMILY.bold }]}>
-                                        {completedDays.includes(todayDay) ? "✓ SESSION DONE" : "READY FOR SESSION"}
-                                    </Text>
-                                </View>
-
-                                <View style={styles.heroMetaRow}>
-                                    <View style={{ flexDirection: "row", gap: 16 }}>
-                                        <View style={styles.heroMeta}>
-                                            <Text style={styles.heroMetaLabel}>VOLUME</Text>
-                                            <Text style={styles.heroMetaValue}>{todayWorkout.exercises.length} EXERCISES</Text>
-                                        </View>
-                                        <View style={styles.heroMeta}>
-                                            <Text style={styles.heroMetaLabel}>DURATION</Text>
-                                            <Text style={styles.heroMetaValue}>{totalTime(todayWorkout)} MINS</Text>
-                                        </View>
-                                    </View>
-
-                                    <TouchableOpacity
-                                        style={styles.heroCta}
-                                        activeOpacity={0.8}
-                                        onPress={() => {
-                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                            navigation.navigate("WorkoutDetail", { day: todayWorkout });
-                                        }}
-                                    >
-                                        <Text style={styles.heroCtaText}>
-                                            {completedDays.includes(todayDay) ? "HIT AGAIN" : "START SESSION"}
-                                        </Text>
-                                        <Ionicons
-                                            name={completedDays.includes(todayDay) ? "refresh-outline" : "play"}
-                                            size={11}
-                                            color="#fff"
+                                <View style={styles.heroContent}>
+                                    <View style={{ alignItems: "flex-start" }}>
+                                        <Pill
+                                            label={completedDays.includes(todayDay) ? "Completed" : "Today"}
+                                            icon={completedDays.includes(todayDay) ? "checkmark-circle" : "sunny-outline"}
+                                            color={completedDays.includes(todayDay) ? COLORS.softFocus : COLORS.softText}
+                                            bg={completedDays.includes(todayDay) ? COLORS.softFocusDim : COLORS.softFillHi}
+                                            size="sm"
                                         />
-                                    </TouchableOpacity>
+                                    </View>
+
+                                    <View>
+                                        <Text style={styles.heroTitle} numberOfLines={2}>
+                                            {sentence(todayWorkout.target)}
+                                        </Text>
+                                        <Text style={styles.heroSub}>
+                                            {todayWorkout.exercises.length} exercises · {totalTime(todayWorkout)} min
+                                        </Text>
+
+                                        <PrimaryButton
+                                            label={completedDays.includes(todayDay) ? "Go again" : "Start workout"}
+                                            icon={completedDays.includes(todayDay) ? "refresh" : "play"}
+                                            height={54}
+                                            style={{ marginTop: 18 }}
+                                            onPress={() => navigation.navigate("WorkoutDetail", { day: todayWorkout })}
+                                        />
+                                    </View>
                                 </View>
-                            </View>
-                        </ImageBackground>
-                    </TouchableOpacity>
-                ) : (
-                    <RestDayCard navigation={navigation} />
-                )}
+                            </ImageBackground>
+                        </TouchableOpacity>
+                    ) : (
+                        <RestDayCard navigation={navigation} />
+                    )}
+                </Reveal>
 
-                {/* Tactical Readout HUD Card */}
-                <View style={styles.hudCard}>
-                    <LinearGradient
-                        colors={[COLORS.glassBg, "rgba(5, 5, 5, 0.95)"]}
-                        style={StyleSheet.absoluteFill}
-                    />
-                    <View style={[styles.cardLeftAccent, { backgroundColor: COLORS.primary }]} />
-                    <View style={styles.hudHeader}>
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                            <View style={styles.hudDot} />
-                            <Text style={styles.hudTitle}>TACTICAL READOUT</Text>
+                {/* ── Level / XP ── */}
+                <Reveal delay={145}>
+                    <Card style={styles.hudCard} padding={SPACING.airy} tint={COLORS.softMove}>
+                        <Text style={styles.levelLabel}>Level {Math.min(Math.floor(xp / 100) + 1, 99)}</Text>
+
+                        <View style={styles.levelProgressRow}>
+                            <ProgressDots
+                                total={10}
+                                filled={Math.round((xp % 100) / 10)}
+                                size={8}
+                                gap={7}
+                                color={COLORS.softMove}
+                                animate
+                            />
+                            <Text style={styles.levelXpText}>{xp % 100} / 100 XP</Text>
                         </View>
-                        <View style={styles.hudStatusBadge}>
-                            <View style={styles.hudStatusDot} />
-                            <Text style={styles.hudStatusText}>SYS ACTIVE</Text>
-                        </View>
-                    </View>
 
-                    <View style={styles.hudBody}>
-                        <View style={{ flex: 1 }}>
-                            <View style={styles.hudLevelRow}>
-                                <Text style={styles.hudLevelLabel}>XP CONVERGENCE</Text>
-                                <View style={styles.hudLevelBadge}>
-                                    <Text style={styles.hudLevelValue}>
-                                        LVL {String(Math.min(Math.floor(xp / 100) + 1, 99)).padStart(2, '0')}
-                                    </Text>
-                                </View>
-                            </View>
-                            
-                            {/* Segmented Tactical HUD Progress Bar */}
-                            <View style={styles.segmentedBarRow}>
-                                {Array.from({ length: 10 }).map((_, idx) => {
-                                    const progressPercent = xp % 100;
-                                    const blockValue = (idx + 1) * 10;
-                                    const prevBlockValue = idx * 10;
-                                    
-                                    let fillWidth = 0;
-                                    if (progressPercent >= blockValue) {
-                                        fillWidth = 100;
-                                    } else if (progressPercent > prevBlockValue) {
-                                        fillWidth = ((progressPercent - prevBlockValue) / 10) * 100;
-                                    }
-                                    
-                                    return (
-                                        <View key={idx} style={styles.segmentContainer}>
-                                            <View style={styles.segmentBg} />
-                                            {fillWidth > 0 && (
-                                                <LinearGradient
-                                                    colors={[COLORS.primary, '#9A1016']}
-                                                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                                                    style={[styles.segmentFill, { width: `${fillWidth}%` }]}
-                                                />
-                                            )}
-                                        </View>
-                                    );
-                                })}
-                            </View>
+                        <Text style={styles.levelRank}>{RANK_FOR(total)}</Text>
+                    </Card>
+                </Reveal>
 
-                            <View style={styles.hudFooterRow}>
-                                <Text style={styles.hudSubText}>
-                                    {xp % 100}/100 XP TO NEXT LEVEL
-                                </Text>
-                                <Text style={styles.hudRankText}>
-                                    {total >= 100 ? 'LEGEND' :
-                                        total >= 50 ? 'TITAN' :
-                                            total >= 25 ? 'WARRIOR' :
-                                                total >= 10 ? 'CHADLITE' :
-                                                    total >= 5 ? 'ROOKIE' : 'RECRUIT'}
-                                </Text>
-                            </View>
-                        </View>
-                    </View>
-                </View>
-
-                {/* ── Streak Intelligence HUD Card ── */}
+                {/* ── Streak ── */}
                 {(() => {
                     const tierInfo = getStreakTierInfo(streak);
                     return (
-                        <TouchableOpacity
-                            style={styles.streakIntelligenceCard}
-                            activeOpacity={0.9}
-                            onPress={() => {
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                setStreakAnalyticsVisible(true);
-                            }}
-                        >
-                            <LinearGradient
-                                colors={[COLORS.glassBg, "rgba(5, 5, 5, 0.95)"]}
-                                style={StyleSheet.absoluteFill}
-                            />
-                            <View style={[styles.cardLeftAccent, { backgroundColor: tierInfo.color || COLORS.accent }]} />
-                            <View style={styles.streakIntelligenceLeft}>
-                                <View style={styles.streakIconContainer}>
-                                    <LinearGradient
-                                        colors={["rgba(227, 30, 36, 0.15)", "rgba(5, 5, 5, 0)"]}
-                                        style={StyleSheet.absoluteFill}
-                                    />
-                                    <Ionicons name="flame" size={16} color={tierInfo.color} />
-                                </View>
-                                <Text style={[styles.streakTierName, { color: tierInfo.color }]}>
-                                    {tierInfo.name}
-                                </Text>
-                                <Text style={styles.streakValue}>{streak} <Text style={{ fontSize: 10, color: COLORS.textMuted, fontFamily: FAMILY.mono }}>DAYS</Text></Text>
-                                <View style={[styles.multiplierBadge, { backgroundColor: `${tierInfo.color}10`, borderColor: `${tierInfo.color}35` }]}>
-                                    <Text style={[styles.multiplierText, { color: tierInfo.color }]}>{tierInfo.multiplier} MULTIPLIER</Text>
-                                </View>
-                            </View>
-                            <View style={styles.streakIntelligenceRight}>
-                                <Text style={styles.gridTitle}>7-DAY CONSISTENCY</Text>
-                                <View style={styles.gridContainer}>
-                                    {DAY_LABELS.map((label, index) => {
-                                        const dayNum = index + 1;
-                                        const isCompleted = completedDays.includes(dayNum);
-                                        const isDayFrozen = freezeDays.includes(dayNum);
-                                        const isToday = todayDay === dayNum;
-                                        const isFuture = dayNum > todayDay;
-                                        const isSunday = dayNum === 7;
+                        <Reveal delay={200}>
+                            <Card
+                                style={styles.streakIntelligenceCard}
+                                padding={SPACING.cardPad}
+                                tint={tierInfo.color}
+                                onPress={() => setStreakAnalyticsVisible(true)}
+                            >
+                                <View style={styles.streakInner}>
+                                    <View style={styles.streakIntelligenceLeft}>
+                                        <View style={[styles.streakIconContainer, { backgroundColor: withAlpha(tierInfo.color, 0.14) }]}>
+                                            <Ionicons name="flame" size={19} color={tierInfo.color} />
+                                        </View>
+                                        <Text style={styles.streakValue}>
+                                            {streak}
+                                            <Text style={styles.streakValueUnit}> {streak === 1 ? "day" : "days"}</Text>
+                                        </Text>
+                                        <Text style={[styles.streakTierName, { color: tierInfo.color }]}>
+                                            {tierInfo.name}
+                                        </Text>
+                                        <Pill
+                                            label={`${tierInfo.multiplier} XP`}
+                                            color={tierInfo.color}
+                                            bg={withAlpha(tierInfo.color, 0.12)}
+                                            size="sm"
+                                            style={{ marginTop: 10 }}
+                                        />
+                                    </View>
 
-                                        return (
-                                            <View key={label} style={styles.gridCellWrapper}>
-                                                <View
-                                                    style={[
-                                                        styles.gridCellRing,
-                                                        isToday && styles.gridCellRingToday
-                                                    ]}
-                                                >
-                                                    <View
-                                                        style={[
-                                                            styles.gridCell,
-                                                            isCompleted && styles.gridCellCompleted,
-                                                            isDayFrozen && styles.gridCellFrozen,
-                                                            isToday && styles.gridCellToday,
-                                                            !isCompleted && !isDayFrozen && !isToday && dayNum < todayDay && (isSunday ? styles.gridCellRest : styles.gridCellMissed),
-                                                            isFuture && { borderStyle: "dashed", borderColor: "rgba(255, 255, 255, 0.15)" }
-                                                        ]}
-                                                    >
-                                                        {isCompleted ? (
-                                                            <>
-                                                                <Ionicons name="checkmark" size={9} color="#fff" />
-                                                                {isDayFrozen && (
-                                                                    <Ionicons
-                                                                        name="snow"
-                                                                        size={6}
-                                                                        color="#D1D1D1"
-                                                                        style={{ position: "absolute", bottom: -2, right: -2 }}
-                                                                    />
-                                                                )}
-                                                            </>
-                                                        ) : isDayFrozen ? (
-                                                            <Ionicons name="snow" size={9} color="#D1D1D1" />
-                                                        ) : isSunday && !isToday ? (
-                                                            <Ionicons name="moon-outline" size={8} color="#8E8E93" />
-                                                        ) : (
-                                                            isToday && !isCompleted && !isDayFrozen && <View style={styles.gridCellTodayDot} />
-                                                        )}
+                                    <View style={styles.streakIntelligenceRight}>
+                                        <Text style={styles.gridTitle}>This week</Text>
+                                        <View style={styles.gridContainer}>
+                                            {DAY_LABELS.map((label, index) => {
+                                                const dayNum = index + 1;
+                                                const isCompleted = completedDays.includes(dayNum);
+                                                const isDayFrozen = freezeDays.includes(dayNum);
+                                                const isToday = todayDay === dayNum;
+                                                const isFuture = dayNum > todayDay;
+                                                const isSunday = dayNum === 7;
+
+                                                return (
+                                                    <View key={label} style={styles.gridCellWrapper}>
+                                                        <View
+                                                            style={[
+                                                                styles.gridCell,
+                                                                isCompleted && styles.gridCellCompleted,
+                                                                isDayFrozen && styles.gridCellFrozen,
+                                                                isToday && !isCompleted && !isDayFrozen && styles.gridCellToday,
+                                                                !isCompleted && !isDayFrozen && !isToday && dayNum < todayDay && (isSunday ? styles.gridCellRest : styles.gridCellMissed),
+                                                                isFuture && styles.gridCellFuture,
+                                                            ]}
+                                                        >
+                                                            {isCompleted ? (
+                                                                <>
+                                                                    <Ionicons name="checkmark" size={13} color={COLORS.softBg} />
+                                                                    {isDayFrozen && (
+                                                                        <Ionicons
+                                                                            name="snow"
+                                                                            size={8}
+                                                                            color={COLORS.softSky}
+                                                                            style={{ position: "absolute", bottom: -1, right: -1 }}
+                                                                        />
+                                                                    )}
+                                                                </>
+                                                            ) : isDayFrozen ? (
+                                                                <Ionicons name="snow" size={12} color={COLORS.softSky} />
+                                                            ) : isSunday && !isToday ? (
+                                                                <Ionicons name="moon" size={10} color={COLORS.softTextMuted} />
+                                                            ) : (
+                                                                isToday && <View style={styles.gridCellTodayDot} />
+                                                            )}
+                                                        </View>
+                                                        <Text style={[styles.gridCellLabel, isToday && styles.gridCellLabelToday]}>
+                                                            {label[0]}
+                                                        </Text>
                                                     </View>
-                                                </View>
-                                                <Text style={[styles.gridCellLabel, isToday && { color: COLORS.primary, fontFamily: FAMILY.bold }]}>{label[0]}</Text>
-                                            </View>
-                                        );
-                                    })}
+                                                );
+                                            })}
+                                        </View>
+                                    </View>
                                 </View>
-                            </View>
-                        </TouchableOpacity>
+                            </Card>
+                        </Reveal>
                     );
                 })()}
 
                 {/* ── Stats: Total & Rank ── */}
-                <View style={styles.statsRow}>
-                    <View style={styles.statSmallWidth}>
-                        <LinearGradient
-                            colors={[COLORS.glassBg, "rgba(5, 5, 5, 0.95)"]}
-                            style={StyleSheet.absoluteFill}
+                <Reveal delay={255}>
+                    <View style={styles.statsRow}>
+                        <StatTile
+                            style={{ flex: 1 }}
+                            label="Total sessions"
+                            value={total}
+                            icon="fitness"
+                            color={COLORS.softFocus}
+                            countUp
+                            delay={300}
                         />
-                        <View style={[styles.cardTopAccent, { backgroundColor: COLORS.accent }]} />
-                        <View style={styles.statSmallTop}>
-                            <View style={styles.statIconWrap}>
-                                <Ionicons name="fitness" size={11} color={COLORS.accent} />
-                            </View>
-                            <Text style={styles.statLabelSmall}>TOTAL SESSIONS</Text>
-                        </View>
-                        <Text style={styles.statValueSmall}>{total} <Text style={{ fontSize: 8, color: COLORS.textMuted, fontFamily: FAMILY.mono }}>COMPLETED</Text></Text>
+                        <StatTile
+                            style={{ flex: 1 }}
+                            label="Current rank"
+                            value={RANK_FOR(total)}
+                            icon="trending-up"
+                            color={COLORS.softMove}
+                            onPress={() => navigation.navigate("Rank")}
+                        />
                     </View>
-                    <TouchableOpacity style={styles.statSmallWidth} activeOpacity={0.8} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); navigation.navigate("Rank"); }}>
-                        <LinearGradient
-                            colors={[COLORS.glassBg, "rgba(5, 5, 5, 0.95)"]}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={StyleSheet.absoluteFill}
-                        />
-                        <View style={[styles.cardTopAccent, { backgroundColor: COLORS.primary }]} />
-                        <View style={styles.statSmallTop}>
-                            <View style={styles.statIconWrap}>
-                                <Ionicons name="trending-up" size={11} color={COLORS.primary} />
-                            </View>
-                            <Text style={styles.statLabelSmall}>CURRENT RANK</Text>
-                        </View>
-                        <Text style={styles.statValueSmall} numberOfLines={1} adjustsFontSizeToFit>{
-                            total >= 100 ? 'LEGEND' :
-                                total >= 50 ? 'TITAN' :
-                                    total >= 25 ? 'WARRIOR' :
-                                        total >= 10 ? 'CHADLITE' :
-                                            total >= 5 ? 'ROOKIE' : 'RECRUIT'
-                        }</Text>
-                    </TouchableOpacity>
-                </View>
+                </Reveal>
 
                 {/* ── Moments (Highlights) ── */}
-                <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionLabel}>MOMENTS</Text>
-                </View>
+                <SectionHeader title="Moments" subtitle="Milestones you've unlocked" />
                 <MomentsGallery streak={streak} total={total} profile={profile} />
 
                 {/* ── Weekly Plan ── */}
-                <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionLabel}>WEEKLY PLAN</Text>
-                </View>
+                <SectionHeader title="Your week" subtitle="Tap any day to preview it" />
                 <GestureScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
@@ -987,9 +931,7 @@ export default function HomeScreen({ navigation, route }) {
                 </GestureScrollView>
 
                 {/* ── Workout Library ── */}
-                <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionLabel}>WORKOUT LIBRARY</Text>
-                </View>
+                <SectionHeader title="Workout library" subtitle="Explore all 6 days of your split" />
                 <View style={styles.dayList}>
                     {WORKOUT_PLAN.map((day) => (
                         <TouchableOpacity
@@ -1027,9 +969,7 @@ export default function HomeScreen({ navigation, route }) {
                 </View>
 
                 {/* ── Protocol Handbook ── */}
-                <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionLabel}>PROTOCOL HANDBOOK</Text>
-                </View>
+                <SectionHeader title="Protocol handbook" subtitle="The science, rules & 12-week progression" />
                 <TouchableOpacity
                     style={styles.customCard}
                     onPress={() => {
@@ -1054,9 +994,7 @@ export default function HomeScreen({ navigation, route }) {
                 </TouchableOpacity>
 
                 {/* ── Custom Workout ── */}
-                <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionLabel}>CUSTOM WORKOUT</Text>
-                </View>
+                <SectionHeader title="Custom workout" subtitle="Design and log your bespoke session" />
                 <TouchableOpacity
                     style={styles.customCard}
                     onPress={() => navigation.navigate("CustomWorkout")}

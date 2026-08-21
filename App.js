@@ -23,6 +23,12 @@ import { Urbanist_900Black } from "@expo-google-fonts/urbanist";
 import { SpaceGrotesk_700Bold } from "@expo-google-fonts/space-grotesk";
 import { Inter_700Bold } from "@expo-google-fonts/inter";
 import {
+  Manrope_400Regular,
+  Manrope_500Medium,
+  Manrope_700Bold,
+  Manrope_800ExtraBold,
+} from "@expo-google-fonts/manrope";
+import {
   Montserrat_400Regular,
   Montserrat_600SemiBold,
   Montserrat_700Bold
@@ -125,28 +131,35 @@ function RootNavigator({ fontsLoaded }) {
 /*
  * ─── Font Loading Strategy ─────────────────────────────────────
  *
- * CRITICAL fonts (block splash): Only the 3 fonts used on the first
- * visible screen (HomeScreen / OnboardingScreen). This cuts boot time
- * because we load 3 fonts instead of 8 before showing the first frame.
+ * CRITICAL fonts (block splash): only the families the first visible
+ * screen actually renders.
+ *   · Manrope 400/500/700/800 — the soft premium stack used across
+ *     the core flow, including HomeScreen. These MUST be critical:
+ *     deferred fonts land ~100ms after the first frame, which would
+ *     show a visible font swap on every cold boot.
+ *   · Arimo 400/700 — still used by Onboarding / Login.
  *
- * DEFERRED fonts: Loaded silently in the background after the splash
- * hides and the app is already interactive. These are only needed on
- * secondary screens (WorkoutDetail, WorkoutComplete, Rank, etc.)
+ * DEFERRED fonts: loaded silently once the app is interactive. Only
+ * needed on secondary screens (Profile, History, Settings, Rank, ...).
  */
 const CRITICAL_FONTS = {
   Arimo_400Regular,
   Arimo_700Bold,
-  Outfit_400Regular,
-  SpaceGrotesk_700Bold,
+  Manrope_400Regular,
+  Manrope_500Medium,
+  Manrope_700Bold,
+  Manrope_800ExtraBold,
 };
 
 const DEFERRED_FONTS = {
   Outfit_300Light,
+  Outfit_400Regular,
   Outfit_500Medium,
   Outfit_600SemiBold,
   Urbanist_900Black,
   Syne_700Bold,
   Inter_700Bold,
+  SpaceGrotesk_700Bold,
   Montserrat_400Regular,
   Montserrat_600SemiBold,
   Montserrat_700Bold,
