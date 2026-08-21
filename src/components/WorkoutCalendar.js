@@ -281,7 +281,7 @@ export default function WorkoutCalendar({ history = [], style }) {
                 </View>
                 <View style={styles.statDivider} />
                 <View style={styles.statItem}>
-                    <Text style={[styles.statVal, { color: COLORS.primary }]}>{monthStats.consistency}%</Text>
+                    <Text style={[styles.statVal, { color: COLORS.text }]}>{monthStats.consistency}%</Text>
                     <Text style={styles.statLbl}>CONSISTENCY</Text>
                 </View>
             </View>
@@ -367,19 +367,19 @@ export default function WorkoutCalendar({ history = [], style }) {
                 />
                 <View style={styles.inspectorHeader}>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                        <Ionicons name="calendar-outline" size={13} color={COLORS.primary} />
+                        <Ionicons name="calendar-outline" size={13} color={COLORS.textSub} />
                         <Text style={styles.inspectorTitle}>{selectedDateTitle}</Text>
                     </View>
                     <View
                         style={[
                             styles.inspectorBadge,
                             selectedDateWorkouts.length > 0 && {
-                                backgroundColor: "rgba(227, 30, 36, 0.15)",
-                                borderColor: "rgba(227, 30, 36, 0.4)",
+                                backgroundColor: "rgba(237, 234, 227, 0.08)",
+                                borderColor: COLORS.border,
                             },
                             selectedDateWorkouts.length === 0 && selectedDateInfo.isToday && {
-                                backgroundColor: "rgba(227, 30, 36, 0.15)",
-                                borderColor: "rgba(227, 30, 36, 0.4)",
+                                backgroundColor: "rgba(237, 234, 227, 0.08)",
+                                borderColor: COLORS.border,
                             },
                             selectedDateWorkouts.length === 0 && selectedDateInfo.isPast && !selectedDateInfo.isSunday && {
                                 backgroundColor: "rgba(255, 69, 58, 0.12)",
@@ -394,8 +394,8 @@ export default function WorkoutCalendar({ history = [], style }) {
                         <Text
                             style={[
                                 styles.inspectorBadgeText,
-                                selectedDateWorkouts.length > 0 && { color: COLORS.primary },
-                                selectedDateWorkouts.length === 0 && selectedDateInfo.isToday && { color: COLORS.primary },
+                                selectedDateWorkouts.length > 0 && { color: COLORS.text },
+                                selectedDateWorkouts.length === 0 && selectedDateInfo.isToday && { color: COLORS.text },
                                 selectedDateWorkouts.length === 0 && selectedDateInfo.isPast && !selectedDateInfo.isSunday && { color: "#FF453A" },
                                 selectedDateWorkouts.length === 0 && selectedDateInfo.isSunday && { color: "#8E8E93" },
                             ]}
@@ -430,7 +430,7 @@ export default function WorkoutCalendar({ history = [], style }) {
                                                 {timeStr} · {formatDuration(w.durationSec || 0)}
                                             </Text>
                                         </View>
-                                        <Ionicons name="checkmark-circle" size={18} color={COLORS.primary} />
+                                        <Ionicons name="checkmark-circle" size={18} color={COLORS.accent} />
                                     </View>
 
                                     {/* Exercises Preview */}
@@ -464,7 +464,7 @@ export default function WorkoutCalendar({ history = [], style }) {
                     </View>
                 ) : selectedDateInfo.isToday ? (
                     <View style={styles.emptyRestState}>
-                        <Ionicons name="barbell-outline" size={20} color={COLORS.primary} />
+                        <Ionicons name="barbell-outline" size={20} color={COLORS.textSub} />
                         <Text style={[styles.emptyRestText, { color: COLORS.text }]}>
                             {selectedDateInfo.plan.target.toUpperCase()}
                         </Text>
@@ -519,7 +519,7 @@ const styles = StyleSheet.create({
     titleBadge: {
         width: 3,
         height: 12,
-        backgroundColor: COLORS.primary,
+        backgroundColor: COLORS.accent,
         borderRadius: 2,
     },
     monthTitle: {
@@ -537,9 +537,9 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         paddingVertical: 4,
         borderRadius: RADIUS.pill,
-        backgroundColor: "rgba(122, 46, 34, 0.12)",
+        backgroundColor: "rgba(237, 234, 227, 0.06)",
         borderWidth: 1,
-        borderColor: COLORS.primary,
+        borderColor: COLORS.border,
     },
     todayBtnText: {
         fontSize: 9,
@@ -632,8 +632,8 @@ const styles = StyleSheet.create({
         borderWidth: 1.5,
     },
     cellWorkout: {
-        backgroundColor: COLORS.primary,
-        borderColor: COLORS.primary,
+        backgroundColor: "rgba(237, 234, 227, 0.16)",
+        borderColor: "rgba(237, 234, 227, 0.3)",
     },
     cellSelected: {
         borderColor: COLORS.text,
@@ -649,7 +649,7 @@ const styles = StyleSheet.create({
         width: 4,
         height: 4,
         borderRadius: 2,
-        backgroundColor: COLORS.primary,
+        backgroundColor: COLORS.accent,
     },
 
     cellText: {
@@ -686,12 +686,12 @@ const styles = StyleSheet.create({
         width: 3,
         height: 3,
         borderRadius: 1.5,
-        backgroundColor: COLORS.primary,
+        backgroundColor: COLORS.text,
     },
     workoutCountText: {
         fontSize: 7,
         fontFamily: FAMILY.monoBold,
-        color: COLORS.primary,
+        color: COLORS.text,
     },
     restDotWrap: {
         position: "absolute",

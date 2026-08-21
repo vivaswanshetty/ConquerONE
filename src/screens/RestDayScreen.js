@@ -102,7 +102,7 @@ export default function RestDayScreen({ navigation }) {
                                     end={{ x: 1, y: 1 }}
                                 />
                                 <View style={styles.tipIconWrap}>
-                                    <Ionicons name={tip.icon} size={20} color={COLORS.primary} />
+                                    <Ionicons name={tip.icon} size={20} color={COLORS.textSub} />
                                 </View>
                                 <Text style={styles.tipTitle}>{tip.title}</Text>
                                 <Text style={tip.desc.length > 80 ? styles.tipDescSmall : styles.tipDesc}>
@@ -121,7 +121,7 @@ export default function RestDayScreen({ navigation }) {
                                 end={{ x: 1, y: 1 }}
                             />
                             <View style={styles.tipIconWrap}>
-                                <Ionicons name="eye-outline" size={20} color={COLORS.primary} />
+                                <Ionicons name="eye-outline" size={20} color={COLORS.textSub} />
                             </View>
                             <Text style={styles.tipTitle}>BODY SCAN</Text>
                             <Text style={styles.tipDesc}>Spend 5 minutes mentally scanning your muscles from feet to head. Acknowledge tightness without judgment.</Text>
@@ -134,7 +134,7 @@ export default function RestDayScreen({ navigation }) {
                                 end={{ x: 1, y: 1 }}
                             />
                             <View style={styles.tipIconWrap}>
-                                <Ionicons name="journal-outline" size={20} color={COLORS.primary} />
+                                <Ionicons name="journal-outline" size={20} color={COLORS.textSub} />
                             </View>
                             <Text style={styles.tipTitle}>INTENTION SETTING</Text>
                             <Text style={styles.tipDesc}>Briefly visualize your goals for the upcoming week. What is the one big lift you want to dominate?</Text>
@@ -147,7 +147,7 @@ export default function RestDayScreen({ navigation }) {
                                 end={{ x: 1, y: 1 }}
                             />
                             <View style={styles.tipIconWrap}>
-                                <Ionicons name="sunny-outline" size={20} color={COLORS.primary} />
+                                <Ionicons name="sunny-outline" size={20} color={COLORS.textSub} />
                             </View>
                             <Text style={styles.tipTitle}>GRATITUDE</Text>
                             <Text style={styles.tipDesc}>Recall three physical accomplishments from this week. Truly feel the pride of your progress.</Text>
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
         marginBottom: 40,
     },
     eyebrow: {
-        fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.primary,
+        fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted,
         letterSpacing: 4, marginBottom: 16,
     },
     title: {
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
         flexDirection: "row", paddingHorizontal: 24, gap: 32, marginBottom: 32,
     },
     zentabActive: {
-        paddingBottom: 8, borderBottomWidth: 2, borderBottomColor: COLORS.primary,
+        paddingBottom: 8, borderBottomWidth: 2, borderBottomColor: COLORS.text,
     },
     zentab: { paddingBottom: 8 },
     zentabText: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 2 },
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     },
     tipIconWrap: {
         width: 36, height: 36, borderRadius: 10,
-        backgroundColor: "rgba(227,30,36,0.1)",
+        backgroundColor: "rgba(255,255,255,0.05)",
         alignItems: "center", justifyContent: "center",
         marginBottom: 20,
     },
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
         borderWidth: 1, borderColor: "rgba(255,255,255,0.1)",
     },
     meditationContent: { flex: 1 },
-    medHeader: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 2, marginBottom: 8 },
+    medHeader: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2, marginBottom: 8 },
     medTitle: { fontSize: 20, fontFamily: FAMILY.display, color: COLORS.text, marginBottom: 4 },
     medSub: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1 },
     medIcon: { marginLeft: 16 },

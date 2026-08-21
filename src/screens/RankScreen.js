@@ -118,17 +118,17 @@ export default function RankScreen({ navigation }) {
                 {/* ── Stats Row ── */}
                 <View style={s.statsRow}>
                     <View style={s.statBox}>
-                        <Ionicons name="barbell-outline" size={16} color={COLORS.primary} />
+                        <Ionicons name="barbell-outline" size={16} color={COLORS.textSub} />
                         <Text style={s.statVal}>{total}</Text>
                         <Text style={s.statLbl}>SESSIONS</Text>
                     </View>
                     <View style={[s.statBox, s.statBoxMid]}>
-                        <Ionicons name="flame" size={16} color={COLORS.primary} />
+                        <Ionicons name="flame" size={16} color={COLORS.textSub} />
                         <Text style={s.statVal}>{streak}d</Text>
                         <Text style={s.statLbl}>STREAK</Text>
                     </View>
                     <View style={s.statBox}>
-                        <Ionicons name="flash" size={16} color={COLORS.primary} />
+                        <Ionicons name="flash" size={16} color={COLORS.textSub} />
                         <Text style={s.statVal}>{sessionsToNext || "MAX"}</Text>
                         <Text style={s.statLbl}>{nextRank ? "TO NEXT" : "REACHED"}</Text>
                     </View>
@@ -160,7 +160,7 @@ export default function RankScreen({ navigation }) {
                         const isAchieved = total >= rank.min;
                         const isCurrent = rank.title === current.title;
                         return (
-                            <View key={rank.title} style={[s.ladderRow, isCurrent && { borderColor: COLORS.primary }]}>
+                            <View key={rank.title} style={[s.ladderRow, isCurrent && { borderColor: COLORS.accent }]}>
                                 <View style={s.ladderIcon}>
                                     <Ionicons
                                         name={isAchieved ? rank.icon : "lock-closed-outline"}
@@ -180,7 +180,7 @@ export default function RankScreen({ navigation }) {
                                     <Text style={[s.ladderSub, !isAchieved && { opacity: 0.5 }]}>{rank.min}+ sessions · {rank.desc.split('.')[0]}</Text>
                                 </View>
                                 {isAchieved && !isCurrent && (
-                                    <Ionicons name="checkmark-circle" size={16} color={COLORS.primary} />
+                                    <Ionicons name="checkmark-circle" size={16} color={COLORS.accent} />
                                 )}
                             </View>
                         );
@@ -244,7 +244,7 @@ const s = StyleSheet.create({
         height: 4, borderRadius: 2, backgroundColor: COLORS.bg,
         overflow: 'hidden', borderWidth: 0.5, borderColor: COLORS.border,
     },
-    progressBarFill: { height: '100%', borderRadius: 2, backgroundColor: COLORS.primary },
+    progressBarFill: { height: '100%', borderRadius: 2, backgroundColor: COLORS.accent },
     progressLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
     progressText: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.textSub },
 
@@ -301,8 +301,8 @@ const s = StyleSheet.create({
     ladderTitle: { fontSize: 13, fontFamily: FAMILY.semibold },
     ladderSub: { fontSize: 10, fontFamily: FAMILY.regular, color: COLORS.textSub, marginTop: 2 },
     currentBadge: {
-        paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, borderWidth: 1, borderColor: COLORS.primary,
-        backgroundColor: 'rgba(122, 46, 34, 0.15)',
+        paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, borderWidth: 1, borderColor: COLORS.border,
+        backgroundColor: 'rgba(237, 234, 227, 0.08)',
     },
     currentBadgeText: { fontSize: 8, fontFamily: FAMILY.monoBold, color: COLORS.text },
 

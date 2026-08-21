@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
     scroll: { paddingHorizontal: SPACING.base, flexGrow: 1 },
 
     header: { marginBottom: 40 },
-    eyebrow: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 4, marginBottom: 12 },
+    eyebrow: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 4, marginBottom: 12 },
     title: { fontSize: 48, fontFamily: FAMILY.display, color: COLORS.text, letterSpacing: -2, lineHeight: 48 },
 
     form: { gap: 18, marginBottom: 32 },
@@ -352,11 +352,11 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(255,255,255,0.03)",
     },
     genderBtnActive: {
-        borderColor: COLORS.primary,
-        backgroundColor: "rgba(227,30,36,0.1)",
+        borderColor: COLORS.accent,
+        backgroundColor: "rgba(237,234,227,0.08)",
     },
     genderBtnText: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1 },
-    genderBtnTextActive: { color: COLORS.primary },
+    genderBtnTextActive: { color: COLORS.text },
 
     errorBox: {
         flexDirection: "row", alignItems: "center", gap: 8,
@@ -371,7 +371,7 @@ const styles = StyleSheet.create({
 
     footer: { flexDirection: "row", justifyContent: "center", alignItems: "center" },
     footerText: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textMuted },
-    footerLink: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 1 },
+    footerLink: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.accent, letterSpacing: 1 },
 
     divider: { flexDirection: "row", alignItems: "center", gap: 12, marginVertical: 20 },
     line: { flex: 1, height: 1, backgroundColor: "rgba(255,255,255,0.06)" },

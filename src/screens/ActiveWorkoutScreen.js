@@ -218,7 +218,7 @@ function PRModal({ visible, exerciseName, onClose, onSave, weightUnit = "kg", in
                             <View style={pm.handle} />
                             <View style={pm.headerRow}>
                                 <View style={pm.trophyBadge}>
-                                    <Ionicons name="clipboard" size={20} color={COLORS.primary} />
+                                    <Ionicons name="clipboard" size={20} color={COLORS.textSub} />
                                 </View>
                                 <View style={{ flex: 1 }}>
                                     <Text style={pm.title}>LOG YOUR SET</Text>
@@ -495,7 +495,7 @@ function RestOverlay({ phase, timeLeft, onSkip, settings, mindsetTip }) {
                                     colors={["rgba(255,255,255,0.02)", "transparent"]}
                                     style={StyleSheet.absoluteFill}
                                 />
-                                <Ionicons name="barbell-outline" size={20} color={COLORS.primary} style={{ marginBottom: 4 }} />
+                                <Ionicons name="barbell-outline" size={20} color={COLORS.textSub} style={{ marginBottom: 4 }} />
                                 <Text style={ro.nextTargetText}>
                                     {(phase.nextExercise.primaryTarget || "TARGET").toUpperCase()} · {(phase.nextExercise.equipment || "EQUIPMENT").toUpperCase()}
                                 </Text>
@@ -1407,7 +1407,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                                     contentContainerStyle={styles.infoPanelBadgeRow}
                                 >
                                     <View style={styles.infoPanelBadge}>
-                                        <Ionicons name="barbell-outline" size={12} color={COLORS.primary} />
+                                        <Ionicons name="barbell-outline" size={12} color={COLORS.textSub} />
                                         <Text style={styles.infoPanelBadgeText}>{ex.equipment || "Equipment"}</Text>
                                     </View>
                                     {ex.tag && (
@@ -1417,8 +1417,8 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                                         </View>
                                     )}
                                     {getSuggestedWeight(ex.name) ? (
-                                        <View style={[styles.infoPanelBadge, { borderColor: COLORS.primary, backgroundColor: "rgba(122, 46, 34, 0.1)" }]}>
-                                            <Ionicons name="trending-up-outline" size={12} color={COLORS.primary} />
+                                        <View style={[styles.infoPanelBadge, { borderColor: COLORS.border, backgroundColor: COLORS.bg }]}>
+                                            <Ionicons name="trending-up-outline" size={12} color={COLORS.textSub} />
                                             <Text style={[styles.infoPanelBadgeText, { color: COLORS.text }]}>Suggested: {getSuggestedWeight(ex.name)}</Text>
                                         </View>
                                     ) : null}
@@ -1579,7 +1579,7 @@ const styles = StyleSheet.create({
     calUnit: { fontSize: 10, color: COLORS.textSub, fontFamily: FAMILY.regular },
 
     progressTrack: { height: 3, backgroundColor: "rgba(237, 234, 227, 0.08)", width: "100%" },
-    progressFill: { height: "100%", backgroundColor: COLORS.primary },
+    progressFill: { height: "100%", backgroundColor: COLORS.text },
 
     restContainer: { flex: 1, backgroundColor: COLORS.bg, justifyContent: "space-between", paddingBottom: 28 },
     restContent: { flex: 1, width: "100%" },
@@ -1666,7 +1666,7 @@ const styles = StyleSheet.create({
     formLabelRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 },
     formLabel: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.text },
     tipRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, marginBottom: 12 },
-    tipDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: COLORS.primary, marginTop: 8 },
+    tipDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: COLORS.textSub, marginTop: 8 },
     tipText: { fontSize: 13, color: COLORS.textSub, flex: 1, lineHeight: 20, fontFamily: FAMILY.regular },
     workImgBox: {
         width: width - 64, height: 180, borderRadius: RADIUS.card,
@@ -1736,9 +1736,9 @@ const styles = StyleSheet.create({
         borderRadius: RADIUS.card, borderWidth: 1, borderColor: COLORS.border,
     },
     recentSetBadge: {
-        backgroundColor: "rgba(122, 46, 34, 0.15)", paddingHorizontal: 5, paddingVertical: 2,
+        backgroundColor: "rgba(237, 234, 227, 0.06)", paddingHorizontal: 5, paddingVertical: 2,
         borderRadius: 4,
     },
-    recentSetBadgeText: { fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.primary },
+    recentSetBadgeText: { fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.text },
     recentSetText: { fontSize: 11, fontFamily: FAMILY.mono, color: COLORS.text },
 });

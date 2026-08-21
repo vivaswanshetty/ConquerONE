@@ -105,7 +105,7 @@ export default function OnboardingScreen({ navigation }) {
                                     {
                                         backgroundColor: dotAnim[i].interpolate({
                                             inputRange: [0, 1],
-                                            outputRange: [COLORS.borderLight, COLORS.primary],
+                                            outputRange: [COLORS.borderLight, COLORS.text],
                                         }),
                                         width: dotAnim[i].interpolate({
                                             inputRange: [0, 1],
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
     },
     eyebrow: {
         fontSize: 10, fontFamily: FAMILY.bold,
-        color: COLORS.primary,
+        color: COLORS.textMuted,
         letterSpacing: 4, marginBottom: 20,
     },
     title: {
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     },
     accentLine: {
         width: 48, height: 2, borderRadius: 1,
-        backgroundColor: COLORS.primary,
+        backgroundColor: COLORS.accent,
         marginTop: 40,
         opacity: 0.5,
     },

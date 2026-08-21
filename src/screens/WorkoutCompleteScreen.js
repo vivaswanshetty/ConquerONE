@@ -200,10 +200,10 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
                         ]} />
                         <Animated.View style={[styles.iconRingWrap, { transform: [{ scale: checkScale }] }]}>
                             <View style={styles.iconRingInner}>
-                                <Ionicons name="checkmark-done" size={54} color={COLORS.primary} />
+                                <Ionicons name="checkmark-done" size={54} color={COLORS.text} />
                             </View>
                             <LinearGradient
-                                colors={["rgba(227,30,36,0.15)", "transparent"]}
+                                colors={["rgba(237,234,227,0.06)", "transparent"]}
                                 style={StyleSheet.absoluteFill}
                             />
                         </Animated.View>
@@ -211,7 +211,6 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
 
                     {(() => {
                         let multiplierText = "1.0x";
-                        let badgeColor = COLORS.primary;
                         if (xpGained === 20) {
                             multiplierText = "2.0x";
                         } else if (xpGained === 15) {
@@ -232,7 +231,7 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
                                         ]
                                     }
                                 ]}>
-                                    <Ionicons name="sparkles" size={12} color={COLORS.primary} />
+                                    <Ionicons name="sparkles" size={12} color={COLORS.textSub} />
                                     <Text style={styles.xpAwardText}>
                                         <Text style={{ fontFamily: FAMILY.monoBold, color: COLORS.text }}>+{xpGained} XP</Text>
                                         <Text style={{ color: COLORS.textSub }}> · {multiplierText} multiplier</Text>
@@ -269,7 +268,7 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
                             opacity: streakAnim,
                             transform: [{ translateY: streakAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }],
                         }]}>
-                            <Ionicons name="flame" size={16} color={COLORS.primary} />
+                            <Ionicons name="flame" size={16} color={COLORS.text} />
                             <Text style={styles.streakText}>{streak}-day streak active</Text>
                         </Animated.View>
                     )}
@@ -293,7 +292,7 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
                     {newPRs.length > 0 && (
                         <Animated.View style={[styles.prCard, { opacity: prAnim, transform: [{ scale: prScale }] }]}>
                             <View style={styles.prHeader}>
-                                <Ionicons name="trophy" size={14} color={COLORS.primary} />
+                                <Ionicons name="trophy" size={14} color={COLORS.textSub} />
                                 <Text style={styles.prTitle}>New Personal Records</Text>
                             </View>
                             <View style={styles.prList}>

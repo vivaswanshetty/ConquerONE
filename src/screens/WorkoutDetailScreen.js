@@ -25,7 +25,7 @@ function totalTime(day) {
 
 function getMuscleColor(target) {
     const t = target.toUpperCase();
-    if (t.includes("CHEST") || t.includes("TRICEPS") || t.includes("PUSH")) return COLORS.primary; // Crimson
+    if (t.includes("CHEST") || t.includes("TRICEPS") || t.includes("PUSH")) return COLORS.accent; // Titanium Silver
     if (t.includes("BACK") || t.includes("BICEPS") || t.includes("PULL")) return "#FF9500"; // Gold
     if (t.includes("LEGS") || t.includes("QUADS") || t.includes("LOWER")) return "#D1D1D1"; // Silver/Titanium
     if (t.includes("SHOULDERS") || t.includes("CORE") || t.includes("ARMS")) return "#30B0C7"; // Steel teal
@@ -147,57 +147,49 @@ export default function WorkoutDetailScreen({ navigation, route }) {
                 <View style={{ height: 64 }} />
             </ScrollView>
 
-            <EditModal
+            <EditExerciseModal
                 visible={!!editExercise}
-                exercise={editExercise}
+                ex={editExercise}
                 onClose={() => setEditExercise(null)}
                 onSave={handleSaveEdit}
-                insets={insets}
             />
         </View>
     );
 }
 
-function EditModal({ visible, exercise, onClose, onSave, insets }) {
+function EditExerciseModal({ visible, ex, onSave, onClose }) {
     const [sets, setSets] = useState("");
-    const [work, setWork] = useState("");
-    const [rest, setRest] = useState("");
+    const [reps, setReps] = useState("");
+    const [restTimeSec, setRestTimeSec] = useState("");
 
-    React.useEffect(() => {
-        if (exercise) {
-            setSets(exercise.sets.toString());
-            setWork(exercise.activeTimeSec.toString());
-            setRest(exercise.restTimeSec.toString());
+    useEffect(() => {
+        if (ex) {
+            setSets(String(ex.sets));
+            setReps(String(ex.reps || ex.activeTimeSec));
+            setRestTimeSec(String(ex.restTimeSec));
         }
-    }, [exercise]);
-
-    const isReps = exercise?.type === "reps" || (exercise?.type !== "timer" && exercise?.name.toLowerCase() !== "plank");
+    }, [ex]);
 
     const handleSave = () => {
-        onSave({
-            sets: parseInt(sets) || exercise.sets,
-            activeTimeSec: parseInt(work) || exercise.activeTimeSec,
-            restTimeSec: parseInt(rest) || exercise.restTimeSec,
-        });
+        const s = parseInt(sets) || ex.sets;
+        const r = parseInt(reps) || ex.reps;
+        const rt = parseInt(restTimeSec) || ex.restTimeSec;
+        onSave({ ...ex, sets: s, reps: r, restTimeSec: rt });
     };
 
-    if (!exercise) return null;
+    if (!ex) return null;
 
     return (
-        <Modal visible={visible} transparent animationType="slide">
+        <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
             <View style={styles.modalOverlay}>
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === "ios" ? "padding" : "height"}
-                    style={styles.modalContent}
-                >
+                <View style={styles.modalContent}>
                     <View style={styles.modalHeader}>
-                        <Text style={styles.modalTitle}>Customize Protocol</Text>
-                        <TouchableOpacity onPress={onClose}>
-                            <Ionicons name="close" size={24} color={COLORS.text} />
+                        <Text style={styles.modalTitle}>EDIT TARGETS</Text>
+                        <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                            <Ionicons name="close" size={20} color={COLORS.textSub} />
                         </TouchableOpacity>
                     </View>
-
-                    <Text style={styles.modalExName}>{exercise.name}</Text>
+                    <Text style={styles.modalExName}>{ex.name}</Text>
 
                     <View style={styles.inputGrid}>
                         <View style={styles.inputBox}>
@@ -206,47 +198,47 @@ function EditModal({ visible, exercise, onClose, onSave, insets }) {
                                 style={styles.input}
                                 value={sets}
                                 onChangeText={setSets}
-                                keyboardType="numeric"
-                                placeholderTextColor={COLORS.textMuted}
+                                keyboardType="number-pad"
+                                selectTextOnFocus
                             />
                         </View>
                         <View style={styles.inputBox}>
-                            <Text style={styles.inputLabel}>{isReps ? "REPS" : "WORK (S)"}</Text>
+                            <Text style={styles.inputLabel}>REPS / SEC</Text>
                             <TextInput
                                 style={styles.input}
-                                value={work}
-                                onChangeText={setWork}
-                                keyboardType="numeric"
-                                placeholderTextColor={COLORS.textMuted}
+                                value={reps}
+                                onChangeText={setReps}
+                                keyboardType="number-pad"
+                                selectTextOnFocus
                             />
                         </View>
                         <View style={styles.inputBox}>
                             <Text style={styles.inputLabel}>REST (S)</Text>
                             <TextInput
                                 style={styles.input}
-                                value={rest}
-                                onChangeText={setRest}
-                                keyboardType="numeric"
-                                placeholderTextColor={COLORS.textMuted}
+                                value={restTimeSec}
+                                onChangeText={setRestTimeSec}
+                                keyboardType="number-pad"
+                                selectTextOnFocus
                             />
                         </View>
                     </View>
 
-                    <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-                        <Text style={styles.saveBtnText}>Apply Changes</Text>
+                    <TouchableOpacity style={styles.saveBtn} onPress={handleSave} activeOpacity={0.8}>
+                        <Text style={styles.saveBtnText}>Update Protocol</Text>
                     </TouchableOpacity>
-                    <View style={{ height: insets.bottom }} />
-                </KeyboardAvoidingView>
+                </View>
             </View>
         </Modal>
     );
 }
+
 function MetaItem({ icon, val, label, accent }) {
     return (
         <View style={styles.metaItem}>
-            <Ionicons name={icon} size={14} color={accent ? COLORS.primary : COLORS.textSub} />
+            <Ionicons name={icon} size={14} color={accent ? COLORS.accent : COLORS.textSub} />
             <View style={styles.metaInfo}>
-                <Text style={[styles.metaVal, accent && { color: COLORS.primary }]} adjustsFontSizeToFit numberOfLines={1}>{val}</Text>
+                <Text style={[styles.metaVal, accent && { color: COLORS.text }]} adjustsFontSizeToFit numberOfLines={1}>{val}</Text>
                 <Text style={styles.metaLabel} adjustsFontSizeToFit numberOfLines={1}>{label}</Text>
             </View>
         </View>
@@ -258,80 +250,50 @@ function ExerciseRow({ ex, index, total, expanded, onPress, onEdit, dayTarget })
     const numLabel = String(index + 1).padStart(2, '0');
 
     return (
-        <TouchableOpacity
-            style={styles.exRow}
-            onPress={onPress}
-            activeOpacity={0.75}
-        >
-            {/* ── Collapsed Row ── */}
-            <View style={styles.exRowHeader}>
-                {/* Left: number */}
+        <View style={styles.exRow}>
+            <TouchableOpacity style={styles.exRowHeader} onPress={onPress} activeOpacity={0.7}>
                 <Text style={styles.exRowNum}>{numLabel}</Text>
-
-                {/* Centre: name + meta */}
                 <View style={styles.exRowInfo}>
-                    <Text style={styles.exRowName} numberOfLines={2}>{ex.name}</Text>
+                    <Text style={styles.exRowName}>{ex.name}</Text>
                     <View style={styles.exRowMeta}>
+                        <Text style={styles.exRowMetaText}>{ex.sets} sets</Text>
+                        <Text style={styles.exRowDot}> · </Text>
                         <Text style={styles.exRowMetaText}>
-                            {ex.primaryTarget}
-                            <Text style={styles.exRowDot}> · </Text>
-                            {ex.equipment}
+                            {isReps ? `${ex.reps || 12} reps` : `${ex.activeTimeSec}s`}
                         </Text>
+                        <Text style={styles.exRowDot}> · </Text>
+                        <Text style={styles.exRowMetaText}>{ex.restTimeSec}s rest</Text>
                     </View>
                 </View>
-
-                {/* Right: chips + controls */}
                 <View style={styles.exRowRight}>
-                    {/* Rep / Work chip */}
                     <View style={styles.chipPill}>
-                        <Text style={styles.chipPillText}>
-                            {isReps ? `${ex.repRange || '12-15'} reps` : `${ex.activeTimeSec}s`}
-                        </Text>
+                        <Text style={styles.chipPillText}>{ex.sets} × {isReps ? `${ex.reps || 12}r` : `${ex.activeTimeSec}s`}</Text>
                     </View>
-                    {/* Rest chip */}
-                    <View style={[styles.chipPill, styles.chipPillMuted]}>
-                        <Text style={[styles.chipPillText, { color: COLORS.textMuted }]}>{ex.restTimeSec}s rest</Text>
-                    </View>
-                    {/* Controls row */}
                     <View style={styles.exRowControls}>
-                        <TouchableOpacity
-                            style={styles.editBtnSmall}
-                            onPress={(e) => {
-                                e.stopPropagation();
-                                onEdit();
-                            }}
-                        >
-                            <Ionicons name="options-outline" size={12} color={COLORS.textSub} />
+                        <TouchableOpacity style={styles.editBtnSmall} onPress={onEdit} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                            <Ionicons name="pencil" size={12} color={COLORS.textSub} />
                         </TouchableOpacity>
-                        <Ionicons
-                            name={expanded ? "chevron-up" : "chevron-down"}
-                            size={14}
-                            color={COLORS.textSub}
-                        />
+                        <Ionicons name={expanded ? "chevron-up" : "chevron-down"} size={16} color={COLORS.textSub} />
                     </View>
                 </View>
-            </View>
+            </TouchableOpacity>
 
-            {/* ── Expanded ── */}
             {expanded && (
                 <View style={styles.exExpanded}>
-                    {ex.image && (
-                        <View style={styles.exImgBox}>
-                            <Image source={ex.image} style={styles.exImg} resizeMode="cover" />
-                            <LinearGradient colors={["transparent", "rgba(10,10,11,0.8)"]} style={styles.exImgGrad} />
-                            <View style={styles.exImgBadge}>
-                                <Text style={styles.exImgBadgeText}>{ex.equipment}</Text>
-                            </View>
+                    <View style={styles.exImgBox}>
+                        <Image source={{ uri: ex.image }} style={styles.exImg} resizeMode="cover" />
+                        <LinearGradient colors={["transparent", "rgba(10,10,11,0.9)"]} style={styles.exImgGrad} />
+                        <View style={styles.exImgBadge}>
+                            <Text style={styles.exImgBadgeText}>{dayTarget}</Text>
                         </View>
-                    )}
+                    </View>
 
-                    {/* Sets grid */}
                     <View style={styles.setsGrid}>
                         {Array.from({ length: ex.sets }).map((_, i) => (
                             <View key={i} style={styles.setCell}>
-                                <Text style={styles.setCellLabel}>SET {String(i + 1).padStart(2, '0')}</Text>
+                                <Text style={styles.setCellLabel}>SET {i + 1}</Text>
                                 <Text style={styles.setCellWork}>
-                                    {isReps ? (ex.repRange || '12-15') : (ex.activeTimeSec + 's')}
+                                    {isReps ? `${ex.reps || 12}r` : `${ex.activeTimeSec}s`}
                                 </Text>
                                 {i < ex.sets - 1 && <Text style={styles.setCellRest}>{ex.restTimeSec}s rest</Text>}
                             </View>
@@ -340,14 +302,14 @@ function ExerciseRow({ ex, index, total, expanded, onPress, onEdit, dayTarget })
 
                     {ex.unilateral && (
                         <View style={styles.noteRow}>
-                            <Ionicons name="swap-horizontal" size={16} color={COLORS.primary} />
+                            <Ionicons name="swap-horizontal" size={16} color={COLORS.textSub} />
                             <Text style={styles.noteText}>Bilateral: Timers run independently</Text>
                         </View>
                     )}
 
                     {getSuggestedWeight(ex.name) ? (
                         <View style={[styles.noteRow, { borderColor: COLORS.border, backgroundColor: COLORS.bg, marginBottom: 20 }]}>
-                            <Ionicons name="trending-up-outline" size={16} color={COLORS.primary} />
+                            <Ionicons name="trending-up-outline" size={16} color={COLORS.textSub} />
                             <Text style={[styles.noteText, { color: COLORS.text }]}>
                                 Suggested Weight: <Text style={{ fontFamily: FAMILY.monoBold, color: COLORS.text }}>{getSuggestedWeight(ex.name)}</Text>
                             </Text>
@@ -364,7 +326,7 @@ function ExerciseRow({ ex, index, total, expanded, onPress, onEdit, dayTarget })
                     ))}
                 </View>
             )}
-        </TouchableOpacity>
+        </View>
     );
 }
 
@@ -427,7 +389,7 @@ const styles = StyleSheet.create({
         overflow: "hidden",
     },
     exRowHeader: { flexDirection: "row", alignItems: "center", gap: 12 },
-    exRowNum: { width: 24, fontSize: 12, color: COLORS.primary, fontFamily: FAMILY.monoBold },
+    exRowNum: { width: 24, fontSize: 12, color: COLORS.textSub, fontFamily: FAMILY.monoBold },
     exRowInfo: { flex: 1, minWidth: 0 },
     exRowName: { fontSize: 15, fontFamily: FAMILY.semibold, color: COLORS.text, letterSpacing: -0.2 },
     exRowMeta: { flexDirection: "row", marginTop: 4 },
@@ -478,7 +440,7 @@ const styles = StyleSheet.create({
 
     formLabel: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.text, marginBottom: 12 },
     tipRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 10 },
-    tipDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: COLORS.primary, marginTop: 8 },
+    tipDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: COLORS.textSub, marginTop: 8 },
     tipText: { fontSize: 13, color: COLORS.textSub, flex: 1, lineHeight: 20, fontFamily: FAMILY.regular },
 
     // Edit Modal Styles

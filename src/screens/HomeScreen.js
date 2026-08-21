@@ -42,7 +42,7 @@ function totalTime(day) {
 
 function getMuscleColor(target) {
     const t = target.toUpperCase();
-    if (t.includes("CHEST") || t.includes("TRICEPS") || t.includes("PUSH")) return COLORS.primary; // Crimson
+    if (t.includes("CHEST") || t.includes("TRICEPS") || t.includes("PUSH")) return COLORS.accent; // Titanium Silver
     if (t.includes("BACK") || t.includes("BICEPS") || t.includes("PULL")) return "#FF9500"; // Gold
     if (t.includes("LEGS") || t.includes("QUADS") || t.includes("LOWER")) return "#D1D1D1"; // Silver/Titanium
     if (t.includes("SHOULDERS") || t.includes("CORE") || t.includes("ARMS")) return "#30B0C7"; // Steel teal
@@ -238,12 +238,12 @@ const renderSvgChart = (weeklyData) => {
                 <Svg width={chartWidth} height={chartHeight}>
                     <Defs>
                         <SvgGradient id="chartGlow" x1="0" y1="0" x2="0" y2="1">
-                            <Stop offset="0%" stopColor={COLORS.primary} stopOpacity="0.4" />
-                            <Stop offset="100%" stopColor={COLORS.primary} stopOpacity="0.0" />
+                            <Stop offset="0%" stopColor={COLORS.accent} stopOpacity="0.25" />
+                            <Stop offset="100%" stopColor={COLORS.accent} stopOpacity="0.0" />
                         </SvgGradient>
                         <SvgGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
-                            <Stop offset="0%" stopColor={COLORS.primary} />
-                            <Stop offset="100%" stopColor="#FF4D4D" />
+                            <Stop offset="0%" stopColor={COLORS.accent} />
+                            <Stop offset="100%" stopColor={COLORS.text} />
                         </SvgGradient>
                     </Defs>
 
@@ -272,7 +272,7 @@ const renderSvgChart = (weeklyData) => {
                             d={d}
                             fill="none"
                             stroke="url(#lineGrad)"
-                            strokeWidth={3}
+                            strokeWidth={2.5}
                         />
                     )}
 
@@ -282,15 +282,15 @@ const renderSvgChart = (weeklyData) => {
                             <Circle
                                 cx={p.x}
                                 cy={p.y}
-                                r={4}
+                                r={3.5}
                                 fill="#FFFFFF"
                             />
                             <Circle
                                 cx={p.x}
                                 cy={p.y}
-                                r={8}
-                                fill={COLORS.primary}
-                                fillOpacity={0.3}
+                                r={7}
+                                fill={COLORS.accent}
+                                fillOpacity={0.2}
                             />
                             <SvgText
                                 x={p.x}
@@ -578,7 +578,7 @@ export default function HomeScreen({ navigation, route }) {
                         contentContainerStyle={styles.hudShortcutBarContent}
                     >
                         <TouchableOpacity style={styles.hudShortcutBtn} onPress={() => navigation.navigate("AICoach")} activeOpacity={0.7}>
-                            <Ionicons name="sparkles" size={13} color={COLORS.primary} style={{ marginRight: 6 }} />
+                            <Ionicons name="sparkles" size={13} color={COLORS.textSub} style={{ marginRight: 6 }} />
                             <Text style={[styles.hudShortcutBtnText, { color: COLORS.text }]}>Coach</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.hudShortcutBtn} onPress={() => navigation.navigate("History")} activeOpacity={0.7}>
@@ -742,7 +742,7 @@ export default function HomeScreen({ navigation, route }) {
                                             <View style={styles.segmentBg} />
                                             {fillWidth > 0 && (
                                                 <View
-                                                    style={[styles.segmentFill, { width: `${fillWidth}%`, backgroundColor: COLORS.primary }]}
+                                                    style={[styles.segmentFill, { width: `${fillWidth}%`, backgroundColor: COLORS.accent }]}
                                                 />
                                             )}
                                         </View>
@@ -776,7 +776,7 @@ export default function HomeScreen({ navigation, route }) {
                         >
                             <View style={styles.streakIntelligenceLeft}>
                                 <View style={styles.streakIconContainer}>
-                                    <Ionicons name="flame" size={16} color={COLORS.primary} />
+                                    <Ionicons name="flame" size={16} color={COLORS.text} />
                                 </View>
                                 <Text style={styles.streakTierName}>
                                     {tierInfo.name}
@@ -821,7 +821,7 @@ export default function HomeScreen({ navigation, route }) {
                                                         isToday && !isCompleted && !isDayFrozen && <View style={styles.gridCellTodayDot} />
                                                     )}
                                                 </View>
-                                                <Text style={[styles.gridCellLabel, isToday && { color: COLORS.primary, fontFamily: FAMILY.bold }]}>{label[0]}</Text>
+                                                <Text style={[styles.gridCellLabel, isToday && { color: COLORS.text, fontFamily: FAMILY.bold }]}>{label[0]}</Text>
                                             </View>
                                         );
                                     })}
@@ -973,7 +973,7 @@ export default function HomeScreen({ navigation, route }) {
                 <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
                     <View style={styles.footerDivider} />
                     <Text style={styles.footerVersion}>CONQUER ONE · {APP_VERSION}</Text>
-                    <Text style={styles.footerAuthor}>BUILT FOR PERFORMANCE BY <Text style={{ color: COLORS.primary }}>VIVASWAN SHETTY</Text></Text>
+                    <Text style={styles.footerAuthor}>BUILT FOR PERFORMANCE BY <Text style={{ color: COLORS.textSub }}>VIVASWAN SHETTY</Text></Text>
                 </View>
             </Animated.ScrollView>
 
@@ -1046,18 +1046,18 @@ export default function HomeScreen({ navigation, route }) {
 
                         <View style={styles.resetModalHeader}>
                             <View style={styles.brokenFlameCircle}>
-                                <Ionicons name="flame" size={38} color={COLORS.primary} />
+                                <Ionicons name="flame" size={38} color={COLORS.textSub} />
                             </View>
                             <Text style={styles.resetStatus}>STREAK RESET</Text>
                             <Text style={styles.resetTitle}>DISCIPLINE INTERRUPTED</Text>
                         </View>
 
                         <Text style={styles.resetDesc}>
-                            Your consecutive <Text style={{ color: COLORS.primary, fontFamily: FAMILY.bold }}>{prevStreak}-day</Text> workout streak has been broken. The protocol requires daily consistency to conquer.
+                            Your consecutive <Text style={{ color: COLORS.text, fontFamily: FAMILY.bold }}>{prevStreak}-day</Text> workout streak has been broken. The protocol requires daily consistency to conquer.
                         </Text>
 
                         <View style={styles.warningBadge}>
-                            <Ionicons name="alert-circle-outline" size={14} color={COLORS.primary} />
+                            <Ionicons name="alert-circle-outline" size={14} color={COLORS.textSub} />
                             <Text style={styles.warningBadgeText}>STREAK CLASSIFIED: 0 DAYS</Text>
                         </View>
 
@@ -1324,7 +1324,7 @@ function MomentsGallery({ streak, total, profile = null }) {
             sub: '100 SESSIONS OF POWER',
             desc: "One hundred sessions. A monumental feat of human willpower. You have reconstructed yourself through pure iron and sweat. You are part of the elite 1% who never quit. Legend status.",
             icon: 'trending-up',
-            color: COLORS.primary,
+            color: COLORS.accent,
             show: total >= 100
         },
         {
@@ -1363,7 +1363,7 @@ function MomentsGallery({ streak, total, profile = null }) {
                 sub: `HAPPY BIRTHDAY, ${profile?.fullName?.split(" ")[0] || "ATHLETE"}!`,
                 desc: "A new year of life means a new year of strength. Today we celebrate the discipline you bring to every facet of your life. Take this energy into your next decade of performance. Have an incredible day!",
                 icon: 'gift',
-                color: COLORS.primary,
+                color: COLORS.accent,
                 show: true
             });
         }
@@ -1736,8 +1736,8 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     gridCellCompleted: {
-        borderColor: COLORS.primary,
-        backgroundColor: COLORS.primary,
+        borderColor: COLORS.textSub,
+        backgroundColor: "rgba(237, 234, 227, 0.2)",
     },
     gridCellFrozen: {
         borderColor: COLORS.border,
@@ -1898,8 +1898,8 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     tierRowActive: {
-        borderColor: COLORS.primary,
-        backgroundColor: "rgba(122, 46, 34, 0.08)",
+        borderColor: COLORS.border,
+        backgroundColor: "rgba(237, 234, 227, 0.06)",
     },
     tierRowName: {
         fontFamily: FAMILY.semibold,
@@ -1960,7 +1960,9 @@ const styles = StyleSheet.create({
         paddingHorizontal: 14,
         height: 38,
         borderRadius: RADIUS.card,
-        backgroundColor: COLORS.primary,
+        backgroundColor: COLORS.bgCard,
+        borderWidth: 1,
+        borderColor: COLORS.border,
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
@@ -2074,15 +2076,15 @@ const styles = StyleSheet.create({
         overflow: "hidden",
     },
     weekCellActive: {
-        backgroundColor: "rgba(122, 46, 34, 0.08)",
-        borderColor: COLORS.primary,
+        backgroundColor: "rgba(237, 234, 227, 0.06)",
+        borderColor: COLORS.border,
     },
     weekDay: { fontSize: 11, fontFamily: FAMILY.mono, color: COLORS.textMuted },
     weekDayActive: { color: COLORS.text },
     weekTarget: { fontSize: 12, color: COLORS.text, fontFamily: FAMILY.medium, textAlign: "center", width: "100%" },
     activeIndicator: {
         position: "absolute", bottom: 8, width: 4, height: 4,
-        borderRadius: 2, backgroundColor: COLORS.primary
+        borderRadius: 2, backgroundColor: COLORS.accent
     },
 
     // Library List Items
@@ -2097,7 +2099,7 @@ const styles = StyleSheet.create({
     },
     dayRowLeft: { flex: 1 },
     dayNumRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
-    dayNum: { fontSize: 10, fontFamily: FAMILY.monoBold, color: COLORS.primary },
+    dayNum: { fontSize: 10, fontFamily: FAMILY.monoBold, color: COLORS.textSub },
     muscleBadge: { backgroundColor: "rgba(237, 234, 227, 0.05)", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
     muscleBadgeText: { fontSize: 8, fontFamily: FAMILY.medium, color: COLORS.textSub },
     dayTargetTitle: { fontSize: 17, fontFamily: FAMILY.semibold, color: COLORS.text, letterSpacing: -0.2 },
@@ -2187,11 +2189,11 @@ const styles = StyleSheet.create({
         borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bgCard,
     },
     brokenFlameCircle: {
-        width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(122, 46, 34, 0.15)',
+        width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(255, 255, 255, 0.05)',
         alignItems: 'center', justifyContent: 'center', marginBottom: 16,
         borderWidth: 1, borderColor: COLORS.border,
     },
-    resetStatus: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.primary, letterSpacing: 2, marginBottom: 6 },
+    resetStatus: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 2, marginBottom: 6 },
     resetTitle: { fontSize: 18, fontFamily: FAMILY.display, color: COLORS.text, textAlign: 'center', lineHeight: 22 },
     resetDesc: {
         fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textSub,
@@ -2199,10 +2201,10 @@ const styles = StyleSheet.create({
     },
     warningBadge: {
         flexDirection: 'row', alignItems: 'center', gap: 6,
-        backgroundColor: 'rgba(122, 46, 34, 0.1)', paddingHorizontal: 12, paddingVertical: 6,
+        backgroundColor: 'rgba(255, 255, 255, 0.03)', paddingHorizontal: 12, paddingVertical: 6,
         borderRadius: RADIUS.pill, marginBottom: 24, borderWidth: 1, borderColor: COLORS.border
     },
-    warningBadgeText: { fontSize: 10, fontFamily: FAMILY.medium, color: COLORS.primary },
+    warningBadgeText: { fontSize: 10, fontFamily: FAMILY.medium, color: COLORS.textSub },
     resetCloseBtn: {
         width: '100%', height: 48, borderRadius: RADIUS.card, backgroundColor: COLORS.primary,
         alignItems: 'center', justifyContent: 'center',

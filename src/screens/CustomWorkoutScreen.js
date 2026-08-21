@@ -111,7 +111,7 @@ export default function CustomWorkoutScreen({ navigation }) {
                 <View style={[styles.fab, { paddingBottom: insets.bottom + 20 }]}>
                     <TouchableOpacity style={styles.fabBtn} onPress={handleStart} activeOpacity={0.9}>
                         <Text style={styles.fabText}>INITIATE {selected.size} PROTOCOLS</Text>
-                        <Ionicons name="play" size={16} color="#000" />
+                        <Ionicons name="play" size={16} color={COLORS.text} />
                     </TouchableOpacity>
                 </View>
             )}
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
     },
     fabBtn: {
         flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12,
-        backgroundColor: COLORS.text, paddingVertical: 18, borderRadius: 16,
+        backgroundColor: COLORS.primary, paddingVertical: 18, borderRadius: 16,
     },
-    fabText: { fontSize: 12, fontFamily: FAMILY.bold, color: "#000", letterSpacing: 2 },
+    fabText: { fontSize: 12, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 2 },
 });

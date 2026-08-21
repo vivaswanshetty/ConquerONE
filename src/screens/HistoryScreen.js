@@ -95,20 +95,20 @@ function LineChart({ data }) {
             <Svg width={CHART_W} height={CHART_H + 20}>
                 <Defs>
                     <SvgGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                        <Stop offset="0" stopColor={COLORS.primary} stopOpacity="0.15" />
-                        <Stop offset="1" stopColor={COLORS.primary} stopOpacity="0.0" />
+                        <Stop offset="0" stopColor={COLORS.accent} stopOpacity="0.2" />
+                        <Stop offset="1" stopColor={COLORS.accent} stopOpacity="0.0" />
                     </SvgGradient>
                 </Defs>
                 <Path d={areaPath} fill="url(#areaGrad)" />
                 <Polyline
                     points={polyPoints}
                     fill="none"
-                    stroke={COLORS.primary}
+                    stroke={COLORS.accent}
                     strokeWidth={2}
                     strokeLinejoin="round"
                     strokeLinecap="round"
                 />
-                <Circle cx={pts[pts.length - 1].x} cy={pts[pts.length - 1].y} r={4} fill={COLORS.primary} />
+                <Circle cx={pts[pts.length - 1].x} cy={pts[pts.length - 1].y} r={3.5} fill={COLORS.text} />
             </Svg>
             <View style={lc.labels}>
                 {pts.map((p, i) => (
@@ -136,7 +136,7 @@ function BreakdownBar({ day, count, max }) {
         <View style={bb.row}>
             <Text style={bb.label}>{day.target.split(" ")[0].toUpperCase()}</Text>
             <View style={bb.track}>
-                <View style={[bb.fill, { width: `${pct * 100}%`, backgroundColor: COLORS.primary }]} />
+                <View style={[bb.fill, { width: `${pct * 100}%`, backgroundColor: COLORS.accent }]} />
             </View>
             <View style={bb.countBox}>
                 <Text style={bb.count}>{count}</Text>
@@ -182,7 +182,7 @@ const pr_s = StyleSheet.create({
     target: { fontSize: 13, fontFamily: FAMILY.semibold, color: COLORS.text },
     date: { fontSize: 10, color: COLORS.textMuted, marginTop: 2, fontFamily: FAMILY.mono },
     right: { alignItems: "flex-end" },
-    duration: { fontSize: 15, fontFamily: FAMILY.monoBold, color: COLORS.primary },
+    duration: { fontSize: 15, fontFamily: FAMILY.monoBold, color: COLORS.text },
     label: { fontSize: 10, fontFamily: FAMILY.regular, color: COLORS.textSub, marginTop: 2 },
 });
 
@@ -201,7 +201,7 @@ function HistoryRow({ entry, isLast }) {
             activeOpacity={hasExercises ? 0.7 : 1}
         >
             <View style={[hr.row, isLast && !expanded && { borderBottomWidth: 0 }]}>
-                <View style={[hr.indicator, expanded && { backgroundColor: COLORS.primary, opacity: 1 }]} />
+                <View style={[hr.indicator, expanded && { backgroundColor: COLORS.accent, opacity: 1 }]} />
                 <View style={hr.left}>
                     <Text style={hr.target}>{entry.target}</Text>
                     <Text style={hr.date}>{dateStr} · {timeStr}</Text>
@@ -458,14 +458,14 @@ export default function HistoryScreen({ navigation }) {
                     <View style={styles.statsLeft}>
                         <View style={styles.statSmall}>
                             <View style={styles.statSmallTop}>
-                                <Ionicons name="flame" size={14} color={COLORS.primary} />
+                                <Ionicons name="flame" size={14} color={COLORS.textSub} />
                                 <Text style={styles.statLabel}>STREAK</Text>
                             </View>
                             <Text style={styles.statValue}>{streak}D</Text>
                         </View>
                         <View style={styles.statSmall}>
                             <View style={styles.statSmallTop}>
-                                <Ionicons name="fitness-outline" size={14} color={COLORS.primary} />
+                                <Ionicons name="fitness-outline" size={14} color={COLORS.textSub} />
                                 <Text style={styles.statLabel}>SESSIONS</Text>
                             </View>
                             <Text style={styles.statValue}>{total}</Text>
@@ -473,7 +473,7 @@ export default function HistoryScreen({ navigation }) {
                     </View>
                     <View style={styles.statLarge}>
                         <View style={styles.statSmallTop}>
-                            <Ionicons name="time" size={16} color={COLORS.primary} />
+                            <Ionicons name="time" size={16} color={COLORS.textSub} />
                             <Text style={styles.statLabel}>TOTAL DURATION</Text>
                         </View>
                         <Text style={[styles.statValue, { fontSize: 34 }]}>{totalMin}m</Text>

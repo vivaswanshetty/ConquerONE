@@ -484,7 +484,7 @@ export default function ProfileScreen({ navigation }) {
                     <Ionicons name="chevron-back" size={22} color={COLORS.text} />
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.7}>
-                    <Ionicons name="log-out-outline" size={18} color={COLORS.primary} />
+                    <Ionicons name="log-out-outline" size={18} color={COLORS.textSub} />
                 </TouchableOpacity>
             </View>
 
@@ -507,7 +507,7 @@ export default function ProfileScreen({ navigation }) {
                             {
                                 transform: [{ scale: ringAnim1 }],
                                 opacity: ringAnim1.interpolate({ inputRange: [1, 1.18], outputRange: [0.6, 0.15] }),
-                                borderColor: COLORS.primary
+                                borderColor: COLORS.accent
                             }
                         ]} />
                     </View>
@@ -568,11 +568,11 @@ export default function ProfileScreen({ navigation }) {
 
                     <View style={styles.heroBadges}>
                         <LinearGradient
-                            colors={['rgba(227,30,36,0.12)', 'rgba(227,30,36,0.04)']}
+                            colors={['rgba(255,255,255,0.05)', 'transparent']}
                             start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                             style={styles.rankBadge}
                         >
-                            <Ionicons name="flash" size={10} color={COLORS.primary} />
+                            <Ionicons name="flash" size={10} color={COLORS.accent} />
                             <Text style={styles.rankBadgeText}>{rank.label}</Text>
                         </LinearGradient>
                         <View style={styles.dateBadge}>
@@ -593,11 +593,11 @@ export default function ProfileScreen({ navigation }) {
                         }}
                     >
                         <LinearGradient
-                            colors={["rgba(227,30,36,0.06)", "transparent"]}
+                            colors={["rgba(255,255,255,0.03)", "transparent"]}
                             style={StyleSheet.absoluteFill}
                         />
                         <View style={styles.statIconWrap}>
-                            <Ionicons name="flame" size={16} color={COLORS.primary} />
+                            <Ionicons name="flame" size={16} color={COLORS.text} />
                         </View>
                         <Text style={styles.statValue}>{streak}</Text>
                         <Text style={styles.statLabel}>DAY STREAK</Text>
@@ -647,15 +647,15 @@ export default function ProfileScreen({ navigation }) {
                         <View style={styles.detailContent}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.xs }}>
                                 <Text style={[styles.detailValue, { flexShrink: 1 }]} numberOfLines={1}>{email}</Text>
-                                <View style={[styles.verifiedBadge, { backgroundColor: user?.emailVerified ? 'rgba(255,255,255,0.05)' : 'rgba(227,30,36,0.06)', borderColor: user?.emailVerified ? 'rgba(255,255,255,0.1)' : 'rgba(227,30,36,0.2)' }]}>
+                                <View style={[styles.verifiedBadge, { backgroundColor: user?.emailVerified ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.03)', borderColor: user?.emailVerified ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.08)' }]}>
                                     <Animated.View style={[
                                         styles.verifiedDot,
                                         {
-                                            backgroundColor: user?.emailVerified ? '#FFF' : COLORS.primary,
+                                            backgroundColor: user?.emailVerified ? '#FFF' : COLORS.textSub,
                                             opacity: user?.emailVerified ? 1 : liveDotOpacity
                                         }
                                     ]} />
-                                    <Text style={[styles.verifiedText, { color: user?.emailVerified ? '#FFF' : COLORS.primary }]}>
+                                    <Text style={[styles.verifiedText, { color: user?.emailVerified ? '#FFF' : COLORS.textSub }]}>
                                         {user?.emailVerified ? "VERIFIED" : "UNVERIFIED"}
                                     </Text>
                                 </View>
@@ -810,7 +810,7 @@ export default function ProfileScreen({ navigation }) {
                 <View style={styles.footerSection}>
                     <View style={styles.footerDivider} />
                     <Text style={styles.footerBrand}>CONQUER ONE</Text>
-                    <Text style={styles.footerAuthor}>by <Text style={{ color: COLORS.primary }}>Vivaswan Shetty</Text></Text>
+                    <Text style={styles.footerAuthor}>by <Text style={{ color: COLORS.accent }}>Vivaswan Shetty</Text></Text>
                     <Text style={styles.version}>{APP_VERSION}</Text>
                 </View>
 
@@ -846,9 +846,9 @@ const styles = StyleSheet.create({
     },
     logoutBtn: {
         width: 44, height: 44, borderRadius: 22,
-        backgroundColor: "rgba(227,30,36,0.05)",
+        backgroundColor: "rgba(255,255,255,0.03)",
         alignItems: "center", justifyContent: "center",
-        borderWidth: 1, borderColor: "rgba(227,30,36,0.15)",
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
     },
     scroll: { paddingBottom: 40 },
 
@@ -879,7 +879,7 @@ const styles = StyleSheet.create({
         padding: 3,
         borderRadius: 60,
         borderWidth: 2,
-        borderColor: 'rgba(227,30,36,0.22)',
+        borderColor: 'rgba(255,255,255,0.1)',
     },
     avatarBg: {
         width: 110, height: 110, borderRadius: 55,
@@ -921,10 +921,10 @@ const styles = StyleSheet.create({
     rankBadge: {
         flexDirection: "row", alignItems: "center", gap: 6,
         paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20,
-        borderWidth: 1, borderColor: "rgba(227,30,36,0.18)",
-        backgroundColor: "rgba(227,30,36,0.03)",
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
+        backgroundColor: "rgba(255,255,255,0.03)",
     },
-    rankBadgeText: { fontSize: 9, fontFamily: FAMILY.mBold, color: COLORS.primary, letterSpacing: 1 },
+    rankBadgeText: { fontSize: 9, fontFamily: FAMILY.mBold, color: COLORS.text, letterSpacing: 1 },
     dateBadge: {
         flexDirection: "row", alignItems: "center", gap: 5,
         paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20,
@@ -944,7 +944,7 @@ const styles = StyleSheet.create({
         overflow: "hidden",
     },
     statCardActive: {
-        borderColor: "rgba(227,30,36,0.22)",
+        borderColor: "rgba(255,255,255,0.12)",
         backgroundColor: "rgba(13,13,13,0.75)",
     },
     statIconWrap: {
@@ -1103,21 +1103,21 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(255,255,255,0.02)",
         borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
     },
-    choiceBtnActive: { backgroundColor: "rgba(227,30,36,0.08)", borderColor: "rgba(227,30,36,0.22)" },
+    choiceBtnActive: { backgroundColor: "rgba(237,234,227,0.08)", borderColor: COLORS.border },
     choiceBtnText: { fontSize: 10, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 0.5 },
-    choiceBtnTextActive: { color: COLORS.primary },
+    choiceBtnTextActive: { color: COLORS.text },
     modalBtns: { flexDirection: "row", gap: 12 },
     modalCancelBtn: { flex: 1, paddingVertical: 16, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.03)", alignItems: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.05)" },
     modalCancelText: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 1 },
     modalSaveBtn: { flex: 2, paddingVertical: 16, borderRadius: 16, backgroundColor: COLORS.primary, alignItems: "center" },
     modalSaveText: { fontSize: 12, fontFamily: FAMILY.accent, color: "#fff", letterSpacing: 1 },
     miniActionBtn: {
-        backgroundColor: 'rgba(227,30,36,0.06)', paddingHorizontal: 10, paddingVertical: 6,
-        borderRadius: 8, borderWidth: 1, borderColor: 'rgba(227,30,36,0.12)',
+        backgroundColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 10, paddingVertical: 6,
+        borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
     },
-    miniActionBtnText: { fontSize: 8, fontFamily: FAMILY.accent, color: COLORS.primary, letterSpacing: 0.5 },
-    miniVerifyBtn: { backgroundColor: 'rgba(227,30,36,0.06)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(227,30,36,0.12)' },
-    miniVerifyBtnText: { fontSize: 8, fontFamily: FAMILY.accent, color: COLORS.primary, letterSpacing: 0.5 },
+    miniActionBtnText: { fontSize: 8, fontFamily: FAMILY.accent, color: COLORS.text, letterSpacing: 0.5 },
+    miniVerifyBtn: { backgroundColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
+    miniVerifyBtnText: { fontSize: 8, fontFamily: FAMILY.accent, color: COLORS.text, letterSpacing: 0.5 },
     chevronAction: { paddingLeft: 12 },
     customToast: {
         position: "absolute",

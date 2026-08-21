@@ -59,7 +59,7 @@ function MarkDownText({ content, style }) {
                 });
                 if (isBullet) return (
                     <View key={idx} style={{ flexDirection: 'row', paddingLeft: 4, gap: 8 }}>
-                        <Text style={[style, { color: COLORS.primary }]}>•</Text>
+                        <Text style={[style, { color: COLORS.textSub }]}>•</Text>
                         <View style={{ flex: 1 }}><Text style={style}>{parts}</Text></View>
                     </View>
                 );
@@ -106,7 +106,7 @@ function MessageBubble({ msg, onSpeak }) {
     const isUser = msg.role === "user";
     return (
         <Animated.View style={[styles.msgRow, isUser ? styles.userRow : styles.aiRow, { opacity: fade, transform: [{ translateY: slide }] }]}>
-            {!isUser && <View style={styles.aiAvatar}><Ionicons name="flash" size={12} color={COLORS.primary} /></View>}
+            {!isUser && <View style={styles.aiAvatar}><Ionicons name="flash" size={12} color={COLORS.accent} /></View>}
             <View style={[styles.bubble, isUser ? styles.userBubble : styles.aiBubble]}>
                 <MarkDownText content={msg.content} style={[styles.msgText, isUser ? styles.userText : styles.aiText]} />
                 <View style={styles.bubbleFooter}>
@@ -226,18 +226,18 @@ function VoiceSettingsModal({ visible, voices, selectedVoice, onSelect, onClose,
                                 return (
                                     <TouchableOpacity
                                         key={voice.identifier || index}
-                                        style={[hm.rowContent, { marginHorizontal: 20, marginBottom: 8 }, isSelected && { borderColor: COLORS.primary, backgroundColor: 'rgba(227,30,36,0.05)' }]}
+                                        style={[hm.rowContent, { marginHorizontal: 20, marginBottom: 8 }, isSelected && { borderColor: COLORS.accent, backgroundColor: 'rgba(237,234,227,0.06)' }]}
                                         onPress={() => onSelect(voice.identifier)}
                                         activeOpacity={0.7}
                                     >
-                                        <View style={[hm.rowIcon, isSelected && { backgroundColor: COLORS.primary }]}>
-                                            <Ionicons name="mic-outline" size={16} color={isSelected ? "#fff" : COLORS.primary} />
+                                        <View style={[hm.rowIcon, isSelected && { backgroundColor: COLORS.accent }]}>
+                                            <Ionicons name="mic-outline" size={16} color={isSelected ? "#000" : COLORS.textSub} />
                                         </View>
                                         <View style={{ flex: 1 }}>
-                                            <Text style={[hm.rowTitle, isSelected && { color: COLORS.primary }]} numberOfLines={1}>{voice.name || 'Unknown Voice'}</Text>
+                                            <Text style={[hm.rowTitle, isSelected && { color: COLORS.text }]} numberOfLines={1}>{voice.name || 'Unknown Voice'}</Text>
                                             <Text style={hm.rowDate}>{(voice.language || '??').toUpperCase()} · {(voice.quality || 'Standard').toUpperCase()}</Text>
                                         </View>
-                                        {isSelected && <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />}
+                                        {isSelected && <Ionicons name="checkmark-circle" size={20} color={COLORS.accent} />}
                                     </TouchableOpacity>
                                 );
                             })
@@ -255,7 +255,7 @@ function VoiceSettingsModal({ visible, voices, selectedVoice, onSelect, onClose,
                                         onPress={() => onPitchChange(p.value)}
                                         activeOpacity={0.7}
                                     >
-                                        <Ionicons name={p.icon} size={14} color={isActive ? COLORS.primary : COLORS.textMuted} />
+                                        <Ionicons name={p.icon} size={14} color={isActive ? COLORS.accent : COLORS.textMuted} />
                                         <Text style={[vmStyles.presetLabel, isActive && vmStyles.presetLabelActive]}>{p.label}</Text>
                                     </TouchableOpacity>
                                 );
@@ -274,7 +274,7 @@ function VoiceSettingsModal({ visible, voices, selectedVoice, onSelect, onClose,
                                         onPress={() => onRateChange(r.value)}
                                         activeOpacity={0.7}
                                     >
-                                        <Ionicons name={r.icon} size={14} color={isActive ? COLORS.primary : COLORS.textMuted} />
+                                        <Ionicons name={r.icon} size={14} color={isActive ? COLORS.accent : COLORS.textMuted} />
                                         <Text style={[vmStyles.presetLabel, isActive && vmStyles.presetLabelActive]}>{r.label}</Text>
                                     </TouchableOpacity>
                                 );
@@ -308,14 +308,14 @@ const vmStyles = StyleSheet.create({
         borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
     },
     presetBtnActive: {
-        backgroundColor: 'rgba(227,30,36,0.08)',
-        borderColor: 'rgba(227,30,36,0.3)',
+        backgroundColor: 'rgba(237,234,227,0.08)',
+        borderColor: 'rgba(237,234,227,0.2)',
     },
     presetLabel: {
         fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1,
     },
     presetLabelActive: {
-        color: COLORS.primary,
+        color: COLORS.text,
     },
     previewBtn: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
@@ -338,13 +338,13 @@ const hm = StyleSheet.create({
     handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.15)', alignSelf: 'center', marginTop: 14, marginBottom: 20 },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24, marginBottom: 20 },
     title: { fontSize: 12, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 2 },
-    clearBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, backgroundColor: 'rgba(227,30,36,0.1)', borderWidth: 1, borderColor: 'rgba(227,30,36,0.2)' },
-    clearText: { fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 1 },
+    clearBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+    clearText: { fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.textSub, letterSpacing: 1 },
     empty: { alignItems: 'center', paddingVertical: 60 },
     emptyText: { fontSize: 13, fontFamily: FAMILY.medium, color: COLORS.textMuted },
     row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, marginBottom: 8 },
     rowContent: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
-    rowIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(227,30,36,0.1)', alignItems: 'center', justifyContent: 'center' },
+    rowIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.05)', alignItems: 'center', justifyContent: 'center' },
     rowTitle: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.text, marginBottom: 4 },
     rowDate: { fontSize: 10, fontFamily: FAMILY.medium, color: COLORS.textMuted },
     deleteBtn: { padding: 12, marginLeft: 8 },
@@ -755,8 +755,8 @@ export default function AICoachScreen({ navigation }) {
                         <Ionicons name="time-outline" size={19} color={COLORS.text} />
                     </TouchableOpacity>
                     {/* New Chat */}
-                    <TouchableOpacity style={[styles.headerBtn, { backgroundColor: 'rgba(227,30,36,0.12)', borderColor: 'rgba(227,30,36,0.2)' }]} onPress={startNewChat} activeOpacity={0.7}>
-                        <Ionicons name="add" size={20} color={COLORS.primary} />
+                    <TouchableOpacity style={[styles.headerBtn, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.08)' }]} onPress={startNewChat} activeOpacity={0.7}>
+                        <Ionicons name="add" size={20} color={COLORS.text} />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -786,7 +786,7 @@ export default function AICoachScreen({ navigation }) {
                     {messages.map(msg => <MessageBubble key={msg.id} msg={msg} onSpeak={handleSpeak} />)}
                     {loading && (
                         <View style={styles.aiRow}>
-                            <View style={styles.aiAvatar}><ActivityIndicator size="small" color={COLORS.primary} /></View>
+                            <View style={styles.aiAvatar}><ActivityIndicator size="small" color={COLORS.accent} /></View>
                             <View style={[styles.bubble, styles.aiBubble, { paddingVertical: 12 }]}>
                                 <TypingDots />
                             </View>
@@ -824,7 +824,7 @@ export default function AICoachScreen({ navigation }) {
                             <Ionicons
                                 name={isMuted ? "volume-mute" : "volume-high-outline"}
                                 size={18}
-                                color={isMuted ? COLORS.primary : COLORS.textMuted}
+                                color={isMuted ? COLORS.accent : COLORS.textMuted}
                             />
                         </TouchableOpacity>
                         <View style={styles.inputWrapper}>
@@ -897,7 +897,7 @@ const styles = StyleSheet.create({
         gap: 12,
     },
     headerCenter: { flex: 1 },
-    headerSub: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 2.5, marginBottom: 2 },
+    headerSub: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2.5, marginBottom: 2 },
     headerTitle: { fontSize: 20, fontFamily: FAMILY.display, color: "#fff", letterSpacing: -0.5 },
     headerActions: { flexDirection: 'row', gap: 8 },
     headerBtn: {
@@ -927,8 +927,8 @@ const styles = StyleSheet.create({
 
     aiAvatar: {
         width: 30, height: 30, borderRadius: 10,
-        backgroundColor: "rgba(227,30,36,0.1)", alignItems: "center", justifyContent: "center",
-        borderWidth: 1, borderColor: "rgba(227,30,36,0.2)", marginTop: 4, flexShrink: 0,
+        backgroundColor: "rgba(255,255,255,0.05)", alignItems: "center", justifyContent: "center",
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", marginTop: 4, flexShrink: 0,
     },
 
     bubble: { borderRadius: 20, padding: 14 },
@@ -970,8 +970,8 @@ const styles = StyleSheet.create({
         marginBottom: 2,
     },
     stopBtnActive: {
-        backgroundColor: 'rgba(227,30,36,0.12)',
-        borderColor: 'rgba(227,30,36,0.25)',
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        borderColor: 'rgba(255,255,255,0.2)',
     },
     inputWrapper: {
         flex: 1, flexDirection: "row", alignItems: "flex-end", gap: 8,

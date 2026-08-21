@@ -155,19 +155,19 @@ const pr = StyleSheet.create({
         borderBottomWidth: 1, borderBottomColor: COLORS.border,
         gap: 12,
     },
-    indicator: { width: 3, height: 20, borderRadius: 1.5, backgroundColor: COLORS.primary },
+    indicator: { width: 3, height: 20, borderRadius: 1.5, backgroundColor: COLORS.accent },
     info: { flex: 1 },
     name: { fontSize: 13, fontFamily: FAMILY.semibold, color: COLORS.text },
     date: { fontSize: 10, color: COLORS.textMuted, marginTop: 2, fontFamily: FAMILY.mono },
     valWrap: { alignItems: "flex-end" },
-    val: { fontSize: 15, fontFamily: FAMILY.monoBold, color: COLORS.primary },
+    val: { fontSize: 15, fontFamily: FAMILY.monoBold, color: COLORS.text },
     repVal: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.textSub, marginTop: 2 },
 });
 
 /* ── TABS ─────────────────────────────────────────────────────── */
 const TABS = ["Body Stats", "Performance"];
 const STAT_FIELDS = [
-    { key: "weightKg", label: "Body Weight", unit: "kg", color: COLORS.primary },
+    { key: "weightKg", label: "Body Weight", unit: "kg", color: COLORS.accent },
     { key: "chest", label: "Chest", unit: "cm", color: "rgba(237, 234, 227, 0.4)" },
     { key: "waist", label: "Waist", unit: "cm", color: "rgba(237, 234, 227, 0.4)" },
     { key: "hips", label: "Hips", unit: "cm", color: "rgba(237, 234, 227, 0.4)" },
@@ -290,7 +290,7 @@ export default function ProgressScreen({ navigation }) {
                         <View style={styles.card}>
                             <MiniChart
                                 data={chartData("weightKg")}
-                                color={COLORS.primary}
+                                color={COLORS.accent}
                                 label="Weight"
                             />
                         </View>
@@ -390,7 +390,7 @@ const styles = StyleSheet.create({
         alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: COLORS.border,
     },
     headerTitle: { fontSize: 24, fontFamily: FAMILY.display, color: COLORS.text, letterSpacing: -0.5 },
-    savedBadge: { backgroundColor: "rgba(122, 46, 34, 0.15)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLORS.primary },
+    savedBadge: { backgroundColor: "rgba(237, 234, 227, 0.06)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLORS.border },
     savedText: { fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.text },
 
     tabs: {
@@ -398,7 +398,7 @@ const styles = StyleSheet.create({
         gap: 20, borderBottomWidth: 1, borderBottomColor: COLORS.border,
     },
     tab: { paddingVertical: 12 },
-    tabActive: { borderBottomWidth: 2, borderBottomColor: COLORS.primary },
+    tabActive: { borderBottomWidth: 2, borderBottomColor: COLORS.text },
     tabText: { fontSize: 12, fontFamily: FAMILY.medium, color: COLORS.textMuted },
     tabTextActive: { color: COLORS.text, fontFamily: FAMILY.semibold },
 

@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
     scroll: { paddingHorizontal: SPACING.base, flexGrow: 1, justifyContent: "center" },
 
     header: { marginBottom: 48 },
-    eyebrow: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 4, marginBottom: 12 },
+    eyebrow: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 4, marginBottom: 12 },
     title: { fontSize: 52, fontFamily: FAMILY.display, color: COLORS.text, letterSpacing: -2, lineHeight: 52, marginBottom: 10 },
     subtitle: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textMuted },
 
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
 
     footer: { flexDirection: "row", justifyContent: "center", alignItems: "center" },
     footerText: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textMuted },
-    footerLink: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.primary, letterSpacing: 1 },
+    footerLink: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.accent, letterSpacing: 1 },
 
     divider: { flexDirection: "row", alignItems: "center", gap: 12, marginVertical: 20 },
     line: { flex: 1, height: 1, backgroundColor: "rgba(255,255,255,0.06)" },
@@ -289,5 +289,5 @@ const styles = StyleSheet.create({
 
     signatureWrap: { marginTop: 60, alignItems: "center", opacity: 0.25 },
     signatureText: { fontSize: 7, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 3 },
-    signatureHighlight: { color: COLORS.primary },
+    signatureHighlight: { color: COLORS.accent },
 });

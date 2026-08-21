@@ -209,8 +209,8 @@ export default function SettingsScreen({ navigation, route }) {
                 <Text style={styles.headerTitle}>SETTINGS</Text>
                 <View style={{ width: 60, alignItems: "flex-end" }}>
                     {saved && (
-                        <View style={[styles.savedBadge, { backgroundColor: "rgba(227,30,36,0.1)" }]}>
-                            <Text style={[styles.savedText, { color: COLORS.primary }]} adjustsFontSizeToFit numberOfLines={1}>SAVED</Text>
+                        <View style={[styles.savedBadge, { backgroundColor: "rgba(237,234,227,0.06)" }]}>
+                            <Text style={[styles.savedText, { color: COLORS.text }]} adjustsFontSizeToFit numberOfLines={1}>SAVED</Text>
                         </View>
                     )}
                 </View>
@@ -747,7 +747,7 @@ function ToggleRow({ label, sublabel, icon, value, onToggle, disabled }) {
         >
             {icon && (
                 <View style={styles.toggleIconWrap}>
-                    <Ionicons name={icon} size={18} color={value ? COLORS.primary : COLORS.textSub} />
+                    <Ionicons name={icon} size={18} color={COLORS.textSub} />
                 </View>
             )}
             <View style={styles.toggleInfo}>
@@ -773,7 +773,7 @@ function PremiumSwitch({ value, disabled }) {
 
     const trackColor = swAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: ["rgba(255,255,255,0.06)", COLORS.primary],
+        outputRange: ["rgba(255,255,255,0.06)", COLORS.accent],
     });
 
     const thumbTranslate = swAnim.interpolate({
@@ -812,7 +812,7 @@ const styles = StyleSheet.create({
         alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: COLORS.border,
     },
     headerTitle: { flex: 1, textAlign: "center", fontSize: 24, fontFamily: FAMILY.display, color: COLORS.text, letterSpacing: -0.5 },
-    savedBadge: { backgroundColor: "rgba(122, 46, 34, 0.15)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLORS.primary },
+    savedBadge: { backgroundColor: "rgba(237, 234, 227, 0.06)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLORS.border },
     savedText: { fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.text },
 
     betaBadge: { backgroundColor: "rgba(237, 234, 227, 0.05)", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, borderWidth: 1, borderColor: COLORS.border },
@@ -853,7 +853,7 @@ const styles = StyleSheet.create({
     chipSub: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.textMuted },
     chipRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
     chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bg, flexDirection: "row", alignItems: "center" },
-    chipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+    chipActive: { backgroundColor: "rgba(237, 234, 227, 0.15)", borderColor: COLORS.border },
     chipCustom: { borderStyle: "dashed", borderColor: COLORS.border },
     chipText: { fontSize: 11, fontFamily: FAMILY.mono, color: COLORS.textSub },
     chipTextActive: { color: COLORS.text, fontFamily: FAMILY.monoBold },
