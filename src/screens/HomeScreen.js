@@ -548,8 +548,12 @@ export default function HomeScreen({ navigation, route }) {
                 <View style={styles.headerRow}>
                     <View style={styles.headerTop}>
                         <View style={{ flex: 1, justifyContent: 'center' }}>
-                            <Text style={styles.greeting}>{greeting}</Text>
-                            <Text style={styles.name}>{displayName}</Text>
+                            <Text style={styles.greeting}>{greeting.toUpperCase()},</Text>
+                            <MetallicText
+                                text={displayName.toUpperCase()}
+                                style={styles.name}
+                                height={42}
+                            />
                         </View>
 
                         <View style={styles.avatarContainer}>

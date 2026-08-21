@@ -18,17 +18,17 @@ export const COLORS = {
     borderLight: "#35353A",
 
     // ── Text hierarchy ────────────────────────────────────────
-    text: "#EDEAE3",
+    text: "#FFFFFF",
     textSub: "#8A8A8E",
     textMuted: "#55555A",
 
     // ── Accent (Restrained Deep Crimson — CTAs & Live State only) ─
-    primary: "#7A2E22",
-    primaryDim: "rgba(122, 46, 34, 0.18)",
+    primary: "#E31E24",
+    primaryDim: "rgba(227, 30, 36, 0.15)",
     primaryActive: "#91382B",
 
     // ── Secondary Accent — Neutral Warm Titanium ──────────────
-    accent: "#EDEAE3",
+    accent: "#D1D1D1",
     accentDim: "rgba(237, 234, 227, 0.08)",
     accentBorder: "rgba(237, 234, 227, 0.15)",
 
@@ -49,7 +49,7 @@ export const COLORS = {
     // ── Clean Flat Surfaces (No resting blur/glow) ─────────────
     glassBg: "#151516",
     glassBorder: "#1E1E20",
-    glowRed: "transparent",
+    glowRed: "rgba(227, 30, 36, 0.45)",
     liveGlow: "rgba(122, 46, 34, 0.35)",
 };
 
@@ -102,7 +102,7 @@ export const FAMILY = {
     regular: "Inter_400Regular",
     medium: "Inter_500Medium",
     semibold: "Inter_600SemiBold",
-    bold: "Inter_700Bold",
+    bold: "Arimo_700Bold",
     black: "Inter_700Bold",
     accent: "Inter_600SemiBold",
 
@@ -132,13 +132,13 @@ export const SPACING = {
 };
 
 export const RADIUS = {
-    xs: 4,
-    sm: 8,
-    md: 12,
-    card: 12,
-    lg: 16,
-    xl: 16,
-    xxl: 16,
+    xs: 6,
+    sm: 10,
+    md: 14,
+    card: 14,
+    lg: 18,
+    xl: 22,
+    xxl: 28,
     full: 999,
     pill: 999,
 };
