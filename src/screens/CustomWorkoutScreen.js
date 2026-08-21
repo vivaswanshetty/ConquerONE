@@ -39,7 +39,7 @@ export default function CustomWorkoutScreen({ navigation }) {
         const customDay = {
             day: 0,
             target: "CUSTOM SESSION",
-            dayName: "TACTICAL",
+            dayName: "CUSTOM",
             exercises: selectedExercises,
             headerImage: selectedExercises[0]?.image,
             color: COLORS.accent,
@@ -110,7 +110,7 @@ export default function CustomWorkoutScreen({ navigation }) {
             {selected.size > 0 && (
                 <View style={[styles.fab, { paddingBottom: insets.bottom + 20 }]}>
                     <TouchableOpacity style={styles.fabBtn} onPress={handleStart} activeOpacity={0.9}>
-                        <Text style={styles.fabText}>INITIATE {selected.size} PROTOCOLS</Text>
+                        <Text style={styles.fabText}>START {selected.size}-DAY PLAN</Text>
                         <Ionicons name="play" size={16} color={COLORS.text} />
                     </TouchableOpacity>
                 </View>

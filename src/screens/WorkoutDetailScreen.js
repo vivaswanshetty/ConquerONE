@@ -80,7 +80,7 @@ export default function WorkoutDetailScreen({ navigation, route }) {
                         resizeMode="cover"
                     >
                         <LinearGradient
-                            colors={["rgba(10,10,11,0.2)", "rgba(10,10,11,0.92)"]}
+                            colors={["rgba(0,0,0,0.3)", "rgba(10,10,11,0.75)", "rgba(10,10,11,0.98)"]}
                             style={StyleSheet.absoluteFill}
                         />
 
@@ -97,7 +97,7 @@ export default function WorkoutDetailScreen({ navigation, route }) {
                                 <Text style={styles.heroBadgeText}>{day.dayName.toUpperCase()}</Text>
                             </View>
                             <Text style={styles.heroTitle} numberOfLines={2} adjustsFontSizeToFit>{day.target}</Text>
-                            <Text style={styles.heroSub}>Day 0{day.day} · 6-Day Split</Text>
+                            <Text style={styles.heroSub}>Day <Text style={{ fontFamily: FAMILY.mono }}>0{day.day}</Text> · 6-Day Split</Text>
                         </View>
                     </ImageBackground>
                 </View>
@@ -110,7 +110,7 @@ export default function WorkoutDetailScreen({ navigation, route }) {
                     <View style={styles.metaDivider} />
                     <MetaItem icon="flame-outline" val={`${estimateCalories(totalTime(day))}`} label="Calories" />
                     <View style={styles.metaDivider} />
-                    <MetaItem icon="flash" val="Elite" label="Protocol" accent />
+                    <MetaItem icon="flash" val="Elite" label="Intensity" accent />
                 </View>
 
                 {/* ── CTA ── */}
@@ -225,7 +225,7 @@ function EditExerciseModal({ visible, ex, onSave, onClose }) {
                     </View>
 
                     <TouchableOpacity style={styles.saveBtn} onPress={handleSave} activeOpacity={0.8}>
-                        <Text style={styles.saveBtnText}>Update Protocol</Text>
+                        <Text style={styles.saveBtnText}>Save Targets</Text>
                     </TouchableOpacity>
                 </View>
             </View>

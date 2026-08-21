@@ -90,7 +90,7 @@ function buildPhases(queue, extraRest = 0) {
 }
 
 /* ── Animated Ring Timer ──────────────────────────────────── */
-function RingTimer({ progress, isWork, size, stroke, timeLeft }) {
+function RingTimer({ progress, isWork, size, stroke, timeLeft, isRunning = false }) {
     const safeProgress = isNaN(progress) ? 0 : progress;
     const safeTimeLeft = isNaN(timeLeft) ? 0 : timeLeft;
     const r = (size - stroke) / 2;
@@ -98,10 +98,11 @@ function RingTimer({ progress, isWork, size, stroke, timeLeft }) {
     const fill = circ * Math.max(0, Math.min(1, safeProgress));
     const isUrgent = safeTimeLeft <= 5 && safeTimeLeft > 0;
 
-    const activeColor = isWork ? COLORS.primary : COLORS.textMuted;
+    const activeColor = isWork ? (isRunning ? COLORS.primary : COLORS.text) : COLORS.textMuted;
     const pulseAnim = useRef(new Animated.Value(1)).current;
 
     useEffect(() => {
+        if (!isRunning) return;
         pulseAnim.setValue(1);
         const duration = isUrgent ? 600 : (isWork ? 2000 : 3000);
         const anim = Animated.loop(
@@ -120,7 +121,7 @@ function RingTimer({ progress, isWork, size, stroke, timeLeft }) {
         );
         anim.start();
         return () => anim.stop();
-    }, [isWork, isUrgent]);
+    }, [isWork, isUrgent, isRunning]);
 
     const scaleOut = pulseAnim;
     const opacityOut = pulseAnim.interpolate({
@@ -139,36 +140,40 @@ function RingTimer({ progress, isWork, size, stroke, timeLeft }) {
 
     return (
         <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
-            {/* Concentric Breathing Halo 1 */}
-            <Animated.View style={{
-                position: "absolute",
-                width: size,
-                height: size,
-                borderRadius: size / 2,
-                borderWidth: 2,
-                borderColor: isUrgent ? COLORS.primary : activeColor,
-                opacity: opacityOut,
-                transform: [{ scale: scaleOut }],
-            }} />
+            {/* Concentric Breathing Halo - only while set is actively running */}
+            {isRunning && isWork && (
+                <>
+                    <Animated.View style={{
+                        position: "absolute",
+                        width: size,
+                        height: size,
+                        borderRadius: size / 2,
+                        borderWidth: 2,
+                        borderColor: isUrgent ? COLORS.primary : activeColor,
+                        opacity: opacityOut,
+                        transform: [{ scale: scaleOut }],
+                    }} />
 
-            {/* Concentric Breathing Halo 2 */}
-            <Animated.View style={{
-                position: "absolute",
-                width: size - stroke * 2,
-                height: size - stroke * 2,
-                borderRadius: (size - stroke * 2) / 2,
-                borderWidth: 1,
-                borderColor: isUrgent ? COLORS.primary : activeColor,
-                opacity: opacityIn,
-                transform: [{ scale: scaleIn }],
-            }} />
+                    <Animated.View style={{
+                        position: "absolute",
+                        width: size - stroke * 2,
+                        height: size - stroke * 2,
+                        borderRadius: (size - stroke * 2) / 2,
+                        borderWidth: 1,
+                        borderColor: isUrgent ? COLORS.primary : activeColor,
+                        opacity: opacityIn,
+                        transform: [{ scale: scaleIn }],
+                    }} />
 
-            <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]}>
-                <LinearGradient
-                    colors={isWork ? ["rgba(227,30,36,0.08)", "transparent"] : ["rgba(255,255,255,0.03)", "transparent"]}
-                    style={{ width: size * 0.8, height: size * 0.8, borderRadius: size * 0.4 }}
-                />
-            </View>
+                    <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]}>
+                        <LinearGradient
+                            colors={["rgba(122,46,34,0.08)", "transparent"]}
+                            style={{ width: size * 0.8, height: size * 0.8, borderRadius: size * 0.4 }}
+                        />
+                    </View>
+                </>
+            )}
+
             <Svg width={size} height={size} style={{ position: "absolute" }}>
                 <Circle
                     cx={size / 2} cy={size / 2} r={r}
@@ -1370,9 +1375,10 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                         {/* Ring Timer / Rep Indicator */}
                         <View style={styles.timerWrap}>
                             <RingTimer
-                                progress={currentPhase.isReps ? (running ? 1 : 0) : progress}
+                                progress={currentPhase.isReps ? (running && !paused ? 1 : 0) : progress}
                                 isWork={isWork} size={RING} stroke={STROKE}
                                 timeLeft={timeLeft}
+                                isRunning={running && !paused}
                             />
                             <View style={styles.timerInner}>
                                 {currentPhase.isReps ? (
@@ -1398,7 +1404,6 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                             </View>
                         ) : (
                             <View style={styles.workInfoPanel}>
-                                <Text style={styles.infoPanelLabel}>TARGET MUSCLE</Text>
                                 <Text style={styles.infoPanelTitle}>{ex.primaryTarget || "Target Muscle"}</Text>
                                 <ScrollView
                                     horizontal
