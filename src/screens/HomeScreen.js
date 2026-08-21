@@ -162,36 +162,36 @@ const getStreakTierInfo = (streak) => {
         return {
             name: "TITAN",
             multiplier: "2.0x",
-            color: "#E31E24",
+            color: "#EDEAE3",
             badge: "Tier IV",
-            desc: "Titan Multiplier active. You reward 20 XP per session.",
+            desc: "20 XP per session reward rate.",
             range: "10+ Days"
         };
     } else if (streak >= 5) {
         return {
             name: "OVERLOAD",
             multiplier: "1.5x",
-            color: "#E31E24",
+            color: "#EDEAE3",
             badge: "Tier III",
-            desc: "Overload Multiplier active. You reward 15 XP per session.",
+            desc: "15 XP per session reward rate.",
             range: "5–9 Days"
         };
     } else if (streak >= 3) {
         return {
             name: "IGNITION",
             multiplier: "1.2x",
-            color: "#FFFFFF",
+            color: "#EDEAE3",
             badge: "Tier II",
-            desc: "Ignition Multiplier active. You reward 12 XP per session.",
+            desc: "12 XP per session reward rate.",
             range: "3–4 Days"
         };
     } else {
         return {
             name: "SPARK",
             multiplier: "1.0x",
-            color: streak > 0 ? "#E31E24" : "#8E8E93",
+            color: streak > 0 ? "#EDEAE3" : "#8A8A8E",
             badge: "Tier I",
-            desc: "Spark Multiplier active. You reward 10 XP per session.",
+            desc: "10 XP per session reward rate.",
             range: "1–2 Days"
         };
     }
@@ -533,7 +533,7 @@ export default function HomeScreen({ navigation, route }) {
             {/* Ambient Glow */}
             <View style={StyleSheet.absoluteFill}>
                 <LinearGradient
-                    colors={["rgba(227,30,36,0.12)", "transparent", "transparent"]}
+                    colors={["rgba(237, 234, 227, 0.04)", "transparent", "transparent"]}
                     style={{ height: width * 1.2, width: width, position: "absolute", top: -width * 0.2 }}
                 />
             </View>
@@ -650,7 +650,7 @@ export default function HomeScreen({ navigation, route }) {
                             resizeMode="cover"
                         >
                             <LinearGradient
-                                colors={["rgba(10,10,11,0.15)", "rgba(10,10,11,0.65)", "rgba(10,10,11,0.96)"]}
+                                colors={["rgba(0,0,0,0.3)", "rgba(10,10,11,0.75)", "rgba(10,10,11,0.98)"]}
                                 style={StyleSheet.absoluteFill}
                             />
 
@@ -704,21 +704,10 @@ export default function HomeScreen({ navigation, route }) {
                     <RestDayCard navigation={navigation} />
                 )}
 
-                {/* Level & XP HUD Card */}
+                {/* Progress HUD Card */}
                 <View style={styles.hudCard}>
                     <View style={styles.hudHeader}>
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                            <Text style={styles.hudTitle}>Level {Math.min(Math.floor(xp / 100) + 1, 99)}</Text>
-                        </View>
-                        <View style={styles.hudStatusBadge}>
-                            <Text style={styles.hudStatusText}>
-                                {total >= 100 ? 'Legend' :
-                                    total >= 50 ? 'Titan' :
-                                        total >= 25 ? 'Warrior' :
-                                            total >= 10 ? 'Chadlite' :
-                                                total >= 5 ? 'Rookie' : 'Recruit'}
-                            </Text>
-                        </View>
+                        <Text style={styles.hudTitle}>PROGRESS</Text>
                     </View>
 
                     <View style={styles.hudBody}>
@@ -755,7 +744,7 @@ export default function HomeScreen({ navigation, route }) {
                                     {xp % 100} / 100 XP
                                 </Text>
                                 <Text style={styles.hudRankText}>
-                                    {100 - (xp % 100)} XP to Next Level
+                                    {100 - (xp % 100)} XP to Next Milestone
                                 </Text>
                             </View>
                         </View>
@@ -789,7 +778,7 @@ export default function HomeScreen({ navigation, route }) {
                                 </View>
                             </View>
                             <View style={styles.streakIntelligenceRight}>
-                                <Text style={styles.gridTitle}>7-Day Consistency</Text>
+                                <Text style={styles.gridTitle}>THIS WEEK</Text>
                                 <View style={styles.gridContainer}>
                                     {DAY_LABELS.map((label, index) => {
                                         const dayNum = index + 1;
@@ -861,7 +850,7 @@ export default function HomeScreen({ navigation, route }) {
 
                 {/* ── Weekly Plan ── */}
                 <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionLabel}>Your Week</Text>
+                    <Text style={styles.sectionLabel}>This Week</Text>
                 </View>
                 <GestureScrollView
                     horizontal
@@ -899,9 +888,9 @@ export default function HomeScreen({ navigation, route }) {
                     </GestureTouchableOpacity>
                 </GestureScrollView>
 
-                {/* ── Workout Library ── */}
+                {/* ── 6-Day Split ── */}
                 <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionLabel}>Workout Library</Text>
+                    <Text style={styles.sectionLabel}>6-Day Split</Text>
                 </View>
                 <View style={styles.dayList}>
                     {WORKOUT_PLAN.map((day) => (
@@ -931,9 +920,9 @@ export default function HomeScreen({ navigation, route }) {
                     ))}
                 </View>
 
-                {/* ── Protocol Handbook ── */}
+                {/* ── Workout Library ── */}
                 <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionLabel}>Protocol Handbook</Text>
+                    <Text style={styles.sectionLabel}>Workout Library</Text>
                 </View>
                 <TouchableOpacity
                     style={styles.customCard}
@@ -1053,7 +1042,7 @@ export default function HomeScreen({ navigation, route }) {
                         </View>
 
                         <Text style={styles.resetDesc}>
-                            Your consecutive <Text style={{ color: COLORS.text, fontFamily: FAMILY.monoBold }}>{prevStreak}-day</Text> workout streak has been broken. The protocol requires daily consistency to conquer.
+                            Your consecutive <Text style={{ color: COLORS.text, fontFamily: FAMILY.monoBold }}>{prevStreak}-day</Text> workout streak has been broken. Your streak resets after a missed day.
                         </Text>
 
                         <View style={styles.warningBadge}>
@@ -1069,7 +1058,7 @@ export default function HomeScreen({ navigation, route }) {
                             }}
                             activeOpacity={0.8}
                         >
-                            <Text style={styles.resetCloseText}>RECLAIM THE PROTOCOL</Text>
+                            <Text style={styles.resetCloseText}>RESTART STREAK</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -1266,11 +1255,11 @@ function MomentsGallery({ streak, total, profile = null }) {
     const MOMENTS = [
         {
             id: 'start',
-            title: 'PROTOCOL INITIATED',
+            title: 'WORKOUT STARTED',
             sub: 'WELCOME TO CONQUER ONE',
             desc: "Your training regimen is officially live. The hard part is starting, and you've already conquered that. Focus on the next set, the next rep, and the next day. You are built for this.",
             icon: 'shield-checkmark',
-            color: '#22c55e',
+            color: COLORS.accent,
             show: true
         },
         {
@@ -1279,7 +1268,7 @@ function MomentsGallery({ streak, total, profile = null }) {
             sub: 'THE JOURNEY BEGINS',
             desc: "The first session is the most important one. You've officially broken the seal and stepped into the arena. Remember this feeling—it's the foundation of everything you will become.",
             icon: 'skull',
-            color: '#FF3B30',
+            color: COLORS.accent,
             show: total >= 1
         },
         {
@@ -1288,7 +1277,7 @@ function MomentsGallery({ streak, total, profile = null }) {
             sub: `${streak} DAYS OF DISCIPLINE`,
             desc: "Discipline is the bridge between goals and accomplishment. Consistent effort is what separates the elite from the average. Keep building that momentum—your future self is watching.",
             icon: 'flame',
-            color: '#FF9500',
+            color: COLORS.accent,
             show: streak >= 3
         },
         {
@@ -1297,7 +1286,7 @@ function MomentsGallery({ streak, total, profile = null }) {
             sub: '7 DAY STREAK UNLOCKED',
             desc: "You are officially on fire. Seven days of zero excuses. This isn't a fluke anymore—it's a habit. The momentum is now working for you. Don't let the fire go out.",
             icon: 'bonfire',
-            color: '#FFCC00',
+            color: COLORS.accent,
             show: streak >= 7
         },
         {
@@ -1306,7 +1295,7 @@ function MomentsGallery({ streak, total, profile = null }) {
             sub: `${total} SESSIONS COMPLETED`,
             desc: "The archives don't lie. You've consistently shown up and put in the work. You are no longer just 'trying'—you are an athlete in pursuit of absolute performance. Respect the grind.",
             icon: 'trophy',
-            color: '#FFFFFF',
+            color: COLORS.accent,
             show: total >= 10
         },
         {
@@ -1315,7 +1304,7 @@ function MomentsGallery({ streak, total, profile = null }) {
             sub: '50 SESSIONS LOGGED',
             desc: "Halfway to a century. You've moved weights, crushed sets, and evolved. You've proven that you have the endurance for the long game. You are becoming a Titan of the arena.",
             icon: 'medal',
-            color: '#D1D1D1',
+            color: COLORS.accent,
             show: total >= 50
         },
         {
@@ -1333,7 +1322,7 @@ function MomentsGallery({ streak, total, profile = null }) {
             sub: 'CHASE PROGRESS, NOT PERFECTION',
             desc: "Take a breath and appreciate what your body is capable of today. Every session is a gift to your future self. Be proud of how far you've come while staying hungry for where you're going.",
             icon: 'heart',
-            color: '#007AFF',
+            color: COLORS.accent,
             show: true
         }
     ];
@@ -1345,9 +1334,9 @@ function MomentsGallery({ streak, total, profile = null }) {
             id: 'weekly_recap',
             title: 'WEEKLY EVOLUTION',
             sub: `${streak}D STREAK · ${total} SESSIONS`,
-            desc: `Your weekly briefing is in. You've maintained a ${streak}-day discipline streak and archived ${total} total sessions in the protocol. Analyzing your biometric data shows consistent evolution. Rest and recharge for the next cycle.`,
+            desc: `Weekly briefing: ${streak}-day streak and ${total} total sessions completed. Rest and recharge for the next cycle.`,
             icon: 'bar-chart',
-            color: '#D1D1D1',
+            color: COLORS.accent,
             show: total > 0
         });
     }
@@ -1359,9 +1348,9 @@ function MomentsGallery({ streak, total, profile = null }) {
         if (today.getDate() === birthDate.getDate() && today.getMonth() === birthDate.getMonth()) {
             MOMENTS.unshift({
                 id: 'birthday',
-                title: 'BIRTHDAY PROTOCOL',
+                title: 'HAPPY BIRTHDAY',
                 sub: `HAPPY BIRTHDAY, ${profile?.fullName?.split(" ")[0] || "ATHLETE"}!`,
-                desc: "A new year of life means a new year of strength. Today we celebrate the discipline you bring to every facet of your life. Take this energy into your next decade of performance. Have an incredible day!",
+                desc: "A new year of life means a new year of strength. Celebrate how far you've come and take this momentum forward into your next year. Have an incredible day!",
                 icon: 'gift',
                 color: COLORS.accent,
                 show: true
@@ -1389,14 +1378,8 @@ function MomentsGallery({ streak, total, profile = null }) {
                             setExpandedMoment(m);
                         }}
                     >
-                        <LinearGradient
-                            colors={[`${m.color}25`, 'transparent']}
-                            style={StyleSheet.absoluteFill}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                        />
-                        <View style={[styles.momentIconWrap, { backgroundColor: `${m.color}20` }]}>
-                            <Ionicons name={m.icon} size={18} color={m.color} />
+                        <View style={styles.momentIconWrap}>
+                            <Ionicons name={m.icon} size={16} color={COLORS.text} />
                         </View>
                         <View>
                             <Text style={styles.momentTitle}>{m.title}</Text>
@@ -1431,21 +1414,21 @@ function MomentsGallery({ streak, total, profile = null }) {
                         }
                     ]}>
                         <LinearGradient
-                            colors={[`${expandedMoment?.color}20`, '#0B0B0B']}
+                            colors={["#151516", "#0B0B0B"]}
                             style={styles.momentDetailCard}
                         >
                             <TouchableOpacity
                                 style={styles.closeMomentBtn}
                                 onPress={() => setExpandedMoment(null)}
                             >
-                                <Ionicons name="close" size={24} color="#fff" />
+                                <Ionicons name="close" size={20} color={COLORS.text} />
                             </TouchableOpacity>
 
                             <View style={styles.momentDetailIconWrap}>
-                                <Ionicons name={expandedMoment?.icon} size={42} color={expandedMoment?.color} />
+                                <Ionicons name={expandedMoment?.icon} size={32} color={COLORS.text} />
                             </View>
 
-                            <Text style={[styles.momentDetailTitle, { color: expandedMoment?.color }]}>
+                            <Text style={styles.momentDetailTitle}>
                                 {expandedMoment?.title}
                             </Text>
                             <Text style={styles.momentDetailSub}>
@@ -1456,7 +1439,7 @@ function MomentsGallery({ streak, total, profile = null }) {
                             </Text>
 
                             <TouchableOpacity
-                                style={[styles.momentActionBtn, { backgroundColor: expandedMoment?.color }]}
+                                style={styles.momentActionBtn}
                                 onPress={() => setExpandedMoment(null)}
                             >
                                 <Text style={styles.momentActionText}>RECOGNIZED</Text>
