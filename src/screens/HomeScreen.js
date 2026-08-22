@@ -1799,11 +1799,11 @@ const styles = StyleSheet.create({
         letterSpacing: 1.2,
     },
     heroTitle: {
-        fontSize: 26,
+        fontSize: 25,
         fontFamily: FAMILY.accent2,
         color: "#FFFFFF",
-        letterSpacing: 0.6,
-        lineHeight: 30,
+        letterSpacing: 0.3,
+        lineHeight: 29,
         marginTop: 4,
     },
     heroSub: {
@@ -1937,9 +1937,9 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     consistencyTitle: {
-        fontSize: 13,
+        fontSize: 12.5,
         fontFamily: FAMILY.accent2,
-        letterSpacing: 0.8,
+        letterSpacing: 0.5,
         color: "#FFFFFF",
     },
     consistencySubtitle: {
@@ -2232,7 +2232,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: SPACING.base, marginBottom: 12, marginTop: 24,
     },
     sectionLabel: {
-        fontSize: 16, fontFamily: FAMILY.accent2, color: COLORS.text, letterSpacing: 0.6,
+        fontSize: 15.5, fontFamily: FAMILY.accent2, color: COLORS.text, letterSpacing: 0.4,
     },
 
     // Rest Card

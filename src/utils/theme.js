@@ -105,7 +105,7 @@ export const FAMILY = {
     bold: "ChakraPetch_700Bold",
     black: "ChakraPetch_700Bold",
     accent: "ChakraPetch_600SemiBold",
-    accent2: "ArchivoBlack_400Regular",
+    accent2: "LeagueSpartan_700ExtraBold",
 
     // ── Precision Instrument Monospace for Numbers, Reps, Weights, Timers, Sets, Kcal, Streak ──
     mono: "JetBrainsMono_600SemiBold",

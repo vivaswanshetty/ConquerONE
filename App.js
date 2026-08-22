@@ -15,7 +15,7 @@ import {
   Archivo_700Bold,
   Archivo_900Black,
 } from "@expo-google-fonts/archivo";
-import { ArchivoBlack_400Regular } from "@expo-google-fonts/archivo-black";
+import { LeagueSpartan_700ExtraBold } from "@expo-google-fonts/league-spartan";
 import {
   Inter_400Regular,
   Inter_500Medium,
@@ -155,7 +155,7 @@ function RootNavigator({ fontsLoaded }) {
  *   - JetBrains Mono (Precision Instruments)
  */
 const CRITICAL_FONTS = {
-  ArchivoBlack_400Regular,
+  LeagueSpartan_700ExtraBold,
   BebasNeue_400Regular,
   ChakraPetch_300Light,
   ChakraPetch_400Regular,
