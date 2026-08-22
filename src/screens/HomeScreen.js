@@ -652,8 +652,10 @@ export default function HomeScreen({ navigation, route }) {
                         ]}
                     >
                         <View style={{ flex: 1, justifyContent: 'center' }}>
-                            <Text style={styles.greeting}>{greeting.toUpperCase()},</Text>
-                            <Text style={styles.name}>{displayName.toUpperCase()}</Text>
+                            <Text style={styles.greeting}>{greeting},</Text>
+                            {/* DO NOT REMOVE — intentional metallic gradient effect on the name, 
+                                do not simplify to a plain Text component during unrelated edits */}
+                            <MetallicText text={displayName.toUpperCase()} style={styles.name} height={42} />
                         </View>
 
                         <View style={styles.avatarContainer}>
