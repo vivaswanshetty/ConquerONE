@@ -97,33 +97,73 @@ function LiveStatusStrip({ total, streak, xp }) {
                 total >= 10 ? 'TIER 03' :
                     total >= 5 ? 'TIER 02' : 'TIER 01';
 
-    const tickerText = `${total} SESSIONS LOGGED   |   ${streak} DAY STREAK   |   ${tier} · MILESTONE   |   ${xp % 100}% XP PROGRESS   |   `;
-    const scrollX = useRef(new Animated.Value(0)).current;
+    const items = [
+        `${total} SESSIONS LOGGED`,
+        `${streak} DAY STREAK`,
+        `${tier} · MILESTONE`,
+        `${xp % 100}% XP PROGRESS`,
+    ];
+
+    const [index, setIndex] = useState(0);
+    const textAnim = useRef(new Animated.Value(1)).current;
+    const dotPulse = useRef(new Animated.Value(1)).current;
 
     useEffect(() => {
-        const anim = Animated.loop(
-            Animated.timing(scrollX, {
-                toValue: -450,
-                duration: 8000,
-                easing: Easing.linear,
-                useNativeDriver: true,
-            })
+        const pulse = Animated.loop(
+            Animated.sequence([
+                Animated.timing(dotPulse, { toValue: 0.3, duration: 900, useNativeDriver: true }),
+                Animated.timing(dotPulse, { toValue: 1, duration: 900, useNativeDriver: true }),
+            ])
         );
-        anim.start();
-        return () => anim.stop();
+        pulse.start();
+        return () => pulse.stop();
+    }, []);
+
+    useEffect(() => {
+        let isMounted = true;
+        const cycle = () => {
+            if (!isMounted) return;
+            Animated.sequence([
+                Animated.delay(2100),
+                Animated.timing(textAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
+            ]).start(({ finished }) => {
+                if (finished && isMounted) {
+                    setIndex((prev) => (prev + 1) % items.length);
+                    textAnim.setValue(0);
+                    Animated.timing(textAnim, { toValue: 1, duration: 200, useNativeDriver: true }).start(cycle);
+                }
+            });
+        };
+        cycle();
+        return () => { isMounted = false; };
     }, []);
 
     return (
-        <View style={styles.liveStatusContainer}>
-            <Animated.View style={{ flexDirection: 'row', alignItems: 'center', transform: [{ translateX: scrollX }] }}>
-                <Text
+        <View style={{
+            flexDirection: 'row', alignItems: 'center', gap: 10,
+            borderTopWidth: 1, borderBottomWidth: 1, borderColor: COLORS.border,
+            paddingVertical: 10, paddingHorizontal: SPACING.base, marginBottom: 18,
+            overflow: 'hidden',
+        }}>
+            <Animated.View style={{
+                width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.primary,
+                opacity: dotPulse,
+            }} />
+            <View style={{ height: 14, flex: 1, overflow: 'hidden' }}>
+                <Animated.Text
                     numberOfLines={1}
-                    ellipsizeMode="clip"
-                    style={[styles.liveStatusText, { flexShrink: 0, width: 3500 }]}
+                    style={{
+                        fontFamily: FAMILY.mono, fontSize: 10, fontWeight: '600',
+                        letterSpacing: 1.5, color: COLORS.textSub, textTransform: 'uppercase',
+                        opacity: textAnim,
+                        transform: [{
+                            translateY: textAnim.interpolate({ inputRange: [0, 1], outputRange: [14, 0] })
+                        }],
+                    }}
                 >
-                    {tickerText}{tickerText}{tickerText}{tickerText}
-                </Text>
-            </Animated.View>
+                    {items[index]}
+                </Animated.Text>
+            </View>
         </View>
     );
 }
