@@ -20,7 +20,7 @@ import {
 } from "../utils/storage";
 import MaskedView from "@react-native-masked-view/masked-view";
 import * as Haptics from "expo-haptics";
-import Svg, { Circle, Path, Defs, LinearGradient as SvgGradient, Stop, Text as SvgText } from "react-native-svg";
+import Svg, { Circle, Path, Defs, LinearGradient as SvgGradient, Stop, Text as SvgText, Polygon, Line } from "react-native-svg";
 import WorkoutCalendar from "../components/WorkoutCalendar";
 
 
@@ -783,6 +783,16 @@ export default function HomeScreen({ navigation, route }) {
                                     style={StyleSheet.absoluteFill}
                                 />
 
+                                {/* Large Faded Day Number in Background */}
+                                <Text
+                                    style={styles.heroBgNumber}
+                                    numberOfLines={1}
+                                    adjustsFontSizeToFit={false}
+                                    pointerEvents="none"
+                                >
+                                    {todayWorkout.day < 10 ? `0${todayWorkout.day}` : todayWorkout.day}
+                                </Text>
+
                                 <View style={styles.heroContent}>
                                     <View>
                                         <View style={[
@@ -833,6 +843,27 @@ export default function HomeScreen({ navigation, route }) {
                                         </TouchableOpacity>
                                     </View>
                                 </View>
+
+                                {/* Angular bottom-right corner cut */}
+                                <Svg
+                                    width={48}
+                                    height={48}
+                                    style={styles.heroCornerCut}
+                                    pointerEvents="none"
+                                >
+                                    <Polygon
+                                        points="0,48 48,0 48,48"
+                                        fill={COLORS.bg}
+                                    />
+                                    <Line
+                                        x1="0"
+                                        y1="48"
+                                        x2="48"
+                                        y2="0"
+                                        stroke={COLORS.border}
+                                        strokeWidth={1}
+                                    />
+                                </Svg>
                             </ImageBackground>
                         </TouchableOpacity>
                     ) : (
@@ -2161,13 +2192,28 @@ const styles = StyleSheet.create({
 
     // Hero card
     heroCard: {
-        width: width - (SPACING.base * 2),
-        alignSelf: "center",
-        height: 210, borderRadius: RADIUS.lg,
-        overflow: "hidden", backgroundColor: COLORS.bgCard,
-        borderWidth: 1, borderColor: COLORS.border,
+        width: width,
+        height: 210,
+        overflow: "hidden",
+        backgroundColor: COLORS.bgCard,
     },
-    heroContent: { flex: 1, paddingVertical: 18, paddingHorizontal: 18, justifyContent: "space-between" },
+    heroBgNumber: {
+        position: "absolute",
+        top: -35,
+        right: -10,
+        fontFamily: "BebasNeue_400Regular",
+        fontSize: 180,
+        lineHeight: 180,
+        color: "rgba(255, 255, 255, 0.05)",
+        zIndex: 1,
+    },
+    heroCornerCut: {
+        position: "absolute",
+        bottom: 0,
+        right: 0,
+        zIndex: 10,
+    },
+    heroContent: { flex: 1, paddingVertical: 18, paddingHorizontal: SPACING.base, justifyContent: "space-between", zIndex: 2 },
     heroBadge: {
         alignSelf: "flex-start",
         backgroundColor: "rgba(237, 234, 227, 0.06)",
