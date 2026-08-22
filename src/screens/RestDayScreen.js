@@ -3,12 +3,11 @@ import {
     View, Text, ScrollView, TouchableOpacity, StyleSheet,
     Dimensions, StatusBar, ImageBackground,
 } from "react-native";
-import Svg, { Polygon, Line } from "react-native-svg";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
-import { COLORS, FAMILY, SPACING, RADIUS, getMuscleColor } from "../utils/theme";
+import { COLORS, FAMILY, SPACING, RADIUS } from "../utils/theme";
 
 const { width } = Dimensions.get("window");
 
@@ -19,7 +18,6 @@ const RECOVERY_TIPS = [
         metric: "20 MIN",
         desc: "A light 20-minute walk or dynamic mobility work to keep nutrient-rich blood flowing to repairing muscle tissues.",
         icon: "walk-outline",
-        target: "LEGS",
     },
     {
         num: "02",
@@ -27,7 +25,6 @@ const RECOVERY_TIPS = [
         metric: "3.5 L",
         desc: "Increase baseline water intake by 500ml today with essential electrolytes to accelerate metabolic waste clearance.",
         icon: "water-outline",
-        target: "CORE",
     },
     {
         num: "03",
@@ -35,7 +32,6 @@ const RECOVERY_TIPS = [
         metric: "2.0 G/KG",
         desc: "Prioritize complete proteins and complex carbohydrates to replenish depleted muscle glycogen stores for tomorrow.",
         icon: "nutrition-outline",
-        target: "PULL",
     },
     {
         num: "04",
@@ -43,7 +39,6 @@ const RECOVERY_TIPS = [
         metric: "8-9 HRS",
         desc: "Target 8-9 hours of restorative sleep. Eliminate blue light screens 45 minutes prior to bed to maximize growth hormone.",
         icon: "moon-outline",
-        target: "RECOVERY",
     },
 ];
 
@@ -54,7 +49,6 @@ const MINDFULNESS_TIPS = [
         metric: "5 MIN",
         desc: "Spend 5 minutes mentally scanning muscle groups from feet to shoulders. Acknowledge residual tension without judgment.",
         icon: "eye-outline",
-        target: "SHOULDERS",
     },
     {
         num: "02",
@@ -62,7 +56,6 @@ const MINDFULNESS_TIPS = [
         metric: "1 GOAL",
         desc: "Visualize your upcoming week's split. Identify the singular key lift you intend to dominate in tomorrow's workout.",
         icon: "journal-outline",
-        target: "PUSH",
     },
     {
         num: "03",
@@ -70,15 +63,12 @@ const MINDFULNESS_TIPS = [
         metric: "3 WINS",
         desc: "Recall three tangible physical accomplishments from this week. Anchor the pride of progressive overload.",
         icon: "sunny-outline",
-        target: "RECOVERY",
     },
 ];
 
 export default function RestDayScreen({ navigation }) {
     const insets = useSafeAreaInsets();
     const [activeTab, setActiveTab] = useState(0); // 0: Protocol, 1: Mindfulness
-
-    const recoveryColor = getMuscleColor("RECOVERY");
 
     return (
         <View style={styles.container}>
@@ -107,8 +97,8 @@ export default function RestDayScreen({ navigation }) {
                     <Ionicons name="chevron-back" size={20} color={COLORS.text} />
                 </TouchableOpacity>
                 <View style={styles.headerBadge}>
-                    <View style={[styles.headerBadgeDot, { backgroundColor: recoveryColor }]} />
-                    <Text style={[styles.headerBadgeText, { color: recoveryColor }]}>RECOVERY MODE</Text>
+                    <View style={styles.headerBadgeDot} />
+                    <Text style={styles.headerBadgeText}>RECOVERY DAY</Text>
                 </View>
                 <View style={{ width: 36 }} />
             </View>
@@ -122,8 +112,8 @@ export default function RestDayScreen({ navigation }) {
                 <View style={styles.hero}>
                     <View style={styles.eyebrowRow}>
                         <Text style={styles.eyebrow}>DAY 07 · ACTIVE RESTORATION</Text>
-                        <View style={[styles.targetPill, { borderColor: `${recoveryColor}4D`, backgroundColor: `${recoveryColor}1F` }]}>
-                            <Text style={[styles.targetPillText, { color: recoveryColor }]}>FULL RECHARGE</Text>
+                        <View style={styles.targetPill}>
+                            <Text style={styles.targetPillText}>FULL RECHARGE</Text>
                         </View>
                     </View>
                     <Text style={styles.title}>PEAK{"\n"}RESTORATION</Text>
@@ -175,36 +165,24 @@ export default function RestDayScreen({ navigation }) {
 
                 {/* ── Cards Grid ── */}
                 <View style={styles.tipsGrid}>
-                    {(activeTab === 0 ? RECOVERY_TIPS : MINDFULNESS_TIPS).map((tip) => {
-                        const tipColor = getMuscleColor(tip.target);
-                        return (
-                            <View key={tip.num} style={[styles.tipCard, { borderColor: `${tipColor}33` }]}>
-                                <LinearGradient
-                                    colors={[`${tipColor}12`, "transparent"]}
-                                    style={StyleSheet.absoluteFillObject}
-                                    start={{ x: 0, y: 0 }}
-                                    end={{ x: 0.4, y: 1 }}
-                                    pointerEvents="none"
-                                />
-                                <View style={[styles.tipLeftSpine, { backgroundColor: tipColor }]} />
-
-                                <View style={styles.tipHeaderRow}>
-                                    <View style={styles.tipHeaderLeft}>
-                                        <Text style={styles.tipNum}>{tip.num}</Text>
-                                        <View style={[styles.tipIconWrap, { backgroundColor: `${tipColor}1F`, borderColor: `${tipColor}4D` }]}>
-                                            <Ionicons name={tip.icon} size={18} color={tipColor} />
-                                        </View>
-                                    </View>
-                                    <View style={[styles.metricBadge, { borderColor: COLORS.borderLight }]}>
-                                        <Text style={styles.metricBadgeText}>{tip.metric}</Text>
+                    {(activeTab === 0 ? RECOVERY_TIPS : MINDFULNESS_TIPS).map((tip) => (
+                        <View key={tip.num} style={styles.tipCard}>
+                            <View style={styles.tipHeaderRow}>
+                                <View style={styles.tipHeaderLeft}>
+                                    <Text style={styles.tipNum}>{tip.num}</Text>
+                                    <View style={styles.tipIconWrap}>
+                                        <Ionicons name={tip.icon} size={16} color={COLORS.text} />
                                     </View>
                                 </View>
-
-                                <Text style={styles.tipTitle}>{tip.title}</Text>
-                                <Text style={styles.tipDesc}>{tip.desc}</Text>
+                                <View style={styles.metricBadge}>
+                                    <Text style={styles.metricBadgeText}>{tip.metric}</Text>
+                                </View>
                             </View>
-                        );
-                    })}
+
+                            <Text style={styles.tipTitle}>{tip.title}</Text>
+                            <Text style={styles.tipDesc}>{tip.desc}</Text>
+                        </View>
+                    ))}
                 </View>
 
                 {/* ── Meditation & Breathwork Promo ── */}
@@ -213,27 +191,20 @@ export default function RestDayScreen({ navigation }) {
                     activeOpacity={0.85}
                     onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
                 >
-                    <LinearGradient
-                        colors={[`${COLORS.primary}22`, "rgba(10,10,11,0.6)"]}
-                        style={StyleSheet.absoluteFillObject}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                    />
                     <View style={styles.meditationContent}>
                         <View style={styles.medHeaderRow}>
-                            <View style={styles.medLiveDot} />
                             <Text style={styles.medHeader}>ZEN PROTOCOL</Text>
                         </View>
                         <Text style={styles.medTitle}>Guided Breathwork</Text>
                         <Text style={styles.medSub}>8 MIN · CALM RECOVERY PHASE</Text>
                     </View>
                     <View style={styles.medIconWrap}>
-                        <Ionicons name="play-circle" size={42} color={COLORS.primary} />
+                        <Ionicons name="play-circle" size={38} color={COLORS.text} />
                     </View>
                 </TouchableOpacity>
             </ScrollView>
 
-            {/* ── Fixed Footer CTA with Signature Angular Cut ── */}
+            {/* ── Fixed Footer CTA ── */}
             <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) + 8 }]}>
                 <LinearGradient
                     colors={["transparent", "rgba(10,10,11,0.85)", COLORS.bg]}
@@ -248,9 +219,6 @@ export default function RestDayScreen({ navigation }) {
                     }}
                     activeOpacity={0.85}
                 >
-                    <Svg width="100%" height={52} style={StyleSheet.absoluteFillObject}>
-                        <Polygon points="12,0 1000,0 1000,52 0,52" fill={COLORS.primary} />
-                    </Svg>
                     <Text style={styles.doneBtnText}>ACKNOWLEDGE PROTOCOL ›</Text>
                 </TouchableOpacity>
             </View>
@@ -280,16 +248,17 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         paddingVertical: 4,
         borderRadius: RADIUS.sm,
-        backgroundColor: "rgba(48, 209, 88, 0.1)",
+        backgroundColor: "rgba(255, 255, 255, 0.05)",
         borderWidth: 1,
-        borderColor: "rgba(48, 209, 88, 0.25)",
+        borderColor: COLORS.border,
         gap: 6,
     },
     headerBadgeDot: {
         width: 6, height: 6, borderRadius: RADIUS.pill,
+        backgroundColor: COLORS.accent,
     },
     headerBadgeText: {
-        fontSize: 9, fontFamily: FAMILY.monoBold, letterSpacing: 1,
+        fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.textSub, letterSpacing: 1,
     },
 
     hero: {
@@ -304,7 +273,7 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     eyebrow: {
-        fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textMuted,
+        fontSize: 9.5, fontFamily: FAMILY.bold, color: COLORS.textMuted,
         letterSpacing: 2,
     },
     targetPill: {
@@ -312,13 +281,15 @@ const styles = StyleSheet.create({
         paddingVertical: 3,
         borderRadius: RADIUS.sm,
         borderWidth: 1,
+        borderColor: COLORS.border,
+        backgroundColor: COLORS.bgCard,
     },
     targetPillText: {
-        fontSize: 8.5, fontFamily: FAMILY.monoBold, letterSpacing: 1,
+        fontSize: 8.5, fontFamily: FAMILY.monoBold, color: COLORS.textSub, letterSpacing: 1,
     },
     title: {
-        fontSize: 44, fontFamily: FAMILY.header, color: COLORS.text,
-        lineHeight: 46, letterSpacing: -0.5,
+        fontSize: 36, fontFamily: FAMILY.bold, color: COLORS.text,
+        lineHeight: 40, letterSpacing: -0.5,
     },
     subtitle: {
         fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textSub,
@@ -339,7 +310,7 @@ const styles = StyleSheet.create({
         borderBottomColor: COLORS.primary,
     },
     zentabText: {
-        fontSize: 11, fontFamily: FAMILY.semibold, letterSpacing: 1.5,
+        fontSize: 11, fontFamily: FAMILY.bold, letterSpacing: 1.5,
     },
 
     tipsGrid: {
@@ -349,19 +320,9 @@ const styles = StyleSheet.create({
     tipCard: {
         borderRadius: RADIUS.lg,
         padding: 18,
-        paddingLeft: 22,
         backgroundColor: COLORS.bgCard,
         borderWidth: 1,
         borderColor: COLORS.border,
-        position: "relative",
-        overflow: "hidden",
-    },
-    tipLeftSpine: {
-        position: "absolute",
-        left: 0,
-        top: 0,
-        bottom: 0,
-        width: 3.5,
     },
     tipHeaderRow: {
         flexDirection: "row",
@@ -375,15 +336,15 @@ const styles = StyleSheet.create({
         gap: 10,
     },
     tipNum: {
-        fontSize: 18,
+        fontSize: 16,
         fontFamily: FAMILY.monoBold,
         color: COLORS.textMuted,
-        opacity: 0.6,
     },
     tipIconWrap: {
-        width: 32, height: 32, borderRadius: RADIUS.sm,
+        width: 30, height: 30, borderRadius: RADIUS.sm,
         alignItems: "center", justifyContent: "center",
-        borderWidth: 1,
+        borderWidth: 1, borderColor: COLORS.border,
+        backgroundColor: COLORS.bg,
     },
     metricBadge: {
         paddingHorizontal: 8,
@@ -391,6 +352,7 @@ const styles = StyleSheet.create({
         borderRadius: RADIUS.xs,
         backgroundColor: COLORS.bg,
         borderWidth: 1,
+        borderColor: COLORS.border,
     },
     metricBadgeText: {
         fontSize: 9.5,
@@ -402,7 +364,7 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontFamily: FAMILY.bold,
         color: COLORS.text,
-        letterSpacing: 1,
+        letterSpacing: 0.8,
         marginBottom: 6,
     },
     tipDesc: {
@@ -416,31 +378,23 @@ const styles = StyleSheet.create({
         marginHorizontal: SPACING.base,
         marginTop: 20,
         borderRadius: RADIUS.lg,
-        height: 110,
-        overflow: "hidden",
+        height: 96,
         flexDirection: "row",
         alignItems: "center",
         paddingHorizontal: 20,
         borderWidth: 1,
-        borderColor: `${COLORS.primary}4D`,
+        borderColor: COLORS.border,
         backgroundColor: COLORS.bgCard,
     },
     meditationContent: { flex: 1 },
     medHeaderRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 6,
         marginBottom: 4,
     },
-    medLiveDot: {
-        width: 6, height: 6, borderRadius: RADIUS.pill,
-        backgroundColor: COLORS.primary,
-    },
     medHeader: {
-        fontSize: 8.5, fontFamily: FAMILY.monoBold, color: COLORS.primary, letterSpacing: 1.5,
+        fontSize: 8.5, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1.5,
     },
     medTitle: {
-        fontSize: 20, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: -0.2, marginBottom: 2,
+        fontSize: 17, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -0.2, marginBottom: 2,
     },
     medSub: {
         fontSize: 9, fontFamily: FAMILY.mono, color: COLORS.textSub, letterSpacing: 0.5,
@@ -465,16 +419,16 @@ const styles = StyleSheet.create({
         top: 0,
     },
     doneBtn: {
-        height: 52,
-        borderRadius: RADIUS.sm,
+        height: 50,
+        borderRadius: RADIUS.md,
+        backgroundColor: COLORS.primary,
         alignItems: "center",
         justifyContent: "center",
-        overflow: "hidden",
     },
     doneBtnText: {
-        fontSize: 12.5,
+        fontSize: 13,
         fontFamily: FAMILY.bold,
         color: "#FFFFFF",
-        letterSpacing: 1.2,
+        letterSpacing: 0.8,
     },
 });
