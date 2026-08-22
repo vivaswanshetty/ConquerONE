@@ -1102,6 +1102,45 @@ export default function HomeScreen({ navigation, route }) {
                             </View>
                         </TouchableOpacity>
                     ))}
+
+                    {/* Day 07 — Rest & Recovery */}
+                    <TouchableOpacity
+                        key="day-07-rest"
+                        style={styles.dayRow}
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            navigation.navigate("RestDay");
+                        }}
+                        activeOpacity={0.75}
+                    >
+                        <LinearGradient
+                            colors={["rgba(48, 209, 88, 0.12)", "transparent"]}
+                            start={{ x: 0, y: 0.5 }}
+                            end={{ x: 0.35, y: 0.5 }}
+                            style={StyleSheet.absoluteFillObject}
+                            pointerEvents="none"
+                        />
+                        <View style={[styles.dayLeftSpine, { backgroundColor: COLORS.success }]} />
+                        <View style={styles.dayRowLeft}>
+                            <View style={styles.dayNumRow}>
+                                <Text style={styles.dayNum}>07</Text>
+                                <View style={[
+                                    styles.muscleBadge,
+                                    {
+                                        backgroundColor: "rgba(48, 209, 88, 0.15)",
+                                        borderColor: "rgba(48, 209, 88, 0.35)",
+                                    }
+                                ]}>
+                                    <Text style={[styles.muscleBadgeText, { color: COLORS.success }]}>REST & RECOVERY</Text>
+                                </View>
+                            </View>
+                            <Text style={styles.dayTargetTitle}>Active Recovery</Text>
+                            <Text style={styles.dayMeta}>Mobility · Hydration · 8H Sleep Protocol</Text>
+                        </View>
+                        <View style={styles.dayRowRight}>
+                            <Ionicons name="chevron-forward" size={18} color={COLORS.textSub} />
+                        </View>
+                    </TouchableOpacity>
                 </View>
 
                 <TouchableOpacity
