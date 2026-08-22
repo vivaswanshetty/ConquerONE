@@ -1054,9 +1054,14 @@ export default function HomeScreen({ navigation, route }) {
                             }}
                             activeOpacity={0.75}
                         >
-                            <Svg width={4} height={48} style={styles.dayAccentNotch}>
-                                <Polygon points="0,7 4,0 4,41 0,48" fill={getMuscleColor(day.target)} />
-                            </Svg>
+                            <LinearGradient
+                                colors={[`${getMuscleColor(day.target)}18`, `${getMuscleColor(day.target)}04`, "transparent"]}
+                                start={{ x: 0, y: 0.5 }}
+                                end={{ x: 0.65, y: 0.5 }}
+                                style={StyleSheet.absoluteFillObject}
+                                pointerEvents="none"
+                            />
+                            <View style={[styles.dayAccentSpine, { backgroundColor: getMuscleColor(day.target) }]} />
                             <View style={styles.dayRowLeft}>
                                 <View style={styles.dayNumRow}>
                                     <Text style={styles.dayNum}>0{day.day}</Text>
@@ -2341,10 +2346,14 @@ const styles = StyleSheet.create({
         position: "relative",
         overflow: "hidden",
     },
-    dayAccentNotch: {
+    dayAccentSpine: {
         position: "absolute",
         left: 0,
-        top: 18,
+        top: 0,
+        bottom: 0,
+        width: 3.5,
+        borderTopLeftRadius: RADIUS.md,
+        borderBottomLeftRadius: RADIUS.md,
     },
     dayRowLeft: { flex: 1 },
     dayNumRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
