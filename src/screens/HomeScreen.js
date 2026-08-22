@@ -822,9 +822,9 @@ export default function HomeScreen({ navigation, route }) {
                 {/* ── Unified Dashboard Card ── */}
                 {(() => {
                     const progressPercent = xp % 100;
-                    const radius = 30;
-                    const strokeWidth = 6;
-                    const circumference = 2 * Math.PI * radius; // ~188.5
+                    const radius = 38;
+                    const strokeWidth = 5.5;
+                    const circumference = 2 * Math.PI * radius; // ~238.76
                     const strokeDashoffset = circumference - (circumference * progressPercent) / 100;
                     const tierNum = total >= 100 ? '06' :
                         total >= 50 ? '05' :
@@ -836,18 +836,18 @@ export default function HomeScreen({ navigation, route }) {
                         <View style={styles.dashboardCard}>
                             {/* Left: SVG XP Progress Ring */}
                             <View style={styles.dashboardRingWrapper}>
-                                <Svg width={80} height={80} style={{ transform: [{ rotate: "-90deg" }] }}>
+                                <Svg width={92} height={92} style={{ transform: [{ rotate: "-90deg" }] }}>
                                     <Circle
-                                        cx={40}
-                                        cy={40}
+                                        cx={46}
+                                        cy={46}
                                         r={radius}
                                         stroke="rgba(255,255,255,0.08)"
                                         strokeWidth={strokeWidth}
                                         fill="none"
                                     />
                                     <Circle
-                                        cx={40}
-                                        cy={40}
+                                        cx={46}
+                                        cy={46}
                                         r={radius}
                                         stroke={COLORS.primary}
                                         strokeWidth={strokeWidth}
@@ -1799,16 +1799,16 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: COLORS.border,
         backgroundColor: COLORS.bgCard,
-        padding: 18,
+        padding: 16,
         flexDirection: "row",
         alignItems: "center",
     },
     dashboardRingWrapper: {
-        width: 80,
-        height: 80,
+        width: 92,
+        height: 92,
         alignItems: "center",
         justifyContent: "center",
-        marginRight: 16,
+        marginRight: 14,
     },
     dashboardRingTextContainer: {
         ...StyleSheet.absoluteFillObject,
@@ -1816,16 +1816,16 @@ const styles = StyleSheet.create({
         justifyContent: "center",
     },
     dashboardRingPercent: {
-        fontSize: 18,
-        fontFamily: FAMILY.monoBold,
+        fontSize: 20,
+        fontFamily: FAMILY.bold,
         color: "#FFFFFF",
     },
     dashboardRingLabel: {
-        fontSize: 8,
-        fontFamily: FAMILY.mono,
-        letterSpacing: 1,
+        fontSize: 8.5,
+        fontFamily: FAMILY.medium,
+        letterSpacing: 1.5,
         color: COLORS.textSub,
-        marginTop: 1,
+        marginTop: 3,
     },
     dashboardStatsRow: {
         flex: 1,
