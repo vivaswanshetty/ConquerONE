@@ -1636,11 +1636,11 @@ const styles = StyleSheet.create({
         textTransform: "uppercase",
     },
     name: {
-        fontSize: 44,
+        fontSize: 30,
         color: "#FFFFFF",
-        fontFamily: "BebasNeue_400Regular",
-        letterSpacing: 0.5,
-        lineHeight: 46,
+        fontFamily: FAMILY.bold,
+        letterSpacing: 0,
+        lineHeight: 36,
     },
 
     // Action Shortcuts
