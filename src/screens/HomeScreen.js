@@ -692,7 +692,7 @@ export default function HomeScreen({ navigation, route }) {
                                 activeOpacity={0.7}
                             >
                                 <View style={styles.shortcutIconBox}>
-                                    <Ionicons name="sparkles" size={18} color={COLORS.textSub} />
+                                    <Ionicons name="chatbubble-ellipses-outline" size={18} color={COLORS.textSub} />
                                 </View>
                                 <Text style={styles.shortcutLabel}>Coach</Text>
                             </TouchableOpacity>
