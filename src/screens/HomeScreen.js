@@ -1691,6 +1691,9 @@ const styles = StyleSheet.create({
         height: 220,
         backgroundColor: "#0C0C0E",
         overflow: "hidden",
+        marginHorizontal: 0,
+        borderRadius: 0,
+        alignSelf: "stretch",
     },
     heroBgNumber: {
         position: "absolute",
