@@ -1642,7 +1642,7 @@ const styles = StyleSheet.create({
     },
     headerAvatar: { width: "100%", height: "100%" },
     avatarPlaceholder: { width: "100%", height: "100%", alignItems: "center", justifyContent: "center" },
-    avatarText: { fontSize: 16, fontFamily: FAMILY.header, color: COLORS.text },
+    avatarText: { fontSize: 16, fontFamily: FAMILY.bold, color: COLORS.text },
 
     greeting: {
         fontSize: 13,
@@ -1745,11 +1745,11 @@ const styles = StyleSheet.create({
         transform: [{ skewX: "8deg" }],
     },
     heroTitle: {
-        fontSize: 34,
-        fontFamily: "BebasNeue_400Regular",
+        fontSize: 26,
+        fontFamily: FAMILY.bold,
         color: "#FFFFFF",
-        letterSpacing: 0.5,
-        lineHeight: 38,
+        letterSpacing: -0.3,
+        lineHeight: 30,
         marginTop: 4,
     },
     heroSub: {
@@ -1775,8 +1775,8 @@ const styles = StyleSheet.create({
         textTransform: "uppercase",
     },
     heroMetaValue: {
-        fontSize: 18,
-        fontFamily: "BebasNeue_400Regular",
+        fontSize: 13,
+        fontFamily: FAMILY.monoBold,
         color: "#FFFFFF",
         letterSpacing: 0.5,
     },
@@ -1879,8 +1879,8 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     consistencyTitle: {
-        fontSize: 14,
-        fontFamily: "BebasNeue_400Regular",
+        fontSize: 13,
+        fontFamily: FAMILY.bold,
         letterSpacing: 1,
         color: "#FFFFFF",
     },
@@ -1991,7 +1991,7 @@ const styles = StyleSheet.create({
         borderBottomColor: COLORS.border,
     },
     modalHeaderTitle: {
-        fontFamily: FAMILY.header,
+        fontFamily: FAMILY.bold,
         fontSize: 16,
         color: COLORS.text,
     },
@@ -2174,7 +2174,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: SPACING.base, marginBottom: 12, marginTop: 24,
     },
     sectionLabel: {
-        fontSize: 16, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: -0.2,
+        fontSize: 16, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -0.2,
     },
 
     // Hero card
@@ -2209,7 +2209,7 @@ const styles = StyleSheet.create({
         borderWidth: 0.5, borderColor: COLORS.border,
     },
     heroBadgeText: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 1.5 },
-    heroTitle: { fontSize: 32, fontFamily: FAMILY.header, color: COLORS.text, lineHeight: 36, letterSpacing: -0.5 },
+    heroTitle: { fontSize: 32, fontFamily: FAMILY.bold, color: COLORS.text, lineHeight: 36, letterSpacing: -0.5 },
     heroSub: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textSub, marginTop: 6 },
 
     heroMetaRow: {
@@ -2262,7 +2262,7 @@ const styles = StyleSheet.create({
         color: COLORS.textSub, letterSpacing: 1.5, marginBottom: 8,
     },
     restTitle: {
-        fontSize: 30, fontFamily: FAMILY.header,
+        fontSize: 30, fontFamily: FAMILY.bold,
         color: COLORS.text, lineHeight: 34, marginBottom: 20, letterSpacing: -0.5,
     },
     restTimeline: { gap: 10 },
@@ -2377,7 +2377,7 @@ const styles = StyleSheet.create({
     closeMomentBtn: { position: "absolute", top: 16, right: 16, padding: 8, backgroundColor: "rgba(237, 234, 227, 0.06)", borderRadius: RADIUS.pill },
     momentDetailIconWrap: { width: 64, height: 64, borderRadius: RADIUS.pill, backgroundColor: "rgba(237, 234, 227, 0.06)", alignItems: "center", justifyContent: "center", marginBottom: 20 },
     momentDetailTitle: { fontSize: 10, fontFamily: FAMILY.semibold, letterSpacing: 2, marginBottom: 8, color: COLORS.textSub },
-    momentDetailSub: { fontSize: 20, fontFamily: FAMILY.header, color: COLORS.text, textAlign: "center", marginBottom: 16, lineHeight: 24 },
+    momentDetailSub: { fontSize: 20, fontFamily: FAMILY.bold, color: COLORS.text, textAlign: "center", marginBottom: 16, lineHeight: 24 },
     momentDetailDesc: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textSub, textAlign: "center", lineHeight: 20, marginBottom: 24 },
     momentActionBtn: { width: '100%', height: 48, borderRadius: RADIUS.md, backgroundColor: COLORS.primary, alignItems: "center", justifyContent: "center" },
     momentActionText: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.text },
@@ -2396,7 +2396,7 @@ const styles = StyleSheet.create({
         borderWidth: 1, borderColor: COLORS.border,
     },
     freezeStatus: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 2, marginBottom: 6 },
-    freezeTitle: { fontSize: 18, fontFamily: FAMILY.header, color: COLORS.text, textAlign: 'center', lineHeight: 22 },
+    freezeTitle: { fontSize: 18, fontFamily: FAMILY.bold, color: COLORS.text, textAlign: 'center', lineHeight: 22 },
     freezeDesc: {
         fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textSub,
         textAlign: 'center', lineHeight: 20, marginBottom: 20
@@ -2433,7 +2433,7 @@ const styles = StyleSheet.create({
         borderWidth: 1, borderColor: COLORS.border,
     },
     resetStatus: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 2, marginBottom: 6 },
-    resetTitle: { fontSize: 18, fontFamily: FAMILY.header, color: COLORS.text, textAlign: 'center', lineHeight: 22 },
+    resetTitle: { fontSize: 18, fontFamily: FAMILY.bold, color: COLORS.text, textAlign: 'center', lineHeight: 22 },
     resetDesc: {
         fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textSub,
         textAlign: 'center', lineHeight: 20, marginBottom: 20
