@@ -1054,21 +1054,15 @@ export default function HomeScreen({ navigation, route }) {
                             }}
                             activeOpacity={0.75}
                         >
-                            <LinearGradient
-                                colors={[`${getMuscleColor(day.target)}18`, `${getMuscleColor(day.target)}04`, "transparent"]}
-                                start={{ x: 0, y: 0.5 }}
-                                end={{ x: 0.65, y: 0.5 }}
-                                style={StyleSheet.absoluteFillObject}
-                                pointerEvents="none"
-                            />
-                            <View style={[styles.dayAccentSpine, { backgroundColor: getMuscleColor(day.target) }]} />
+                            <View style={[styles.dayTopAccent, { backgroundColor: getMuscleColor(day.target) }]} />
                             <View style={styles.dayRowLeft}>
                                 <View style={styles.dayNumRow}>
+                                    <View style={[styles.dayTelemetryDot, { backgroundColor: getMuscleColor(day.target) }]} />
                                     <Text style={styles.dayNum}>0{day.day}</Text>
                                     <View style={[
                                         styles.muscleBadge,
                                         {
-                                            backgroundColor: `${getMuscleColor(day.target)}26`,
+                                            backgroundColor: `${getMuscleColor(day.target)}1F`,
                                             borderColor: `${getMuscleColor(day.target)}4D`,
                                         }
                                     ]}>
@@ -1804,11 +1798,11 @@ const styles = StyleSheet.create({
         letterSpacing: 1.2,
     },
     heroTitle: {
-        fontSize: 25,
+        fontSize: 26,
         fontFamily: FAMILY.accent2,
         color: "#FFFFFF",
-        letterSpacing: 0.3,
-        lineHeight: 29,
+        letterSpacing: 0.6,
+        lineHeight: 30,
         marginTop: 4,
     },
     heroSub: {
@@ -1942,9 +1936,9 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     consistencyTitle: {
-        fontSize: 12.5,
+        fontSize: 13,
         fontFamily: FAMILY.accent2,
-        letterSpacing: 0.5,
+        letterSpacing: 0.8,
         color: "#FFFFFF",
     },
     consistencySubtitle: {
@@ -2237,7 +2231,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: SPACING.base, marginBottom: 12, marginTop: 24,
     },
     sectionLabel: {
-        fontSize: 15.5, fontFamily: FAMILY.accent2, color: COLORS.text, letterSpacing: 0.4,
+        fontSize: 16, fontFamily: FAMILY.accent2, color: COLORS.text, letterSpacing: 0.6,
     },
 
     // Rest Card
@@ -2340,20 +2334,26 @@ const styles = StyleSheet.create({
     },
     dayRow: {
         flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-        paddingLeft: 22, paddingRight: 18, paddingVertical: 16, backgroundColor: COLORS.bgCard,
+        paddingHorizontal: 18, paddingVertical: 16, backgroundColor: COLORS.bgCard,
         borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border,
         minHeight: 84,
         position: "relative",
         overflow: "hidden",
     },
-    dayAccentSpine: {
+    dayTopAccent: {
         position: "absolute",
-        left: 0,
         top: 0,
-        bottom: 0,
-        width: 3.5,
-        borderTopLeftRadius: RADIUS.md,
-        borderBottomLeftRadius: RADIUS.md,
+        left: 18,
+        width: 38,
+        height: 2.5,
+        borderBottomLeftRadius: 2,
+        borderBottomRightRadius: 2,
+    },
+    dayTelemetryDot: {
+        width: 3,
+        height: 10,
+        borderRadius: 1.5,
+        marginRight: -2,
     },
     dayRowLeft: { flex: 1 },
     dayNumRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
