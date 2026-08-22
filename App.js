@@ -36,6 +36,14 @@ import { Syne_700Bold } from "@expo-google-fonts/syne";
 import { Arimo_400Regular, Arimo_700Bold } from "@expo-google-fonts/arimo";
 import { Urbanist_700Bold, Urbanist_900Black } from "@expo-google-fonts/urbanist";
 import { SpaceGrotesk_700Bold } from "@expo-google-fonts/space-grotesk";
+import { BebasNeue_400Regular } from "@expo-google-fonts/bebas-neue";
+import {
+  ChakraPetch_300Light,
+  ChakraPetch_400Regular,
+  ChakraPetch_500Medium,
+  ChakraPetch_600SemiBold,
+  ChakraPetch_700Bold,
+} from "@expo-google-fonts/chakra-petch";
 import {
   Montserrat_400Regular,
   Montserrat_600SemiBold,
@@ -146,19 +154,25 @@ function RootNavigator({ fontsLoaded }) {
  *   - JetBrains Mono (Precision Instruments)
  */
 const CRITICAL_FONTS = {
+  BebasNeue_400Regular,
+  ChakraPetch_300Light,
+  ChakraPetch_400Regular,
+  ChakraPetch_500Medium,
+  ChakraPetch_600SemiBold,
+  ChakraPetch_700Bold,
+  JetBrainsMono_600SemiBold,
   Inter_400Regular,
   Inter_600SemiBold,
   Inter_700Bold,
-  Archivo_700Bold,
   Urbanist_700Bold,
   Urbanist_900Black,
-  JetBrainsMono_600SemiBold,
   Arimo_400Regular,
   Arimo_700Bold,
 };
 
 const DEFERRED_FONTS = {
   Inter_500Medium,
+  Archivo_700Bold,
   Archivo_900Black,
   JetBrainsMono_400Regular,
   JetBrainsMono_700Bold,

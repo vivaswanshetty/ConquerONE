@@ -90,21 +90,21 @@ export const FONTS = {
 import { Platform } from "react-native";
 
 export const FAMILY = {
-    // ── Standardized Display Typeface for Screen Titles & Hero Numbers (Urbanist) ──
-    header: "Urbanist_900Black",
-    display: "Urbanist_900Black",
-    urbanist: "Urbanist_900Black",
-    urbanistBold: "Urbanist_700Bold",
-    urbanistBlack: "Urbanist_900Black",
+    // ── Display Typeface for Screen Titles & Hero Numbers (Bebas Neue) ──
+    header: "BebasNeue_400Regular",
+    display: "BebasNeue_400Regular",
+    urbanist: "BebasNeue_400Regular",
+    urbanistBold: "BebasNeue_400Regular",
+    urbanistBlack: "BebasNeue_400Regular",
 
-    // ── Clean Grotesk for Body & UI Text (Inter) ──
-    light: "Inter_400Regular",
-    regular: "Inter_400Regular",
-    medium: "Inter_500Medium",
-    semibold: "Inter_600SemiBold",
-    bold: "Arimo_700Bold",
-    black: "Inter_700Bold",
-    accent: "Inter_600SemiBold",
+    // ── Modern Technical Grotesk for Body & UI Text (Chakra Petch) ──
+    light: "ChakraPetch_300Light",
+    regular: "ChakraPetch_400Regular",
+    medium: "ChakraPetch_500Medium",
+    semibold: "ChakraPetch_600SemiBold",
+    bold: "ChakraPetch_700Bold",
+    black: "ChakraPetch_700Bold",
+    accent: "ChakraPetch_600SemiBold",
 
     // ── Precision Instrument Monospace for Numbers, Reps, Weights, Timers, Sets, Kcal, Streak ──
     mono: "JetBrainsMono_600SemiBold",
@@ -112,10 +112,10 @@ export const FAMILY = {
     monoBold: "JetBrainsMono_700Bold",
 
     // ── Fallbacks for secondary screens ──
-    mReg: "Inter_400Regular",
-    mSemi: "Inter_600SemiBold",
-    mBold: "Inter_700Bold",
-    mBlack: "Inter_700Bold",
+    mReg: "ChakraPetch_400Regular",
+    mSemi: "ChakraPetch_600SemiBold",
+    mBold: "ChakraPetch_700Bold",
+    mBlack: "ChakraPetch_700Bold",
 };
 
 export const SPACING = {
