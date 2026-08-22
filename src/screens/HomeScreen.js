@@ -1054,10 +1054,16 @@ export default function HomeScreen({ navigation, route }) {
                             }}
                             activeOpacity={0.75}
                         >
-                            <View style={[styles.dayTopAccent, { backgroundColor: getMuscleColor(day.target) }]} />
+                            <LinearGradient
+                                colors={[`${getMuscleColor(day.target)}14`, "transparent"]}
+                                start={{ x: 0, y: 0.5 }}
+                                end={{ x: 0.35, y: 0.5 }}
+                                style={StyleSheet.absoluteFillObject}
+                                pointerEvents="none"
+                            />
+                            <View style={[styles.dayLeftSpine, { backgroundColor: getMuscleColor(day.target) }]} />
                             <View style={styles.dayRowLeft}>
                                 <View style={styles.dayNumRow}>
-                                    <View style={[styles.dayTelemetryDot, { backgroundColor: getMuscleColor(day.target) }]} />
                                     <Text style={styles.dayNum}>0{day.day}</Text>
                                     <View style={[
                                         styles.muscleBadge,
@@ -2334,26 +2340,20 @@ const styles = StyleSheet.create({
     },
     dayRow: {
         flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-        paddingHorizontal: 18, paddingVertical: 16, backgroundColor: COLORS.bgCard,
+        paddingLeft: 22, paddingRight: 18, paddingVertical: 16, backgroundColor: COLORS.bgCard,
         borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border,
         minHeight: 84,
         position: "relative",
         overflow: "hidden",
     },
-    dayTopAccent: {
+    dayLeftSpine: {
         position: "absolute",
+        left: 0,
         top: 0,
-        left: 18,
-        width: 38,
-        height: 2.5,
-        borderBottomLeftRadius: 2,
-        borderBottomRightRadius: 2,
-    },
-    dayTelemetryDot: {
-        width: 3,
-        height: 10,
-        borderRadius: 1.5,
-        marginRight: -2,
+        bottom: 0,
+        width: 3.5,
+        borderTopLeftRadius: RADIUS.md,
+        borderBottomLeftRadius: RADIUS.md,
     },
     dayRowLeft: { flex: 1 },
     dayNumRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
