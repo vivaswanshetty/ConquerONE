@@ -769,8 +769,24 @@ export default function HomeScreen({ navigation, route }) {
                                 <View style={styles.heroContent}>
                                     <View>
                                         <View style={styles.heroBadge}>
-                                            <View style={styles.heroBadgeDot} />
-                                            <Text style={styles.heroBadgeText}>TODAY · DAY 0{todayWorkout.day}</Text>
+                                            <Svg
+                                                width={164}
+                                                height={26}
+                                                viewBox="0 0 164 26"
+                                                style={StyleSheet.absoluteFillObject}
+                                            >
+                                                <Defs>
+                                                    <SvgGradient id="heroBadgeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                        <Stop offset="0%" stopColor="#280A0A" stopOpacity="0.95" />
+                                                        <Stop offset="100%" stopColor="#3C1A0C" stopOpacity="0.95" />
+                                                    </SvgGradient>
+                                                </Defs>
+                                                <Polygon points="0,0 152,0 164,26 0,26" fill="url(#heroBadgeGrad)" stroke="rgba(255, 100, 40, 0.4)" strokeWidth={1} />
+                                            </Svg>
+                                            <View style={styles.heroBadgeContent}>
+                                                <View style={styles.heroBadgeDot} />
+                                                <Text style={styles.heroBadgeText}>TODAY · DAY 0{todayWorkout.day}</Text>
+                                            </View>
                                         </View>
                                         <Text style={styles.heroTitle} numberOfLines={1} adjustsFontSizeToFit>
                                             {todayWorkout.dayName ? todayWorkout.dayName.toUpperCase() : (todayWorkout.target.toUpperCase().includes("DAY") ? todayWorkout.target.toUpperCase() : `${todayWorkout.target.toUpperCase()} (HEAVY)`)}
@@ -1715,31 +1731,29 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     heroBadge: {
+        width: 164,
+        height: 26,
+        alignSelf: "flex-start",
+        marginBottom: 8,
+        justifyContent: "center",
+    },
+    heroBadgeContent: {
         flexDirection: "row",
         alignItems: "center",
-        alignSelf: "flex-start",
-        gap: 6,
-        backgroundColor: "rgba(227, 30, 36, 0.12)",
-        borderWidth: 1,
-        borderColor: "rgba(227, 30, 36, 0.25)",
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 6,
-        transform: [{ skewX: "-8deg" }],
-        marginBottom: 8,
+        paddingLeft: 12,
+        gap: 8,
     },
     heroBadgeDot: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
-        backgroundColor: COLORS.primary,
+        width: 7,
+        height: 7,
+        borderRadius: 3.5,
+        backgroundColor: "#FF5E3A",
     },
     heroBadgeText: {
-        fontSize: 10,
-        fontFamily: FAMILY.semibold,
+        fontSize: 10.5,
+        fontFamily: FAMILY.bold,
         color: "#FFFFFF",
-        letterSpacing: 1.5,
-        transform: [{ skewX: "8deg" }],
+        letterSpacing: 1.2,
     },
     heroTitle: {
         fontSize: 26,
