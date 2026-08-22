@@ -456,14 +456,31 @@ export default function HistoryScreen({ navigation }) {
                 {/* Stats Asymmetric Grid */}
                 <View style={styles.statsRow}>
                     <View style={styles.statsLeft}>
-                        <View style={styles.statSmall}>
+                        {/* Streak Card */}
+                        <View style={[styles.statSmall, { borderColor: "rgba(255, 149, 0, 0.25)" }]}>
+                            <LinearGradient
+                                colors={["rgba(255, 149, 0, 0.08)", "transparent"]}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                                style={StyleSheet.absoluteFillObject}
+                                pointerEvents="none"
+                            />
                             <View style={styles.statSmallTop}>
-                                <Ionicons name="flame" size={14} color={COLORS.textSub} />
+                                <Ionicons name="flame" size={14} color="#FF9500" />
                                 <Text style={styles.statLabel}>STREAK</Text>
                             </View>
-                            <Text style={styles.statValue}>{streak}D</Text>
+                            <Text style={[styles.statValue, { color: "#FF9500" }]}>{streak}D</Text>
                         </View>
+
+                        {/* Sessions Card */}
                         <View style={styles.statSmall}>
+                            <LinearGradient
+                                colors={["rgba(255, 255, 255, 0.03)", "transparent"]}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                                style={StyleSheet.absoluteFillObject}
+                                pointerEvents="none"
+                            />
                             <View style={styles.statSmallTop}>
                                 <Ionicons name="fitness-outline" size={14} color={COLORS.textSub} />
                                 <Text style={styles.statLabel}>SESSIONS</Text>
@@ -471,12 +488,31 @@ export default function HistoryScreen({ navigation }) {
                             <Text style={styles.statValue}>{total}</Text>
                         </View>
                     </View>
+
+                    {/* Total Duration Card (Main Card) */}
                     <View style={styles.statLarge}>
+                        <LinearGradient
+                            colors={["rgba(255, 255, 255, 0.05)", "rgba(255, 255, 255, 0.01)"]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={StyleSheet.absoluteFillObject}
+                            pointerEvents="none"
+                        />
+                        {/* Subtle decorative background watermark */}
+                        <View style={{ position: "absolute", right: -20, bottom: -20, opacity: 0.07 }} pointerEvents="none">
+                            <Ionicons name="time-outline" size={120} color="#FFFFFF" />
+                        </View>
+
                         <View style={styles.statSmallTop}>
-                            <Ionicons name="time" size={16} color={COLORS.textSub} />
+                            <Ionicons name="time-outline" size={16} color={COLORS.textSub} />
                             <Text style={styles.statLabel}>TOTAL DURATION</Text>
                         </View>
-                        <Text style={[styles.statValue, { fontSize: 34 }]}>{totalMin}m</Text>
+                        <View>
+                            <Text style={[styles.statValue, { fontSize: 34, lineHeight: 38 }]}>
+                                {totalMin}<Text style={{ fontSize: 18, color: COLORS.textSub }}>m</Text>
+                            </Text>
+                            <Text style={styles.statSubLabel}>cumulative volume</Text>
+                        </View>
                     </View>
                 </View>
 
@@ -563,7 +599,7 @@ const styles = StyleSheet.create({
         width: 36, height: 36, borderRadius: RADIUS.pill, backgroundColor: COLORS.bgCard,
         alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: COLORS.border,
     },
-    headerTitle: { fontSize: 24, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: -0.5 },
+    headerTitle: { fontSize: 18, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 0.5 },
 
     statsRow: {
         flexDirection: "row", marginHorizontal: 20, marginTop: 4, gap: 12,
@@ -572,24 +608,26 @@ const styles = StyleSheet.create({
     statSmall: {
         flex: 1, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.md,
         padding: 16, borderWidth: 1, borderColor: COLORS.border,
+        position: "relative", overflow: "hidden", justifyContent: "center",
     },
     statLarge: {
-        flex: 1, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.md,
+        flex: 1, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg,
         padding: 18, borderWidth: 1, borderColor: COLORS.border,
-        justifyContent: "space-between",
+        justifyContent: "space-between", position: "relative", overflow: "hidden",
     },
-    statSmallTop: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 },
-    statValue: { fontSize: 22, fontFamily: FAMILY.monoBold, color: COLORS.text, letterSpacing: -0.5 },
-    statLabel: { fontSize: 9, color: COLORS.textSub, fontFamily: FAMILY.medium, flex: 1 },
+    statSmallTop: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 },
+    statValue: { fontSize: 24, fontFamily: FAMILY.monoBold, color: COLORS.text, letterSpacing: -0.5 },
+    statLabel: { fontSize: 9.5, color: COLORS.textSub, fontFamily: FAMILY.semibold, letterSpacing: 1, flex: 1 },
+    statSubLabel: { fontSize: 9, color: COLORS.textMuted, fontFamily: FAMILY.regular, marginTop: 2 },
 
     sectionLabel: {
-        fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.textMuted,
-        letterSpacing: 1.5, marginHorizontal: 20, marginTop: 32, marginBottom: 12
+        fontSize: 12, fontFamily: FAMILY.bold, color: COLORS.textMuted,
+        letterSpacing: 1.2, marginHorizontal: 20, marginTop: 28, marginBottom: 12
     },
 
     card: {
         marginHorizontal: 20, backgroundColor: COLORS.bgCard,
-        borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border,
+        borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border,
         padding: 18,
     },
 
@@ -599,7 +637,7 @@ const styles = StyleSheet.create({
         marginBottom: 8, marginLeft: 4
     },
     weekCard: {
-        backgroundColor: COLORS.bgCard, borderRadius: RADIUS.md,
+        backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg,
         borderWidth: 1, borderColor: COLORS.border,
         paddingHorizontal: 16,
     },
