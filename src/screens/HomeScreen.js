@@ -2173,56 +2173,6 @@ const styles = StyleSheet.create({
         fontSize: 16, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -0.2,
     },
 
-    // Hero card
-    heroCard: {
-        width: width,
-        height: 210,
-        overflow: "hidden",
-        backgroundColor: COLORS.bgCard,
-    },
-    heroBgNumber: {
-        position: "absolute",
-        top: -35,
-        right: -10,
-        fontFamily: "BebasNeue_400Regular",
-        fontSize: 180,
-        lineHeight: 180,
-        color: "rgba(255, 255, 255, 0.05)",
-        zIndex: 1,
-    },
-    heroCornerCut: {
-        position: "absolute",
-        bottom: 0,
-        right: 0,
-        zIndex: 10,
-    },
-    heroContent: { flex: 1, paddingVertical: 18, paddingHorizontal: SPACING.base, justifyContent: "space-between", zIndex: 2 },
-    heroBadge: {
-        alignSelf: "flex-start",
-        backgroundColor: "rgba(237, 234, 227, 0.06)",
-        paddingHorizontal: 8, paddingVertical: 3,
-        borderRadius: RADIUS.sm, marginBottom: 10,
-        borderWidth: 0.5, borderColor: COLORS.border,
-    },
-    heroBadgeText: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 1.5 },
-    heroTitle: { fontSize: 32, fontFamily: FAMILY.bold, color: COLORS.text, lineHeight: 36, letterSpacing: -0.5 },
-    heroSub: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textSub, marginTop: 6 },
-
-    heroMetaRow: {
-        flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-        marginTop: 14,
-    },
-    heroMeta: { gap: 2 },
-    heroMetaLabel: { fontSize: 8, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 1 },
-    heroMetaValue: { fontSize: 11, fontFamily: FAMILY.mono, color: COLORS.text },
-
-    heroCta: {
-        flexDirection: "row", alignItems: "center", gap: 6,
-        backgroundColor: COLORS.primary, paddingHorizontal: 14, paddingVertical: 9,
-        borderRadius: RADIUS.md,
-    },
-    heroCtaText: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.text, letterSpacing: 0.2 },
-
     // Rest Card
     restCard: {
         marginHorizontal: SPACING.base, borderRadius: RADIUS.lg, overflow: "hidden",
