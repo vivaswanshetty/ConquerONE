@@ -280,13 +280,15 @@ function ExerciseRow({ ex, index, total, expanded, onPress, onEdit, dayTarget })
 
             {expanded && (
                 <View style={styles.exExpanded}>
-                    <View style={styles.exImgBox}>
-                        <Image source={{ uri: ex.image }} style={styles.exImg} resizeMode="cover" />
-                        <LinearGradient colors={["transparent", "rgba(10,10,11,0.9)"]} style={styles.exImgGrad} />
-                        <View style={styles.exImgBadge}>
-                            <Text style={styles.exImgBadgeText}>{dayTarget}</Text>
+                    {ex.image ? (
+                        <View style={styles.exImgBox}>
+                            <Image source={{ uri: ex.image }} style={styles.exImg} resizeMode="cover" />
+                            <LinearGradient colors={["transparent", "rgba(10,10,11,0.9)"]} style={styles.exImgGrad} />
+                            <View style={styles.exImgBadge}>
+                                <Text style={styles.exImgBadgeText}>{dayTarget}</Text>
+                            </View>
                         </View>
-                    </View>
+                    ) : null}
 
                     <View style={styles.setsGrid}>
                         {Array.from({ length: ex.sets }).map((_, i) => (
