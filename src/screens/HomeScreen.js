@@ -46,7 +46,7 @@ function getMuscleColor(target) {
     if (t.includes("CHEST") || t.includes("TRICEPS") || t.includes("PUSH")) return "#E31E24"; // Crimson Red
     if (t.includes("BACK") || t.includes("BICEPS") || t.includes("PULL")) return "#FF9500"; // Gold Amber
     if (t.includes("SHOULDERS") || t.includes("CORE") || t.includes("ARMS")) return "#30B0C7"; // Steel Teal
-    if (t.includes("LEGS") || t.includes("QUADS") || t.includes("LOWER") || t.includes("CALVES")) return "#EDEAE3"; // White/Silver
+    if (t.includes("LEGS") || t.includes("QUADS") || t.includes("LOWER")) return "#D1D1D1"; // Silver
     return "#8E8E93";
 }
 
@@ -740,65 +740,77 @@ export default function HomeScreen({ navigation, route }) {
                             activeOpacity={0.9}
                             onPress={() => navigation.navigate("WorkoutDetail", { day: todayWorkout })}
                         >
-                            <ImageBackground
-                                source={todayWorkout.headerImage || require("../../assets/home_hero_bg.png")}
-                                style={StyleSheet.absoluteFill}
-                                resizeMode="cover"
+                            <MaskedView
+                                style={{ width, height: 220 }}
+                                maskElement={
+                                    <Svg width={width} height={220}>
+                                        <Polygon
+                                            points={`0,0 ${width},0 ${width},180 ${width - 40},220 0,220`}
+                                            fill="white"
+                                        />
+                                    </Svg>
+                                }
                             >
-                                <LinearGradient
-                                    colors={["rgba(0,0,0,0.3)", "rgba(10,10,11,0.85)", "rgba(10,10,11,0.98)"]}
+                                <ImageBackground
+                                    source={todayWorkout.headerImage || require("../../assets/home_hero_bg.png")}
                                     style={StyleSheet.absoluteFill}
-                                />
-
-                                {/* Large Faded Day Number in Background */}
-                                <Text
-                                    style={styles.heroBgNumber}
-                                    numberOfLines={1}
-                                    adjustsFontSizeToFit={false}
-                                    pointerEvents="none"
+                                    resizeMode="cover"
                                 >
-                                    {todayWorkout.day < 10 ? `0${todayWorkout.day}` : todayWorkout.day}
-                                </Text>
+                                    <LinearGradient
+                                        colors={["rgba(0,0,0,0.3)", "rgba(10,10,11,0.85)", "rgba(10,10,11,0.98)"]}
+                                        style={StyleSheet.absoluteFill}
+                                    />
 
-                                <View style={styles.heroContent}>
-                                    <View>
-                                        <View style={styles.heroBadge}>
-                                            <View style={styles.heroBadgeDot} />
-                                            <Text style={styles.heroBadgeText}>TODAY · DAY 0{todayWorkout.day}</Text>
-                                        </View>
-                                        <Text style={styles.heroTitle} numberOfLines={1} adjustsFontSizeToFit>
-                                            {todayWorkout.dayName ? todayWorkout.dayName.toUpperCase() : (todayWorkout.target.toUpperCase().includes("DAY") ? todayWorkout.target.toUpperCase() : `${todayWorkout.target.toUpperCase()} (HEAVY)`)}
-                                        </Text>
-                                        <Text style={styles.heroSub}>
-                                            6-day split · pull & push combined
-                                        </Text>
-                                    </View>
+                                    {/* Large Faded Day Number in Background */}
+                                    <Text
+                                        style={styles.heroBgNumber}
+                                        numberOfLines={1}
+                                        adjustsFontSizeToFit={false}
+                                        pointerEvents="none"
+                                    >
+                                        {todayWorkout.day < 10 ? `0${todayWorkout.day}` : todayWorkout.day}
+                                    </Text>
 
-                                    <View style={styles.heroMetaRow}>
-                                        <View style={{ flexDirection: "row", gap: 20 }}>
-                                            <View style={styles.heroMeta}>
-                                                <Text style={styles.heroMetaLabel}>VOLUME</Text>
-                                                <Text style={styles.heroMetaValue}>{todayWorkout.exercises.length} EX</Text>
+                                    <View style={styles.heroContent}>
+                                        <View>
+                                            <View style={styles.heroBadge}>
+                                                <View style={styles.heroBadgeDot} />
+                                                <Text style={styles.heroBadgeText}>TODAY · DAY 0{todayWorkout.day}</Text>
                                             </View>
-                                            <View style={styles.heroMeta}>
-                                                <Text style={styles.heroMetaLabel}>DURATION</Text>
-                                                <Text style={styles.heroMetaValue}>{totalTime(todayWorkout)} MIN</Text>
-                                            </View>
+                                            <Text style={styles.heroTitle} numberOfLines={1} adjustsFontSizeToFit>
+                                                {todayWorkout.dayName ? todayWorkout.dayName.toUpperCase() : (todayWorkout.target.toUpperCase().includes("DAY") ? todayWorkout.target.toUpperCase() : `${todayWorkout.target.toUpperCase()} (HEAVY)`)}
+                                            </Text>
+                                            <Text style={styles.heroSub}>
+                                                6-day split · pull & push combined
+                                            </Text>
                                         </View>
 
-                                        <TouchableOpacity
-                                            style={styles.heroCta}
-                                            activeOpacity={0.85}
-                                            onPress={() => {
-                                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                                navigation.navigate("WorkoutDetail", { day: todayWorkout });
-                                            }}
-                                        >
-                                            <Text style={styles.heroCtaText}>Start session ›</Text>
-                                        </TouchableOpacity>
+                                        <View style={styles.heroMetaRow}>
+                                            <View style={{ flexDirection: "row", gap: 20 }}>
+                                                <View style={styles.heroMeta}>
+                                                    <Text style={styles.heroMetaLabel}>VOLUME</Text>
+                                                    <Text style={styles.heroMetaValue}>{todayWorkout.exercises.length} EX</Text>
+                                                </View>
+                                                <View style={styles.heroMeta}>
+                                                    <Text style={styles.heroMetaLabel}>DURATION</Text>
+                                                    <Text style={styles.heroMetaValue}>{totalTime(todayWorkout)} MIN</Text>
+                                                </View>
+                                            </View>
+
+                                            <TouchableOpacity
+                                                style={styles.heroCta}
+                                                activeOpacity={0.85}
+                                                onPress={() => {
+                                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                                    navigation.navigate("WorkoutDetail", { day: todayWorkout });
+                                                }}
+                                            >
+                                                <Text style={styles.heroCtaText}>Start session ›</Text>
+                                            </TouchableOpacity>
+                                        </View>
                                     </View>
-                                </View>
-                            </ImageBackground>
+                                </ImageBackground>
+                            </MaskedView>
                         </TouchableOpacity>
                     ) : (
                         <RestDayCard navigation={navigation} />
@@ -962,7 +974,7 @@ export default function HomeScreen({ navigation, route }) {
                             <Text style={styles.legendText}>Shoulders/core</Text>
                         </View>
                         <View style={styles.legendItem}>
-                            <View style={[styles.legendDot, { backgroundColor: "#EDEAE3" }]} />
+                            <View style={[styles.legendDot, { backgroundColor: "#D1D1D1" }]} />
                             <Text style={styles.legendText}>Legs</Text>
                         </View>
                     </View>
@@ -1676,7 +1688,7 @@ const styles = StyleSheet.create({
     // Hero Card
     heroCard: {
         width: width,
-        minHeight: 220,
+        height: 220,
         backgroundColor: "#0C0C0E",
         overflow: "hidden",
     },
