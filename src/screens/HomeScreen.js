@@ -89,6 +89,86 @@ function MetallicText({ text, style, height = 50 }) {
     );
 }
 
+function LiveStatusStrip({ total, streak, xp }) {
+    const tier = total >= 100 ? 'TIER 6' :
+        total >= 50 ? 'TIER 5' :
+            total >= 25 ? 'TIER 4' :
+                total >= 10 ? 'TIER 3' :
+                    total >= 5 ? 'TIER 2' : 'TIER 1';
+
+    const items = [
+        `${total} TOTAL SESSIONS`,
+        `${streak} DAY STREAK`,
+        `CURRENT: ${tier}`,
+        `${100 - (xp % 100)} XP TO NEXT LEVEL`,
+    ];
+
+    const [index, setIndex] = useState(0);
+    const textAnim = useRef(new Animated.Value(1)).current;
+    const dotPulse = useRef(new Animated.Value(1)).current;
+
+    useEffect(() => {
+        const pulse = Animated.loop(
+            Animated.sequence([
+                Animated.timing(dotPulse, { toValue: 0.3, duration: 900, useNativeDriver: true }),
+                Animated.timing(dotPulse, { toValue: 1, duration: 900, useNativeDriver: true }),
+            ])
+        );
+        pulse.start();
+        return () => pulse.stop();
+    }, []);
+
+    useEffect(() => {
+        let isMounted = true;
+        const cycle = () => {
+            if (!isMounted) return;
+            Animated.sequence([
+                Animated.delay(2100),
+                Animated.timing(textAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
+            ]).start(({ finished }) => {
+                if (finished && isMounted) {
+                    setIndex((prev) => (prev + 1) % items.length);
+                    textAnim.setValue(0);
+                    Animated.timing(textAnim, { toValue: 1, duration: 200, useNativeDriver: true }).start(() => {
+                        if (isMounted) cycle();
+                    });
+                }
+            });
+        };
+        cycle();
+        return () => {
+            isMounted = false;
+        };
+    }, [items.length]);
+
+    const currentText = items[index] || items[0];
+
+    return (
+        <View style={styles.liveStatusContainer}>
+            <Animated.View style={[styles.liveStatusDot, { opacity: dotPulse }]} />
+            <View style={{ flex: 1, overflow: 'hidden', height: 16, justifyContent: 'center' }}>
+                <Animated.Text
+                    style={[
+                        styles.liveStatusText,
+                        {
+                            opacity: textAnim,
+                            transform: [{
+                                translateY: textAnim.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [-14, 0],
+                                }),
+                            }],
+                        },
+                    ]}
+                    numberOfLines={1}
+                >
+                    {currentText}
+                </Animated.Text>
+            </View>
+        </View>
+    );
+}
+
 const getWeekStats = (history, lastFreezeDate) => {
     const today = new Date();
     const currentDay = today.getDay(); // 0 is Sunday, 1 is Monday
@@ -588,6 +668,8 @@ export default function HomeScreen({ navigation, route }) {
                             </TouchableOpacity>
                         </View>
                     </Animated.View>
+
+                    <LiveStatusStrip total={total} streak={streak} xp={xp} />
 
                     {/* Action Shortcut Bar */}
                     <Animated.View
@@ -1547,6 +1629,31 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     headerTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
+
+    // Live Status Strip
+    liveStatusContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        paddingVertical: 8,
+        borderTopWidth: 1,
+        borderBottomWidth: 1,
+        borderColor: COLORS.border,
+        marginBottom: 12,
+    },
+    liveStatusDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: COLORS.primary,
+        marginRight: 8,
+    },
+    liveStatusText: {
+        fontSize: 10,
+        fontFamily: FAMILY.mono,
+        letterSpacing: 1.5,
+        color: COLORS.textSub,
+        textTransform: "uppercase",
+    },
 
     // Avatar
     avatarContainer: {
