@@ -103,8 +103,8 @@ function LiveStatusStrip({ total, streak, xp }) {
     useEffect(() => {
         const anim = Animated.loop(
             Animated.timing(scrollX, {
-                toValue: -340,
-                duration: 9000,
+                toValue: -450,
+                duration: 10000,
                 easing: Easing.linear,
                 useNativeDriver: true,
             })
@@ -115,8 +115,14 @@ function LiveStatusStrip({ total, streak, xp }) {
 
     return (
         <View style={styles.liveStatusContainer}>
-            <Animated.View style={{ flexDirection: 'row', transform: [{ translateX: scrollX }] }}>
-                <Text style={styles.liveStatusText}>{tickerText}{tickerText}{tickerText}</Text>
+            <Animated.View style={{ flexDirection: 'row', alignItems: 'center', transform: [{ translateX: scrollX }] }}>
+                <Text
+                    numberOfLines={1}
+                    ellipsizeMode="clip"
+                    style={[styles.liveStatusText, { flexShrink: 0, width: 3500 }]}
+                >
+                    {tickerText}{tickerText}{tickerText}{tickerText}
+                </Text>
             </Animated.View>
         </View>
     );
@@ -801,13 +807,14 @@ export default function HomeScreen({ navigation, route }) {
                             </ImageBackground>
 
                             <Svg
-                                width={70}
-                                height={45}
-                                viewBox="0 0 70 45"
-                                style={{ position: 'absolute', bottom: 0, right: 0 }}
+                                width={80}
+                                height={50}
+                                viewBox="0 0 80 50"
+                                style={{ position: 'absolute', bottom: -1, right: -1, zIndex: 999, elevation: 20 }}
                                 pointerEvents="none"
                             >
-                                <Polygon points="70,0 70,45 0,45" fill={COLORS.bg} />
+                                <Polygon points="80,0 80,50 0,50" fill={COLORS.bg} />
+                                <Line x1="0" y1="50" x2="80" y2="0" stroke="rgba(255, 255, 255, 0.15)" strokeWidth={1.5} />
                             </Svg>
                         </TouchableOpacity>
                     ) : (
