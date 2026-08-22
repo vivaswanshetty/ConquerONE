@@ -801,12 +801,12 @@ export default function HomeScreen({ navigation, route }) {
                                             }}
                                         >
                                             <Svg
-                                                width={152}
-                                                height={42}
-                                                viewBox="0 0 152 42"
+                                                width={176}
+                                                height={48}
+                                                viewBox="0 0 176 48"
                                                 style={StyleSheet.absoluteFillObject}
                                             >
-                                                <Polygon points="18,0 152,0 152,42 0,42" fill={COLORS.primary} />
+                                                <Polygon points="14,0 176,0 176,48 0,48" fill={COLORS.primary} />
                                             </Svg>
                                             <Text style={styles.heroCtaText}>Start session ›</Text>
                                         </TouchableOpacity>
@@ -1778,17 +1778,17 @@ const styles = StyleSheet.create({
         letterSpacing: 0.5,
     },
     heroCta: {
-        width: 152,
-        height: 42,
+        width: 176,
+        height: 48,
         justifyContent: "center",
         alignItems: "center",
-        paddingLeft: 10,
+        paddingLeft: 12,
     },
     heroCtaText: {
-        fontSize: 13,
+        fontSize: 14,
         fontFamily: FAMILY.bold,
         color: "#FFFFFF",
-        letterSpacing: 0.3,
+        letterSpacing: 0.2,
     },
 
     // Unified Horizontal Dashboard Card
