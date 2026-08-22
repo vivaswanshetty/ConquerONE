@@ -104,7 +104,7 @@ function LiveStatusStrip({ total, streak, xp }) {
         const anim = Animated.loop(
             Animated.timing(scrollX, {
                 toValue: -450,
-                duration: 10000,
+                duration: 16000,
                 easing: Easing.linear,
                 useNativeDriver: true,
             })
@@ -800,22 +800,20 @@ export default function HomeScreen({ navigation, route }) {
                                                 navigation.navigate("WorkoutDetail", { day: todayWorkout });
                                             }}
                                         >
+                                            <Svg
+                                                width="100%"
+                                                height="100%"
+                                                viewBox="0 0 100 100"
+                                                preserveAspectRatio="none"
+                                                style={StyleSheet.absoluteFillObject}
+                                            >
+                                                <Polygon points="16,0 100,0 100,100 0,100" fill={COLORS.primary} />
+                                            </Svg>
                                             <Text style={styles.heroCtaText}>Start session ›</Text>
                                         </TouchableOpacity>
                                     </View>
                                 </View>
                             </ImageBackground>
-
-                            <Svg
-                                width={80}
-                                height={50}
-                                viewBox="0 0 80 50"
-                                style={{ position: 'absolute', bottom: -1, right: -1, zIndex: 999, elevation: 20 }}
-                                pointerEvents="none"
-                            >
-                                <Polygon points="80,0 80,50 0,50" fill={COLORS.bg} />
-                                <Line x1="0" y1="50" x2="80" y2="0" stroke="rgba(255, 255, 255, 0.15)" strokeWidth={1.5} />
-                            </Svg>
                         </TouchableOpacity>
                     ) : (
                         <RestDayCard navigation={navigation} />
@@ -1781,19 +1779,17 @@ const styles = StyleSheet.create({
         letterSpacing: 0.5,
     },
     heroCta: {
-        backgroundColor: COLORS.primary,
-        paddingHorizontal: 18,
-        paddingVertical: 10,
-        borderRadius: 4,
-        transform: [{ skewX: "-8deg" }],
+        paddingHorizontal: 22,
+        paddingVertical: 12,
+        paddingLeft: 28,
         justifyContent: "center",
         alignItems: "center",
+        overflow: "hidden",
     },
     heroCtaText: {
         fontSize: 13,
         fontFamily: FAMILY.bold,
         color: "#FFFFFF",
-        transform: [{ skewX: "8deg" }],
     },
 
     // Unified Horizontal Dashboard Card
