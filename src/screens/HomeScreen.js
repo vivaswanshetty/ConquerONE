@@ -900,14 +900,6 @@ export default function HomeScreen({ navigation, route }) {
                                 pointerEvents="none"
                             />
 
-                            {/* Top-Right Angular Cut Overlay */}
-                            <View style={{ position: "absolute", top: -1, right: -1, width: 24, height: 24, zIndex: 10 }} pointerEvents="none">
-                                <Svg width={24} height={24}>
-                                    <Polygon points="0,0 24,0 24,24" fill={COLORS.bg} />
-                                    <Line x1="0" y1="0" x2="24" y2="24" stroke={`${categoryColor}4D`} strokeWidth={1} />
-                                </Svg>
-                            </View>
-
                             {/* Left: SVG XP Progress Ring */}
                             <View style={styles.dashboardRingWrapper}>
                                 <Svg width={86} height={86} style={{ transform: [{ rotate: "-90deg" }] }}>
@@ -951,7 +943,7 @@ export default function HomeScreen({ navigation, route }) {
                                     <Ionicons name="flame" size={14} color="#FF9500" style={{ marginBottom: 3 }} />
                                     <Text style={styles.dashboardStatLabel}>STREAK</Text>
                                     <Text style={[styles.dashboardStatValue, { color: "#FF9500" }]} numberOfLines={1}>
-                                        {streak}d
+                                        {streak}D
                                     </Text>
                                 </TouchableOpacity>
 
