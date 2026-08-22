@@ -801,12 +801,12 @@ export default function HomeScreen({ navigation, route }) {
                                             }}
                                         >
                                             <Svg
-                                                width={142}
-                                                height={35}
-                                                viewBox="0 0 142 35"
+                                                width={128}
+                                                height={42}
+                                                viewBox="0 0 128 42"
                                                 style={StyleSheet.absoluteFillObject}
                                             >
-                                                <Polygon points="10,0 142,0 142,35 0,35" fill={COLORS.primary} />
+                                                <Polygon points="10,0 128,0 128,42 0,42" fill={COLORS.primary} />
                                             </Svg>
                                             <Text style={styles.heroCtaText}>Start session ›</Text>
                                         </TouchableOpacity>
@@ -1778,14 +1778,14 @@ const styles = StyleSheet.create({
         letterSpacing: 0.5,
     },
     heroCta: {
-        width: 142,
-        height: 35,
+        width: 128,
+        height: 42,
         justifyContent: "center",
         alignItems: "center",
-        paddingLeft: 8,
+        paddingLeft: 6,
     },
     heroCtaText: {
-        fontSize: 13,
+        fontSize: 12.5,
         fontFamily: FAMILY.bold,
         color: "#FFFFFF",
         letterSpacing: 0.2,
