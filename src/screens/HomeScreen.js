@@ -104,7 +104,7 @@ function LiveStatusStrip({ total, streak, xp }) {
         const anim = Animated.loop(
             Animated.timing(scrollX, {
                 toValue: -450,
-                duration: 16000,
+                duration: 8000,
                 easing: Easing.linear,
                 useNativeDriver: true,
             })
