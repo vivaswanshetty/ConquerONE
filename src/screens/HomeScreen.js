@@ -887,9 +887,27 @@ export default function HomeScreen({ navigation, route }) {
                             total >= 25 ? '04' :
                                 total >= 10 ? '03' :
                                     total >= 5 ? '02' : '01';
+                    const categoryColor = todayWorkout?.target ? getMuscleColor(todayWorkout.target) : COLORS.primary;
 
                     return (
-                        <View style={styles.dashboardCard}>
+                        <View style={[styles.dashboardCard, { borderColor: `${categoryColor}4D` }]}>
+                            {/* Subtle Matte Linear Gradient */}
+                            <LinearGradient
+                                colors={[COLORS.bgCard, COLORS.bgRaised]}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                                style={StyleSheet.absoluteFillObject}
+                                pointerEvents="none"
+                            />
+
+                            {/* Top-Right Angular Cut Overlay */}
+                            <View style={{ position: "absolute", top: -1, right: -1, width: 24, height: 24, zIndex: 10 }} pointerEvents="none">
+                                <Svg width={24} height={24}>
+                                    <Polygon points="0,0 24,0 24,24" fill={COLORS.bg} />
+                                    <Line x1="0" y1="0" x2="24" y2="24" stroke={`${categoryColor}4D`} strokeWidth={1} />
+                                </Svg>
+                            </View>
+
                             {/* Left: SVG XP Progress Ring */}
                             <View style={styles.dashboardRingWrapper}>
                                 <Svg width={86} height={86} style={{ transform: [{ rotate: "-90deg" }] }}>
@@ -930,23 +948,31 @@ export default function HomeScreen({ navigation, route }) {
                                         setStreakAnalyticsVisible(true);
                                     }}
                                 >
+                                    <Ionicons name="flame" size={14} color="#FF9500" style={{ marginBottom: 3 }} />
                                     <Text style={styles.dashboardStatLabel}>STREAK</Text>
                                     <Text style={[styles.dashboardStatValue, { color: "#FF9500" }]} numberOfLines={1}>
                                         {streak}d
                                     </Text>
                                 </TouchableOpacity>
 
-                                <View style={styles.dashboardStatDivider} />
+                                {/* Diagonal Divider */}
+                                <Svg width={10} height={38} style={{ marginHorizontal: 2 }}>
+                                    <Line x1="7" y1="0" x2="3" y2="38" stroke="rgba(255,255,255,0.08)" strokeWidth={1} strokeLinecap="round" />
+                                </Svg>
 
                                 {/* Sessions Cell */}
                                 <View style={styles.dashboardStatCell}>
+                                    <Ionicons name="checkmark-done" size={14} color={COLORS.textSub} style={{ marginBottom: 3 }} />
                                     <Text style={styles.dashboardStatLabel}>SESSIONS</Text>
                                     <Text style={[styles.dashboardStatValue, { color: "#FFFFFF" }]} numberOfLines={1}>
                                         {total}
                                     </Text>
                                 </View>
 
-                                <View style={styles.dashboardStatDivider} />
+                                {/* Diagonal Divider */}
+                                <Svg width={10} height={38} style={{ marginHorizontal: 2 }}>
+                                    <Line x1="7" y1="0" x2="3" y2="38" stroke="rgba(255,255,255,0.08)" strokeWidth={1} strokeLinecap="round" />
+                                </Svg>
 
                                 {/* Rank/Tier Cell */}
                                 <TouchableOpacity
@@ -957,6 +983,7 @@ export default function HomeScreen({ navigation, route }) {
                                         navigation.navigate("Rank");
                                     }}
                                 >
+                                    <Ionicons name="trophy-outline" size={14} color={COLORS.accent} style={{ marginBottom: 3 }} />
                                     <Text style={styles.dashboardStatLabel}>TIER</Text>
                                     <Text style={[styles.dashboardStatValue, { color: "#EDEAE3" }]} numberOfLines={1}>
                                         {tierNum}
@@ -1860,10 +1887,11 @@ const styles = StyleSheet.create({
         borderRadius: 18,
         borderWidth: 1,
         borderColor: COLORS.border,
-        backgroundColor: COLORS.bgCard,
         padding: 16,
         flexDirection: "row",
         alignItems: "center",
+        position: "relative",
+        overflow: "hidden",
     },
     dashboardRingWrapper: {
         width: 86,
