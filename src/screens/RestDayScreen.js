@@ -1,42 +1,84 @@
-// Elite Version - Fixed Interactivity and Layout
 import React, { useState } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity, StyleSheet,
     Dimensions, StatusBar, ImageBackground,
 } from "react-native";
+import Svg, { Polygon, Line } from "react-native-svg";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { COLORS, FAMILY, SPACING, RADIUS } from "../utils/theme";
+import * as Haptics from "expo-haptics";
+import { COLORS, FAMILY, SPACING, RADIUS, getMuscleColor } from "../utils/theme";
 
-const { width, height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
 const RECOVERY_TIPS = [
     {
+        num: "01",
         title: "ACTIVE RECOVERY",
-        desc: "A light 20-minute walk or dynamic stretching to keep blood flowing to recovering tissues.",
-        icon: "walk-outline"
+        metric: "20 MIN",
+        desc: "A light 20-minute walk or dynamic mobility work to keep nutrient-rich blood flowing to repairing muscle tissues.",
+        icon: "walk-outline",
+        target: "LEGS",
     },
     {
+        num: "02",
         title: "HYDRATION FOCUS",
-        desc: "Increase water intake by 500ml today to assist in flushing out metabolic waste.",
-        icon: "water-outline"
+        metric: "3.5 L",
+        desc: "Increase baseline water intake by 500ml today with essential electrolytes to accelerate metabolic waste clearance.",
+        icon: "water-outline",
+        target: "CORE",
     },
     {
+        num: "03",
         title: "NUTRIENT RELOAD",
-        desc: "Prioritize protein and complex carbs to replenish glycogen stores for tomorrow's session.",
-        icon: "leaf-outline"
+        metric: "2.0 G/KG",
+        desc: "Prioritize complete proteins and complex carbohydrates to replenish depleted muscle glycogen stores for tomorrow.",
+        icon: "nutrition-outline",
+        target: "PULL",
     },
     {
+        num: "04",
         title: "SLEEP HYGIENE",
-        desc: "Aim for 8-9 hours of quality sleep. No screens 45 minutes before bed.",
-        icon: "moon-outline"
-    }
+        metric: "8-9 HRS",
+        desc: "Target 8-9 hours of restorative sleep. Eliminate blue light screens 45 minutes prior to bed to maximize growth hormone.",
+        icon: "moon-outline",
+        target: "RECOVERY",
+    },
+];
+
+const MINDFULNESS_TIPS = [
+    {
+        num: "01",
+        title: "NEURAL BODY SCAN",
+        metric: "5 MIN",
+        desc: "Spend 5 minutes mentally scanning muscle groups from feet to shoulders. Acknowledge residual tension without judgment.",
+        icon: "eye-outline",
+        target: "SHOULDERS",
+    },
+    {
+        num: "02",
+        title: "INTENTION CALIBRATION",
+        metric: "1 GOAL",
+        desc: "Visualize your upcoming week's split. Identify the singular key lift you intend to dominate in tomorrow's workout.",
+        icon: "journal-outline",
+        target: "PUSH",
+    },
+    {
+        num: "03",
+        title: "GRATITUDE & TRIUMPH",
+        metric: "3 WINS",
+        desc: "Recall three tangible physical accomplishments from this week. Anchor the pride of progressive overload.",
+        icon: "sunny-outline",
+        target: "RECOVERY",
+    },
 ];
 
 export default function RestDayScreen({ navigation }) {
     const insets = useSafeAreaInsets();
     const [activeTab, setActiveTab] = useState(0); // 0: Protocol, 1: Mindfulness
+
+    const recoveryColor = getMuscleColor("RECOVERY");
 
     return (
         <View style={styles.container}>
@@ -48,144 +90,168 @@ export default function RestDayScreen({ navigation }) {
                 resizeMode="cover"
             >
                 <LinearGradient
-                    colors={["rgba(0,0,0,0.5)", "rgba(0,0,0,0.85)", "#000"]}
+                    colors={["rgba(10,10,11,0.65)", "rgba(10,10,11,0.92)", COLORS.bg]}
                     style={StyleSheet.absoluteFill}
                 />
             </ImageBackground>
 
-            <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+            <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
                 <TouchableOpacity
                     style={styles.backBtn}
-                    onPress={() => navigation.goBack()}
+                    onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        navigation.goBack();
+                    }}
                     activeOpacity={0.7}
                 >
-                    <Ionicons name="chevron-back" size={22} color={COLORS.text} />
+                    <Ionicons name="chevron-back" size={20} color={COLORS.text} />
                 </TouchableOpacity>
+                <View style={styles.headerBadge}>
+                    <View style={[styles.headerBadgeDot, { backgroundColor: recoveryColor }]} />
+                    <Text style={[styles.headerBadgeText, { color: recoveryColor }]}>RECOVERY MODE</Text>
+                </View>
+                <View style={{ width: 36 }} />
             </View>
 
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 overScrollMode="never"
-                contentContainerStyle={{ paddingBottom: 180 }}
+                contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
             >
+                {/* ── Hero Section ── */}
                 <View style={styles.hero}>
-                    <Text style={styles.eyebrow}>SUNDAY RECOVERY</Text>
-                    <Text style={styles.title} adjustsFontSizeToFit numberOfLines={2}>PEAK{"\n"}RESTORATION</Text>
+                    <View style={styles.eyebrowRow}>
+                        <Text style={styles.eyebrow}>DAY 07 · ACTIVE RESTORATION</Text>
+                        <View style={[styles.targetPill, { borderColor: `${recoveryColor}4D`, backgroundColor: `${recoveryColor}1F` }]}>
+                            <Text style={[styles.targetPillText, { color: recoveryColor }]}>FULL RECHARGE</Text>
+                        </View>
+                    </View>
+                    <Text style={styles.title}>PEAK{"\n"}RESTORATION</Text>
                     <Text style={styles.subtitle}>
-                        Today is about rebuilding. Your results don't happen in the gym; they happen while you rest.
+                        Adaptation happens in recovery. Cellular repair, nervous system reset, and hypertrophy solidify today.
                     </Text>
                 </View>
 
+                {/* ── Segmented Tab Switcher ── */}
                 <View style={styles.zentabs}>
                     <TouchableOpacity
                         style={[styles.zentab, activeTab === 0 && styles.zentabActive]}
-                        onPress={() => setActiveTab(0)}
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            setActiveTab(0);
+                        }}
+                        activeOpacity={0.8}
                     >
-                        <Text style={[styles.zentabText, activeTab !== 0 && { color: COLORS.textMuted }]}>PROTOCOL</Text>
+                        <Ionicons
+                            name="fitness-outline"
+                            size={14}
+                            color={activeTab === 0 ? COLORS.primary : COLORS.textMuted}
+                            style={{ marginRight: 6 }}
+                        />
+                        <Text style={[styles.zentabText, activeTab === 0 ? { color: COLORS.text } : { color: COLORS.textMuted }]}>
+                            PROTOCOL
+                        </Text>
                     </TouchableOpacity>
+
                     <TouchableOpacity
                         style={[styles.zentab, activeTab === 1 && styles.zentabActive]}
-                        onPress={() => setActiveTab(1)}
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            setActiveTab(1);
+                        }}
+                        activeOpacity={0.8}
                     >
-                        <Text style={[styles.zentabText, activeTab !== 1 && { color: COLORS.textMuted }]}>MINDFULNESS</Text>
+                        <Ionicons
+                            name="leaf-outline"
+                            size={14}
+                            color={activeTab === 1 ? COLORS.primary : COLORS.textMuted}
+                            style={{ marginRight: 6 }}
+                        />
+                        <Text style={[styles.zentabText, activeTab === 1 ? { color: COLORS.text } : { color: COLORS.textMuted }]}>
+                            MINDFULNESS
+                        </Text>
                     </TouchableOpacity>
                 </View>
 
-                {activeTab === 0 ? (
-                    <View style={styles.tipsGrid}>
-                        {RECOVERY_TIPS.map((tip, i) => (
-                            <View key={i} style={styles.tipCard}>
+                {/* ── Cards Grid ── */}
+                <View style={styles.tipsGrid}>
+                    {(activeTab === 0 ? RECOVERY_TIPS : MINDFULNESS_TIPS).map((tip) => {
+                        const tipColor = getMuscleColor(tip.target);
+                        return (
+                            <View key={tip.num} style={[styles.tipCard, { borderColor: `${tipColor}33` }]}>
                                 <LinearGradient
-                                    colors={["rgba(255,255,255,0.06)", "transparent"]}
-                                    style={StyleSheet.absoluteFill}
+                                    colors={[`${tipColor}12`, "transparent"]}
+                                    style={StyleSheet.absoluteFillObject}
                                     start={{ x: 0, y: 0 }}
-                                    end={{ x: 1, y: 1 }}
+                                    end={{ x: 0.4, y: 1 }}
+                                    pointerEvents="none"
                                 />
-                                <View style={styles.tipIconWrap}>
-                                    <Ionicons name={tip.icon} size={20} color={COLORS.textSub} />
-                                </View>
-                                <Text style={styles.tipTitle}>{tip.title}</Text>
-                                <Text style={tip.desc.length > 80 ? styles.tipDescSmall : styles.tipDesc}>
-                                    {tip.desc}
-                                </Text>
-                            </View>
-                        ))}
-                    </View>
-                ) : (
-                    <View style={styles.tipsGrid}>
-                        <View style={styles.tipCard}>
-                            <LinearGradient
-                                colors={["rgba(255,255,255,0.06)", "transparent"]}
-                                style={StyleSheet.absoluteFill}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 1 }}
-                            />
-                            <View style={styles.tipIconWrap}>
-                                <Ionicons name="eye-outline" size={20} color={COLORS.textSub} />
-                            </View>
-                            <Text style={styles.tipTitle}>BODY SCAN</Text>
-                            <Text style={styles.tipDesc}>Spend 5 minutes mentally scanning your muscles from feet to head. Acknowledge tightness without judgment.</Text>
-                        </View>
-                        <View style={styles.tipCard}>
-                            <LinearGradient
-                                colors={["rgba(255,255,255,0.06)", "transparent"]}
-                                style={StyleSheet.absoluteFill}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 1 }}
-                            />
-                            <View style={styles.tipIconWrap}>
-                                <Ionicons name="journal-outline" size={20} color={COLORS.textSub} />
-                            </View>
-                            <Text style={styles.tipTitle}>INTENTION SETTING</Text>
-                            <Text style={styles.tipDesc}>Briefly visualize your goals for the upcoming week. What is the one big lift you want to dominate?</Text>
-                        </View>
-                        <View style={styles.tipCard}>
-                            <LinearGradient
-                                colors={["rgba(255,255,255,0.06)", "transparent"]}
-                                style={StyleSheet.absoluteFill}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 1 }}
-                            />
-                            <View style={styles.tipIconWrap}>
-                                <Ionicons name="sunny-outline" size={20} color={COLORS.textSub} />
-                            </View>
-                            <Text style={styles.tipTitle}>GRATITUDE</Text>
-                            <Text style={styles.tipDesc}>Recall three physical accomplishments from this week. Truly feel the pride of your progress.</Text>
-                        </View>
-                    </View>
-                )}
+                                <View style={[styles.tipLeftSpine, { backgroundColor: tipColor }]} />
 
-                {/* Meditation Promo */}
-                <TouchableOpacity style={styles.meditationCard} activeOpacity={0.9}>
+                                <View style={styles.tipHeaderRow}>
+                                    <View style={styles.tipHeaderLeft}>
+                                        <Text style={styles.tipNum}>{tip.num}</Text>
+                                        <View style={[styles.tipIconWrap, { backgroundColor: `${tipColor}1F`, borderColor: `${tipColor}4D` }]}>
+                                            <Ionicons name={tip.icon} size={18} color={tipColor} />
+                                        </View>
+                                    </View>
+                                    <View style={[styles.metricBadge, { borderColor: COLORS.borderLight }]}>
+                                        <Text style={styles.metricBadgeText}>{tip.metric}</Text>
+                                    </View>
+                                </View>
+
+                                <Text style={styles.tipTitle}>{tip.title}</Text>
+                                <Text style={styles.tipDesc}>{tip.desc}</Text>
+                            </View>
+                        );
+                    })}
+                </View>
+
+                {/* ── Meditation & Breathwork Promo ── */}
+                <TouchableOpacity
+                    style={styles.meditationCard}
+                    activeOpacity={0.85}
+                    onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+                >
                     <LinearGradient
-                        colors={["rgba(227,30,36,0.15)", "rgba(0,0,0,0.3)"]}
-                        style={StyleSheet.absoluteFill}
+                        colors={[`${COLORS.primary}22`, "rgba(10,10,11,0.6)"]}
+                        style={StyleSheet.absoluteFillObject}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
                     />
                     <View style={styles.meditationContent}>
-                        <Text style={styles.medHeader}>ZEN SESSIONS</Text>
+                        <View style={styles.medHeaderRow}>
+                            <View style={styles.medLiveDot} />
+                            <Text style={styles.medHeader}>ZEN PROTOCOL</Text>
+                        </View>
                         <Text style={styles.medTitle}>Guided Breathwork</Text>
-                        <Text style={styles.medSub}>8 MIN · CALM PHASE</Text>
+                        <Text style={styles.medSub}>8 MIN · CALM RECOVERY PHASE</Text>
                     </View>
-                    <View style={styles.medIcon}>
-                        <Ionicons name="play-circle" size={42} color={COLORS.text} />
+                    <View style={styles.medIconWrap}>
+                        <Ionicons name="play-circle" size={42} color={COLORS.primary} />
                     </View>
                 </TouchableOpacity>
-
             </ScrollView>
 
-            <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 20) + 10 }]}>
+            {/* ── Fixed Footer CTA with Signature Angular Cut ── */}
+            <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) + 8 }]}>
                 <LinearGradient
-                    colors={["transparent", "rgba(0,0,0,0.8)", "#000"]}
+                    colors={["transparent", "rgba(10,10,11,0.85)", COLORS.bg]}
                     style={styles.footerBg}
+                    pointerEvents="none"
                 />
                 <TouchableOpacity
                     style={styles.doneBtn}
-                    onPress={() => navigation.goBack()}
-                    activeOpacity={0.8}
+                    onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        navigation.goBack();
+                    }}
+                    activeOpacity={0.85}
                 >
-                    <Text style={styles.doneBtnText}>ACKNOWLEDGE PROTOCOL</Text>
+                    <Svg width="100%" height={52} style={StyleSheet.absoluteFillObject}>
+                        <Polygon points="12,0 1000,0 1000,52 0,52" fill={COLORS.primary} />
+                    </Svg>
+                    <Text style={styles.doneBtnText}>ACKNOWLEDGE PROTOCOL ›</Text>
                 </TouchableOpacity>
             </View>
         </View>
@@ -193,84 +259,222 @@ export default function RestDayScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#000" },
+    container: { flex: 1, backgroundColor: COLORS.bg },
     header: {
-        paddingHorizontal: 24,
+        paddingHorizontal: SPACING.base,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
         zIndex: 10,
+        paddingBottom: 8,
     },
     backBtn: {
-        width: 44, height: 44, borderRadius: RADIUS.md,
-        backgroundColor: "rgba(255,255,255,0.05)",
+        width: 36, height: 36, borderRadius: RADIUS.pill,
+        backgroundColor: COLORS.bgCard,
         alignItems: "center", justifyContent: "center",
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.1)",
+        borderWidth: 1, borderColor: COLORS.border,
     },
+    headerBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: RADIUS.sm,
+        backgroundColor: "rgba(48, 209, 88, 0.1)",
+        borderWidth: 1,
+        borderColor: "rgba(48, 209, 88, 0.25)",
+        gap: 6,
+    },
+    headerBadgeDot: {
+        width: 6, height: 6, borderRadius: RADIUS.pill,
+    },
+    headerBadgeText: {
+        fontSize: 9, fontFamily: FAMILY.monoBold, letterSpacing: 1,
+    },
+
     hero: {
-        paddingHorizontal: 24,
-        marginTop: 40,
-        marginBottom: 40,
+        paddingHorizontal: SPACING.base,
+        marginTop: 20,
+        marginBottom: 28,
+    },
+    eyebrowRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 12,
     },
     eyebrow: {
-        fontSize: 10, fontFamily: FAMILY.semibold, color: COLORS.textMuted,
-        letterSpacing: 4, marginBottom: 16,
+        fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textMuted,
+        letterSpacing: 2,
+    },
+    targetPill: {
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: RADIUS.sm,
+        borderWidth: 1,
+    },
+    targetPillText: {
+        fontSize: 8.5, fontFamily: FAMILY.monoBold, letterSpacing: 1,
     },
     title: {
-        fontSize: 48, fontFamily: FAMILY.header, color: COLORS.text,
-        lineHeight: 52, letterSpacing: -1,
+        fontSize: 44, fontFamily: FAMILY.header, color: COLORS.text,
+        lineHeight: 46, letterSpacing: -0.5,
     },
     subtitle: {
-        fontSize: 14, fontFamily: FAMILY.regular, color: COLORS.textSub,
-        lineHeight: 22, marginTop: 24, opacity: 0.8,
+        fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textSub,
+        lineHeight: 20, marginTop: 14,
     },
+
     zentabs: {
-        flexDirection: "row", paddingHorizontal: 24, gap: 32, marginBottom: 32,
+        flexDirection: "row", paddingHorizontal: SPACING.base, gap: 24, marginBottom: 20,
+    },
+    zentab: {
+        flexDirection: "row",
+        alignItems: "center",
+        paddingBottom: 8,
+        borderBottomWidth: 2,
+        borderBottomColor: "transparent",
     },
     zentabActive: {
-        paddingBottom: 8, borderBottomWidth: 2, borderBottomColor: COLORS.text,
+        borderBottomColor: COLORS.primary,
     },
-    zentab: { paddingBottom: 8 },
-    zentabText: { fontSize: 10, fontFamily: FAMILY.semibold, color: COLORS.text, letterSpacing: 2 },
+    zentabText: {
+        fontSize: 11, fontFamily: FAMILY.semibold, letterSpacing: 1.5,
+    },
 
-    tipsGrid: { paddingHorizontal: 24, gap: 16 },
+    tipsGrid: {
+        paddingHorizontal: SPACING.base,
+        gap: 12,
+    },
     tipCard: {
-        borderRadius: RADIUS.lg, padding: 24,
-        backgroundColor: "rgba(255,255,255,0.03)",
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
+        borderRadius: RADIUS.lg,
+        padding: 18,
+        paddingLeft: 22,
+        backgroundColor: COLORS.bgCard,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        position: "relative",
         overflow: "hidden",
     },
-    tipIconWrap: {
-        width: 36, height: 36, borderRadius: RADIUS.sm,
-        backgroundColor: "rgba(255,255,255,0.05)",
-        alignItems: "center", justifyContent: "center",
-        marginBottom: 20,
+    tipLeftSpine: {
+        position: "absolute",
+        left: 0,
+        top: 0,
+        bottom: 0,
+        width: 3.5,
     },
-    tipTitle: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.text, letterSpacing: 2, marginBottom: 10 },
-    tipDesc: { fontSize: 14, fontFamily: FAMILY.regular, color: COLORS.textSub, lineHeight: 22 },
-    tipDescSmall: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textSub, lineHeight: 20 },
+    tipHeaderRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 12,
+    },
+    tipHeaderLeft: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+    },
+    tipNum: {
+        fontSize: 18,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textMuted,
+        opacity: 0.6,
+    },
+    tipIconWrap: {
+        width: 32, height: 32, borderRadius: RADIUS.sm,
+        alignItems: "center", justifyContent: "center",
+        borderWidth: 1,
+    },
+    metricBadge: {
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: RADIUS.xs,
+        backgroundColor: COLORS.bg,
+        borderWidth: 1,
+    },
+    metricBadgeText: {
+        fontSize: 9.5,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.text,
+        letterSpacing: 0.5,
+    },
+    tipTitle: {
+        fontSize: 13,
+        fontFamily: FAMILY.bold,
+        color: COLORS.text,
+        letterSpacing: 1,
+        marginBottom: 6,
+    },
+    tipDesc: {
+        fontSize: 12.5,
+        fontFamily: FAMILY.regular,
+        color: COLORS.textSub,
+        lineHeight: 18,
+    },
 
     meditationCard: {
-        marginHorizontal: 24, marginTop: 32, borderRadius: RADIUS.lg,
-        height: 120, overflow: "hidden", flexDirection: "row",
-        alignItems: "center", paddingHorizontal: 28,
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.1)",
+        marginHorizontal: SPACING.base,
+        marginTop: 20,
+        borderRadius: RADIUS.lg,
+        height: 110,
+        overflow: "hidden",
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 20,
+        borderWidth: 1,
+        borderColor: `${COLORS.primary}4D`,
+        backgroundColor: COLORS.bgCard,
     },
     meditationContent: { flex: 1 },
-    medHeader: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 2, marginBottom: 8 },
-    medTitle: { fontSize: 20, fontFamily: FAMILY.header, color: COLORS.text, marginBottom: 4 },
-    medSub: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.textMuted, letterSpacing: 1 },
-    medIcon: { marginLeft: 16 },
+    medHeaderRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        marginBottom: 4,
+    },
+    medLiveDot: {
+        width: 6, height: 6, borderRadius: RADIUS.pill,
+        backgroundColor: COLORS.primary,
+    },
+    medHeader: {
+        fontSize: 8.5, fontFamily: FAMILY.monoBold, color: COLORS.primary, letterSpacing: 1.5,
+    },
+    medTitle: {
+        fontSize: 20, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: -0.2, marginBottom: 2,
+    },
+    medSub: {
+        fontSize: 9, fontFamily: FAMILY.mono, color: COLORS.textSub, letterSpacing: 0.5,
+    },
+    medIconWrap: {
+        marginLeft: 12,
+    },
 
     footer: {
-        paddingHorizontal: 24, position: "absolute", bottom: 0, left: 0, right: 0,
-        paddingTop: 40,
+        paddingHorizontal: SPACING.base,
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        paddingTop: 24,
     },
     footerBg: {
-        position: "absolute", bottom: 0, left: 0, right: 0, top: 0,
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        top: 0,
     },
     doneBtn: {
-        backgroundColor: COLORS.text, height: 60, borderRadius: RADIUS.lg,
-        alignItems: "center", justifyContent: "center",
-        shadowColor: "#000", shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3, shadowRadius: 10, elevation: 5,
+        height: 52,
+        borderRadius: RADIUS.sm,
+        alignItems: "center",
+        justifyContent: "center",
+        overflow: "hidden",
     },
-    doneBtnText: { fontSize: 12, fontFamily: FAMILY.bold, color: "#000", letterSpacing: 2 },
+    doneBtnText: {
+        fontSize: 12.5,
+        fontFamily: FAMILY.bold,
+        color: "#FFFFFF",
+        letterSpacing: 1.2,
+    },
 });

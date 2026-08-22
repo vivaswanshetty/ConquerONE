@@ -153,3 +153,13 @@ export const TRACKING = {
 
 export const APP_VERSION = "v2.2.9";
 
+export function getMuscleColor(target) {
+    if (!target) return "#8E8E93";
+    const t = String(target).toUpperCase();
+    if (t.includes("CHEST") || t.includes("TRICEPS") || t.includes("PUSH")) return "#E31E24"; // Crimson Red
+    if (t.includes("BACK") || t.includes("BICEPS") || t.includes("PULL")) return "#FF9500"; // Gold Amber
+    if (t.includes("SHOULDERS") || t.includes("CORE") || t.includes("ARMS") || t.includes("ABS")) return "#30B0C7"; // Steel Teal
+    if (t.includes("LEGS") || t.includes("QUADS") || t.includes("LOWER") || t.includes("CALVES")) return "#D1D1D1"; // Silver
+    if (t.includes("RECOVERY") || t.includes("REST") || t.includes("MOBILITY") || t.includes("MINDFULNESS")) return "#30D158"; // Emerald Green
+    return "#8E8E93";
+}

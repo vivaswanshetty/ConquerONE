@@ -3,23 +3,25 @@ import {
     View, Text, StyleSheet, ScrollView, StatusBar,
     Animated, Dimensions, TouchableOpacity,
 } from "react-native";
+import Svg, { Polygon, Line } from "react-native-svg";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as Haptics from "expo-haptics";
 import { getStreak, getTotalWorkouts } from "../utils/storage";
-import { COLORS, FAMILY, SPACING, RADIUS } from "../utils/theme";
+import { COLORS, FAMILY, SPACING, RADIUS, getMuscleColor } from "../utils/theme";
 import { useAuth } from "../context/AuthContext";
 
 const { width } = Dimensions.get("window");
 
 const RANKS = [
-    { level: 1, title: "Tier 1 · 0+ Sessions", icon: "shield-outline", min: 0, max: 4, color: COLORS.accent, desc: "The foundation of your training habit begins with your initial workouts." },
-    { level: 2, title: "Tier 2 · 5+ Sessions", icon: "star-outline", min: 5, max: 9, color: COLORS.accent, desc: "Consistent routine established. Building steady momentum across the weekly split." },
-    { level: 3, title: "Tier 3 · 10+ Sessions", icon: "trending-up", min: 10, max: 24, color: COLORS.accent, desc: "Double-digit consistency. Progressive adaptation and habit formation taking hold." },
-    { level: 4, title: "Tier 4 · 25+ Sessions", icon: "fitness", min: 25, max: 49, color: COLORS.accent, desc: "Established workout cadence. High consistency and measurable volume gains." },
-    { level: 5, title: "Tier 5 · 50+ Sessions", icon: "diamond-outline", min: 50, max: 99, color: COLORS.accent, desc: "Major training milestone. Over fifty structured workouts completed." },
-    { level: 6, title: "Tier 6 · 100+ Sessions", icon: "trophy-outline", min: 100, max: 999, color: COLORS.accent, desc: "Century milestone achieved. 100+ workouts logged in your training history." },
+    { level: 1, tierCode: "01", title: "Tier 01 · 0+ Sessions", icon: "shield-outline", min: 0, max: 4, target: "PUSH", desc: "The foundation of your training habit begins with your initial workouts." },
+    { level: 2, tierCode: "02", title: "Tier 02 · 5+ Sessions", icon: "star-outline", min: 5, max: 9, target: "PULL", desc: "Consistent routine established. Building steady momentum across the weekly split." },
+    { level: 3, tierCode: "03", title: "Tier 03 · 10+ Sessions", icon: "trending-up", min: 10, max: 24, target: "SHOULDERS", desc: "Double-digit consistency. Progressive adaptation and habit formation taking hold." },
+    { level: 4, tierCode: "04", title: "Tier 04 · 25+ Sessions", icon: "fitness", min: 25, max: 49, target: "LEGS", desc: "Established workout cadence. High consistency and measurable volume gains." },
+    { level: 5, tierCode: "05", title: "Tier 05 · 50+ Sessions", icon: "diamond-outline", min: 50, max: 99, target: "PULL", desc: "Major training milestone. Over fifty structured workouts completed." },
+    { level: 6, tierCode: "06", title: "Tier 06 · 100+ Sessions", icon: "trophy-outline", min: 100, max: 999, target: "PUSH", desc: "Century milestone achieved. 100+ workouts logged in your training history." },
 ];
 
 function getRankData(total) {
@@ -63,13 +65,21 @@ export default function RankScreen({ navigation }) {
         ? Math.min((total - current.min) / (nextRank.min - current.min), 1)
         : 1;
     const sessionsToNext = nextRank ? nextRank.min - total : 0;
+    const activeRankColor = getMuscleColor(current.target) || COLORS.primary;
 
     return (
         <View style={s.container}>
             <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
 
             <View style={[s.header, { paddingTop: insets.top + 8 }]}>
-                <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+                <TouchableOpacity
+                    style={s.backBtn}
+                    onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        navigation.goBack();
+                    }}
+                    activeOpacity={0.7}
+                >
                     <Ionicons name="chevron-back" size={20} color={COLORS.text} />
                 </TouchableOpacity>
                 <Text style={s.headerTitle}>Milestones</Text>
@@ -82,21 +92,29 @@ export default function RankScreen({ navigation }) {
                 contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
             >
                 {/* ── Hero Card ── */}
-                <Animated.View style={[s.heroCard, { transform: [{ scale: scaleAnim }] }]}>
+                <Animated.View style={[s.heroCard, { borderColor: `${activeRankColor}4D`, transform: [{ scale: scaleAnim }] }]}>
+                    <LinearGradient
+                        colors={[`${activeRankColor}18`, "transparent"]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={StyleSheet.absoluteFillObject}
+                        pointerEvents="none"
+                    />
+
                     <View style={s.heroBadgeRow}>
                         <Text style={s.heroEyebrow}>CURRENT MILESTONE</Text>
-                        <View style={s.levelPill}>
-                            <Text style={s.levelPillText}>{total} SESSIONS</Text>
+                        <View style={[s.levelPill, { backgroundColor: `${activeRankColor}1F`, borderColor: `${activeRankColor}4D` }]}>
+                            <Text style={[s.levelPillText, { color: activeRankColor }]}>{total} SESSIONS</Text>
                         </View>
                     </View>
 
                     <View style={s.heroIconRow}>
-                        <View style={s.heroIconCircle}>
-                            <Ionicons name={current.icon} size={32} color={COLORS.text} />
+                        <View style={[s.heroIconCircle, { borderColor: `${activeRankColor}66` }]}>
+                            <Ionicons name={current.icon} size={32} color={activeRankColor} />
                         </View>
                     </View>
 
-                    <Text style={s.heroTitle}>{current.title}</Text>
+                    <Text style={s.heroTitle}>{current.title.toUpperCase()}</Text>
                     <Text style={s.heroName}>{displayName}</Text>
                     <Text style={s.heroDesc}>{current.desc}</Text>
 
@@ -104,11 +122,11 @@ export default function RankScreen({ navigation }) {
                     {nextRank && (
                         <View style={s.progressSection}>
                             <View style={s.progressBarBg}>
-                                <View style={[s.progressBarFill, { width: `${progressInRank * 100}%` }]} />
+                                <View style={[s.progressBarFill, { width: `${progressInRank * 100}%`, backgroundColor: COLORS.primary }]} />
                             </View>
                             <View style={s.progressLabels}>
-                                <Text style={s.progressText}>{total} / {nextRank.min} sessions</Text>
-                                <Text style={[s.progressText, { color: COLORS.text }]}>{Math.round(progressInRank * 100)}%</Text>
+                                <Text style={s.progressText}>{total} / {nextRank.min} SESSIONS</Text>
+                                <Text style={[s.progressPercentText, { color: COLORS.primary }]}>{Math.round(progressInRank * 100)}%</Text>
                             </View>
                         </View>
                     )}
@@ -122,13 +140,13 @@ export default function RankScreen({ navigation }) {
                         <Text style={s.statLbl}>SESSIONS</Text>
                     </View>
                     <View style={[s.statBox, s.statBoxMid]}>
-                        <Ionicons name="flame" size={16} color={COLORS.textSub} />
-                        <Text style={s.statVal}>{streak}d</Text>
+                        <Ionicons name="flame" size={16} color="#FF9500" />
+                        <Text style={[s.statVal, { color: "#FF9500" }]}>{streak}d</Text>
                         <Text style={s.statLbl}>STREAK</Text>
                     </View>
                     <View style={s.statBox}>
-                        <Ionicons name="flash" size={16} color={COLORS.textSub} />
-                        <Text style={s.statVal}>{sessionsToNext || "MAX"}</Text>
+                        <Ionicons name="flash" size={16} color={COLORS.primary} />
+                        <Text style={[s.statVal, { color: COLORS.primary }]}>{sessionsToNext || "MAX"}</Text>
                         <Text style={s.statLbl}>{nextRank ? "TO NEXT" : "REACHED"}</Text>
                     </View>
                 </View>
@@ -155,35 +173,65 @@ export default function RankScreen({ navigation }) {
                 {/* ── Milestone Ladder ── */}
                 <View style={s.ladderSection}>
                     <Text style={s.sectionTitle}>MILESTONE TIERS</Text>
-                    {RANKS.map((rank, i) => {
+                    {RANKS.map((rank) => {
                         const isAchieved = total >= rank.min;
                         const isCurrent = rank.title === current.title;
+                        const rankColor = getMuscleColor(rank.target);
+
                         return (
-                            <View key={rank.title} style={[s.ladderRow, isCurrent && { borderColor: COLORS.accent }]}>
-                                <View style={s.ladderIcon}>
+                            <View
+                                key={rank.title}
+                                style={[
+                                    s.ladderRow,
+                                    isCurrent && { borderColor: `${COLORS.primary}80`, backgroundColor: `${COLORS.primary}0D` },
+                                ]}
+                            >
+                                {isCurrent && (
+                                    <View style={[s.ladderLeftSpine, { backgroundColor: COLORS.primary }]} />
+                                )}
+                                <View style={[s.ladderIcon, isCurrent && { borderColor: `${COLORS.primary}66` }]}>
                                     <Ionicons
                                         name={isAchieved ? rank.icon : "lock-closed-outline"}
                                         size={16}
-                                        color={isAchieved ? COLORS.text : COLORS.textMuted}
+                                        color={isCurrent ? COLORS.primary : isAchieved ? rankColor : COLORS.textMuted}
                                     />
                                 </View>
                                 <View style={{ flex: 1 }}>
                                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                                         <Text style={[s.ladderTitle, { color: isAchieved ? COLORS.text : COLORS.textMuted }]}>{rank.title}</Text>
                                         {isCurrent && (
-                                            <View style={s.currentBadge}>
+                                            <View style={[s.currentBadge, { backgroundColor: COLORS.primary, borderColor: COLORS.primary }]}>
                                                 <Text style={s.currentBadgeText}>YOU</Text>
                                             </View>
                                         )}
                                     </View>
-                                    <Text style={[s.ladderSub, !isAchieved && { opacity: 0.5 }]}>{rank.min}+ sessions · {rank.desc.split('.')[0]}</Text>
+                                    <Text style={[s.ladderSub, !isAchieved && { opacity: 0.5 }]}>
+                                        {rank.min}+ sessions · {rank.desc.split('.')[0]}
+                                    </Text>
                                 </View>
                                 {isAchieved && !isCurrent && (
-                                    <Ionicons name="checkmark-circle" size={16} color={COLORS.accent} />
+                                    <Ionicons name="checkmark-circle" size={16} color={COLORS.success} />
                                 )}
                             </View>
                         );
                     })}
+                </View>
+
+                {/* ── Primary CTA Button with Signature Angular Cut ── */}
+                <View style={s.ctaContainer}>
+                    <TouchableOpacity
+                        style={s.primaryCta}
+                        activeOpacity={0.85}
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                            navigation.goBack();
+                        }}
+                    >
+                        <Svg width="100%" height={48} style={StyleSheet.absoluteFillObject}>
+                            <Polygon points="12,0 1000,0 1000,48 0,48" fill={COLORS.primary} />
+                        </Svg>
+                        <Text style={s.primaryCtaText}>CONTINUE TRAINING ›</Text>
+                    </TouchableOpacity>
                 </View>
 
                 {/* ── Footer ── */}
@@ -204,7 +252,7 @@ const s = StyleSheet.create({
     container: { flex: 1, backgroundColor: COLORS.bg },
     header: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        paddingHorizontal: 20, paddingBottom: 16, paddingTop: 8,
+        paddingHorizontal: SPACING.base, paddingBottom: 16, paddingTop: 8,
     },
     backBtn: {
         width: 36, height: 36, borderRadius: RADIUS.pill,
@@ -216,9 +264,9 @@ const s = StyleSheet.create({
 
     // Hero Card
     heroCard: {
-        marginHorizontal: 20, marginBottom: 16, borderRadius: RADIUS.lg, padding: 22,
+        marginHorizontal: SPACING.base, marginBottom: 16, borderRadius: RADIUS.lg, padding: 22,
         borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bgCard,
-        alignItems: 'center',
+        alignItems: 'center', overflow: 'hidden', position: 'relative',
     },
     heroBadgeRow: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginBottom: 16 },
     heroEyebrow: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 1.5 },
@@ -230,7 +278,7 @@ const s = StyleSheet.create({
 
     heroIconRow: { marginBottom: 14 },
     heroIconCircle: {
-        width: 72, height: 72, borderRadius: 36,
+        width: 72, height: 72, borderRadius: RADIUS.pill,
         borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center',
         backgroundColor: COLORS.bg,
     },
@@ -240,16 +288,17 @@ const s = StyleSheet.create({
 
     progressSection: { width: '100%' },
     progressBarBg: {
-        height: 4, borderRadius: 2, backgroundColor: COLORS.bg,
+        height: 5, borderRadius: RADIUS.xs, backgroundColor: COLORS.bg,
         overflow: 'hidden', borderWidth: 0.5, borderColor: COLORS.border,
     },
-    progressBarFill: { height: '100%', borderRadius: 2, backgroundColor: COLORS.accent },
+    progressBarFill: { height: '100%', borderRadius: RADIUS.xs, backgroundColor: COLORS.primary },
     progressLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
     progressText: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.textSub },
+    progressPercentText: { fontSize: 10, fontFamily: FAMILY.monoBold },
 
     // Stats
     statsRow: {
-        flexDirection: 'row', marginHorizontal: 20, marginBottom: 20,
+        flexDirection: 'row', marginHorizontal: SPACING.base, marginBottom: 20,
         borderRadius: RADIUS.md, overflow: 'hidden',
         borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bgCard,
     },
@@ -259,11 +308,11 @@ const s = StyleSheet.create({
     statBoxMid: {
         borderLeftWidth: 1, borderRightWidth: 1, borderColor: COLORS.border,
     },
-    statVal: { fontSize: 16, fontFamily: FAMILY.monoBold, color: COLORS.text },
+    statVal: { fontSize: 17, fontFamily: FAMILY.monoBold, color: COLORS.text },
     statLbl: { fontSize: 8, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 1 },
 
     // Next Rank
-    nextSection: { marginHorizontal: 20, marginBottom: 20 },
+    nextSection: { marginHorizontal: SPACING.base, marginBottom: 20 },
     sectionTitle: { fontSize: 11, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 1.5, marginBottom: 10 },
     nextCard: {
         flexDirection: 'row', alignItems: 'center', gap: 12,
@@ -285,13 +334,17 @@ const s = StyleSheet.create({
     },
 
     // Rank Ladder
-    ladderSection: { marginHorizontal: 20, marginBottom: 20 },
+    ladderSection: { marginHorizontal: SPACING.base, marginBottom: 20 },
     ladderRow: {
         flexDirection: 'row', alignItems: 'center', gap: 12,
         paddingVertical: 12, paddingHorizontal: 14, marginBottom: 6,
         borderRadius: RADIUS.md, borderWidth: 1,
         borderColor: COLORS.border,
         backgroundColor: COLORS.bgCard,
+        position: 'relative', overflow: 'hidden',
+    },
+    ladderLeftSpine: {
+        position: 'absolute', left: 0, top: 0, bottom: 0, width: 3.5,
     },
     ladderIcon: {
         width: 34, height: 34, borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLORS.border,
@@ -300,12 +353,21 @@ const s = StyleSheet.create({
     ladderTitle: { fontSize: 13, fontFamily: FAMILY.semibold },
     ladderSub: { fontSize: 10, fontFamily: FAMILY.regular, color: COLORS.textSub, marginTop: 2 },
     currentBadge: {
-        paddingHorizontal: 6, paddingVertical: 2, borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.border,
-        backgroundColor: 'rgba(237, 234, 227, 0.08)',
+        paddingHorizontal: 6, paddingVertical: 2, borderRadius: RADIUS.sm, borderWidth: 1,
     },
-    currentBadgeText: { fontSize: 8, fontFamily: FAMILY.monoBold, color: COLORS.text },
+    currentBadgeText: { fontSize: 8, fontFamily: FAMILY.monoBold, color: "#FFFFFF" },
+
+    // Primary CTA Button
+    ctaContainer: { marginHorizontal: SPACING.base, marginTop: 10, marginBottom: 8 },
+    primaryCta: {
+        height: 48, justifyContent: 'center', alignItems: 'center',
+        borderRadius: RADIUS.sm, overflow: 'hidden',
+    },
+    primaryCtaText: {
+        fontSize: 13, fontFamily: FAMILY.bold, color: '#FFFFFF', letterSpacing: 0.5,
+    },
 
     // Footer
-    footer: { alignItems: 'center', paddingVertical: 28, paddingHorizontal: 36 },
+    footer: { alignItems: 'center', paddingVertical: 20, paddingHorizontal: 36 },
     footerText: { fontSize: 12, fontFamily: FAMILY.regular, color: COLORS.textMuted, textAlign: 'center', lineHeight: 18 },
 });
