@@ -336,7 +336,9 @@ export default function HomeScreen({ navigation, route }) {
     const [history, setHistory] = useState([]);
     const [streakAnalyticsVisible, setStreakAnalyticsVisible] = useState(false);
     const [activeSession, setActiveSession] = useState(null);
-    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const greetingAnim = useRef(new Animated.Value(0)).current;
+    const navAnim = useRef(new Animated.Value(0)).current;
+    const heroAnim = useRef(new Animated.Value(0)).current;
 
     // Animations
     const avatarGlow = useRef(new Animated.Value(0.3)).current;
@@ -399,7 +401,11 @@ export default function HomeScreen({ navigation, route }) {
         });
 
         Animated.parallel([
-            Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+            Animated.stagger(120, [
+                Animated.timing(greetingAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
+                Animated.timing(navAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
+                Animated.timing(heroAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
+            ]),
             ...animations
         ]).start();
     }, []);
@@ -538,17 +544,26 @@ export default function HomeScreen({ navigation, route }) {
                 />
             </View>
 
-            <Animated.ScrollView
-                style={{ opacity: fadeAnim }}
+            <ScrollView
                 showsVerticalScrollIndicator={false}
                 overScrollMode="never"
                 contentContainerStyle={{ paddingTop: insets.top + SPACING.base, paddingBottom: 16 }}
             >
                 {/* ── Header ── */}
                 <View style={styles.headerRow}>
-                    <View style={styles.headerTop}>
+                    <Animated.View
+                        style={[
+                            styles.headerTop,
+                            {
+                                opacity: greetingAnim,
+                                transform: [{
+                                    translateY: greetingAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] })
+                                }],
+                            }
+                        ]}
+                    >
                         <View style={{ flex: 1, justifyContent: 'center' }}>
-                            <Text style={styles.greeting}>{greeting.toUpperCase()},</Text>
+                            <Text style={styles.greeting}>{greeting},</Text>
                             <MetallicText
                                 text={displayName.toUpperCase()}
                                 style={styles.name}
@@ -572,38 +587,47 @@ export default function HomeScreen({ navigation, route }) {
                                 )}
                             </TouchableOpacity>
                         </View>
-                    </View>
+                    </Animated.View>
 
                     {/* Action Shortcut Bar */}
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        style={styles.hudShortcutBar}
-                        contentContainerStyle={styles.hudShortcutBarContent}
+                    <Animated.View
+                        style={{
+                            opacity: navAnim,
+                            transform: [{
+                                translateY: navAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] })
+                            }],
+                        }}
                     >
-                        <TouchableOpacity style={styles.hudShortcutBtn} onPress={() => navigation.navigate("AICoach")} activeOpacity={0.7}>
-                            <Ionicons name="sparkles" size={13} color={COLORS.textSub} style={{ marginRight: 6 }} />
-                            <Text style={[styles.hudShortcutBtnText, { color: COLORS.text }]}>Coach</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.hudShortcutBtn} onPress={() => navigation.navigate("History")} activeOpacity={0.7}>
-                            <Ionicons name="time-outline" size={13} color={COLORS.textSub} style={{ marginRight: 6 }} />
-                            <Text style={styles.hudShortcutBtnText}>History</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.hudShortcutBtn} onPress={() => navigation.navigate("Settings")} activeOpacity={0.7}>
-                            <Ionicons name="settings-outline" size={13} color={COLORS.textSub} style={{ marginRight: 6 }} />
-                            <Text style={styles.hudShortcutBtnText}>Settings</Text>
-                        </TouchableOpacity>
-                        {isFrozen && (
-                            <TouchableOpacity
-                                style={[styles.hudShortcutBtn, { backgroundColor: 'rgba(237, 234, 227, 0.06)', borderColor: 'rgba(237, 234, 227, 0.18)' }]}
-                                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setFreezeModal(true); }}
-                                activeOpacity={0.7}
-                            >
-                                <Ionicons name="snow" size={12} color={COLORS.text} style={{ marginRight: 6 }} />
-                                <Text style={[styles.hudShortcutBtnText, { color: COLORS.text }]}>Streak Frozen</Text>
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            style={styles.hudShortcutBar}
+                            contentContainerStyle={styles.hudShortcutBarContent}
+                        >
+                            <TouchableOpacity style={styles.hudShortcutBtn} onPress={() => navigation.navigate("AICoach")} activeOpacity={0.7}>
+                                <Ionicons name="sparkles" size={13} color={COLORS.textSub} style={{ marginRight: 6 }} />
+                                <Text style={[styles.hudShortcutBtnText, { color: COLORS.text }]}>Coach</Text>
                             </TouchableOpacity>
-                        )}
-                    </ScrollView>
+                            <TouchableOpacity style={styles.hudShortcutBtn} onPress={() => navigation.navigate("History")} activeOpacity={0.7}>
+                                <Ionicons name="time-outline" size={13} color={COLORS.textSub} style={{ marginRight: 6 }} />
+                                <Text style={styles.hudShortcutBtnText}>History</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.hudShortcutBtn} onPress={() => navigation.navigate("Settings")} activeOpacity={0.7}>
+                                <Ionicons name="settings-outline" size={13} color={COLORS.textSub} style={{ marginRight: 6 }} />
+                                <Text style={styles.hudShortcutBtnText}>Settings</Text>
+                            </TouchableOpacity>
+                            {isFrozen && (
+                                <TouchableOpacity
+                                    style={[styles.hudShortcutBtn, { backgroundColor: 'rgba(237, 234, 227, 0.06)', borderColor: 'rgba(237, 234, 227, 0.18)' }]}
+                                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setFreezeModal(true); }}
+                                    activeOpacity={0.7}
+                                >
+                                    <Ionicons name="snow" size={12} color={COLORS.text} style={{ marginRight: 6 }} />
+                                    <Text style={[styles.hudShortcutBtnText, { color: COLORS.text }]}>Streak Frozen</Text>
+                                </TouchableOpacity>
+                            )}
+                        </ScrollView>
+                    </Animated.View>
                 </View>
 
                 {/* Active Workout Resume Banner */}
@@ -642,71 +666,80 @@ export default function HomeScreen({ navigation, route }) {
                 )}
 
                 {/* ── Today's Workout Hero Card (Focal Point) ── */}
-                {todayWorkout ? (
-                    <TouchableOpacity
-                        style={styles.heroCard}
-                        activeOpacity={0.9}
-                        onPress={() => navigation.navigate("WorkoutDetail", { day: todayWorkout })}
-                    >
-                        <ImageBackground
-                            source={todayWorkout.headerImage || require("../../assets/home_hero_bg.png")}
-                            style={StyleSheet.absoluteFill}
-                            resizeMode="cover"
+                <Animated.View
+                    style={{
+                        opacity: heroAnim,
+                        transform: [{
+                            translateY: heroAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] })
+                        }],
+                    }}
+                >
+                    {todayWorkout ? (
+                        <TouchableOpacity
+                            style={styles.heroCard}
+                            activeOpacity={0.9}
+                            onPress={() => navigation.navigate("WorkoutDetail", { day: todayWorkout })}
                         >
-                            <LinearGradient
-                                colors={["rgba(0,0,0,0.3)", "rgba(10,10,11,0.75)", "rgba(10,10,11,0.98)"]}
+                            <ImageBackground
+                                source={todayWorkout.headerImage || require("../../assets/home_hero_bg.png")}
                                 style={StyleSheet.absoluteFill}
-                            />
+                                resizeMode="cover"
+                            >
+                                <LinearGradient
+                                    colors={["rgba(0,0,0,0.3)", "rgba(10,10,11,0.75)", "rgba(10,10,11,0.98)"]}
+                                    style={StyleSheet.absoluteFill}
+                                />
 
-                            <View style={styles.heroContent}>
-                                <View>
-                                    <View style={styles.heroBadge}>
-                                        <Text style={styles.heroBadgeText}>TODAY'S TARGET</Text>
-                                    </View>
-                                    <Text style={styles.heroTitle} numberOfLines={1} adjustsFontSizeToFit>
-                                        {todayWorkout.target}
-                                    </Text>
-                                    <Text style={[styles.heroSub, completedDays.includes(todayDay) && { color: COLORS.text, fontFamily: FAMILY.medium }]}>
-                                        {completedDays.includes(todayDay) ? "✓ Session completed" : `Day 0${todayWorkout.day} · 6-Day Split`}
-                                    </Text>
-                                </View>
-
-                                <View style={styles.heroMetaRow}>
-                                    <View style={{ flexDirection: "row", gap: 16 }}>
-                                        <View style={styles.heroMeta}>
-                                            <Text style={styles.heroMetaLabel}>VOLUME</Text>
-                                            <Text style={styles.heroMetaValue}>{todayWorkout.exercises.length} EX</Text>
+                                <View style={styles.heroContent}>
+                                    <View>
+                                        <View style={styles.heroBadge}>
+                                            <Text style={styles.heroBadgeText}>TODAY'S TARGET</Text>
                                         </View>
-                                        <View style={styles.heroMeta}>
-                                            <Text style={styles.heroMetaLabel}>DURATION</Text>
-                                            <Text style={styles.heroMetaValue}>{totalTime(todayWorkout)} MIN</Text>
-                                        </View>
-                                    </View>
-
-                                    <TouchableOpacity
-                                        style={styles.heroCta}
-                                        activeOpacity={0.85}
-                                        onPress={() => {
-                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                            navigation.navigate("WorkoutDetail", { day: todayWorkout });
-                                        }}
-                                    >
-                                        <Text style={styles.heroCtaText}>
-                                            {completedDays.includes(todayDay) ? "Log Again" : "Start Session"}
+                                        <Text style={styles.heroTitle} numberOfLines={1} adjustsFontSizeToFit>
+                                            {todayWorkout.target}
                                         </Text>
-                                        <Ionicons
-                                            name={completedDays.includes(todayDay) ? "refresh-outline" : "play"}
-                                            size={12}
-                                            color="#EDEAE3"
-                                        />
-                                    </TouchableOpacity>
+                                        <Text style={[styles.heroSub, completedDays.includes(todayDay) && { color: COLORS.text, fontFamily: FAMILY.medium }]}>
+                                            {completedDays.includes(todayDay) ? "✓ Session completed" : `Day 0${todayWorkout.day} · 6-Day Split`}
+                                        </Text>
+                                    </View>
+
+                                    <View style={styles.heroMetaRow}>
+                                        <View style={{ flexDirection: "row", gap: 16 }}>
+                                            <View style={styles.heroMeta}>
+                                                <Text style={styles.heroMetaLabel}>VOLUME</Text>
+                                                <Text style={styles.heroMetaValue}>{todayWorkout.exercises.length} EX</Text>
+                                            </View>
+                                            <View style={styles.heroMeta}>
+                                                <Text style={styles.heroMetaLabel}>DURATION</Text>
+                                                <Text style={styles.heroMetaValue}>{totalTime(todayWorkout)} MIN</Text>
+                                            </View>
+                                        </View>
+
+                                        <TouchableOpacity
+                                            style={styles.heroCta}
+                                            activeOpacity={0.85}
+                                            onPress={() => {
+                                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                                navigation.navigate("WorkoutDetail", { day: todayWorkout });
+                                            }}
+                                        >
+                                            <Text style={styles.heroCtaText}>
+                                                {completedDays.includes(todayDay) ? "Log Again" : "Start Session"}
+                                            </Text>
+                                            <Ionicons
+                                                name={completedDays.includes(todayDay) ? "refresh-outline" : "play"}
+                                                size={12}
+                                                color="#EDEAE3"
+                                            />
+                                        </TouchableOpacity>
+                                    </View>
                                 </View>
-                            </View>
-                        </ImageBackground>
-                    </TouchableOpacity>
-                ) : (
-                    <RestDayCard navigation={navigation} />
-                )}
+                            </ImageBackground>
+                        </TouchableOpacity>
+                    ) : (
+                        <RestDayCard navigation={navigation} />
+                    )}
+                </Animated.View>
 
                 {/* Progress HUD Card */}
                 <View style={styles.hudCard}>
@@ -968,7 +1001,7 @@ export default function HomeScreen({ navigation, route }) {
                     <Text style={styles.footerVersion}>CONQUER ONE · {APP_VERSION}</Text>
                     <Text style={styles.footerAuthor}>BUILT FOR PERFORMANCE BY <Text style={{ color: COLORS.textSub }}>VIVASWAN SHETTY</Text></Text>
                 </View>
-            </Animated.ScrollView>
+            </ScrollView>
 
             <Modal
                 visible={freezeModal}
