@@ -15,7 +15,11 @@ import {
   Archivo_700Bold,
   Archivo_900Black,
 } from "@expo-google-fonts/archivo";
-import { LeagueSpartan_700ExtraBold } from "@expo-google-fonts/league-spartan";
+import {
+  LeagueSpartan_700Bold,
+  LeagueSpartan_800ExtraBold,
+  LeagueSpartan_900Black,
+} from "@expo-google-fonts/league-spartan";
 import {
   Inter_400Regular,
   Inter_500Medium,
@@ -155,7 +159,10 @@ function RootNavigator({ fontsLoaded }) {
  *   - JetBrains Mono (Precision Instruments)
  */
 const CRITICAL_FONTS = {
-  LeagueSpartan_700ExtraBold,
+  LeagueSpartan_700Bold,
+  LeagueSpartan_800ExtraBold,
+  LeagueSpartan_900Black,
+  LeagueSpartan_700ExtraBold: LeagueSpartan_700Bold,
   BebasNeue_400Regular,
   ChakraPetch_300Light,
   ChakraPetch_400Regular,
