@@ -740,77 +740,75 @@ export default function HomeScreen({ navigation, route }) {
                             activeOpacity={0.9}
                             onPress={() => navigation.navigate("WorkoutDetail", { day: todayWorkout })}
                         >
-                            <MaskedView
-                                style={{ width, height: 220 }}
-                                maskElement={
-                                    <Svg width={width} height={220}>
-                                        <Polygon
-                                            points={`0,0 ${width},0 ${width},180 ${width - 40},220 0,220`}
-                                            fill="white"
-                                        />
-                                    </Svg>
-                                }
+                            <ImageBackground
+                                source={todayWorkout.headerImage || require("../../assets/home_hero_bg.png")}
+                                style={StyleSheet.absoluteFill}
+                                resizeMode="cover"
                             >
-                                <ImageBackground
-                                    source={todayWorkout.headerImage || require("../../assets/home_hero_bg.png")}
+                                <LinearGradient
+                                    colors={["rgba(0,0,0,0.3)", "rgba(10,10,11,0.85)", "rgba(10,10,11,0.98)"]}
                                     style={StyleSheet.absoluteFill}
-                                    resizeMode="cover"
+                                />
+
+                                {/* Large Faded Day Number in Background */}
+                                <Text
+                                    style={styles.heroBgNumber}
+                                    numberOfLines={1}
+                                    adjustsFontSizeToFit={false}
+                                    pointerEvents="none"
                                 >
-                                    <LinearGradient
-                                        colors={["rgba(0,0,0,0.3)", "rgba(10,10,11,0.85)", "rgba(10,10,11,0.98)"]}
-                                        style={StyleSheet.absoluteFill}
-                                    />
+                                    {todayWorkout.day < 10 ? `0${todayWorkout.day}` : todayWorkout.day}
+                                </Text>
 
-                                    {/* Large Faded Day Number in Background */}
-                                    <Text
-                                        style={styles.heroBgNumber}
-                                        numberOfLines={1}
-                                        adjustsFontSizeToFit={false}
-                                        pointerEvents="none"
-                                    >
-                                        {todayWorkout.day < 10 ? `0${todayWorkout.day}` : todayWorkout.day}
-                                    </Text>
-
-                                    <View style={styles.heroContent}>
-                                        <View>
-                                            <View style={styles.heroBadge}>
-                                                <View style={styles.heroBadgeDot} />
-                                                <Text style={styles.heroBadgeText}>TODAY · DAY 0{todayWorkout.day}</Text>
-                                            </View>
-                                            <Text style={styles.heroTitle} numberOfLines={1} adjustsFontSizeToFit>
-                                                {todayWorkout.dayName ? todayWorkout.dayName.toUpperCase() : (todayWorkout.target.toUpperCase().includes("DAY") ? todayWorkout.target.toUpperCase() : `${todayWorkout.target.toUpperCase()} (HEAVY)`)}
-                                            </Text>
-                                            <Text style={styles.heroSub}>
-                                                6-day split · pull & push combined
-                                            </Text>
+                                <View style={styles.heroContent}>
+                                    <View>
+                                        <View style={styles.heroBadge}>
+                                            <View style={styles.heroBadgeDot} />
+                                            <Text style={styles.heroBadgeText}>TODAY · DAY 0{todayWorkout.day}</Text>
                                         </View>
-
-                                        <View style={styles.heroMetaRow}>
-                                            <View style={{ flexDirection: "row", gap: 20 }}>
-                                                <View style={styles.heroMeta}>
-                                                    <Text style={styles.heroMetaLabel}>VOLUME</Text>
-                                                    <Text style={styles.heroMetaValue}>{todayWorkout.exercises.length} EX</Text>
-                                                </View>
-                                                <View style={styles.heroMeta}>
-                                                    <Text style={styles.heroMetaLabel}>DURATION</Text>
-                                                    <Text style={styles.heroMetaValue}>{totalTime(todayWorkout)} MIN</Text>
-                                                </View>
-                                            </View>
-
-                                            <TouchableOpacity
-                                                style={styles.heroCta}
-                                                activeOpacity={0.85}
-                                                onPress={() => {
-                                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                                    navigation.navigate("WorkoutDetail", { day: todayWorkout });
-                                                }}
-                                            >
-                                                <Text style={styles.heroCtaText}>Start session ›</Text>
-                                            </TouchableOpacity>
-                                        </View>
+                                        <Text style={styles.heroTitle} numberOfLines={1} adjustsFontSizeToFit>
+                                            {todayWorkout.dayName ? todayWorkout.dayName.toUpperCase() : (todayWorkout.target.toUpperCase().includes("DAY") ? todayWorkout.target.toUpperCase() : `${todayWorkout.target.toUpperCase()} (HEAVY)`)}
+                                        </Text>
+                                        <Text style={styles.heroSub}>
+                                            6-day split · pull & push combined
+                                        </Text>
                                     </View>
-                                </ImageBackground>
-                            </MaskedView>
+
+                                    <View style={styles.heroMetaRow}>
+                                        <View style={{ flexDirection: "row", gap: 20 }}>
+                                            <View style={styles.heroMeta}>
+                                                <Text style={styles.heroMetaLabel}>VOLUME</Text>
+                                                <Text style={styles.heroMetaValue}>{todayWorkout.exercises.length} EX</Text>
+                                            </View>
+                                            <View style={styles.heroMeta}>
+                                                <Text style={styles.heroMetaLabel}>DURATION</Text>
+                                                <Text style={styles.heroMetaValue}>{totalTime(todayWorkout)} MIN</Text>
+                                            </View>
+                                        </View>
+
+                                        <TouchableOpacity
+                                            style={styles.heroCta}
+                                            activeOpacity={0.85}
+                                            onPress={() => {
+                                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                                navigation.navigate("WorkoutDetail", { day: todayWorkout });
+                                            }}
+                                        >
+                                            <Text style={styles.heroCtaText}>Start session ›</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+                            </ImageBackground>
+
+                            <Svg
+                                width={70}
+                                height={45}
+                                viewBox="0 0 70 45"
+                                style={{ position: 'absolute', bottom: 0, right: 0 }}
+                                pointerEvents="none"
+                            >
+                                <Polygon points="70,0 70,45 0,45" fill={COLORS.bg} />
+                            </Svg>
                         </TouchableOpacity>
                     ) : (
                         <RestDayCard navigation={navigation} />
