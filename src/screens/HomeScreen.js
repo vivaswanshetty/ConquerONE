@@ -45,8 +45,8 @@ function getMuscleColor(target) {
     const t = String(target).toUpperCase();
     if (t.includes("CHEST") || t.includes("TRICEPS") || t.includes("PUSH")) return "#E31E24"; // Crimson Red
     if (t.includes("BACK") || t.includes("BICEPS") || t.includes("PULL")) return "#FF9500"; // Gold Amber
-    if (t.includes("SHOULDERS") || t.includes("CORE") || t.includes("ARMS")) return "#30B0C7"; // Steel Teal
-    if (t.includes("LEGS") || t.includes("QUADS") || t.includes("LOWER")) return "#D1D1D1"; // Silver
+    if (t.includes("SHOULDERS") || t.includes("CORE") || t.includes("ARMS") || t.includes("ABS")) return "#30B0C7"; // Steel Teal
+    if (t.includes("LEGS") || t.includes("QUADS") || t.includes("LOWER") || t.includes("CALVES")) return "#D1D1D1"; // Silver
     return "#8E8E93";
 }
 
@@ -1054,6 +1054,9 @@ export default function HomeScreen({ navigation, route }) {
                             }}
                             activeOpacity={0.75}
                         >
+                            <Svg width={4} height={48} style={styles.dayAccentNotch}>
+                                <Polygon points="0,7 4,0 4,41 0,48" fill={getMuscleColor(day.target)} />
+                            </Svg>
                             <View style={styles.dayRowLeft}>
                                 <View style={styles.dayNumRow}>
                                     <Text style={styles.dayNum}>0{day.day}</Text>
@@ -2332,9 +2335,16 @@ const styles = StyleSheet.create({
     },
     dayRow: {
         flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-        paddingHorizontal: 18, paddingVertical: 16, backgroundColor: COLORS.bgCard,
+        paddingLeft: 22, paddingRight: 18, paddingVertical: 16, backgroundColor: COLORS.bgCard,
         borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border,
         minHeight: 84,
+        position: "relative",
+        overflow: "hidden",
+    },
+    dayAccentNotch: {
+        position: "absolute",
+        left: 0,
+        top: 18,
     },
     dayRowLeft: { flex: 1 },
     dayNumRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
