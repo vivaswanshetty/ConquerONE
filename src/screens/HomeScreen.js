@@ -41,11 +41,12 @@ function totalTime(day) {
 }
 
 function getMuscleColor(target) {
-    const t = target.toUpperCase();
-    if (t.includes("CHEST") || t.includes("TRICEPS") || t.includes("PUSH")) return COLORS.accent; // Titanium Silver
-    if (t.includes("BACK") || t.includes("BICEPS") || t.includes("PULL")) return "#FF9500"; // Gold
-    if (t.includes("LEGS") || t.includes("QUADS") || t.includes("LOWER")) return "#D1D1D1"; // Silver/Titanium
-    if (t.includes("SHOULDERS") || t.includes("CORE") || t.includes("ARMS")) return "#30B0C7"; // Steel teal
+    if (!target) return "#8E8E93";
+    const t = String(target).toUpperCase();
+    if (t.includes("CHEST") || t.includes("TRICEPS") || t.includes("PUSH")) return "#E31E24"; // Crimson Red
+    if (t.includes("BACK") || t.includes("BICEPS") || t.includes("PULL")) return "#FF9500"; // Gold Amber
+    if (t.includes("LEGS") || t.includes("QUADS") || t.includes("LOWER")) return "#30D158"; // Emerald Green
+    if (t.includes("SHOULDERS") || t.includes("CORE") || t.includes("ARMS")) return "#30B0C7"; // Steel Teal
     return "#8E8E93";
 }
 
@@ -180,6 +181,7 @@ const getWeekStats = (history, lastFreezeDate) => {
 
     const completedDays = [];
     const freezeDays = [];
+    const completedTargets = {};
 
     if (history && Array.isArray(history)) {
         history.forEach(item => {
@@ -192,6 +194,12 @@ const getWeekStats = (history, lastFreezeDate) => {
                 const dayOfWeek = diffDays + 1; // 1 = Mon, 7 = Sun
                 if (!completedDays.includes(dayOfWeek)) {
                     completedDays.push(dayOfWeek);
+                }
+                if (item.target) {
+                    completedTargets[dayOfWeek] = item.target;
+                } else if (item.day) {
+                    const wDay = WORKOUT_PLAN.find(d => d.day === item.day);
+                    if (wDay) completedTargets[dayOfWeek] = wDay.target;
                 }
             }
         });
@@ -208,7 +216,7 @@ const getWeekStats = (history, lastFreezeDate) => {
         }
     }
 
-    return { completedDays, freezeDays };
+    return { completedDays, freezeDays, completedTargets };
 };
 
 const getWeeklyHistoryData = (history) => {
@@ -412,6 +420,7 @@ export default function HomeScreen({ navigation, route }) {
     const [xp, setXP] = useState(0);
     const [recordStreak, setRecordStreak] = useState(0);
     const [completedDays, setCompletedDays] = useState([]);
+    const [completedTargets, setCompletedTargets] = useState({});
     const [freezeDays, setFreezeDays] = useState([]);
     const [history, setHistory] = useState([]);
     const [streakAnalyticsVisible, setStreakAnalyticsVisible] = useState(false);
@@ -510,9 +519,10 @@ export default function HomeScreen({ navigation, route }) {
             setPreviousFreezeDate(cachedPrevFreeze);
             setIsFrozen(cachedFreeze === new Date().toISOString().split("T")[0]);
 
-            const { completedDays: localComp, freezeDays: localFrz } = getWeekStats(cachedHistory, cachedFreeze);
+            const { completedDays: localComp, freezeDays: localFrz, completedTargets: localTargets } = getWeekStats(cachedHistory, cachedFreeze);
             setCompletedDays(localComp);
             setFreezeDays(localFrz);
+            setCompletedTargets(localTargets || {});
         } catch (e) {
             console.warn("Failed to load cached stats in HomeScreen", e);
         }
@@ -551,9 +561,10 @@ export default function HomeScreen({ navigation, route }) {
                 setRecordStreak(nextRecord);
                 setHistory(nextHistory);
 
-                const { completedDays: syncComp, freezeDays: syncFrz } = getWeekStats(nextHistory, lastFreeze);
+                const { completedDays: syncComp, freezeDays: syncFrz, completedTargets: syncTargets } = getWeekStats(nextHistory, lastFreeze);
                 setCompletedDays(syncComp);
                 setFreezeDays(syncFrz);
+                setCompletedTargets(syncTargets || {});
             } catch (e) {
                 console.warn("HomeScreen background sync failed", e);
             }
@@ -774,8 +785,14 @@ export default function HomeScreen({ navigation, route }) {
 
                                 <View style={styles.heroContent}>
                                     <View>
-                                        <View style={styles.heroBadge}>
-                                            <Text style={styles.heroBadgeText}>TODAY'S TARGET</Text>
+                                        <View style={[
+                                            styles.heroBadge,
+                                            {
+                                                backgroundColor: `${getMuscleColor(todayWorkout.target)}2E`,
+                                                borderColor: `${getMuscleColor(todayWorkout.target)}4D`,
+                                            }
+                                        ]}>
+                                            <Text style={[styles.heroBadgeText, { color: getMuscleColor(todayWorkout.target) }]}>TODAY'S TARGET</Text>
                                         </View>
                                         <Text style={styles.heroTitle} numberOfLines={1} adjustsFontSizeToFit>
                                             {todayWorkout.target}
@@ -906,21 +923,26 @@ export default function HomeScreen({ navigation, route }) {
                                         const isToday = todayDay === dayNum;
                                         const isFuture = dayNum > todayDay;
                                         const isSunday = dayNum === 7;
+                                        const dayTarget = completedTargets[dayNum] || (WORKOUT_PLAN.find(d => d.day === dayNum)?.target);
+                                        const muscleColor = getMuscleColor(dayTarget);
 
                                         return (
                                             <View key={label} style={styles.gridCellWrapper}>
                                                 <View
                                                     style={[
                                                         styles.gridCell,
-                                                        isCompleted && styles.gridCellCompleted,
+                                                        isCompleted && {
+                                                            backgroundColor: muscleColor,
+                                                            borderColor: muscleColor,
+                                                        },
                                                         isDayFrozen && styles.gridCellFrozen,
-                                                        isToday && styles.gridCellToday,
+                                                        isToday && !isCompleted && styles.gridCellToday,
                                                         !isCompleted && !isDayFrozen && !isToday && dayNum < todayDay && (isSunday ? styles.gridCellRest : styles.gridCellMissed),
                                                         isFuture && { borderColor: COLORS.border }
                                                     ]}
                                                 >
                                                     {isCompleted ? (
-                                                        <Ionicons name="checkmark" size={11} color="#EDEAE3" />
+                                                        <Ionicons name="checkmark" size={11} color="#FFFFFF" />
                                                     ) : isDayFrozen ? (
                                                         <Ionicons name="snow" size={10} color={COLORS.textSub} />
                                                     ) : isSunday && !isToday ? (
@@ -1011,6 +1033,22 @@ export default function HomeScreen({ navigation, route }) {
                 <View style={styles.sectionHeader}>
                     <Text style={styles.sectionLabel}>6-Day Split</Text>
                 </View>
+
+                {/* Muscle Legend */}
+                <View style={styles.muscleLegendRow}>
+                    {[
+                        { label: "Chest/Triceps", target: "Chest" },
+                        { label: "Back/Biceps", target: "Back" },
+                        { label: "Shoulders/Core", target: "Shoulders" },
+                        { label: "Legs", target: "Legs" },
+                    ].map((item) => (
+                        <View key={item.label} style={styles.legendItem}>
+                            <View style={[styles.legendDot, { backgroundColor: getMuscleColor(item.target) }]} />
+                            <Text style={styles.legendText}>{item.label}</Text>
+                        </View>
+                    ))}
+                </View>
+
                 <View style={styles.dayList}>
                     {WORKOUT_PLAN.map((day) => (
                         <TouchableOpacity
@@ -1025,8 +1063,14 @@ export default function HomeScreen({ navigation, route }) {
                             <View style={styles.dayRowLeft}>
                                 <View style={styles.dayNumRow}>
                                     <Text style={styles.dayNum}>0{day.day}</Text>
-                                    <View style={styles.muscleBadge}>
-                                        <Text style={styles.muscleBadgeText}>{day.target}</Text>
+                                    <View style={[
+                                        styles.muscleBadge,
+                                        {
+                                            backgroundColor: `${getMuscleColor(day.target)}26`,
+                                            borderColor: `${getMuscleColor(day.target)}4D`,
+                                        }
+                                    ]}>
+                                        <Text style={[styles.muscleBadgeText, { color: getMuscleColor(day.target) }]}>{day.target}</Text>
                                     </View>
                                 </View>
                                 <Text style={styles.dayTargetTitle}>{day.target}</Text>
@@ -2214,6 +2258,36 @@ const styles = StyleSheet.create({
         borderRadius: 2, backgroundColor: COLORS.accent
     },
 
+    // Muscle Legend
+    muscleLegendRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginHorizontal: SPACING.base,
+        marginBottom: 12,
+        paddingVertical: 6,
+        paddingHorizontal: 10,
+        backgroundColor: "rgba(255, 255, 255, 0.02)",
+        borderRadius: RADIUS.xs,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.04)",
+    },
+    legendItem: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 5,
+    },
+    legendDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+    },
+    legendText: {
+        fontSize: 10,
+        fontFamily: FAMILY.regular,
+        color: COLORS.textSub,
+    },
+
     // Library List Items
     dayList: {
         marginHorizontal: SPACING.base, gap: 10,
@@ -2227,8 +2301,13 @@ const styles = StyleSheet.create({
     dayRowLeft: { flex: 1 },
     dayNumRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
     dayNum: { fontSize: 10, fontFamily: FAMILY.monoBold, color: COLORS.textSub },
-    muscleBadge: { backgroundColor: "rgba(237, 234, 227, 0.05)", paddingHorizontal: 6, paddingVertical: 2, borderRadius: RADIUS.sm },
-    muscleBadgeText: { fontSize: 8, fontFamily: FAMILY.medium, color: COLORS.textSub },
+    muscleBadge: {
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: RADIUS.sm,
+        borderWidth: 0.5,
+    },
+    muscleBadgeText: { fontSize: 8, fontFamily: FAMILY.semibold },
     dayTargetTitle: { fontSize: 17, fontFamily: FAMILY.semibold, color: COLORS.text, letterSpacing: -0.2 },
     dayMeta: { fontSize: 11, color: COLORS.textSub, marginTop: 4, fontFamily: FAMILY.monoRegular },
     dayRowRight: { opacity: 0.6 },
