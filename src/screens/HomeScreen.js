@@ -871,148 +871,152 @@ export default function HomeScreen({ navigation, route }) {
                     )}
                 </Animated.View>
 
-                {/* Progress HUD Card */}
-                <View style={styles.hudCard}>
-                    <View style={styles.hudHeader}>
-                        <Text style={styles.hudTitle}>PROGRESS</Text>
-                    </View>
+                {/* ── Unified Dashboard Card ── */}
+                {(() => {
+                    const progressPercent = xp % 100;
+                    const radius = 28;
+                    const strokeWidth = 5;
+                    const circumference = 2 * Math.PI * radius; // ~175.93
+                    const strokeDashoffset = circumference - (circumference * progressPercent) / 100;
+                    const tierLabel = total >= 100 ? 'Tier 6' :
+                        total >= 50 ? 'Tier 5' :
+                            total >= 25 ? 'Tier 4' :
+                                total >= 10 ? 'Tier 3' :
+                                    total >= 5 ? 'Tier 2' : 'Tier 1';
 
-                    <View style={styles.hudBody}>
-                        <View style={{ flex: 1 }}>
-                            {/* Segmented HUD Progress Bar */}
-                            <View style={styles.segmentedBarRow}>
-                                {Array.from({ length: 10 }).map((_, idx) => {
-                                    const progressPercent = xp % 100;
-                                    const blockValue = (idx + 1) * 10;
-                                    const prevBlockValue = idx * 10;
-                                    
-                                    let fillWidth = 0;
-                                    if (progressPercent >= blockValue) {
-                                        fillWidth = 100;
-                                    } else if (progressPercent > prevBlockValue) {
-                                        fillWidth = ((progressPercent - prevBlockValue) / 10) * 100;
-                                    }
-                                    
-                                    return (
-                                        <View key={idx} style={styles.segmentContainer}>
-                                            <View style={styles.segmentBg} />
-                                            {fillWidth > 0 && (
-                                                <View
-                                                    style={[styles.segmentFill, { width: `${fillWidth}%`, backgroundColor: COLORS.accent }]}
-                                                />
-                                            )}
-                                        </View>
-                                    );
-                                })}
+                    return (
+                        <View style={styles.dashboardCard}>
+                            {/* Left: SVG XP Progress Ring */}
+                            <View style={styles.dashboardRingWrapper}>
+                                <Svg width={74} height={74} style={{ transform: [{ rotate: "-90deg" }] }}>
+                                    <Circle
+                                        cx={37}
+                                        cy={37}
+                                        r={radius}
+                                        stroke={COLORS.border}
+                                        strokeWidth={strokeWidth}
+                                        fill="none"
+                                    />
+                                    <Circle
+                                        cx={37}
+                                        cy={37}
+                                        r={radius}
+                                        stroke={COLORS.primary}
+                                        strokeWidth={strokeWidth}
+                                        fill="none"
+                                        strokeDasharray={circumference}
+                                        strokeDashoffset={strokeDashoffset}
+                                        strokeLinecap="round"
+                                    />
+                                </Svg>
+                                <View style={styles.dashboardRingTextContainer} pointerEvents="none">
+                                    <Text style={styles.dashboardRingPercent}>{progressPercent}%</Text>
+                                </View>
                             </View>
 
-                            <View style={styles.hudFooterRow}>
-                                <Text style={styles.hudSubText}>
-                                    {xp % 100} / 100 XP
-                                </Text>
-                                <Text style={styles.hudRankText}>
-                                    {100 - (xp % 100)} XP to Next Milestone
-                                </Text>
+                            {/* Right: 3 Stats Cells */}
+                            <View style={styles.dashboardStatsRow}>
+                                {/* Streak Cell */}
+                                <TouchableOpacity
+                                    style={styles.dashboardStatCell}
+                                    activeOpacity={0.8}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        setStreakAnalyticsVisible(true);
+                                    }}
+                                >
+                                    <Text style={styles.dashboardStatLabel}>STREAK</Text>
+                                    <Text style={[styles.dashboardStatValue, { color: streak > 0 ? COLORS.primary : COLORS.textSub }]} numberOfLines={1}>
+                                        {streak} <Text style={styles.dashboardStatUnit}>{streak === 1 ? 'day' : 'days'}</Text>
+                                    </Text>
+                                </TouchableOpacity>
+
+                                <View style={styles.dashboardStatDivider} />
+
+                                {/* Sessions Cell */}
+                                <View style={styles.dashboardStatCell}>
+                                    <Text style={styles.dashboardStatLabel}>SESSIONS</Text>
+                                    <Text style={[styles.dashboardStatValue, { color: COLORS.text }]} numberOfLines={1}>
+                                        {total}
+                                    </Text>
+                                </View>
+
+                                <View style={styles.dashboardStatDivider} />
+
+                                {/* Rank/Tier Cell */}
+                                <TouchableOpacity
+                                    style={styles.dashboardStatCell}
+                                    activeOpacity={0.8}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        navigation.navigate("Rank");
+                                    }}
+                                >
+                                    <Text style={styles.dashboardStatLabel}>TIER</Text>
+                                    <Text style={[styles.dashboardStatValue, { color: COLORS.accent }]} numberOfLines={1} adjustsFontSizeToFit>
+                                        {tierLabel}
+                                    </Text>
+                                </TouchableOpacity>
                             </View>
                         </View>
-                    </View>
-                </View>
-
-                {/* ── Streak Intelligence Card ── */}
-                {(() => {
-                    const tierInfo = getStreakTierInfo(streak);
-                    return (
-                        <TouchableOpacity
-                            style={styles.streakIntelligenceCard}
-                            activeOpacity={0.88}
-                            onPress={() => {
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                setStreakAnalyticsVisible(true);
-                            }}
-                        >
-                            <View style={styles.streakIntelligenceLeft}>
-                                <View style={styles.streakIconContainer}>
-                                    <Ionicons name="flame" size={16} color={COLORS.text} />
-                                </View>
-                                <Text style={styles.streakTierName}>
-                                    {tierInfo.name}
-                                </Text>
-                                <Text style={styles.streakValue}>
-                                    {streak} <Text style={{ fontSize: 11, color: COLORS.textSub, fontFamily: FAMILY.regular }}>{streak === 1 ? 'day' : 'days'}</Text>
-                                </Text>
-                                <View style={styles.multiplierBadge}>
-                                    <Text style={styles.multiplierText}>{tierInfo.multiplier}x XP</Text>
-                                </View>
-                            </View>
-                            <View style={styles.streakIntelligenceRight}>
-                                <Text style={styles.gridTitle}>THIS WEEK</Text>
-                                <View style={styles.gridContainer}>
-                                    {DAY_LABELS.map((label, index) => {
-                                        const dayNum = index + 1;
-                                        const isCompleted = completedDays.includes(dayNum);
-                                        const isDayFrozen = freezeDays.includes(dayNum);
-                                        const isToday = todayDay === dayNum;
-                                        const isFuture = dayNum > todayDay;
-                                        const isSunday = dayNum === 7;
-                                        const dayTarget = completedTargets[dayNum] || (WORKOUT_PLAN.find(d => d.day === dayNum)?.target);
-                                        const muscleColor = getMuscleColor(dayTarget);
-
-                                        return (
-                                            <View key={label} style={styles.gridCellWrapper}>
-                                                <View
-                                                    style={[
-                                                        styles.gridCell,
-                                                        isCompleted && {
-                                                            backgroundColor: muscleColor,
-                                                            borderColor: muscleColor,
-                                                        },
-                                                        isDayFrozen && styles.gridCellFrozen,
-                                                        isToday && !isCompleted && styles.gridCellToday,
-                                                        !isCompleted && !isDayFrozen && !isToday && dayNum < todayDay && (isSunday ? styles.gridCellRest : styles.gridCellMissed),
-                                                        isFuture && { borderColor: COLORS.border }
-                                                    ]}
-                                                >
-                                                    {isCompleted ? (
-                                                        <Ionicons name="checkmark" size={11} color="#FFFFFF" />
-                                                    ) : isDayFrozen ? (
-                                                        <Ionicons name="snow" size={10} color={COLORS.textSub} />
-                                                    ) : isSunday && !isToday ? (
-                                                        <Ionicons name="moon-outline" size={9} color={COLORS.textMuted} />
-                                                    ) : (
-                                                        isToday && !isCompleted && !isDayFrozen && <View style={styles.gridCellTodayDot} />
-                                                    )}
-                                                </View>
-                                                <Text style={[styles.gridCellLabel, isToday && { color: COLORS.text, fontFamily: FAMILY.bold }]}>{label[0]}</Text>
-                                            </View>
-                                        );
-                                    })}
-                                </View>
-                            </View>
-                        </TouchableOpacity>
                     );
                 })()}
 
-                {/* ── Stats: Total & Rank ── */}
-                <View style={styles.statsRow}>
-                    <View style={styles.statSmallWidth}>
-                        <Text style={styles.statLabelSmall}>Total Sessions</Text>
-                        <Text style={styles.statValueSmall}>{total}</Text>
+                {/* ── 7-Day Consistency Grid Card ── */}
+                <TouchableOpacity
+                    style={styles.consistencyCard}
+                    activeOpacity={0.88}
+                    onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        setStreakAnalyticsVisible(true);
+                    }}
+                >
+                    <View style={styles.consistencyHeader}>
+                        <Text style={styles.consistencyTitle}>THIS WEEK</Text>
+                        <Ionicons name="stats-chart-outline" size={13} color={COLORS.textSub} />
                     </View>
-                    <TouchableOpacity
-                        style={styles.statSmallWidth}
-                        activeOpacity={0.8}
-                        onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); navigation.navigate("Rank"); }}
-                    >
-                        <Text style={styles.statLabelSmall}>Milestone</Text>
-                        <Text style={styles.statValueSmall} numberOfLines={1} adjustsFontSizeToFit>{
-                            total >= 100 ? 'Tier 6' :
-                                total >= 50 ? 'Tier 5' :
-                                    total >= 25 ? 'Tier 4' :
-                                        total >= 10 ? 'Tier 3' :
-                                            total >= 5 ? 'Tier 2' : 'Tier 1'
-                        }</Text>
-                    </TouchableOpacity>
-                </View>
+                    <View style={styles.consistencyGridContainer}>
+                        {DAY_LABELS.map((label, index) => {
+                            const dayNum = index + 1;
+                            const isCompleted = completedDays.includes(dayNum);
+                            const isDayFrozen = freezeDays.includes(dayNum);
+                            const isToday = todayDay === dayNum;
+                            const isFuture = dayNum > todayDay;
+                            const isSunday = dayNum === 7;
+                            const dayTarget = completedTargets[dayNum] || (WORKOUT_PLAN.find(d => d.day === dayNum)?.target);
+                            const muscleColor = getMuscleColor(dayTarget);
+
+                            return (
+                                <View key={label} style={styles.gridCellWrapper}>
+                                    <View
+                                        style={[
+                                            styles.gridCell,
+                                            isCompleted && {
+                                                backgroundColor: muscleColor,
+                                                borderColor: muscleColor,
+                                            },
+                                            isDayFrozen && styles.gridCellFrozen,
+                                            isToday && !isCompleted && styles.gridCellToday,
+                                            !isCompleted && !isDayFrozen && !isToday && dayNum < todayDay && (isSunday ? styles.gridCellRest : styles.gridCellMissed),
+                                            isFuture && { borderColor: COLORS.border }
+                                        ]}
+                                    >
+                                        {isCompleted ? (
+                                            <Ionicons name="checkmark" size={11} color="#FFFFFF" />
+                                        ) : isDayFrozen ? (
+                                            <Ionicons name="snow" size={10} color={COLORS.textSub} />
+                                        ) : isSunday && !isToday ? (
+                                            <Ionicons name="moon-outline" size={9} color={COLORS.textMuted} />
+                                        ) : (
+                                            isToday && !isCompleted && !isDayFrozen && <View style={styles.gridCellTodayDot} />
+                                        )}
+                                    </View>
+                                    <Text style={[styles.gridCellLabel, isToday && { color: COLORS.text, fontFamily: FAMILY.bold }]}>{label[0]}</Text>
+                                </View>
+                            );
+                        })}
+                    </View>
+                </TouchableOpacity>
 
                 {/* ── Moments (Highlights) ── */}
                 <View style={styles.sectionHeader}>
@@ -1757,167 +1761,97 @@ const styles = StyleSheet.create({
         lineHeight: 32,
     },
 
-    // HUD Level Card
-    hudCard: {
+    // Unified Horizontal Dashboard Card
+    dashboardCard: {
         marginHorizontal: SPACING.base,
-        marginTop: 12,
-        borderRadius: RADIUS.md,
+        marginTop: 14,
+        borderRadius: RADIUS.card,
         borderWidth: 1,
         borderColor: COLORS.border,
         backgroundColor: COLORS.bgCard,
         padding: 16,
+        flexDirection: "row",
+        alignItems: "center",
+    },
+    dashboardRingWrapper: {
+        width: 74,
+        height: 74,
+        alignItems: "center",
+        justifyContent: "center",
+        marginRight: 14,
+    },
+    dashboardRingTextContainer: {
+        ...StyleSheet.absoluteFillObject,
+        alignItems: "center",
         justifyContent: "center",
     },
-    hudHeader: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
-        paddingBottom: 10,
-        marginBottom: 12,
-    },
-    hudTitle: {
-        fontSize: 14,
-        fontFamily: FAMILY.header,
-        color: COLORS.text,
-        letterSpacing: -0.2,
-    },
-    hudStatusBadge: {
-        paddingHorizontal: 8,
-        paddingVertical: 3,
-        borderRadius: RADIUS.sm,
-        backgroundColor: "rgba(237, 234, 227, 0.06)",
-        borderWidth: 1,
-        borderColor: COLORS.border,
-    },
-    hudStatusText: {
-        fontSize: 10,
-        fontFamily: FAMILY.medium,
-        color: COLORS.textSub,
-    },
-    hudBody: {
-        flexDirection: "row",
-    },
-    hudFooterRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginTop: 4,
-    },
-    hudSubText: {
-        fontSize: 11,
+    dashboardRingPercent: {
+        fontSize: 16,
         fontFamily: FAMILY.mono,
         color: COLORS.text,
     },
-    hudRankText: {
-        fontSize: 11,
+    dashboardStatsRow: {
+        flex: 1,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+    },
+    dashboardStatCell: {
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    dashboardStatLabel: {
+        fontSize: 9,
+        fontFamily: FAMILY.regular,
+        color: COLORS.textSub,
+        textTransform: "uppercase",
+        letterSpacing: 1,
+        marginBottom: 3,
+    },
+    dashboardStatValue: {
+        fontSize: 18,
+        fontFamily: FAMILY.mono,
+        textAlign: "center",
+    },
+    dashboardStatUnit: {
+        fontSize: 10,
         fontFamily: FAMILY.regular,
         color: COLORS.textSub,
     },
-    
-    // Segmented HUD Bar Styles
-    segmentedBarRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        width: '100%',
-        height: 6,
-        marginBottom: 10,
-    },
-    segmentContainer: {
-        flex: 1,
-        height: '100%',
-        marginHorizontal: 1.5,
-        borderRadius: 2,
-        overflow: 'hidden',
-        position: 'relative',
-    },
-    segmentBg: {
-        position: 'absolute',
-        top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: "rgba(237, 234, 227, 0.08)",
-        borderRadius: 2,
-    },
-    segmentFill: {
-        height: '100%',
-        borderRadius: 2,
+    dashboardStatDivider: {
+        width: 1,
+        height: 28,
+        backgroundColor: COLORS.border,
     },
 
-    // Stats Grid
-    statsRow: {
-        flexDirection: "row", marginHorizontal: SPACING.base, marginBottom: 24,
-        height: 76, gap: 10, marginTop: 12,
-    },
-    statSmallWidth: {
-        flex: 1, paddingHorizontal: 16, paddingVertical: 12,
-        backgroundColor: COLORS.bgCard, borderRadius: RADIUS.md,
-        borderWidth: 1, borderColor: COLORS.border,
-        justifyContent: "center", alignItems: "flex-start",
-    },
-    statLabelSmall: { fontSize: 11, color: COLORS.textSub, fontFamily: FAMILY.medium, marginBottom: 4 },
-    statValueSmall: { fontSize: 20, fontFamily: FAMILY.monoBold, color: COLORS.text },
-
-    // Streak Intelligence Card Styles
-    streakIntelligenceCard: {
+    // 7-Day Consistency Card
+    consistencyCard: {
         marginHorizontal: SPACING.base,
-        marginTop: 12,
-        padding: 16,
-        borderRadius: RADIUS.md,
+        marginTop: 10,
+        borderRadius: RADIUS.card,
         borderWidth: 1,
         borderColor: COLORS.border,
         backgroundColor: COLORS.bgCard,
+        padding: 16,
+    },
+    consistencyHeader: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
+        marginBottom: 12,
     },
-    streakIntelligenceLeft: {
-        flex: 1.1,
-        alignItems: "flex-start",
-        justifyContent: "center",
-    },
-    streakIconContainer: {
-        width: 28,
-        height: 28,
-        borderRadius: RADIUS.pill,
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: "rgba(122, 46, 34, 0.15)",
-        marginBottom: 6,
-    },
-    streakTierName: {
-        fontFamily: FAMILY.semibold,
+    consistencyTitle: {
         fontSize: 11,
-        color: COLORS.text,
-        marginBottom: 2,
-    },
-    streakValue: {
-        fontFamily: FAMILY.monoBold,
-        fontSize: 24,
-        color: COLORS.text,
-        marginBottom: 6,
-    },
-    multiplierBadge: {
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        borderRadius: RADIUS.sm,
-        borderWidth: 1,
-        borderColor: COLORS.border,
-        backgroundColor: "rgba(237, 234, 227, 0.04)",
-    },
-    multiplierText: {
         fontFamily: FAMILY.mono,
-        fontSize: 9,
+        letterSpacing: 1.5,
         color: COLORS.textSub,
+        textTransform: "uppercase",
     },
-    streakIntelligenceRight: {
-        flex: 1.9,
-        alignItems: "flex-end",
-    },
-    gridTitle: {
-        fontFamily: FAMILY.medium,
-        fontSize: 11,
-        color: COLORS.textSub,
-        marginBottom: 10,
+    consistencyGridContainer: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
     },
     gridContainer: {
         flexDirection: "row",
