@@ -800,6 +800,14 @@ export default function HomeScreen({ navigation, route }) {
                                                 navigation.navigate("WorkoutDetail", { day: todayWorkout });
                                             }}
                                         >
+                                            <Svg
+                                                width={152}
+                                                height={42}
+                                                viewBox="0 0 152 42"
+                                                style={StyleSheet.absoluteFillObject}
+                                            >
+                                                <Polygon points="18,0 152,0 152,42 0,42" fill={COLORS.primary} />
+                                            </Svg>
                                             <Text style={styles.heroCtaText}>Start session ›</Text>
                                         </TouchableOpacity>
                                     </View>
@@ -1770,20 +1778,17 @@ const styles = StyleSheet.create({
         letterSpacing: 0.5,
     },
     heroCta: {
-        backgroundColor: COLORS.primary,
-        paddingHorizontal: 20,
-        paddingVertical: 11,
-        borderRadius: 4,
-        transform: [{ skewX: "-16deg" }],
+        width: 152,
+        height: 42,
         justifyContent: "center",
         alignItems: "center",
+        paddingLeft: 10,
     },
     heroCtaText: {
         fontSize: 13,
         fontFamily: FAMILY.bold,
         color: "#FFFFFF",
         letterSpacing: 0.3,
-        transform: [{ skewX: "16deg" }],
     },
 
     // Unified Horizontal Dashboard Card
