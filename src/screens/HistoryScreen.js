@@ -1093,16 +1093,7 @@ export default function HistoryScreen({ navigation }) {
                     <Ionicons name="chevron-back" size={22} color={COLORS.text} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>HISTORY</Text>
-                <TouchableOpacity
-                    style={styles.backBtn}
-                    onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        setExportModalVisible(true);
-                    }}
-                    activeOpacity={0.7}
-                >
-                    <Ionicons name="download-outline" size={18} color={COLORS.text} />
-                </TouchableOpacity>
+                <View style={styles.backBtnPlaceholder} />
             </View>
 
             {/* ── Segmented Tabs ── */}
@@ -1719,6 +1710,9 @@ const styles = StyleSheet.create({
     backBtn: {
         width: 36, height: 36, borderRadius: RADIUS.pill, backgroundColor: COLORS.bgCard,
         alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: COLORS.border,
+    },
+    backBtnPlaceholder: {
+        width: 36, height: 36,
     },
     headerTitle: { fontSize: 18, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 0.5 },
 
