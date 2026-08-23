@@ -645,11 +645,12 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
     const autoStartRef = useRef(true);   // mirrors settings.autoStartRest
     const settingsRef = useRef(settings);
     const completingRef = useRef(false);
+    const isQuittingRef = useRef(false);
 
     // Intercept back navigation (hardware back, swipe gesture) to prevent data loss
     useEffect(() => {
         const unsubscribe = navigation.addListener("beforeRemove", (e) => {
-            if (e.data.action.type === "REPLACE") return;
+            if (isQuittingRef.current || completingRef.current || e.data.action.type === "REPLACE") return;
 
             e.preventDefault();
 
@@ -660,6 +661,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                 cancelText: "KEEP GOING",
                 isDestructive: true,
                 onConfirm: async () => {
+                    isQuittingRef.current = true;
                     clearInterval(intervalRef.current);
                     clearInterval(elapsedRef.current);
                     await clearActiveWorkoutSession();
@@ -1128,11 +1130,16 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
             cancelText: "KEEP GOING",
             isDestructive: true,
             onConfirm: async () => {
+                isQuittingRef.current = true;
                 clearInterval(intervalRef.current);
                 clearInterval(elapsedRef.current);
                 await clearActiveWorkoutSession();
                 if (restNotifIdRef.current) await cancelNotification(restNotifIdRef.current);
-                navigation.goBack();
+                if (navigation.canGoBack()) {
+                    navigation.goBack();
+                } else {
+                    navigation.navigate("Main");
+                }
             }
         });
     };

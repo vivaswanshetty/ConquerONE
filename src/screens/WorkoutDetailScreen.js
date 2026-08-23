@@ -107,7 +107,7 @@ export default function WorkoutDetailScreen({ navigation, route }) {
                 {/* ── CTA ── */}
                 <TouchableOpacity
                     style={styles.cta}
-                    onPress={() => navigation.navigate("ActiveWorkout", { day })}
+                    onPress={() => navigation.replace("ActiveWorkout", { day })}
                     activeOpacity={0.85}
                 >
                     <Text style={styles.ctaText}>Start Workout</Text>

@@ -46,7 +46,7 @@ export default function CustomWorkoutScreen({ navigation }) {
             gradient: [COLORS.accent, "#A0A0A0"],
             emoji: "⚡",
         };
-        navigation.navigate("ActiveWorkout", { day: customDay });
+        navigation.replace("ActiveWorkout", { day: customDay });
     };
 
     return (
