@@ -774,23 +774,10 @@ export default function HomeScreen({ navigation, route }) {
                                     end={{ x: 1, y: 1 }}
                                     style={StyleSheet.absoluteFillObject}
                                 />
-                                {/* 3x3 Dot Matrix with Red Accent Dots */}
-                                <View style={styles.menuDotMatrix} pointerEvents="none">
-                                    <View style={styles.menuMatrixRow}>
-                                        <View style={[styles.menuMatrixDot, { backgroundColor: "#FFFFFF" }]} />
-                                        <View style={[styles.menuMatrixDot, { backgroundColor: "#FFFFFF" }]} />
-                                        <View style={[styles.menuMatrixDot, { backgroundColor: "#E31E24", shadowColor: "#E31E24", shadowOpacity: 0.8, shadowRadius: 3, elevation: 2 }]} />
-                                    </View>
-                                    <View style={styles.menuMatrixRow}>
-                                        <View style={[styles.menuMatrixDot, { backgroundColor: "#FFFFFF" }]} />
-                                        <View style={[styles.menuMatrixDot, { backgroundColor: "#E31E24", shadowColor: "#E31E24", shadowOpacity: 0.8, shadowRadius: 3, elevation: 2 }]} />
-                                        <View style={[styles.menuMatrixDot, { backgroundColor: "#FFFFFF" }]} />
-                                    </View>
-                                    <View style={styles.menuMatrixRow}>
-                                        <View style={[styles.menuMatrixDot, { backgroundColor: "#E31E24", shadowColor: "#E31E24", shadowOpacity: 0.8, shadowRadius: 3, elevation: 2 }]} />
-                                        <View style={[styles.menuMatrixDot, { backgroundColor: "#FFFFFF" }]} />
-                                        <View style={[styles.menuMatrixDot, { backgroundColor: "#FFFFFF" }]} />
-                                    </View>
+                                {/* Minimalist Offset Dual-Line Cyber Menu Bars */}
+                                <View style={styles.menuBarIconWrap} pointerEvents="none">
+                                    <View style={styles.menuBarTop} />
+                                    <View style={styles.menuBarBottom} />
                                 </View>
                             </TouchableOpacity>
 
@@ -1486,22 +1473,9 @@ export default function HomeScreen({ navigation, route }) {
                         <View style={styles.quickMenuHeader}>
                             <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                                 <View style={styles.quickMenuHeaderIconBox}>
-                                    <View style={{ width: 14, height: 14, justifyContent: "space-between" }}>
-                                        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                                            <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: "#FFFFFF" }} />
-                                            <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: "#FFFFFF" }} />
-                                            <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: "#E31E24" }} />
-                                        </View>
-                                        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                                            <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: "#FFFFFF" }} />
-                                            <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: "#E31E24" }} />
-                                            <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: "#FFFFFF" }} />
-                                        </View>
-                                        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                                            <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: "#E31E24" }} />
-                                            <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: "#FFFFFF" }} />
-                                            <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: "#FFFFFF" }} />
-                                        </View>
+                                    <View style={{ width: 14, height: 10, justifyContent: "space-between", alignItems: "flex-end" }}>
+                                        <View style={{ width: 14, height: 2, borderRadius: 1, backgroundColor: "#FFFFFF" }} />
+                                        <View style={{ width: 9, height: 2, borderRadius: 1, backgroundColor: COLORS.primary }} />
                                     </View>
                                 </View>
                                 <View>
@@ -2389,22 +2363,23 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         overflow: "hidden",
     },
-    menuDotMatrix: {
-        width: 20,
-        height: 20,
+    menuBarIconWrap: {
+        width: 18,
+        height: 12,
         justifyContent: "space-between",
-        alignItems: "center",
+        alignItems: "flex-end",
     },
-    menuMatrixRow: {
-        flexDirection: "row",
-        width: "100%",
-        justifyContent: "space-between",
-        alignItems: "center",
+    menuBarTop: {
+        width: 18,
+        height: 2.2,
+        borderRadius: 1.1,
+        backgroundColor: "#FFFFFF",
     },
-    menuMatrixDot: {
-        width: 4.2,
-        height: 4.2,
-        borderRadius: 2.1,
+    menuBarBottom: {
+        width: 11,
+        height: 2.2,
+        borderRadius: 1.1,
+        backgroundColor: COLORS.primary,
     },
 
     // Quick Menu Sheet Modal
