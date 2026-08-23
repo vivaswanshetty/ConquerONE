@@ -2167,7 +2167,7 @@ const styles = StyleSheet.create({
     },
     shareCardFooterLeft: {
         flexDirection: "column",
-        alignItems: "flex-start",
+        alignItems: "center",
         gap: 3,
     },
     shareCardBrandLockup: {
@@ -2178,7 +2178,8 @@ const styles = StyleSheet.create({
         fontSize: 7,
         fontFamily: FAMILY.mono,
         color: COLORS.textMuted,
-        letterSpacing: 0.6,
+        letterSpacing: 0.8,
+        textAlign: "center",
     },
     shareCardAccentPill: {
         paddingHorizontal: 10,
