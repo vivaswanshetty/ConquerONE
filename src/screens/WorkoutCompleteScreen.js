@@ -7,12 +7,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
+import ViewShot from "react-native-view-shot";
+import * as Sharing from "expo-sharing";
+import { useNotification } from "../context/NotificationContext";
 import { COLORS, FONTS, SPACING, RADIUS, FAMILY } from "../utils/theme";
 import { formatDuration } from "../utils/storage";
 import { sendMilestoneNotif } from "../utils/notifications";
-
-import { getSettings } from "../utils/settings";
-import { Platform } from "react-native";
 import { checkHealthConnectStatus } from "../utils/health";
 import { insertRecords } from 'react-native-health-connect';
 
@@ -22,6 +22,10 @@ const { width, height } = Dimensions.get("window");
 export default function WorkoutCompleteScreen({ navigation, route }) {
     const { day, durationSec, streak, total, newPRs = [], caloriesBurned = 0, showCalories = true, xpGained = 0, totalXP = 0 } = route.params;
     const insets = useSafeAreaInsets();
+    const shotRef = useRef(null);
+    const { showDialog } = useNotification();
+    const [sharing, setSharing] = useState(false);
+
     const scaleAnim = useRef(new Animated.Value(0.9)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const prAnim = useRef(new Animated.Value(0)).current;
@@ -104,7 +108,41 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
         }
     };
 
+    const handleShare = async () => {
+        try {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => { });
+            const isAvailable = await Sharing.isAvailableAsync();
+            if (!isAvailable) {
+                showDialog({
+                    title: "SHARING UNAVAILABLE",
+                    message: "Sharing is not supported on this device.",
+                    confirmText: "CLOSE",
+                    singleButton: true,
+                });
+                return;
+            }
 
+            if (shotRef.current && shotRef.current.capture) {
+                setSharing(true);
+                const uri = await shotRef.current.capture();
+                setSharing(false);
+                await Sharing.shareAsync(uri, {
+                    mimeType: "image/png",
+                    dialogTitle: `CONQUER ONE - ${day?.target || "Workout Complete"}`,
+                    UTI: "public.png",
+                });
+            }
+        } catch (e) {
+            setSharing(false);
+            console.warn("Share session failed:", e);
+            showDialog({
+                title: "SHARE ERROR",
+                message: "Unable to generate workout card for sharing.",
+                confirmText: "CLOSE",
+                singleButton: true,
+            });
+        }
+    };
 
     const checkMilestones = () => {
         if (total === 1) {
@@ -243,7 +281,7 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
                     })()}
 
                     <Text style={styles.completedLabel}>SESSION COMPLETE</Text>
-                    <Text style={styles.completedTitle} numberOfLines={2} adjustsFontSizeToFit>{day.target}</Text>
+                    <Text style={styles.completedTitle} numberOfLines={2} adjustsFontSizeToFit>{day?.target || "Workout"}</Text>
 
                     {/* Symmetric Stats Row */}
                     <View style={styles.statsRow}>
@@ -312,9 +350,26 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
                         </Animated.View>
                     )}
 
-                    <TouchableOpacity style={styles.homeBtn} onPress={() => navigation.navigate("Main")} activeOpacity={0.85}>
-                        <Text style={styles.homeBtnText}>Done</Text>
-                    </TouchableOpacity>
+                    {/* Action Buttons */}
+                    <View style={styles.actionButtons}>
+                        <TouchableOpacity
+                            style={styles.shareBtn}
+                            onPress={handleShare}
+                            activeOpacity={0.85}
+                            disabled={sharing}
+                        >
+                            <Ionicons name="share-outline" size={18} color={COLORS.text} />
+                            <Text style={styles.shareBtnText}>{sharing ? "GENERATING CARD..." : "SHARE SESSION"}</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.homeBtn}
+                            onPress={() => navigation.navigate("Main")}
+                            activeOpacity={0.85}
+                        >
+                            <Text style={styles.homeBtnText}>DONE</Text>
+                        </TouchableOpacity>
+                    </View>
 
                     <View style={styles.linkRow}>
                         <TouchableOpacity style={styles.histLink} onPress={() => navigation.navigate("History")} activeOpacity={0.7}>
@@ -327,6 +382,96 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
                     </View>
                 </Animated.View>
             </ScrollView>
+
+            {/* ── Purpose-Built Branded Social Share Card (Off-Screen Captured ViewShot) ── */}
+            <View style={styles.offscreenWrap} pointerEvents="none">
+                <ViewShot ref={shotRef} options={{ format: "png", quality: 1 }}>
+                    <View style={styles.shareCard} collapsable={false}>
+                        {/* Background Gradient & Ambient Sheen */}
+                        <LinearGradient
+                            colors={["#141418", "#0A0A0C", "#040406"]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 0.3, y: 1 }}
+                            style={StyleSheet.absoluteFill}
+                        />
+                        <LinearGradient
+                            colors={["rgba(255, 255, 255, 0.12)", "rgba(255, 255, 255, 0.02)", "transparent"]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 0, y: 1 }}
+                            style={{ position: "absolute", top: 0, left: 0, right: 0, height: 100 }}
+                        />
+
+                        {/* Top Card Header */}
+                        <View style={styles.shareCardHeader}>
+                            <View style={styles.shareCardBadge}>
+                                <View style={styles.shareBadgeDot} />
+                                <Text style={styles.shareCardBadgeText}>SESSION COMPLETE</Text>
+                            </View>
+                            <Text style={styles.shareCardDate}>
+                                {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }).toUpperCase()}
+                            </Text>
+                        </View>
+
+                        {/* Workout Name */}
+                        <View style={styles.shareCardTitleWrap}>
+                            <Text style={styles.shareCardWorkoutLabel}>TODAY'S TARGET</Text>
+                            <Text style={styles.shareCardWorkoutName} numberOfLines={2}>
+                                {day?.target || "Workout"}
+                            </Text>
+                        </View>
+
+                        {/* Stats Grid */}
+                        <View style={styles.shareCardStatsGrid}>
+                            <View style={styles.shareCardStatBox}>
+                                <Text style={styles.shareCardStatLabel}>DURATION</Text>
+                                <Text style={styles.shareCardStatValue}>{formatDuration(durationSec)}</Text>
+                            </View>
+                            <View style={[styles.shareCardStatBox, styles.shareCardStatDivider]}>
+                                <Text style={styles.shareCardStatLabel}>STREAK</Text>
+                                <Text style={[styles.shareCardStatValue, { color: COLORS.primary }]}>
+                                    {streak} <Text style={styles.shareCardStatUnit}>DAYS</Text>
+                                </Text>
+                            </View>
+                            <View style={styles.shareCardStatBox}>
+                                <Text style={styles.shareCardStatLabel}>{showCalories ? "CALORIES" : "SESSIONS"}</Text>
+                                <Text style={styles.shareCardStatValue}>
+                                    {showCalories ? `${caloriesBurned}` : total}
+                                    <Text style={styles.shareCardStatUnit}>{showCalories ? " KCAL" : " TOTAL"}</Text>
+                                </Text>
+                            </View>
+                        </View>
+
+                        {/* Personal Records Banner (if any) */}
+                        {newPRs.length > 0 && (
+                            <View style={styles.shareCardPRWrap}>
+                                <View style={styles.shareCardPRHeader}>
+                                    <Ionicons name="trophy-outline" size={13} color={COLORS.textSub} />
+                                    <Text style={styles.shareCardPRTitle}>NEW PERSONAL RECORD</Text>
+                                </View>
+                                {newPRs.slice(0, 2).map((pr, i) => (
+                                    <View key={i} style={styles.shareCardPRRow}>
+                                        <Text style={styles.shareCardPRName} numberOfLines={1}>{pr.name}</Text>
+                                        <Text style={styles.shareCardPRVal}>
+                                            {pr.weightKg > 0 ? `${pr.weightKg}kg` : ""}
+                                            {pr.weightKg > 0 && pr.reps > 0 ? " · " : ""}
+                                            {pr.reps > 0 ? `${pr.reps} reps` : ""}
+                                        </Text>
+                                    </View>
+                                ))}
+                            </View>
+                        )}
+
+                        {/* Card Footer Brandmark */}
+                        <View style={styles.shareCardFooter}>
+                            <View style={styles.shareCardFooterLeft}>
+                                <View style={styles.shareCardAccentLine} />
+                                <Text style={styles.shareCardTagline}>ELITE TRAINING PROTOCOL</Text>
+                            </View>
+                            <Text style={styles.shareCardBrand}>CONQUERONE</Text>
+                        </View>
+                    </View>
+                </ViewShot>
+            </View>
         </View>
     );
 }
@@ -403,11 +548,44 @@ const styles = StyleSheet.create({
     prValBox: { backgroundColor: COLORS.bg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.border },
     prVal: { fontSize: 11, fontFamily: FAMILY.monoBold, color: COLORS.textSub },
 
-    homeBtn: {
-        width: "100%", backgroundColor: COLORS.primary, height: 52,
-        borderRadius: RADIUS.md, alignItems: "center", justifyContent: "center", marginTop: 24, marginBottom: 20,
+    actionButtons: {
+        width: "100%",
+        gap: 12,
+        marginTop: 20,
+        marginBottom: 20,
     },
-    homeBtnText: { fontSize: 13, fontFamily: FAMILY.bold, color: "#FFFFFF", letterSpacing: 1 },
+    shareBtn: {
+        width: "100%",
+        height: 52,
+        borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(255, 255, 255, 0.05)",
+        borderWidth: 1.2,
+        borderColor: "rgba(255, 255, 255, 0.14)",
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+    },
+    shareBtnText: {
+        fontSize: 12,
+        fontFamily: FAMILY.bold,
+        color: COLORS.text,
+        letterSpacing: 1.2,
+    },
+    homeBtn: {
+        width: "100%",
+        backgroundColor: COLORS.primary,
+        height: 52,
+        borderRadius: RADIUS.pill,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    homeBtnText: {
+        fontSize: 12.5,
+        fontFamily: FAMILY.bold,
+        color: "#FFFFFF",
+        letterSpacing: 1.2,
+    },
 
     linkRow: { flexDirection: "row", alignItems: "center", gap: 32 },
     histLink: { paddingVertical: 8 },
@@ -445,6 +623,183 @@ const styles = StyleSheet.create({
     xpAwardText: {
         fontSize: 11,
         fontFamily: FAMILY.regular,
+    },
+
+    // Purpose-Built Social Share Card
+    offscreenWrap: {
+        position: "absolute",
+        left: -3000,
+        top: 0,
+        opacity: 0,
+    },
+    shareCard: {
+        width: 360,
+        minHeight: 460,
+        backgroundColor: COLORS.bg,
+        borderRadius: 24,
+        borderWidth: 1.2,
+        borderColor: "rgba(255, 255, 255, 0.16)",
+        padding: 24,
+        justifyContent: "space-between",
+        overflow: "hidden",
+    },
+    shareCardHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom: 20,
+    },
+    shareCardBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(227, 30, 36, 0.12)",
+        borderWidth: 1,
+        borderColor: "rgba(227, 30, 36, 0.35)",
+    },
+    shareBadgeDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: COLORS.primary,
+    },
+    shareCardBadgeText: {
+        fontSize: 9,
+        fontFamily: FAMILY.bold,
+        color: COLORS.primary,
+        letterSpacing: 1,
+    },
+    shareCardDate: {
+        fontSize: 9.5,
+        fontFamily: FAMILY.mono,
+        color: COLORS.textMuted,
+        letterSpacing: 0.5,
+    },
+    shareCardTitleWrap: {
+        marginBottom: 22,
+    },
+    shareCardWorkoutLabel: {
+        fontSize: 9,
+        fontFamily: FAMILY.bold,
+        color: COLORS.textMuted,
+        letterSpacing: 1.5,
+        marginBottom: 4,
+    },
+    shareCardWorkoutName: {
+        fontSize: 24,
+        fontFamily: FAMILY.bold,
+        color: COLORS.text,
+        letterSpacing: -0.5,
+        lineHeight: 28,
+    },
+    shareCardStatsGrid: {
+        flexDirection: "row",
+        backgroundColor: "rgba(255, 255, 255, 0.03)",
+        borderRadius: 18,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+        paddingVertical: 16,
+        marginBottom: 16,
+    },
+    shareCardStatBox: {
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        paddingHorizontal: 4,
+    },
+    shareCardStatDivider: {
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+    },
+    shareCardStatLabel: {
+        fontSize: 8,
+        fontFamily: FAMILY.bold,
+        color: COLORS.textMuted,
+        letterSpacing: 1,
+        marginBottom: 4,
+    },
+    shareCardStatValue: {
+        fontSize: 18,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.text,
+        letterSpacing: -0.2,
+    },
+    shareCardStatUnit: {
+        fontSize: 10,
+        fontFamily: FAMILY.mono,
+        color: COLORS.textMuted,
+    },
+    shareCardPRWrap: {
+        backgroundColor: "rgba(255, 255, 255, 0.03)",
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+        padding: 12,
+        marginBottom: 16,
+    },
+    shareCardPRHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        marginBottom: 8,
+    },
+    shareCardPRTitle: {
+        fontSize: 8.5,
+        fontFamily: FAMILY.bold,
+        color: COLORS.textSub,
+        letterSpacing: 1,
+    },
+    shareCardPRRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingVertical: 3,
+    },
+    shareCardPRName: {
+        fontSize: 11,
+        fontFamily: FAMILY.regular,
+        color: COLORS.text,
+        flex: 1,
+    },
+    shareCardPRVal: {
+        fontSize: 10.5,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textSub,
+    },
+    shareCardFooter: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingTop: 14,
+        borderTopWidth: 1,
+        borderTopColor: "rgba(255, 255, 255, 0.06)",
+    },
+    shareCardFooterLeft: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+    },
+    shareCardAccentLine: {
+        width: 14,
+        height: 2,
+        borderRadius: 1,
+        backgroundColor: COLORS.primary,
+    },
+    shareCardTagline: {
+        fontSize: 8.5,
+        fontFamily: FAMILY.medium,
+        color: COLORS.textMuted,
+        letterSpacing: 1,
+    },
+    shareCardBrand: {
+        fontSize: 13,
+        fontFamily: FAMILY.accent2,
+        color: COLORS.text,
+        letterSpacing: 2,
     },
 });
 
