@@ -110,6 +110,16 @@ function MessageBubble({ msg, onSpeak }) {
                 <MarkDownText content={msg.content} style={[styles.msgText, isUser ? styles.userText : styles.aiText]} />
                 <View style={styles.bubbleFooter}>
                     <Text style={[styles.timeText, isUser && { color: "rgba(255,255,255,0.5)" }]}>{msg.time}</Text>
+                    {!isUser && onSpeak && (
+                        <TouchableOpacity
+                            onPress={() => onSpeak(msg.content)}
+                            style={styles.speakBtn}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            activeOpacity={0.6}
+                        >
+                            <Ionicons name="volume-medium-outline" size={13} color="rgba(255,255,255,0.4)" />
+                        </TouchableOpacity>
+                    )}
                 </View>
             </View>
         </Animated.View>
@@ -627,10 +637,9 @@ export default function AICoachScreen({ navigation }) {
     }, [selectedVoice, voicePitch, voiceRate]);
 
     const handleSpeak = useCallback((text) => {
-        if (isMuted) return;
         Speech.stop();
         Speech.speak(text, getSpeechOpts());
-    }, [isMuted, getSpeechOpts]);
+    }, [getSpeechOpts]);
 
     const toggleMute = useCallback(() => {
         setIsMuted(prev => {
@@ -738,22 +747,26 @@ export default function AICoachScreen({ navigation }) {
             {/* ── Header ── */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBtn} activeOpacity={0.7}>
-                    <Ionicons name="chevron-back" size={22} color={COLORS.text} />
+                    <Ionicons name="chevron-back" size={20} color={COLORS.text} />
                 </TouchableOpacity>
                 <View style={styles.headerCenter}>
                     <Text style={styles.headerTitle}>AI Coach</Text>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 2 }}>
+                        <View style={styles.statusDot} />
+                        <Text style={styles.headerSub}>ONLINE · INTELLIGENCE</Text>
+                    </View>
                 </View>
                 <View style={styles.headerActions}>
                     {/* Voice Selection */}
                     <TouchableOpacity style={styles.headerBtn} onPress={() => setShowVoiceSettings(true)} activeOpacity={0.7}>
-                        <Ionicons name="settings-outline" size={19} color={COLORS.text} />
+                        <Ionicons name="mic-outline" size={18} color={COLORS.text} />
                     </TouchableOpacity>
                     {/* History */}
                     <TouchableOpacity style={styles.headerBtn} onPress={() => { loadSessions(); setShowHistory(true); }} activeOpacity={0.7}>
-                        <Ionicons name="time-outline" size={19} color={COLORS.text} />
+                        <Ionicons name="time-outline" size={18} color={COLORS.text} />
                     </TouchableOpacity>
                     {/* New Chat */}
-                    <TouchableOpacity style={[styles.headerBtn, { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.08)' }]} onPress={startNewChat} activeOpacity={0.7}>
+                    <TouchableOpacity style={[styles.headerBtn, { backgroundColor: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.12)' }]} onPress={startNewChat} activeOpacity={0.7}>
                         <Ionicons name="add" size={20} color={COLORS.text} />
                     </TouchableOpacity>
                 </View>
@@ -790,11 +803,20 @@ export default function AICoachScreen({ navigation }) {
                         showsHorizontalScrollIndicator={false}
                         keyboardShouldPersistTaps="handled"
                         nestedScrollEnabled
-                        style={{ flexGrow: 0, maxHeight: 52 }}
+                        style={styles.chipsScroll}
                         contentContainerStyle={styles.chipsRow}
                     >
                         {ACTION_CHIPS.map((chip, i) => (
-                            <TouchableOpacity key={i} style={styles.chip} onPress={() => handleSend(chip)} activeOpacity={0.7}>
+                            <TouchableOpacity
+                                key={i}
+                                style={styles.chip}
+                                onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    handleSend(chip);
+                                }}
+                                activeOpacity={0.7}
+                            >
+                                <Ionicons name="sparkles-sharp" size={10} color={COLORS.primary} style={{ marginRight: 6 }} />
                                 <Text style={styles.chipText}>{chip.toUpperCase()}</Text>
                             </TouchableOpacity>
                         ))}
@@ -802,9 +824,9 @@ export default function AICoachScreen({ navigation }) {
                 )}
 
                 {/* ── Input Bar ── */}
-                <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-                    {/* Mute toggle button */}
+                <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
                     <View style={styles.inputRow}>
+                        {/* Mute toggle button */}
                         <TouchableOpacity
                             style={[styles.stopBtn, isMuted && styles.stopBtnActive]}
                             onPress={toggleMute}
@@ -813,15 +835,17 @@ export default function AICoachScreen({ navigation }) {
                             <Ionicons
                                 name={isMuted ? "volume-mute" : "volume-high-outline"}
                                 size={18}
-                                color={isMuted ? COLORS.accent : COLORS.textMuted}
+                                color={isMuted ? COLORS.primary : COLORS.textMuted}
                             />
                         </TouchableOpacity>
+
+                        {/* Input Capsule */}
                         <View style={styles.inputWrapper}>
                             <TextInput
                                 ref={inputRef}
                                 style={styles.input}
                                 placeholder="Ask your coach..."
-                                placeholderTextColor="rgba(255,255,255,0.22)"
+                                placeholderTextColor="rgba(255,255,255,0.28)"
                                 value={inputText}
                                 onChangeText={setInputText}
                                 multiline
@@ -829,6 +853,7 @@ export default function AICoachScreen({ navigation }) {
                                 onSubmitEditing={() => handleSend()}
                                 returnKeyType="send"
                                 blurOnSubmit={false}
+                                textAlignVertical="center"
                             />
                             <TouchableOpacity
                                 style={[styles.sendBtn, (!inputText.trim() || loading) && styles.sendBtnOff]}
@@ -836,10 +861,15 @@ export default function AICoachScreen({ navigation }) {
                                 activeOpacity={0.8}
                                 disabled={loading}
                             >
-                                {loading
-                                    ? <ActivityIndicator size="small" color="#fff" />
-                                    : <Ionicons name="send" size={17} color={inputText.trim() ? "#fff" : "rgba(255,255,255,0.25)"} />
-                                }
+                                {loading ? (
+                                    <ActivityIndicator size="small" color="#fff" />
+                                ) : (
+                                    <Ionicons
+                                        name="send"
+                                        size={15}
+                                        color={inputText.trim() ? "#fff" : "rgba(255,255,255,0.25)"}
+                                    />
+                                )}
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -879,98 +909,141 @@ const styles = StyleSheet.create({
 
     // Header
     header: {
-        flexDirection: "row", alignItems: "center",
-        paddingHorizontal: 16, paddingTop: 10, paddingBottom: 12,
-        backgroundColor: "rgba(0,0,0,0.9)",
-        borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.05)",
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 16,
+        paddingTop: 8,
+        paddingBottom: 12,
+        backgroundColor: "rgba(0,0,0,0.95)",
+        borderBottomWidth: 1,
+        borderBottomColor: "rgba(255,255,255,0.06)",
         gap: 12,
     },
     headerCenter: { flex: 1 },
-    headerSub: { fontSize: 8.5, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2, marginBottom: 2 },
+    headerSub: { fontSize: 8.5, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1.5 },
     headerTitle: { fontSize: 18, fontFamily: FAMILY.bold, color: "#fff", letterSpacing: 0.5 },
     headerActions: { flexDirection: 'row', gap: 8 },
     headerBtn: {
-        width: 40, height: 40, borderRadius: RADIUS.md,
-        backgroundColor: "rgba(255,255,255,0.05)",
-        alignItems: "center", justifyContent: "center",
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
+        width: 38,
+        height: 38,
+        borderRadius: RADIUS.md,
+        backgroundColor: "rgba(255,255,255,0.04)",
+        alignItems: "center",
+        justifyContent: "center",
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.07)",
     },
 
-    // Status row
-    statusRow: {
-        flexDirection: 'row', alignItems: 'center', gap: 8,
-        paddingHorizontal: 20, paddingVertical: 8,
-        borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.04)',
-    },
-    statusDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#22c55e' },
-    statusText: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1 },
-    msgCount: { fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.textMuted, letterSpacing: 1 },
+    // Status dot
+    statusDot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: '#30D158' },
 
     // Chat
     chatBody: { flex: 1 },
-    chatContent: { padding: 16, paddingBottom: 20, gap: 4 },
+    chatContent: { padding: 16, paddingBottom: 16, gap: 4 },
 
     msgRow: { flexDirection: "row", marginBottom: 12 },
     userRow: { alignSelf: "flex-end", justifyContent: "flex-end", maxWidth: "82%" },
     aiRow: { alignSelf: "flex-start", maxWidth: "86%" },
 
-    bubble: { borderRadius: RADIUS.md, padding: 14 },
+    bubble: { borderRadius: RADIUS.lg, paddingHorizontal: 16, paddingVertical: 12 },
     aiBubble: {
         backgroundColor: COLORS.bgCard,
-        borderWidth: 1, borderColor: COLORS.border,
-        borderTopLeftRadius: RADIUS.sm,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        borderTopLeftRadius: RADIUS.xs,
     },
     userBubble: {
         backgroundColor: COLORS.primary,
-        borderTopRightRadius: RADIUS.sm,
+        borderTopRightRadius: RADIUS.xs,
     },
 
-    msgText: { fontSize: 14, lineHeight: 22, fontFamily: FAMILY.medium },
-    aiText: { color: "#e8e8e8" },
+    msgText: { fontSize: 14, lineHeight: 22, fontFamily: FAMILY.regular, letterSpacing: 0.2 },
+    aiText: { color: "#EDEDED" },
     userText: { color: "#fff" },
 
-    bubbleFooter: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", marginTop: 8, gap: 8 },
-    timeText: { fontSize: 9, color: "rgba(255,255,255,0.28)", fontFamily: FAMILY.mono, letterSpacing: 0.5 },
-    speakBtn: { opacity: 0.6 },
+    bubbleFooter: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", marginTop: 6, gap: 8 },
+    timeText: { fontSize: 9.5, color: "rgba(255,255,255,0.32)", fontFamily: FAMILY.mono, letterSpacing: 0.5 },
+    speakBtn: { padding: 2 },
 
     // Chips
-    chipsRow: { paddingHorizontal: 14, paddingVertical: 10, gap: 8, alignItems: 'center' },
+    chipsScroll: { flexGrow: 0 },
+    chipsRow: { paddingHorizontal: 16, paddingVertical: 10, gap: 8, alignItems: 'center' },
     chip: {
-        paddingHorizontal: 14, paddingVertical: 9, borderRadius: RADIUS.sm,
-        backgroundColor: "rgba(255,255,255,0.05)",
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.1)",
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(255,255,255,0.04)",
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.08)",
     },
-    chipText: { fontSize: 10, color: "#8E8E93", fontFamily: FAMILY.medium, letterSpacing: 0.6 },
+    chipText: {
+        fontSize: 10.5,
+        color: COLORS.textSub,
+        fontFamily: FAMILY.bold,
+        letterSpacing: 0.8,
+        includeFontPadding: false,
+    },
 
     // Input
-    inputContainer: { paddingHorizontal: 14, paddingTop: 8 },
-    inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
+    inputContainer: { paddingHorizontal: 14, paddingTop: 6 },
+    inputRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     stopBtn: {
-        width: 40, height: 44, borderRadius: RADIUS.md,
+        width: 46,
+        height: 46,
+        borderRadius: RADIUS.lg,
         backgroundColor: 'rgba(255,255,255,0.04)',
-        alignItems: 'center', justifyContent: 'center',
-        borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)',
-        marginBottom: 2,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.07)',
     },
     stopBtnActive: {
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        borderColor: 'rgba(255,255,255,0.2)',
+        backgroundColor: 'rgba(227,30,36,0.12)',
+        borderColor: 'rgba(227,30,36,0.3)',
     },
     inputWrapper: {
-        flex: 1, flexDirection: "row", alignItems: "flex-end", gap: 8,
-        backgroundColor: "rgba(255,255,255,0.05)", borderRadius: RADIUS.lg,
-        paddingLeft: 18, paddingRight: 8, paddingVertical: 8,
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.1)",
+        flex: 1,
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "rgba(255,255,255,0.04)",
+        borderRadius: RADIUS.pill,
+        paddingLeft: 16,
+        paddingRight: 5,
+        minHeight: 46,
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.08)",
     },
     input: {
-        flex: 1, color: "#fff", fontFamily: FAMILY.medium, fontSize: 15,
-        maxHeight: 120, minHeight: 34, paddingVertical: 5, lineHeight: 22,
+        flex: 1,
+        color: "#fff",
+        fontFamily: FAMILY.regular,
+        fontSize: 14,
+        maxHeight: 100,
+        minHeight: 38,
+        paddingTop: 0,
+        paddingBottom: 0,
+        paddingVertical: 0,
+        textAlignVertical: "center",
+        letterSpacing: 0.2,
     },
     sendBtn: {
-        width: 42, height: 42, borderRadius: 21, backgroundColor: COLORS.primary,
-        alignItems: "center", justifyContent: "center",
-        shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.4, shadowRadius: 8, elevation: 4,
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: COLORS.primary,
+        alignItems: "center",
+        justifyContent: "center",
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.4,
+        shadowRadius: 6,
+        elevation: 4,
     },
-    sendBtnOff: { backgroundColor: "rgba(255,255,255,0.05)", shadowOpacity: 0, elevation: 0 },
+    sendBtnOff: {
+        backgroundColor: "rgba(255,255,255,0.04)",
+        shadowOpacity: 0,
+        elevation: 0,
+    },
 });
