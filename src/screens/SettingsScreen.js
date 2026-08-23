@@ -8,6 +8,7 @@ import * as Linking from "expo-linking";
 import * as Haptics from "expo-haptics";
 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import * as Updates from "expo-updates";
 import { COLORS, FONTS, SPACING, RADIUS, FAMILY, APP_VERSION } from "../utils/theme";
 import { getSettings, saveSettings, DEFAULT_SETTINGS } from "../utils/settings";

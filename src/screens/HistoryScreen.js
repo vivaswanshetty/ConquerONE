@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo, useRef } from "react";
 import {
-    View, Text, ScrollView, StyleSheet, TouchableOpacity, StatusBar, Dimensions, Share, Animated, Modal,
+    View, Text, ScrollView, StyleSheet, TouchableOpacity, StatusBar, Dimensions, Share, Animated, Modal, Image,
 } from "react-native";
 import { useNotification } from "../context/NotificationContext";
 import Svg, { Polyline, Circle, Path, Defs, LinearGradient as SvgGradient, Stop } from "react-native-svg";
