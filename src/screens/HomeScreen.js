@@ -1033,8 +1033,15 @@ export default function HomeScreen({ navigation, route }) {
                                         pointerEvents="none"
                                     />
 
-                                    {/* Left: SVG XP Progress Ring */}
-                                    <View style={styles.dashboardRingWrapper}>
+                                    {/* Left: SVG Rank Progress Ring */}
+                                    <TouchableOpacity
+                                        style={styles.dashboardRingWrapper}
+                                        activeOpacity={0.8}
+                                        onPress={() => {
+                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                            navigation.navigate("Rank");
+                                        }}
+                                    >
                                         <Svg width={86} height={86} style={{ transform: [{ rotate: "-90deg" }] }}>
                                             <Circle
                                                 cx={43}
@@ -1048,7 +1055,7 @@ export default function HomeScreen({ navigation, route }) {
                                                 cx={43}
                                                 cy={43}
                                                 r={radius}
-                                                stroke={total === 0 ? "rgba(255,255,255,0.06)" : COLORS.primary}
+                                                stroke={total === 0 ? "rgba(255,255,255,0.06)" : (currentRank.color || COLORS.primary)}
                                                 strokeWidth={strokeWidth}
                                                 fill="none"
                                                 strokeDasharray={circumference}
@@ -1062,7 +1069,7 @@ export default function HomeScreen({ navigation, route }) {
                                             </Text>
                                             <Text style={styles.dashboardRingLabel}>PROGRESS</Text>
                                         </View>
-                                    </View>
+                                    </TouchableOpacity>
 
                                     {/* Right: 3 Stats Cells */}
                                     <View style={styles.dashboardStatsRow}>
