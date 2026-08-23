@@ -8,6 +8,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import ViewShot from "react-native-view-shot";
+import * as Sharing from "expo-sharing";
 import { COLORS, FONTS, SPACING, RADIUS, FAMILY, getMuscleColor } from "../utils/theme";
 import { getWorkoutHistory, getStreak, getTotalWorkouts, formatDuration, getStreakLocal, getTotalWorkoutsLocal, getWorkoutHistoryLocal } from "../utils/storage";
 import { WORKOUT_PLAN } from "../data/workoutData";
@@ -16,8 +18,8 @@ import WorkoutCalendar from "../components/WorkoutCalendar";
 import SkeletonBlock from "../components/SkeletonBlock";
 
 const { width } = Dimensions.get("window");
-const CARD_PADDING = 24;
-const CHART_W = width - CARD_PADDING * 4;
+const CARD_PADDING = 20;
+const CHART_W = width - CARD_PADDING * 2 - 36;
 const CHART_H = 100;
 
 /* ── helpers ─────────────────────────────────────────────── */
@@ -29,7 +31,6 @@ const CHART_H = 100;
 function toDate(completedAt) {
     if (!completedAt) return new Date(0);
     if (typeof completedAt === 'object' && completedAt.seconds) {
-        // Firestore Timestamp
         return new Date(completedAt.seconds * 1000);
     }
     if (completedAt instanceof Date) return completedAt;
@@ -72,7 +73,65 @@ function computePRs(history) {
             map[h.target] = h;
         }
     });
-    return Object.values(map).sort((a, b) => b.durationSec - a.durationSec).slice(0, 3);
+    return Object.values(map).sort((a, b) => b.durationSec - a.durationSec).slice(0, 4);
+}
+
+function computeHallOfFame(history) {
+    if (!history || history.length === 0) {
+        return {
+            maxCalories: null,
+            heaviestLift: null,
+            longestSession: null,
+        };
+    }
+
+    let maxCal = { calories: 0, target: "—", date: null };
+    let maxLift = { weightKg: 0, reps: 0, exerciseName: "—", target: "—", date: null };
+    let maxDuration = { durationSec: 0, target: "—", date: null };
+
+    history.forEach((h) => {
+        const d = toDate(h.completedAt);
+        const cals = h.caloriesBurned || Math.round((h.durationSec || 0) * 0.11);
+        if (cals > maxCal.calories) {
+            maxCal = { calories: cals, target: h.target, date: d };
+        }
+
+        if ((h.durationSec || 0) > maxDuration.durationSec) {
+            maxDuration = { durationSec: h.durationSec, target: h.target, date: d };
+        }
+
+        if (h.exercises && Array.isArray(h.exercises)) {
+            h.exercises.forEach((ex) => {
+                if (ex.loggedSets && Array.isArray(ex.loggedSets)) {
+                    ex.loggedSets.forEach((s) => {
+                        if (s.completed && Number(s.weightKg) > maxLift.weightKg) {
+                            maxLift = {
+                                weightKg: Number(s.weightKg),
+                                reps: Number(s.reps) || 1,
+                                exerciseName: ex.name,
+                                target: h.target,
+                                date: d,
+                            };
+                        }
+                    });
+                } else if (Number(ex.weightKg) > maxLift.weightKg) {
+                    maxLift = {
+                        weightKg: Number(ex.weightKg),
+                        reps: Number(ex.reps) || 1,
+                        exerciseName: ex.name,
+                        target: h.target,
+                        date: d,
+                    };
+                }
+            });
+        }
+    });
+
+    return {
+        maxCalories: maxCal.calories > 0 ? maxCal : null,
+        heaviestLift: maxLift.weightKg > 0 ? maxLift : null,
+        longestSession: maxDuration.durationSec > 0 ? maxDuration : null,
+    };
 }
 
 /* ── Line chart ────────────────────────────────────────────── */
@@ -266,7 +325,7 @@ const pr_s = StyleSheet.create({
 });
 
 /* ── History row ────────────────────────────────────────────── */
-function HistoryRow({ entry, isLast }) {
+function HistoryRow({ entry, isLast, onShare }) {
     const [expanded, setExpanded] = useState(false);
     const date = toDate(entry.completedAt);
     const dateStr = date.toLocaleDateString("en-US", { day: "numeric", month: "short" });
@@ -275,26 +334,39 @@ function HistoryRow({ entry, isLast }) {
     const hasExercises = entry.exercises && entry.exercises.length > 0;
     const isCustom = entry.day === 0;
     const itemColor = isCustom ? "#AF52DE" : getMuscleColor(entry.target);
+    const cals = entry.caloriesBurned || Math.round((entry.durationSec || 0) * 0.11);
 
     return (
-        <TouchableOpacity
-            onPress={() => hasExercises && setExpanded(!expanded)}
-            activeOpacity={hasExercises ? 0.7 : 1}
-        >
-            <View style={[hr.row, isLast && !expanded && { borderBottomWidth: 0 }]}>
+        <View style={[hr.wrapper, isLast && { borderBottomWidth: 0 }]}>
+            <TouchableOpacity
+                onPress={() => hasExercises && setExpanded(!expanded)}
+                activeOpacity={hasExercises ? 0.7 : 1}
+                style={hr.row}
+            >
                 <View style={[hr.indicator, { backgroundColor: itemColor }]} />
                 <View style={hr.left}>
                     <Text style={hr.target}>{entry.target}</Text>
-                    <Text style={hr.date}>{dateStr} · {timeStr}</Text>
+                    <Text style={hr.date}>{dateStr} · {timeStr} · {cals} kcal</Text>
                 </View>
                 <View style={hr.right}>
                     <Text style={hr.duration}>{formatDuration(entry.durationSec)}</Text>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                         <View style={[hr.dayBadge, { backgroundColor: `${itemColor}18`, borderColor: `${itemColor}38` }]}>
                             <Text style={[hr.dayLabel, { color: itemColor }]}>
                                 {isCustom ? `Custom · ${entry.exercises?.length || 0} ex` : `Day 0${entry.day}`}
                             </Text>
                         </View>
+                        <TouchableOpacity
+                            style={hr.shareIconBtn}
+                            onPress={(e) => {
+                                e.stopPropagation();
+                                onShare && onShare(entry);
+                            }}
+                            activeOpacity={0.7}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        >
+                            <Ionicons name="share-outline" size={14} color={COLORS.textSub} />
+                        </TouchableOpacity>
                         {hasExercises && (
                             <Ionicons
                                 name={expanded ? "chevron-up" : "chevron-down"}
@@ -304,7 +376,7 @@ function HistoryRow({ entry, isLast }) {
                         )}
                     </View>
                 </View>
-            </View>
+            </TouchableOpacity>
 
             {expanded && hasExercises && (
                 <View style={hr.detailLines}>
@@ -335,18 +407,21 @@ function HistoryRow({ entry, isLast }) {
                             ) : null}
                         </View>
                     ))}
-                    <View style={{ height: 12 }} />
+                    <View style={{ height: 8 }} />
                 </View>
             )}
-        </TouchableOpacity>
+        </View>
     );
 }
 
 const hr = StyleSheet.create({
+    wrapper: {
+        borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    },
     row: {
         flexDirection: "row", alignItems: "center",
-        paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: COLORS.border,
-        gap: 14,
+        paddingVertical: 14,
+        gap: 12,
     },
     indicator: { width: 3, height: 28, borderRadius: 1.5 },
     left: { flex: 1 },
@@ -362,11 +437,17 @@ const hr = StyleSheet.create({
         marginTop: 2,
     },
     dayLabel: { fontSize: 9, fontFamily: FAMILY.monoBold },
+    shareIconBtn: {
+        padding: 4,
+        marginTop: 2,
+        borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(255, 255, 255, 0.05)",
+    },
     detailLines: {
         paddingLeft: 18,
         paddingBottom: 6,
-        borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
+        borderTopWidth: 1,
+        borderTopColor: "rgba(255, 255, 255, 0.04)",
     },
     detailRow: {
         flexDirection: "row",
@@ -393,7 +474,7 @@ const hr = StyleSheet.create({
     exerciseContainer: {
         paddingVertical: 4,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
+        borderBottomColor: "rgba(255, 255, 255, 0.03)",
     },
     loggedSetsBox: {
         paddingLeft: 12,
@@ -429,6 +510,141 @@ const hr = StyleSheet.create({
     },
 });
 
+/* ── Gallery Card Item ──────────────────────────────────────── */
+function GalleryCardItem({ workout, streak, onShare, isSharing }) {
+    const d = toDate(workout.completedAt);
+    const dateStr = d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }).toUpperCase();
+    const muscleColor = getMuscleColor(workout.target);
+    const cals = workout.caloriesBurned || Math.round((workout.durationSec || 0) * 0.11);
+    const exercisesCount = workout.exercises?.length || 0;
+
+    return (
+        <View style={gc.card}>
+            <LinearGradient
+                colors={["#16161A", "#0C0C0E", "#060608"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0.3, y: 1 }}
+                style={StyleSheet.absoluteFill}
+            />
+            <LinearGradient
+                colors={["rgba(255, 255, 255, 0.08)", "transparent"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                style={{ position: "absolute", top: 0, left: 0, right: 0, height: 60 }}
+            />
+
+            <View style={gc.topHeader}>
+                <View style={gc.badge}>
+                    <View style={[gc.badgeDot, { backgroundColor: muscleColor }]} />
+                    <Text style={[gc.badgeText, { color: muscleColor }]}>{workout.target.split(" ")[0].toUpperCase()}</Text>
+                </View>
+                <Text style={gc.date}>{dateStr}</Text>
+            </View>
+
+            <Text style={gc.title} numberOfLines={2}>{workout.target}</Text>
+
+            <View style={gc.statsRow}>
+                <View style={gc.statBox}>
+                    <Text style={gc.statLabel}>DURATION</Text>
+                    <Text style={gc.statValue}>{formatDuration(workout.durationSec)}</Text>
+                </View>
+                <View style={[gc.statBox, gc.statDivider]}>
+                    <Text style={gc.statLabel}>ENERGY</Text>
+                    <Text style={gc.statValue}>{cals} <Text style={gc.statUnit}>KCAL</Text></Text>
+                </View>
+                <View style={gc.statBox}>
+                    <Text style={gc.statLabel}>EXERCISES</Text>
+                    <Text style={gc.statValue}>{exercisesCount} <Text style={gc.statUnit}>EX</Text></Text>
+                </View>
+            </View>
+
+            <View style={gc.footer}>
+                <View style={gc.brandLeft}>
+                    <View style={[gc.accentBar, { backgroundColor: muscleColor }]} />
+                    <Text style={gc.brandTag}>CONQUERONE</Text>
+                </View>
+                <TouchableOpacity
+                    style={gc.shareBtn}
+                    onPress={() => onShare(workout)}
+                    activeOpacity={0.8}
+                    disabled={isSharing}
+                >
+                    <Ionicons name="share-outline" size={14} color="#FFFFFF" />
+                    <Text style={gc.shareBtnText}>SHARE</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
+    );
+}
+
+const gc = StyleSheet.create({
+    card: {
+        backgroundColor: COLORS.bgCard,
+        borderRadius: 20,
+        borderWidth: 1.2,
+        borderColor: "rgba(255, 255, 255, 0.12)",
+        padding: 18,
+        marginBottom: 16,
+        overflow: "hidden",
+    },
+    topHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom: 12,
+    },
+    badge: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(255, 255, 255, 0.05)",
+        borderWidth: 0.5,
+        borderColor: "rgba(255, 255, 255, 0.12)",
+    },
+    badgeDot: { width: 6, height: 6, borderRadius: 3 },
+    badgeText: { fontSize: 8.5, fontFamily: FAMILY.bold, letterSpacing: 0.8 },
+    date: { fontSize: 9.5, fontFamily: FAMILY.mono, color: COLORS.textMuted },
+    title: { fontSize: 18, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -0.3, marginBottom: 16 },
+    statsRow: {
+        flexDirection: "row",
+        backgroundColor: "rgba(255, 255, 255, 0.03)",
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.06)",
+        paddingVertical: 12,
+        marginBottom: 16,
+    },
+    statBox: { flex: 1, alignItems: "center", justifyContent: "center" },
+    statDivider: { borderLeftWidth: 1, borderRightWidth: 1, borderColor: "rgba(255, 255, 255, 0.06)" },
+    statLabel: { fontSize: 7.5, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 0.8, marginBottom: 2 },
+    statValue: { fontSize: 13.5, fontFamily: FAMILY.monoBold, color: COLORS.text },
+    statUnit: { fontSize: 8.5, fontFamily: FAMILY.mono, color: COLORS.textMuted },
+    footer: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingTop: 12,
+        borderTopWidth: 1,
+        borderTopColor: "rgba(255, 255, 255, 0.06)",
+    },
+    brandLeft: { flexDirection: "row", alignItems: "center", gap: 6 },
+    accentBar: { width: 8, height: 2, borderRadius: 1 },
+    brandTag: { fontSize: 10, fontFamily: FAMILY.accent2, color: COLORS.textSub, letterSpacing: 1.5 },
+    shareBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        paddingHorizontal: 14,
+        paddingVertical: 6,
+        borderRadius: RADIUS.pill,
+        backgroundColor: COLORS.primary,
+    },
+    shareBtnText: { fontSize: 10, fontFamily: FAMILY.bold, color: "#FFFFFF", letterSpacing: 1 },
+});
+
 /* ── Main screen ──────────────────────────────────────────── */
 export default function HistoryScreen({ navigation }) {
     const insets = useSafeAreaInsets();
@@ -436,6 +652,10 @@ export default function HistoryScreen({ navigation }) {
     const [history, setHistory] = useState([]);
     const [streak, setStreak] = useState(0);
     const [total, setTotal] = useState(0);
+    const [activeTab, setActiveTab] = useState("analytics"); // "analytics" | "logs" | "cards"
+    const [selectedWorkout, setSelectedWorkout] = useState(null);
+    const [sharingCard, setSharingCard] = useState(false);
+    const shareShotRef = useRef(null);
 
     const [loading, setLoading] = useState(true);
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -455,7 +675,6 @@ export default function HistoryScreen({ navigation }) {
 
     useFocusEffect(useCallback(() => { load(); }, []));
     const load = async () => {
-        // 1. Immediate local cache load
         try {
             const cachedHistory = await getWorkoutHistoryLocal();
             const cachedStreak = await getStreakLocal();
@@ -469,7 +688,6 @@ export default function HistoryScreen({ navigation }) {
             finishLoading();
         }
 
-        // 2. Background cloud sync
         try {
             const [nextHistory, nextStreak, nextTotal] = await Promise.all([
                 getWorkoutHistory(),
@@ -491,8 +709,11 @@ export default function HistoryScreen({ navigation }) {
         const hrs = sec / 3600;
         return hrs >= 100 ? Math.round(hrs).toString() : hrs.toFixed(1);
     }, [history]);
+
     const weeklyData = useMemo(() => computeWeeklyData(history), [history]);
     const prs = useMemo(() => computePRs(history), [history]);
+    const hallOfFame = useMemo(() => computeHallOfFame(history), [history]);
+
     const dayCounts = useMemo(() => {
         const counts = {};
         history.forEach((item) => {
@@ -500,16 +721,66 @@ export default function HistoryScreen({ navigation }) {
         });
         return counts;
     }, [history]);
+
     const maxCount = useMemo(
         () => Math.max(...WORKOUT_PLAN.map((day) => dayCounts[day.day] || 0), 1),
         [dayCounts]
     );
+
     const groups = useMemo(() => history.reduce((acc, e) => {
         const key = getWeekLabel(toDate(e.completedAt));
         if (!acc[key]) acc[key] = [];
         acc[key].push(e);
         return acc;
     }, {}), [history]);
+
+    const handleShareWorkout = async (workout) => {
+        try {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            setSelectedWorkout(workout);
+            setSharingCard(true);
+
+            const isAvailable = await Sharing.isAvailableAsync();
+            if (!isAvailable) {
+                setSharingCard(false);
+                showDialog({
+                    title: "SHARING UNAVAILABLE",
+                    message: "Sharing is not supported on this device.",
+                    confirmText: "CLOSE",
+                    singleButton: true,
+                });
+                return;
+            }
+
+            setTimeout(async () => {
+                try {
+                    if (shareShotRef.current && shareShotRef.current.capture) {
+                        const uri = await shareShotRef.current.capture();
+                        setSharingCard(false);
+                        await Sharing.shareAsync(uri, {
+                            mimeType: "image/png",
+                            dialogTitle: `CONQUER ONE - ${workout.target || "Workout Card"}`,
+                            UTI: "public.png",
+                        });
+                    } else {
+                        setSharingCard(false);
+                    }
+                } catch (err) {
+                    setSharingCard(false);
+                    console.warn("Capture failed:", err);
+                    showDialog({
+                        title: "SHARE ERROR",
+                        message: "Unable to generate workout card image.",
+                        confirmText: "CLOSE",
+                        singleButton: true,
+                    });
+                }
+            }, 150);
+        } catch (e) {
+            setSharingCard(false);
+            console.warn("handleShareWorkout error:", e);
+        }
+    };
 
     const exportHistory = async () => {
         if (history.length === 0) {
@@ -553,24 +824,98 @@ export default function HistoryScreen({ navigation }) {
         }
     };
 
+    const activeShareTarget = selectedWorkout || history[0] || {
+        target: "Training Session",
+        durationSec: 3600,
+        caloriesBurned: 350,
+        completedAt: new Date().toISOString(),
+    };
+
     return (
         <View style={[styles.container, { paddingTop: insets.top }]}>
             <StatusBar barStyle="light-content" backgroundColor="#000" translucent />
 
+            {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
                     <Ionicons name="chevron-back" size={22} color={COLORS.text} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>HISTORY</Text>
                 <TouchableOpacity style={styles.backBtn} onPress={exportHistory} activeOpacity={0.7}>
-                    <Ionicons name="share-outline" size={18} color={COLORS.text} />
+                    <Ionicons name="download-outline" size={18} color={COLORS.text} />
                 </TouchableOpacity>
+            </View>
+
+            {/* ── Segmented Tabs ── */}
+            <View style={styles.tabBarContainer}>
+                <View style={styles.tabBar}>
+                    <TouchableOpacity
+                        style={[styles.tabItem, activeTab === "analytics" && styles.tabItemActive]}
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            setActiveTab("analytics");
+                        }}
+                        activeOpacity={0.8}
+                    >
+                        <Ionicons
+                            name={activeTab === "analytics" ? "stats-chart" : "stats-chart-outline"}
+                            size={13}
+                            color={activeTab === "analytics" ? COLORS.primary : COLORS.textMuted}
+                        />
+                        <Text style={[styles.tabLabel, activeTab === "analytics" && styles.tabLabelActive]}>
+                            ANALYTICS
+                        </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.tabItem, activeTab === "logs" && styles.tabItemActive]}
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            setActiveTab("logs");
+                        }}
+                        activeOpacity={0.8}
+                    >
+                        <Ionicons
+                            name={activeTab === "logs" ? "reader" : "reader-outline"}
+                            size={13}
+                            color={activeTab === "logs" ? COLORS.primary : COLORS.textMuted}
+                        />
+                        <Text style={[styles.tabLabel, activeTab === "logs" && styles.tabLabelActive]}>
+                            LOGS
+                        </Text>
+                        {history.length > 0 && (
+                            <View style={[styles.tabBadge, activeTab === "logs" && styles.tabBadgeActive]}>
+                                <Text style={[styles.tabBadgeText, activeTab === "logs" && styles.tabBadgeTextActive]}>
+                                    {history.length}
+                                </Text>
+                            </View>
+                        )}
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.tabItem, activeTab === "cards" && styles.tabItemActive]}
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            setActiveTab("cards");
+                        }}
+                        activeOpacity={0.8}
+                    >
+                        <Ionicons
+                            name={activeTab === "cards" ? "images" : "images-outline"}
+                            size={13}
+                            color={activeTab === "cards" ? COLORS.primary : COLORS.textMuted}
+                        />
+                        <Text style={[styles.tabLabel, activeTab === "cards" && styles.tabLabelActive]}>
+                            CARDS
+                        </Text>
+                    </TouchableOpacity>
+                </View>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} overScrollMode="never" contentContainerStyle={{ paddingBottom: 60 }}>
                 {loading ? (
                     <View style={{ width: "100%" }}>
-                        {/* Stats Asymmetric Grid Skeleton */}
+                        {/* Skeleton */}
                         <View style={styles.statsRow}>
                             <View style={styles.statsLeft}>
                                 <SkeletonBlock width="100%" height={74} borderRadius={RADIUS.md} index={0} />
@@ -578,161 +923,375 @@ export default function HistoryScreen({ navigation }) {
                             </View>
                             <SkeletonBlock width="auto" height={160} borderRadius={RADIUS.lg} index={2} style={{ flex: 1 }} />
                         </View>
-
-                        {/* Monthly Progress Calendar Skeleton */}
                         <SectionLabel text="MONTHLY PROGRESS CALENDAR" />
-                        <SkeletonBlock
-                            width="auto"
-                            height={140}
-                            borderRadius={RADIUS.lg}
-                            index={3}
-                            style={{ marginHorizontal: 20 }}
-                        />
-
-                        {/* Workout Log Skeleton Rows */}
-                        <SectionLabel text="WORKOUT LOG" />
-                        <View style={{ marginHorizontal: 20, gap: 10 }}>
-                            {[0, 1, 2, 3].map((i) => (
-                                <SkeletonBlock
-                                    key={i}
-                                    width="100%"
-                                    height={64}
-                                    borderRadius={RADIUS.md}
-                                    index={4 + i}
-                                />
-                            ))}
-                        </View>
+                        <SkeletonBlock width="auto" height={140} borderRadius={RADIUS.lg} index={3} style={{ marginHorizontal: 20 }} />
                     </View>
                 ) : (
                     <Animated.View style={{ opacity: fadeAnim }}>
-                        {/* Stats Asymmetric Grid */}
-                        <View style={styles.statsRow}>
-                            <View style={styles.statsLeft}>
-                                {/* Streak Card */}
-                                <View style={[styles.statSmall, { borderColor: "rgba(255, 149, 0, 0.25)" }]}>
-                                    <LinearGradient
-                                        colors={["rgba(255, 149, 0, 0.08)", "transparent"]}
-                                        start={{ x: 0, y: 0 }}
-                                        end={{ x: 1, y: 1 }}
-                                        style={StyleSheet.absoluteFillObject}
-                                        pointerEvents="none"
-                                    />
-                                    <View style={styles.statSmallTop}>
-                                        <Ionicons name="flame" size={14} color="#FF9500" />
-                                        <Text style={styles.statLabel}>STREAK</Text>
-                                    </View>
-                                    <Text style={[styles.statValue, { color: "#FF9500" }]}>{streak}D</Text>
-                                </View>
 
-                                {/* Sessions Card */}
-                                <View style={styles.statSmall}>
-                                    <LinearGradient
-                                        colors={["rgba(255, 255, 255, 0.03)", "transparent"]}
-                                        start={{ x: 0, y: 0 }}
-                                        end={{ x: 1, y: 1 }}
-                                        style={StyleSheet.absoluteFillObject}
-                                        pointerEvents="none"
-                                    />
-                                    <View style={styles.statSmallTop}>
-                                        <Ionicons name="fitness-outline" size={14} color={COLORS.textSub} />
-                                        <Text style={styles.statLabel}>SESSIONS</Text>
-                                    </View>
-                                    <Text style={styles.statValue}>{total}</Text>
-                                </View>
-                            </View>
-
-                            {/* Total Duration Card (Main Card) */}
-                            <View style={styles.statLarge}>
-                                <LinearGradient
-                                    colors={["rgba(227, 30, 36, 0.08)", "rgba(255, 255, 255, 0.02)"]}
-                                    start={{ x: 1, y: 1 }}
-                                    end={{ x: 0, y: 0 }}
-                                    style={StyleSheet.absoluteFillObject}
-                                    pointerEvents="none"
-                                />
-                                {/* Red decorative background watermark */}
-                                <View style={{ position: "absolute", right: -20, bottom: -20, opacity: 0.16 }} pointerEvents="none">
-                                    <Ionicons name="time-outline" size={120} color={COLORS.primary} />
-                                </View>
-
-                                <View style={styles.statSmallTop}>
-                                    <Ionicons name="time-outline" size={16} color={COLORS.textSub} />
-                                    <Text style={styles.statLabel}>TOTAL DURATION</Text>
-                                </View>
-                                <View>
-                                    <Text style={[styles.statValue, { fontSize: 34, lineHeight: 38 }]}>
-                                        {totalHours}<Text style={{ fontSize: 18, color: COLORS.textSub }}> HRS</Text>
-                                    </Text>
-                                    <Text style={styles.statSubLabel}>cumulative volume</Text>
-                                </View>
-                            </View>
-                        </View>
-
-                        {/* ── Monthly Progress Calendar ── */}
-                        <SectionLabel text="MONTHLY PROGRESS CALENDAR" />
-                        <WorkoutCalendar history={history} style={{ marginHorizontal: 20 }} />
-
-                        {total > 0 && (
-                            <>
-                                <SectionLabel text="WEEKLY FLOW" />
-                                <View style={styles.card}>
-                                    <LineChart data={weeklyData} />
-                                </View>
-                            </>
-                        )}
-
-                        {prs.length > 0 && (
-                            <>
-                                <SectionLabel text="PERSONAL BESTS" />
-                                <View style={[styles.card, { padding: 0, overflow: "hidden" }]}>
-                                    {prs.map((pr, i) => (
-                                        <PRCard key={i} pr={pr} />
-                                    ))}
-                                </View>
-                            </>
-                        )}
-
-                        {total > 0 && (
-                            <>
-                                <SectionLabel text="TARGET FOCUS" />
-                                <View style={styles.card}>
-                                    {WORKOUT_PLAN.map((day) => {
-                                        const count = dayCounts[day.day] || 0;
-                                        return (
-                                            <View key={day.day}>
-                                                <BreakdownBar day={day} count={count} max={maxCount} />
-                                            </View>
-                                        );
-                                    })}
-                                </View>
-                            </>
-                        )}
-
-                        <SectionLabel text="WORKOUT LOG" />
-                        {history.length === 0 ? (
-                            <View style={styles.empty}>
-                                <Text style={styles.emptyTitle}>NO WORKOUTS YET</Text>
-                                <Text style={styles.emptySub}>Start your first session to see your progress tracked here.</Text>
-                            </View>
-                        ) : (
-                            Object.keys(groups).map((week) => (
-                                <View key={week} style={styles.weekContainer}>
-                                    <Text style={styles.weekLabel}>{week.toUpperCase()}</Text>
-                                    <View style={styles.weekCard}>
-                                        {groups[week].map((entry, i) => (
-                                            <HistoryRow
-                                                key={i}
-                                                entry={entry}
-                                                isLast={i === groups[week].length - 1}
+                        {/* ══════════════════════════════════════════════
+                            TAB 1: ANALYTICS & STATS
+                           ══════════════════════════════════════════════ */}
+                        {activeTab === "analytics" && (
+                            <View>
+                                {/* Stats Asymmetric Grid */}
+                                <View style={styles.statsRow}>
+                                    <View style={styles.statsLeft}>
+                                        {/* Streak Card */}
+                                        <View style={[styles.statSmall, { borderColor: "rgba(255, 149, 0, 0.25)" }]}>
+                                            <LinearGradient
+                                                colors={["rgba(255, 149, 0, 0.08)", "transparent"]}
+                                                start={{ x: 0, y: 0 }}
+                                                end={{ x: 1, y: 1 }}
+                                                style={StyleSheet.absoluteFillObject}
+                                                pointerEvents="none"
                                             />
-                                        ))}
+                                            <View style={styles.statSmallTop}>
+                                                <Ionicons name="flame" size={14} color="#FF9500" />
+                                                <Text style={styles.statLabel}>STREAK</Text>
+                                            </View>
+                                            <Text style={[styles.statValue, { color: "#FF9500" }]}>{streak}D</Text>
+                                        </View>
+
+                                        {/* Sessions Card */}
+                                        <View style={styles.statSmall}>
+                                            <LinearGradient
+                                                colors={["rgba(255, 255, 255, 0.03)", "transparent"]}
+                                                start={{ x: 0, y: 0 }}
+                                                end={{ x: 1, y: 1 }}
+                                                style={StyleSheet.absoluteFillObject}
+                                                pointerEvents="none"
+                                            />
+                                            <View style={styles.statSmallTop}>
+                                                <Ionicons name="fitness-outline" size={14} color={COLORS.textSub} />
+                                                <Text style={styles.statLabel}>SESSIONS</Text>
+                                            </View>
+                                            <Text style={styles.statValue}>{total}</Text>
+                                        </View>
+                                    </View>
+
+                                    {/* Total Duration Card (Main Card) */}
+                                    <View style={styles.statLarge}>
+                                        <LinearGradient
+                                            colors={["rgba(227, 30, 36, 0.08)", "rgba(255, 255, 255, 0.02)"]}
+                                            start={{ x: 1, y: 1 }}
+                                            end={{ x: 0, y: 0 }}
+                                            style={StyleSheet.absoluteFillObject}
+                                            pointerEvents="none"
+                                        />
+                                        {/* Red decorative background watermark */}
+                                        <View style={{ position: "absolute", right: -20, bottom: -20, opacity: 0.16 }} pointerEvents="none">
+                                            <Ionicons name="time-outline" size={120} color={COLORS.primary} />
+                                        </View>
+
+                                        <View style={styles.statSmallTop}>
+                                            <Ionicons name="time-outline" size={16} color={COLORS.textSub} />
+                                            <Text style={styles.statLabel}>TOTAL DURATION</Text>
+                                        </View>
+                                        <View>
+                                            <Text style={[styles.statValue, { fontSize: 34, lineHeight: 38 }]}>
+                                                {totalHours}<Text style={{ fontSize: 18, color: COLORS.textSub }}>h</Text>
+                                            </Text>
+                                            <Text style={styles.statSubLabel}>cumulative volume</Text>
+                                        </View>
                                     </View>
                                 </View>
-                            ))
+
+                                {/* ── Hall of Fame & Highlights Grid ── */}
+                                <SectionLabel text="HALL OF FAME & RECORDS" />
+                                <View style={styles.hofGrid}>
+                                    {/* Max Calories Card */}
+                                    <View style={styles.hofCard}>
+                                        <LinearGradient
+                                            colors={["rgba(227, 30, 36, 0.08)", "transparent"]}
+                                            style={StyleSheet.absoluteFillObject}
+                                            pointerEvents="none"
+                                        />
+                                        <View style={styles.hofTop}>
+                                            <View style={[styles.hofIconBox, { backgroundColor: "rgba(227, 30, 36, 0.12)", borderColor: "rgba(227, 30, 36, 0.3)" }]}>
+                                                <Ionicons name="flame" size={14} color={COLORS.primary} />
+                                            </View>
+                                            <Text style={styles.hofTag}>MAX CALORIES</Text>
+                                        </View>
+                                        <Text style={[styles.hofValue, { color: COLORS.primary }]}>
+                                            {hallOfFame.maxCalories ? `${hallOfFame.maxCalories.calories}` : "—"}
+                                            <Text style={styles.hofUnit}>{hallOfFame.maxCalories ? " KCAL" : ""}</Text>
+                                        </Text>
+                                        <Text style={styles.hofSub} numberOfLines={1}>
+                                            {hallOfFame.maxCalories ? `${hallOfFame.maxCalories.target} · ${hallOfFame.maxCalories.date ? hallOfFame.maxCalories.date.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}` : "No workout logged"}
+                                        </Text>
+                                    </View>
+
+                                    {/* Heaviest Lift Card */}
+                                    <View style={styles.hofCard}>
+                                        <LinearGradient
+                                            colors={["rgba(255, 215, 0, 0.08)", "transparent"]}
+                                            style={StyleSheet.absoluteFillObject}
+                                            pointerEvents="none"
+                                        />
+                                        <View style={styles.hofTop}>
+                                            <View style={[styles.hofIconBox, { backgroundColor: "rgba(255, 215, 0, 0.12)", borderColor: "rgba(255, 215, 0, 0.3)" }]}>
+                                                <Ionicons name="barbell" size={14} color="#FFD700" />
+                                            </View>
+                                            <Text style={styles.hofTag}>HEAVIEST LIFT</Text>
+                                        </View>
+                                        <Text style={[styles.hofValue, { color: "#FFD700" }]}>
+                                            {hallOfFame.heaviestLift ? `${hallOfFame.heaviestLift.weightKg}` : "—"}
+                                            <Text style={styles.hofUnit}>{hallOfFame.heaviestLift ? " KG" : ""}</Text>
+                                        </Text>
+                                        <Text style={styles.hofSub} numberOfLines={1}>
+                                            {hallOfFame.heaviestLift ? `${hallOfFame.heaviestLift.exerciseName} · ${hallOfFame.heaviestLift.reps}r` : "No heavy lift logged"}
+                                        </Text>
+                                    </View>
+
+                                    {/* Longest Session Card */}
+                                    <View style={styles.hofCard}>
+                                        <LinearGradient
+                                            colors={["rgba(48, 176, 199, 0.08)", "transparent"]}
+                                            style={StyleSheet.absoluteFillObject}
+                                            pointerEvents="none"
+                                        />
+                                        <View style={styles.hofTop}>
+                                            <View style={[styles.hofIconBox, { backgroundColor: "rgba(48, 176, 199, 0.12)", borderColor: "rgba(48, 176, 199, 0.3)" }]}>
+                                                <Ionicons name="timer" size={14} color="#30B0C7" />
+                                            </View>
+                                            <Text style={styles.hofTag}>LONGEST SESSION</Text>
+                                        </View>
+                                        <Text style={[styles.hofValue, { color: "#30B0C7" }]}>
+                                            {hallOfFame.longestSession ? formatDuration(hallOfFame.longestSession.durationSec) : "—"}
+                                        </Text>
+                                        <Text style={styles.hofSub} numberOfLines={1}>
+                                            {hallOfFame.longestSession ? `${hallOfFame.longestSession.target} · ${hallOfFame.longestSession.date ? hallOfFame.longestSession.date.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}` : "No session logged"}
+                                        </Text>
+                                    </View>
+
+                                    {/* All-Time PRs Card */}
+                                    <View style={styles.hofCard}>
+                                        <LinearGradient
+                                            colors={["rgba(255, 149, 0, 0.08)", "transparent"]}
+                                            style={StyleSheet.absoluteFillObject}
+                                            pointerEvents="none"
+                                        />
+                                        <View style={styles.hofTop}>
+                                            <View style={[styles.hofIconBox, { backgroundColor: "rgba(255, 149, 0, 0.12)", borderColor: "rgba(255, 149, 0, 0.3)" }]}>
+                                                <Ionicons name="trophy" size={14} color="#FF9500" />
+                                            </View>
+                                            <Text style={styles.hofTag}>BEST TARGETS</Text>
+                                        </View>
+                                        <Text style={[styles.hofValue, { color: "#FF9500" }]}>
+                                            {prs.length}
+                                            <Text style={styles.hofUnit}> PRs</Text>
+                                        </Text>
+                                        <Text style={styles.hofSub} numberOfLines={1}>
+                                            {prs.length > 0 ? "Benchmark records active" : "Log workouts to set PRs"}
+                                        </Text>
+                                    </View>
+                                </View>
+
+                                {/* ── Weekly Flow Graph ── */}
+                                {total > 0 && (
+                                    <>
+                                        <SectionLabel text="WEEKLY FLOW" />
+                                        <View style={styles.card}>
+                                            <LineChart data={weeklyData} />
+                                        </View>
+                                    </>
+                                )}
+
+                                {/* ── Target Focus ── */}
+                                {total > 0 && (
+                                    <>
+                                        <SectionLabel text="TARGET FOCUS" />
+                                        <View style={styles.card}>
+                                            {WORKOUT_PLAN.map((day) => {
+                                                const count = dayCounts[day.day] || 0;
+                                                return (
+                                                    <View key={day.day}>
+                                                        <BreakdownBar day={day} count={count} max={maxCount} />
+                                                    </View>
+                                                );
+                                            })}
+                                        </View>
+                                    </>
+                                )}
+
+                                {/* ── Personal Bests List ── */}
+                                {prs.length > 0 && (
+                                    <>
+                                        <SectionLabel text="PERSONAL BESTS" />
+                                        <View style={[styles.card, { padding: 0, overflow: "hidden" }]}>
+                                            {prs.map((pr, i) => (
+                                                <PRCard key={i} pr={pr} />
+                                            ))}
+                                        </View>
+                                    </>
+                                )}
+
+                                {/* ── Monthly Progress Calendar ── */}
+                                <SectionLabel text="MONTHLY PROGRESS CALENDAR" />
+                                <WorkoutCalendar history={history} style={{ marginHorizontal: 20 }} />
+                            </View>
                         )}
+
+                        {/* ══════════════════════════════════════════════
+                            TAB 2: WORKOUT LOGS
+                           ══════════════════════════════════════════════ */}
+                        {activeTab === "logs" && (
+                            <View>
+                                <SectionLabel text={`LOGGED SESSIONS (${history.length})`} />
+                                {history.length === 0 ? (
+                                    <View style={styles.empty}>
+                                        <View style={styles.emptyIconBox}>
+                                            <Ionicons name="barbell-outline" size={32} color={COLORS.textMuted} />
+                                        </View>
+                                        <Text style={styles.emptyTitle}>NO SESSIONS LOGGED YET</Text>
+                                        <Text style={styles.emptySub}>Your completed workouts will be recorded here with full set breakdown and timestamps.</Text>
+                                    </View>
+                                ) : (
+                                    Object.keys(groups).map((week) => (
+                                        <View key={week} style={styles.weekContainer}>
+                                            <Text style={styles.weekLabel}>{week.toUpperCase()}</Text>
+                                            <View style={styles.weekCard}>
+                                                {groups[week].map((entry, i) => (
+                                                    <HistoryRow
+                                                        key={i}
+                                                        entry={entry}
+                                                        isLast={i === groups[week].length - 1}
+                                                        onShare={handleShareWorkout}
+                                                    />
+                                                ))}
+                                            </View>
+                                        </View>
+                                    ))
+                                )}
+                            </View>
+                        )}
+
+                        {/* ══════════════════════════════════════════════
+                            TAB 3: SHAREABLE CARDS GALLERY
+                           ══════════════════════════════════════════════ */}
+                        {activeTab === "cards" && (
+                            <View style={{ paddingHorizontal: 20 }}>
+                                <SectionLabel text="SHAREABLE SESSION CARDS" />
+                                <Text style={styles.cardsHelpText}>
+                                    Tap "SHARE" on any completed session below to generate a branded social card ready for Instagram, WhatsApp, or Twitter.
+                                </Text>
+
+                                {history.length === 0 ? (
+                                    <View style={styles.empty}>
+                                        <View style={styles.emptyIconBox}>
+                                            <Ionicons name="images-outline" size={32} color={COLORS.textMuted} />
+                                        </View>
+                                        <Text style={styles.emptyTitle}>NO CARDS TO SHARE</Text>
+                                        <Text style={styles.emptySub}>Complete your first workout to generate instant shareable athlete cards.</Text>
+                                    </View>
+                                ) : (
+                                    history.map((workout, idx) => (
+                                        <GalleryCardItem
+                                            key={idx}
+                                            workout={workout}
+                                            streak={streak}
+                                            onShare={handleShareWorkout}
+                                            isSharing={sharingCard}
+                                        />
+                                    ))
+                                )}
+                            </View>
+                        )}
+
                     </Animated.View>
                 )}
             </ScrollView>
+
+            {/* ── Purpose-Built Branded Social Share Card (Off-Screen Captured ViewShot) ── */}
+            <View style={styles.offscreenWrap} pointerEvents="none">
+                <ViewShot ref={shareShotRef} options={{ format: "png", quality: 1 }}>
+                    <View style={styles.shareCard} collapsable={false}>
+                        {/* Background Gradient & Ambient Sheen */}
+                        <LinearGradient
+                            colors={["#141418", "#0A0A0C", "#040406"]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 0.3, y: 1 }}
+                            style={StyleSheet.absoluteFill}
+                        />
+                        <LinearGradient
+                            colors={["rgba(255, 255, 255, 0.12)", "rgba(255, 255, 255, 0.02)", "transparent"]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 0, y: 1 }}
+                            style={{ position: "absolute", top: 0, left: 0, right: 0, height: 100 }}
+                        />
+
+                        {/* Top Card Header */}
+                        <View style={styles.shareCardHeader}>
+                            <View style={styles.shareCardBadge}>
+                                <View style={[styles.shareBadgeDot, { backgroundColor: getMuscleColor(activeShareTarget?.target) }]} />
+                                <Text style={[styles.shareCardBadgeText, { color: getMuscleColor(activeShareTarget?.target) }]}>
+                                    SESSION COMPLETE
+                                </Text>
+                            </View>
+                            <Text style={styles.shareCardDate}>
+                                {toDate(activeShareTarget?.completedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }).toUpperCase()}
+                            </Text>
+                        </View>
+
+                        {/* Workout Name */}
+                        <View style={styles.shareCardTitleWrap}>
+                            <Text style={styles.shareCardWorkoutLabel}>LOGGED TARGET</Text>
+                            <Text style={styles.shareCardWorkoutName} numberOfLines={2}>
+                                {activeShareTarget?.target || "Workout"}
+                            </Text>
+                        </View>
+
+                        {/* Stats Grid */}
+                        <View style={styles.shareCardStatsGrid}>
+                            <View style={styles.shareCardStatBox}>
+                                <Text style={styles.shareCardStatLabel}>DURATION</Text>
+                                <Text style={styles.shareCardStatValue}>{formatDuration(activeShareTarget?.durationSec || 0)}</Text>
+                            </View>
+                            <View style={[styles.shareCardStatBox, styles.shareCardStatDivider]}>
+                                <Text style={styles.shareCardStatLabel}>STREAK</Text>
+                                <Text style={[styles.shareCardStatValue, { color: COLORS.primary }]}>
+                                    {streak} <Text style={styles.shareCardStatUnit}>DAYS</Text>
+                                </Text>
+                            </View>
+                            <View style={styles.shareCardStatBox}>
+                                <Text style={styles.shareCardStatLabel}>ENERGY</Text>
+                                <Text style={styles.shareCardStatValue}>
+                                    {activeShareTarget?.caloriesBurned || Math.round((activeShareTarget?.durationSec || 0) * 0.11)}
+                                    <Text style={styles.shareCardStatUnit}> KCAL</Text>
+                                </Text>
+                            </View>
+                        </View>
+
+                        {/* Exercise Summary Rows */}
+                        {activeShareTarget?.exercises && activeShareTarget.exercises.length > 0 && (
+                            <View style={styles.shareCardPRWrap}>
+                                <View style={styles.shareCardPRHeader}>
+                                    <Ionicons name="barbell-outline" size={13} color={COLORS.textSub} />
+                                    <Text style={styles.shareCardPRTitle}>WORKOUT BREAKDOWN</Text>
+                                </View>
+                                {activeShareTarget.exercises.slice(0, 3).map((ex, i) => (
+                                    <View key={i} style={styles.shareCardPRRow}>
+                                        <Text style={styles.shareCardPRName} numberOfLines={1}>{ex.name}</Text>
+                                        <Text style={styles.shareCardPRVal}>
+                                            {ex.sets} sets {ex.weightKg > 0 ? `· ${ex.weightKg}kg` : ""}
+                                        </Text>
+                                    </View>
+                                ))}
+                            </View>
+                        )}
+
+                        {/* Card Footer Brandmark */}
+                        <View style={styles.shareCardFooter}>
+                            <View style={styles.shareCardFooterLeft}>
+                                <View style={[styles.shareCardAccentLine, { backgroundColor: getMuscleColor(activeShareTarget?.target) }]} />
+                                <Text style={styles.shareCardTagline}>ELITE TRAINING PROTOCOL</Text>
+                            </View>
+                            <Text style={styles.shareCardBrand}>CONQUERONE</Text>
+                        </View>
+                    </View>
+                </ViewShot>
+            </View>
         </View>
     );
 }
@@ -750,7 +1309,7 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: COLORS.bg },
     header: {
         flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-        paddingHorizontal: 20, paddingBottom: 16, paddingTop: 8,
+        paddingHorizontal: 20, paddingBottom: 14, paddingTop: 8,
     },
     backBtn: {
         width: 36, height: 36, borderRadius: RADIUS.pill, backgroundColor: COLORS.bgCard,
@@ -758,6 +1317,66 @@ const styles = StyleSheet.create({
     },
     headerTitle: { fontSize: 18, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 0.5 },
 
+    /* Segmented Tab Bar */
+    tabBarContainer: {
+        paddingHorizontal: 20,
+        marginBottom: 16,
+    },
+    tabBar: {
+        flexDirection: "row",
+        backgroundColor: "rgba(255, 255, 255, 0.04)",
+        borderRadius: RADIUS.pill,
+        padding: 3,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+    },
+    tabItem: {
+        flex: 1,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: 8,
+        borderRadius: RADIUS.pill,
+        gap: 6,
+    },
+    tabItemActive: {
+        backgroundColor: COLORS.bgCard,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.16)",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    tabLabel: {
+        fontSize: 10,
+        fontFamily: FAMILY.bold,
+        color: COLORS.textMuted,
+        letterSpacing: 0.8,
+    },
+    tabLabelActive: {
+        color: COLORS.text,
+    },
+    tabBadge: {
+        paddingHorizontal: 5,
+        paddingVertical: 1,
+        borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(255, 255, 255, 0.06)",
+    },
+    tabBadgeActive: {
+        backgroundColor: "rgba(227, 30, 36, 0.15)",
+    },
+    tabBadgeText: {
+        fontSize: 8.5,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textMuted,
+    },
+    tabBadgeTextActive: {
+        color: COLORS.primary,
+    },
+
+    /* Stats Grid */
     statsRow: {
         flexDirection: "row", marginHorizontal: 20, marginTop: 4, gap: 12,
     },
@@ -777,11 +1396,66 @@ const styles = StyleSheet.create({
     statLabel: { fontSize: 9.5, color: COLORS.textSub, fontFamily: FAMILY.semibold, letterSpacing: 1, flex: 1 },
     statSubLabel: { fontSize: 9, color: COLORS.textMuted, fontFamily: FAMILY.regular, marginTop: 2 },
 
+    /* Hall of Fame Highlights */
+    hofGrid: {
+        flexDirection: "row",
+        flexWrap: "wrap",
+        marginHorizontal: 20,
+        gap: 12,
+    },
+    hofCard: {
+        width: (width - 40 - 12) / 2,
+        backgroundColor: COLORS.bgCard,
+        borderRadius: RADIUS.md,
+        padding: 14,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        overflow: "hidden",
+        position: "relative",
+    },
+    hofTop: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        marginBottom: 8,
+    },
+    hofIconBox: {
+        width: 24,
+        height: 24,
+        borderRadius: RADIUS.pill,
+        borderWidth: 1,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    hofTag: {
+        fontSize: 8,
+        fontFamily: FAMILY.bold,
+        color: COLORS.textMuted,
+        letterSpacing: 0.8,
+    },
+    hofValue: {
+        fontSize: 19,
+        fontFamily: FAMILY.monoBold,
+        letterSpacing: -0.5,
+        marginBottom: 2,
+    },
+    hofUnit: {
+        fontSize: 10,
+        fontFamily: FAMILY.mono,
+        color: COLORS.textMuted,
+    },
+    hofSub: {
+        fontSize: 9.5,
+        fontFamily: FAMILY.regular,
+        color: COLORS.textSub,
+        marginTop: 2,
+    },
+
     sectionLabelRow: {
         flexDirection: "row",
         alignItems: "center",
         marginHorizontal: 20,
-        marginTop: 28,
+        marginTop: 24,
         marginBottom: 12,
         gap: 8,
     },
@@ -815,7 +1489,200 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
     },
 
-    empty: { alignItems: "center", paddingTop: 80, paddingHorizontal: 40 },
-    emptyTitle: { fontSize: 13, fontFamily: FAMILY.semibold, color: COLORS.textSub, marginBottom: 8 },
-    emptySub: { fontSize: 12, color: COLORS.textMuted, textAlign: "center", lineHeight: 18, fontFamily: FAMILY.regular },
+    cardsHelpText: {
+        fontSize: 11,
+        fontFamily: FAMILY.regular,
+        color: COLORS.textMuted,
+        lineHeight: 16,
+        marginBottom: 16,
+    },
+
+    empty: { alignItems: "center", paddingTop: 60, paddingHorizontal: 40 },
+    emptyIconBox: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: "rgba(255, 255, 255, 0.04)",
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        alignItems: "center",
+        justifyContent: "center",
+        marginBottom: 14,
+    },
+    emptyTitle: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.textSub, marginBottom: 6, letterSpacing: 0.5 },
+    emptySub: { fontSize: 11.5, color: COLORS.textMuted, textAlign: "center", lineHeight: 17, fontFamily: FAMILY.regular },
+
+    /* Purpose-Built Social Share Card Template */
+    offscreenWrap: {
+        position: "absolute",
+        left: -3500,
+        top: 0,
+        opacity: 0,
+    },
+    shareCard: {
+        width: 360,
+        minHeight: 460,
+        backgroundColor: COLORS.bg,
+        borderRadius: 24,
+        borderWidth: 1.2,
+        borderColor: "rgba(255, 255, 255, 0.16)",
+        padding: 24,
+        justifyContent: "space-between",
+        overflow: "hidden",
+    },
+    shareCardHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom: 20,
+    },
+    shareCardBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(255, 255, 255, 0.05)",
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.12)",
+    },
+    shareBadgeDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+    },
+    shareCardBadgeText: {
+        fontSize: 9,
+        fontFamily: FAMILY.bold,
+        letterSpacing: 1,
+    },
+    shareCardDate: {
+        fontSize: 9.5,
+        fontFamily: FAMILY.mono,
+        color: COLORS.textMuted,
+        letterSpacing: 0.5,
+    },
+    shareCardTitleWrap: {
+        marginBottom: 22,
+    },
+    shareCardWorkoutLabel: {
+        fontSize: 9,
+        fontFamily: FAMILY.bold,
+        color: COLORS.textMuted,
+        letterSpacing: 1.5,
+        marginBottom: 4,
+    },
+    shareCardWorkoutName: {
+        fontSize: 24,
+        fontFamily: FAMILY.bold,
+        color: COLORS.text,
+        letterSpacing: -0.5,
+        lineHeight: 28,
+    },
+    shareCardStatsGrid: {
+        flexDirection: "row",
+        backgroundColor: "rgba(255, 255, 255, 0.03)",
+        borderRadius: 18,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+        paddingVertical: 16,
+        marginBottom: 16,
+    },
+    shareCardStatBox: {
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        paddingHorizontal: 4,
+    },
+    shareCardStatDivider: {
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+    },
+    shareCardStatLabel: {
+        fontSize: 8,
+        fontFamily: FAMILY.bold,
+        color: COLORS.textMuted,
+        letterSpacing: 1,
+        marginBottom: 4,
+    },
+    shareCardStatValue: {
+        fontSize: 18,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.text,
+        letterSpacing: -0.2,
+    },
+    shareCardStatUnit: {
+        fontSize: 10,
+        fontFamily: FAMILY.mono,
+        color: COLORS.textMuted,
+    },
+    shareCardPRWrap: {
+        backgroundColor: "rgba(255, 255, 255, 0.03)",
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+        padding: 12,
+        marginBottom: 16,
+    },
+    shareCardPRHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        marginBottom: 8,
+    },
+    shareCardPRTitle: {
+        fontSize: 8.5,
+        fontFamily: FAMILY.bold,
+        color: COLORS.textSub,
+        letterSpacing: 1,
+    },
+    shareCardPRRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingVertical: 3,
+    },
+    shareCardPRName: {
+        fontSize: 11,
+        fontFamily: FAMILY.regular,
+        color: COLORS.text,
+        flex: 1,
+    },
+    shareCardPRVal: {
+        fontSize: 10.5,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textSub,
+    },
+    shareCardFooter: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingTop: 14,
+        borderTopWidth: 1,
+        borderTopColor: "rgba(255, 255, 255, 0.06)",
+    },
+    shareCardFooterLeft: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+    },
+    shareCardAccentLine: {
+        width: 14,
+        height: 2,
+        borderRadius: 1,
+    },
+    shareCardTagline: {
+        fontSize: 8.5,
+        fontFamily: FAMILY.medium,
+        color: COLORS.textMuted,
+        letterSpacing: 1,
+    },
+    shareCardBrand: {
+        fontSize: 13,
+        fontFamily: FAMILY.accent2,
+        color: COLORS.text,
+        letterSpacing: 2,
+    },
 });
