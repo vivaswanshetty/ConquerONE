@@ -72,7 +72,7 @@ const getLibraryDayCode = (day) => {
 
 const getLibraryTitle = (day) => {
     if (day.day === 1) return "Chest &\nTriceps";
-    if (day.day === 2) return "Back & Biceps";
+    if (day.day === 2) return "Back &\nBiceps";
     if (day.day === 3) return "Shoulders &\nAbs";
     if (day.day === 4) return "Legs";
     if (day.day === 5) return "Chest &\nBack";
@@ -2842,9 +2842,11 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.08)",
-        padding: 16,
+        paddingTop: 16,
+        paddingBottom: 14,
+        paddingHorizontal: 16,
         paddingLeft: 18,
-        justifyContent: "center",
+        justifyContent: "flex-start",
         position: "relative",
         overflow: "hidden",
     },
