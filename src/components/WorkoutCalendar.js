@@ -308,53 +308,54 @@ export default function WorkoutCalendar({ history = [], style }) {
                     const isPastMissed = !cell.isFuture && !cell.isToday && !isSunday && !hasWorkout;
 
                     return (
-                        <TouchableOpacity
-                            key={cell.key}
-                            style={[
-                                styles.cell,
-                                !cell.isCurrentMonth && styles.cellOtherMonth,
-                                cell.isToday && styles.cellToday,
-                                hasWorkout && styles.cellWorkout,
-                                isSelected && styles.cellSelected,
-                                isPastMissed && styles.cellMissed,
-                            ]}
-                            activeOpacity={0.7}
-                            onPress={() => {
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                setSelectedDateKey(cell.dateKey);
-                            }}
-                        >
-                            {/* Today ring glow */}
-                            {cell.isToday && <View style={styles.todayGlow} />}
-
-                            <Text
+                        <View key={cell.key} style={styles.cellWrapper}>
+                            <TouchableOpacity
                                 style={[
-                                    styles.cellText,
-                                    !cell.isCurrentMonth && styles.cellTextOtherMonth,
-                                    cell.isToday && styles.cellTextToday,
-                                    hasWorkout && styles.cellTextWorkout,
-                                    isSelected && styles.cellTextSelected,
-                                    isPastMissed && styles.cellTextMissed,
+                                    styles.cell,
+                                    !cell.isCurrentMonth && styles.cellOtherMonth,
+                                    cell.isToday && styles.cellToday,
+                                    hasWorkout && styles.cellWorkout,
+                                    isSelected && styles.cellSelected,
+                                    isPastMissed && styles.cellMissed,
                                 ]}
+                                activeOpacity={0.75}
+                                onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    setSelectedDateKey(cell.dateKey);
+                                }}
                             >
-                                {cell.dateNum}
-                            </Text>
+                                {/* Today indicator pip */}
+                                {cell.isToday && !isSelected && <View style={styles.todayGlow} />}
 
-                            {/* Workout indicators */}
-                            {hasWorkout ? (
-                                <View style={styles.workoutBadge}>
-                                    {dayWorkouts.length > 1 ? (
-                                        <Text style={styles.workoutCountText}>{dayWorkouts.length}</Text>
-                                    ) : (
-                                        <View style={styles.workoutDot} />
-                                    )}
-                                </View>
-                            ) : isSunday && !cell.isFuture ? (
-                                <View style={styles.restDotWrap}>
-                                    <Ionicons name="moon-outline" size={6} color="#636366" />
-                                </View>
-                            ) : null}
-                        </TouchableOpacity>
+                                <Text
+                                    style={[
+                                        styles.cellText,
+                                        !cell.isCurrentMonth && styles.cellTextOtherMonth,
+                                        cell.isToday && styles.cellTextToday,
+                                        hasWorkout && styles.cellTextWorkout,
+                                        isSelected && styles.cellTextSelected,
+                                        isPastMissed && styles.cellTextMissed,
+                                    ]}
+                                >
+                                    {cell.dateNum}
+                                </Text>
+
+                                {/* Workout indicators */}
+                                {hasWorkout ? (
+                                    <View style={styles.workoutBadge}>
+                                        {dayWorkouts.length > 1 ? (
+                                            <Text style={styles.workoutCountText}>{dayWorkouts.length}</Text>
+                                        ) : (
+                                            <View style={[styles.workoutDot, isSelected && { backgroundColor: COLORS.primary }]} />
+                                        )}
+                                    </View>
+                                ) : isSunday && !cell.isFuture ? (
+                                    <View style={styles.restDotWrap}>
+                                        <Ionicons name="moon-outline" size={7} color="#71717A" />
+                                    </View>
+                                ) : null}
+                            </TouchableOpacity>
+                        </View>
                     );
                 })}
             </View>
@@ -615,26 +616,33 @@ const styles = StyleSheet.create({
         flexWrap: "wrap",
         justifyContent: "flex-start",
         marginHorizontal: -2,
+        marginBottom: 8,
     },
-    cell: {
+    cellWrapper: {
         width: `${100 / 7}%`,
-        aspectRatio: 1.05,
+        aspectRatio: 1,
         padding: 3,
         alignItems: "center",
         justifyContent: "center",
-        borderRadius: RADIUS.sm,
-        marginVertical: 3,
+    },
+    cell: {
+        width: "100%",
+        height: "100%",
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: 10,
         borderWidth: 1,
         borderColor: "transparent",
         backgroundColor: "transparent",
         position: "relative",
     },
     cellOtherMonth: {
-        opacity: 0.25,
+        opacity: 0.18,
     },
     cellToday: {
-        borderColor: COLORS.text,
+        borderColor: "#FF9500",
         borderWidth: 1.5,
+        backgroundColor: "rgba(255, 149, 0, 0.08)",
     },
     cellWorkout: {
         backgroundColor: "rgba(255, 255, 255, 0.08)",
@@ -642,23 +650,24 @@ const styles = StyleSheet.create({
     },
     cellSelected: {
         borderColor: COLORS.primary,
-        backgroundColor: "rgba(227, 30, 36, 0.1)",
+        borderWidth: 1.5,
+        backgroundColor: "rgba(227, 30, 36, 0.12)",
     },
     cellMissed: {
-        backgroundColor: "rgba(255, 255, 255, 0.02)",
+        backgroundColor: "transparent",
     },
     todayGlow: {
         position: "absolute",
-        top: 4,
-        right: 4,
+        top: 3,
+        right: 3,
         width: 4,
         height: 4,
         borderRadius: 2,
-        backgroundColor: COLORS.primary,
+        backgroundColor: "#FF9500",
     },
 
     cellText: {
-        fontSize: 10.5,
+        fontSize: 11.5,
         fontFamily: FAMILY.mono,
         color: COLORS.textSub,
     },
@@ -666,15 +675,15 @@ const styles = StyleSheet.create({
         color: COLORS.textMuted,
     },
     cellTextToday: {
-        color: COLORS.text,
+        color: "#FF9500",
         fontFamily: FAMILY.monoBold,
     },
     cellTextWorkout: {
-        color: COLORS.text,
+        color: "#FFFFFF",
         fontFamily: FAMILY.monoBold,
     },
     cellTextSelected: {
-        color: COLORS.text,
+        color: "#FFFFFF",
         fontFamily: FAMILY.monoBold,
     },
     cellTextMissed: {
@@ -691,12 +700,12 @@ const styles = StyleSheet.create({
         width: 3.5,
         height: 3.5,
         borderRadius: 2,
-        backgroundColor: COLORS.text,
+        backgroundColor: "#FFFFFF",
     },
     workoutCountText: {
         fontSize: 7,
         fontFamily: FAMILY.monoBold,
-        color: COLORS.text,
+        color: "#FFFFFF",
     },
     restDotWrap: {
         position: "absolute",
