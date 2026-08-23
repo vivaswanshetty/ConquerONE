@@ -220,6 +220,22 @@ function PRModal({ visible, exerciseName, onClose, onSave, weightUnit = "kg", in
                 <TouchableOpacity style={pm.backdrop} activeOpacity={1} onPress={onClose}>
                     <TouchableOpacity activeOpacity={1} onPress={() => { }}>
                         <Animated.View style={[pm.sheet, { transform: [{ scale: scaleAnim }] }]}>
+                            {/* macOS Liquid Glass Gradient */}
+                            <LinearGradient
+                                colors={['rgba(32, 32, 40, 0.95)', 'rgba(14, 14, 18, 0.98)', 'rgba(8, 8, 10, 0.99)']}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 0.2, y: 1 }}
+                                style={StyleSheet.absoluteFill}
+                            />
+                            {/* Top Gloss Specular Highlight */}
+                            <LinearGradient
+                                colors={['rgba(255, 255, 255, 0.16)', 'rgba(255, 255, 255, 0.02)', 'transparent']}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 0, y: 1 }}
+                                style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 90 }}
+                                pointerEvents="none"
+                            />
+
                             <View style={pm.handle} />
                             <View style={pm.headerRow}>
                                 <View style={pm.trophyBadge}>
@@ -291,26 +307,28 @@ const pm = StyleSheet.create({
         justifyContent: "flex-end",
     },
     sheet: {
-        backgroundColor: COLORS.glassBg,
+        backgroundColor: "rgba(22, 22, 26, 0.95)",
         borderTopLeftRadius: 32, borderTopRightRadius: 32,
-        borderWidth: 1, borderColor: COLORS.glassBorder,
+        borderWidth: 1.2, borderColor: "rgba(255, 255, 255, 0.14)",
+        borderBottomWidth: 0,
         padding: 32, paddingBottom: 48,
         alignItems: "center",
         width: "100%",
-        shadowColor: COLORS.primary, shadowOffset: { width: 0, height: -10 },
-        shadowOpacity: 0.1, shadowRadius: 20,
+        overflow: "hidden",
+        shadowColor: "#000", shadowOffset: { width: 0, height: -10 },
+        shadowOpacity: 0.4, shadowRadius: 20,
     },
     handle: {
         width: 40, height: 4, borderRadius: 2,
-        backgroundColor: COLORS.border, marginBottom: 32,
+        backgroundColor: "rgba(255,255,255,0.2)", marginBottom: 32,
     },
     headerRow: {
         flexDirection: "row", alignItems: "center", gap: 16,
         width: "100%", marginBottom: 32,
     },
     trophyBadge: {
-        width: 48, height: 48, borderRadius: RADIUS.md,
-        backgroundColor: "rgba(227,30,36,0.05)", borderWidth: 1, borderColor: "rgba(227,30,36,0.2)",
+        width: 48, height: 48, borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(255,255,255,0.06)", borderWidth: 1.2, borderColor: "rgba(255,255,255,0.12)",
         alignItems: "center", justifyContent: "center",
     },
     title: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 1.5 },
@@ -325,9 +343,9 @@ const pm = StyleSheet.create({
     },
     inputBox: {
         flexDirection: "row", alignItems: "center",
-        backgroundColor: "rgba(255,255,255,0.02)", borderRadius: RADIUS.md,
+        backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 18,
         paddingHorizontal: 16, paddingVertical: 12,
-        borderWidth: 1.5, borderColor: COLORS.glassBorder,
+        borderWidth: 1.2, borderColor: "rgba(255,255,255,0.08)",
     },
     input: {
         flex: 1, fontSize: 32, fontFamily: FAMILY.monoBold,
@@ -335,10 +353,10 @@ const pm = StyleSheet.create({
     },
     saveBtn: {
         width: "100%", backgroundColor: COLORS.primary,
-        borderRadius: RADIUS.md, paddingVertical: 20,
-        alignItems: "center", marginBottom: 16,
+        height: 52, borderRadius: RADIUS.pill,
+        alignItems: "center", justifyContent: "center", marginBottom: 16,
         shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.3, shadowRadius: 15,
+        shadowOpacity: 0.35, shadowRadius: 15,
         elevation: 5,
     },
     saveBtnText: { fontSize: 12, fontFamily: FAMILY.bold, color: "#fff", letterSpacing: 2 },
@@ -1527,10 +1545,26 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
             <Modal visible={jumpModal} transparent animationType="fade" onRequestClose={() => setJumpModal(false)}>
                 <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={() => setJumpModal(false)}>
                     <View style={styles.jumpModal}>
+                        {/* macOS Liquid Glass Gradient */}
+                        <LinearGradient
+                            colors={['rgba(32, 32, 40, 0.95)', 'rgba(14, 14, 18, 0.98)', 'rgba(8, 8, 10, 0.99)']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 0.2, y: 1 }}
+                            style={StyleSheet.absoluteFill}
+                        />
+                        {/* Top Gloss Specular Highlight */}
+                        <LinearGradient
+                            colors={['rgba(255, 255, 255, 0.16)', 'rgba(255, 255, 255, 0.02)', 'transparent']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 0, y: 1 }}
+                            style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 80 }}
+                            pointerEvents="none"
+                        />
+
                         <View style={styles.jumpHeader}>
                             <Text style={styles.jumpTitle}>WORKOUT NAVIGATOR</Text>
-                            <TouchableOpacity onPress={() => setJumpModal(false)}>
-                                <Ionicons name="close" size={24} color={COLORS.text} />
+                            <TouchableOpacity onPress={() => setJumpModal(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                                <Ionicons name="close" size={22} color={COLORS.text} />
                             </TouchableOpacity>
                         </View>
                         <ScrollView showsVerticalScrollIndicator={false}>
@@ -1717,19 +1751,20 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.bgCard, alignItems: "center", justifyContent: "center",
         borderWidth: 1, borderColor: COLORS.border,
     },
-    modalBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.85)", justifyContent: "center", alignItems: "center" },
+    modalBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.85)", justifyContent: "center", alignItems: "center", padding: 20 },
     jumpModal: {
-        width: width - 40, maxHeight: "70%", backgroundColor: COLORS.bgCard,
-        borderRadius: RADIUS.md, padding: 24, borderWidth: 1, borderColor: COLORS.border,
+        width: "100%", maxWidth: 380, maxHeight: "70%", backgroundColor: "rgba(22, 22, 26, 0.95)",
+        borderRadius: 28, padding: 24, borderWidth: 1.2, borderColor: "rgba(255, 255, 255, 0.16)",
+        overflow: "hidden",
     },
     jumpHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
-    jumpTitle: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.text },
+    jumpTitle: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 1 },
     jumpItem: {
-        flexDirection: "row", alignItems: "center", paddingVertical: 14, borderBottomWidth: 1,
-        borderBottomColor: COLORS.border, gap: 14,
+        flexDirection: "row", alignItems: "center", paddingVertical: 14, paddingHorizontal: 12, borderBottomWidth: 1,
+        borderBottomColor: "rgba(255,255,255,0.06)", gap: 14, borderRadius: 14,
     },
-    jumpItemActive: { backgroundColor: "rgba(122, 46, 34, 0.08)", borderRadius: RADIUS.sm, paddingHorizontal: 10, marginHorizontal: -10 },
-    jumpIndex: { width: 26, height: 26, borderRadius: RADIUS.sm, backgroundColor: COLORS.bg, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: COLORS.border },
+    jumpItemActive: { backgroundColor: "rgba(227, 30, 36, 0.12)", borderRadius: 14 },
+    jumpIndex: { width: 28, height: 28, borderRadius: 10, backgroundColor: "rgba(255,255,255,0.05)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" },
     jumpIndexText: { fontSize: 11, fontFamily: FAMILY.monoBold, color: COLORS.textSub },
     jumpName: { fontSize: 14, fontFamily: FAMILY.semibold, color: COLORS.text },
     jumpMeta: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.textMuted, marginTop: 2 },

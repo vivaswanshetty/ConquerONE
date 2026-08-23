@@ -711,7 +711,24 @@ function LegalModal({ visible, title, content, onClose }) {
     return (
         <Modal visible={visible} transparent animationType="slide">
             <View style={styles.modalOverlay}>
+                <TouchableOpacity style={StyleSheet.absoluteFill} onPress={onClose} activeOpacity={1} />
                 <View style={styles.modalSheet}>
+                    {/* macOS Liquid Glass Gradient */}
+                    <LinearGradient
+                        colors={['rgba(32, 32, 40, 0.95)', 'rgba(14, 14, 18, 0.98)', 'rgba(8, 8, 10, 0.99)']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 0.2, y: 1 }}
+                        style={StyleSheet.absoluteFill}
+                    />
+                    {/* Top Gloss Specular Highlight */}
+                    <LinearGradient
+                        colors={['rgba(255, 255, 255, 0.16)', 'rgba(255, 255, 255, 0.02)', 'transparent']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 0, y: 1 }}
+                        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 80 }}
+                        pointerEvents="none"
+                    />
+
                     <View style={styles.modalHandle} />
                     <Text style={styles.modalTitle}>{title}</Text>
                     <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 400 }}>
@@ -908,10 +925,15 @@ const styles = StyleSheet.create({
     creditVersion: { fontSize: 9, fontFamily: FAMILY.mono, color: COLORS.textMuted, marginTop: 4 },
 
     modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.85)", justifyContent: "flex-end" },
-    modalSheet: { backgroundColor: COLORS.bgCard, borderTopLeftRadius: RADIUS.lg, borderTopRightRadius: RADIUS.lg, padding: 24, paddingBottom: 40, borderWidth: 1, borderColor: COLORS.border },
-    modalHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: COLORS.border, alignSelf: "center", marginBottom: 20 },
+    modalSheet: {
+        backgroundColor: "rgba(22, 22, 26, 0.95)", borderTopLeftRadius: 32, borderTopRightRadius: 32,
+        padding: 26, paddingBottom: 40,
+        borderWidth: 1.2, borderColor: "rgba(255, 255, 255, 0.14)", borderBottomWidth: 0,
+        overflow: "hidden",
+    },
+    modalHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: "rgba(255,255,255,0.2)", alignSelf: "center", marginBottom: 20 },
     modalTitle: { fontSize: 16, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 0.5, marginBottom: 16 },
-    legalBody: { fontSize: 12, fontFamily: FAMILY.regular, color: COLORS.textSub, lineHeight: 18, marginBottom: 20 },
-    modalCloseBtn: { paddingVertical: 14, borderRadius: RADIUS.md, backgroundColor: COLORS.primary, alignItems: "center" },
-    modalCloseText: { fontSize: 13, fontFamily: FAMILY.bold, color: "#FFFFFF", letterSpacing: 0.5 },
+    legalBody: { fontSize: 12.5, fontFamily: FAMILY.regular, color: COLORS.textSub, lineHeight: 19, marginBottom: 24 },
+    modalCloseBtn: { height: 50, borderRadius: RADIUS.pill, backgroundColor: COLORS.primary, alignItems: "center", justifyContent: "center" },
+    modalCloseText: { fontSize: 12, fontFamily: FAMILY.bold, color: "#FFFFFF", letterSpacing: 1 },
 });

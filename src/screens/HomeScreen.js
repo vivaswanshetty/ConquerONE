@@ -1346,15 +1346,26 @@ export default function HomeScreen({ navigation, route }) {
                 <View style={styles.freezeOverlay}>
                     <TouchableOpacity style={StyleSheet.absoluteFill} onPress={() => setFreezeModal(false)} activeOpacity={1} />
                     <View style={styles.freezeModalContent}>
+                        {/* macOS Liquid Glass Gradient */}
                         <LinearGradient
-                            colors={['rgba(30,58,138,0.95)', 'rgba(0,0,0,0.98)']}
+                            colors={['rgba(24, 46, 92, 0.90)', 'rgba(10, 18, 36, 0.96)', 'rgba(5, 8, 18, 0.99)']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 0.2, y: 1 }}
                             style={StyleSheet.absoluteFill}
+                        />
+                        {/* Top Gloss Specular Highlight */}
+                        <LinearGradient
+                            colors={['rgba(255, 255, 255, 0.20)', 'rgba(255, 255, 255, 0.03)', 'transparent']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 0, y: 1 }}
+                            style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 110 }}
+                            pointerEvents="none"
                         />
                         <View style={styles.iceEffect} />
 
                         <View style={styles.freezeModalHeader}>
                             <View style={styles.snowCircle}>
-                                <Ionicons name="snow" size={42} color="#60A5FA" />
+                                <Ionicons name="snow" size={38} color="#60A5FA" />
                             </View>
                             <Text style={styles.freezeStatus}>STREAK FROZEN</Text>
                             <Text style={styles.freezeTitle}>RECOVERY MODE ACTIVE</Text>
@@ -1398,15 +1409,26 @@ export default function HomeScreen({ navigation, route }) {
                 <View style={styles.resetOverlay}>
                     <TouchableOpacity style={StyleSheet.absoluteFill} onPress={() => setStreakResetModal(false)} activeOpacity={1} />
                     <View style={styles.resetModalContent}>
+                        {/* macOS Liquid Glass Gradient */}
                         <LinearGradient
-                            colors={['rgba(13,13,13,0.95)', 'rgba(0,0,0,0.98)']}
+                            colors={['rgba(36, 36, 44, 0.94)', 'rgba(16, 16, 20, 0.98)', 'rgba(8, 8, 10, 0.99)']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 0.2, y: 1 }}
                             style={StyleSheet.absoluteFill}
+                        />
+                        {/* Top Gloss Specular Highlight */}
+                        <LinearGradient
+                            colors={['rgba(255, 255, 255, 0.16)', 'rgba(255, 255, 255, 0.02)', 'transparent']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 0, y: 1 }}
+                            style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 110 }}
+                            pointerEvents="none"
                         />
                         <View style={styles.resetGlowEffect} />
 
                         <View style={styles.resetModalHeader}>
                             <View style={styles.brokenFlameCircle}>
-                                <Ionicons name="flame" size={38} color={COLORS.textSub} />
+                                <Ionicons name="flame" size={36} color={COLORS.textSub} />
                             </View>
                             <Text style={styles.resetStatus}>STREAK RESET</Text>
                             <Text style={styles.resetTitle}>DISCIPLINE INTERRUPTED</Text>
@@ -1450,8 +1472,16 @@ export default function HomeScreen({ navigation, route }) {
                     />
                     <View style={styles.modalSheet}>
                         <LinearGradient
-                            colors={["#0D0D0D", "#000000"]}
+                            colors={["rgba(26, 26, 32, 0.96)", "rgba(10, 10, 12, 0.99)"]}
                             style={StyleSheet.absoluteFill}
+                        />
+                        {/* Top Gloss Specular Highlight */}
+                        <LinearGradient
+                            colors={['rgba(255, 255, 255, 0.14)', 'rgba(255, 255, 255, 0.02)', 'transparent']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 0, y: 1 }}
+                            style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 80 }}
+                            pointerEvents="none"
                         />
 
                         {/* Drag Handle */}
@@ -1821,9 +1851,17 @@ function MomentsGallery({ streak, total, profile = null }) {
                         }
                     ]}>
                         <LinearGradient
-                            colors={["#151516", "#0B0B0B"]}
+                            colors={["rgba(32, 32, 40, 0.94)", "rgba(14, 14, 18, 0.98)"]}
                             style={styles.momentDetailCard}
                         >
+                            {/* Top Gloss Specular Highlight */}
+                            <LinearGradient
+                                colors={['rgba(255, 255, 255, 0.16)', 'rgba(255, 255, 255, 0.02)', 'transparent']}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 0, y: 1 }}
+                                style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 90 }}
+                                pointerEvents="none"
+                            />
                             <TouchableOpacity
                                 style={styles.closeMomentBtn}
                                 onPress={() => setExpandedMoment(null)}
@@ -2338,11 +2376,12 @@ const styles = StyleSheet.create({
     modalSheet: {
         width: "100%",
         height: "82%",
-        borderTopLeftRadius: RADIUS.lg,
-        borderTopRightRadius: RADIUS.lg,
-        borderWidth: 1,
-        borderColor: COLORS.border,
-        backgroundColor: COLORS.bgCard,
+        borderTopLeftRadius: 32,
+        borderTopRightRadius: 32,
+        borderWidth: 1.2,
+        borderColor: "rgba(255, 255, 255, 0.14)",
+        borderBottomWidth: 0,
+        backgroundColor: "rgba(20, 20, 24, 0.95)",
         overflow: "hidden",
         paddingTop: 12,
     },
@@ -2350,7 +2389,7 @@ const styles = StyleSheet.create({
         width: 36,
         height: 4,
         borderRadius: 2,
-        backgroundColor: "rgba(255, 255, 255, 0.15)",
+        backgroundColor: "rgba(255, 255, 255, 0.2)",
         alignSelf: "center",
         marginBottom: 16,
     },
@@ -2361,7 +2400,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 24,
         paddingBottom: 16,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
+        borderBottomColor: "rgba(255, 255, 255, 0.08)",
     },
     modalHeaderTitle: {
         fontFamily: FAMILY.bold,
@@ -2373,11 +2412,11 @@ const styles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: RADIUS.pill,
-        backgroundColor: "rgba(255, 255, 255, 0.05)",
+        backgroundColor: "rgba(255, 255, 255, 0.08)",
         justifyContent: "center",
         alignItems: "center",
         borderWidth: 1,
-        borderColor: COLORS.border,
+        borderColor: "rgba(255, 255, 255, 0.12)",
     },
     modalScrollContent: {
         paddingHorizontal: 24,
@@ -2391,10 +2430,10 @@ const styles = StyleSheet.create({
     },
     metricCard: {
         flex: 1,
-        backgroundColor: COLORS.bgCard,
-        borderRadius: RADIUS.lg,
-        borderWidth: 1,
-        borderColor: COLORS.border,
+        backgroundColor: "rgba(255, 255, 255, 0.03)",
+        borderRadius: 22,
+        borderWidth: 1.2,
+        borderColor: "rgba(255, 255, 255, 0.10)",
         padding: 16,
         overflow: "hidden",
     },
@@ -2839,47 +2878,53 @@ const styles = StyleSheet.create({
     // Moment Detail
     momentDetailBlur: { flex: 1, justifyContent: "center", alignItems: "center" },
     momentDetailContent: { width: '90%', maxWidth: 400 },
-    momentDetailCard: { borderRadius: RADIUS.md, padding: 24, alignItems: "center", borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bgCard },
-    closeMomentBtn: { position: "absolute", top: 16, right: 16, padding: 8, backgroundColor: "rgba(237, 234, 227, 0.06)", borderRadius: RADIUS.pill },
-    momentDetailIconWrap: { width: 64, height: 64, borderRadius: RADIUS.pill, backgroundColor: "rgba(237, 234, 227, 0.06)", alignItems: "center", justifyContent: "center", marginBottom: 20 },
+    momentDetailCard: {
+        borderRadius: 28, padding: 24, alignItems: "center",
+        borderWidth: 1.2, borderColor: "rgba(255, 255, 255, 0.16)",
+        backgroundColor: "rgba(22, 22, 26, 0.92)",
+        overflow: "hidden",
+    },
+    closeMomentBtn: { position: "absolute", top: 16, right: 16, padding: 8, backgroundColor: "rgba(255, 255, 255, 0.08)", borderRadius: RADIUS.pill, borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.12)" },
+    momentDetailIconWrap: { width: 64, height: 64, borderRadius: RADIUS.pill, backgroundColor: "rgba(255, 255, 255, 0.08)", alignItems: "center", justifyContent: "center", marginBottom: 20, borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.14)" },
     momentDetailTitle: { fontSize: 10, fontFamily: FAMILY.semibold, letterSpacing: 2, marginBottom: 8, color: COLORS.textSub },
     momentDetailSub: { fontSize: 20, fontFamily: FAMILY.bold, color: COLORS.text, textAlign: "center", marginBottom: 16, lineHeight: 24 },
     momentDetailDesc: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textSub, textAlign: "center", lineHeight: 20, marginBottom: 24 },
-    momentActionBtn: { width: '100%', height: 48, borderRadius: RADIUS.md, backgroundColor: COLORS.primary, alignItems: "center", justifyContent: "center" },
-    momentActionText: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.text },
+    momentActionBtn: { width: '100%', height: 50, borderRadius: RADIUS.pill, backgroundColor: COLORS.primary, alignItems: "center", justifyContent: "center" },
+    momentActionText: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.text, letterSpacing: 1 },
     momentShareBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", marginTop: 14, paddingVertical: 8 },
     momentShareText: { fontSize: 10, fontFamily: FAMILY.medium, color: COLORS.textSub },
 
     // Freeze Modal
     freezeOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 20 },
     freezeModalContent: {
-        width: '100%', borderRadius: RADIUS.md, padding: 24, alignItems: 'center',
-        borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bgCard,
+        width: '100%', maxWidth: 380, borderRadius: 28, padding: 26, alignItems: 'center',
+        borderWidth: 1.2, borderColor: 'rgba(255, 255, 255, 0.18)', backgroundColor: 'rgba(16, 26, 48, 0.85)',
+        overflow: 'hidden',
     },
     snowCircle: {
-        width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(237, 234, 227, 0.06)',
+        width: 68, height: 68, borderRadius: RADIUS.pill, backgroundColor: 'rgba(96, 165, 250, 0.12)',
         alignItems: 'center', justifyContent: 'center', marginBottom: 16,
-        borderWidth: 1, borderColor: COLORS.border,
+        borderWidth: 1.2, borderColor: 'rgba(96, 165, 250, 0.25)',
     },
-    freezeStatus: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 2, marginBottom: 6 },
-    freezeTitle: { fontSize: 18, fontFamily: FAMILY.bold, color: COLORS.text, textAlign: 'center', lineHeight: 22 },
+    freezeStatus: { fontSize: 9.5, fontFamily: FAMILY.semibold, color: '#93C5FD', letterSpacing: 2, marginBottom: 6 },
+    freezeTitle: { fontSize: 20, fontFamily: FAMILY.bold, color: COLORS.text, textAlign: 'center', lineHeight: 24 },
     freezeDesc: {
-        fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textSub,
+        fontSize: 13, fontFamily: FAMILY.regular, color: 'rgba(255, 255, 255, 0.7)',
         textAlign: 'center', lineHeight: 20, marginBottom: 20
     },
     protectionBadge: {
         flexDirection: 'row', alignItems: 'center', gap: 6,
-        backgroundColor: 'rgba(237, 234, 227, 0.05)', paddingHorizontal: 12, paddingVertical: 6,
-        borderRadius: RADIUS.sm, marginBottom: 24, borderWidth: 1, borderColor: COLORS.border
+        backgroundColor: 'rgba(96, 165, 250, 0.10)', paddingHorizontal: 14, paddingVertical: 7,
+        borderRadius: RADIUS.pill, marginBottom: 24, borderWidth: 1, borderColor: 'rgba(96, 165, 250, 0.22)'
     },
-    protectionText: { fontSize: 10, fontFamily: FAMILY.medium, color: COLORS.textSub },
+    protectionText: { fontSize: 10, fontFamily: FAMILY.semibold, color: '#BFDBFE', letterSpacing: 0.5 },
     freezeCloseBtn: {
-        width: '100%', height: 48, borderRadius: RADIUS.md, backgroundColor: COLORS.primary,
+        width: '100%', height: 50, borderRadius: RADIUS.pill, backgroundColor: COLORS.primary,
         alignItems: 'center', justifyContent: 'center'
     },
-    freezeCloseText: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.text },
-    unfreezeLink: { marginTop: 14, paddingVertical: 6 },
-    unfreezeLinkText: { fontSize: 11, fontFamily: FAMILY.regular, color: COLORS.textMuted },
+    freezeCloseText: { fontSize: 12, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 1 },
+    unfreezeLink: { marginTop: 14, paddingVertical: 8, paddingHorizontal: 16 },
+    unfreezeLinkText: { fontSize: 11, fontFamily: FAMILY.semibold, color: 'rgba(255, 255, 255, 0.45)', letterSpacing: 0.8 },
     
     // Footer
     footer: { alignItems: "center", marginTop: 40, paddingHorizontal: SPACING.base },
@@ -2890,31 +2935,32 @@ const styles = StyleSheet.create({
     // Streak Reset Modal Styles
     resetOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 20 },
     resetModalContent: {
-        width: '100%', borderRadius: RADIUS.md, padding: 24, alignItems: 'center',
-        borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bgCard,
+        width: '100%', maxWidth: 380, borderRadius: 28, padding: 26, alignItems: 'center',
+        borderWidth: 1.2, borderColor: 'rgba(255, 255, 255, 0.16)', backgroundColor: 'rgba(24, 24, 28, 0.88)',
+        overflow: 'hidden',
     },
     brokenFlameCircle: {
-        width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        width: 68, height: 68, borderRadius: RADIUS.pill, backgroundColor: 'rgba(255, 255, 255, 0.06)',
         alignItems: 'center', justifyContent: 'center', marginBottom: 16,
-        borderWidth: 1, borderColor: COLORS.border,
+        borderWidth: 1.2, borderColor: 'rgba(255, 255, 255, 0.12)',
     },
-    resetStatus: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 2, marginBottom: 6 },
-    resetTitle: { fontSize: 18, fontFamily: FAMILY.bold, color: COLORS.text, textAlign: 'center', lineHeight: 22 },
+    resetStatus: { fontSize: 9.5, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 2, marginBottom: 6 },
+    resetTitle: { fontSize: 20, fontFamily: FAMILY.bold, color: COLORS.text, textAlign: 'center', lineHeight: 24 },
     resetDesc: {
         fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textSub,
         textAlign: 'center', lineHeight: 20, marginBottom: 20
     },
     warningBadge: {
         flexDirection: 'row', alignItems: 'center', gap: 6,
-        backgroundColor: 'rgba(255, 255, 255, 0.03)', paddingHorizontal: 12, paddingVertical: 6,
-        borderRadius: RADIUS.sm, marginBottom: 24, borderWidth: 1, borderColor: COLORS.border
+        backgroundColor: 'rgba(255, 255, 255, 0.05)', paddingHorizontal: 14, paddingVertical: 7,
+        borderRadius: RADIUS.pill, marginBottom: 24, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.10)'
     },
-    warningBadgeText: { fontSize: 10, fontFamily: FAMILY.medium, color: COLORS.textSub },
+    warningBadgeText: { fontSize: 10, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 0.5 },
     resetCloseBtn: {
-        width: '100%', height: 48, borderRadius: RADIUS.md, backgroundColor: COLORS.primary,
+        width: '100%', height: 50, borderRadius: RADIUS.pill, backgroundColor: COLORS.primary,
         alignItems: 'center', justifyContent: 'center',
     },
-    resetCloseText: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.text },
+    resetCloseText: { fontSize: 12, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 1 },
 
     // Resume Card Styles
     resumeCard: {

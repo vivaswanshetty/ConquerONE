@@ -133,6 +133,22 @@ function HistoryModal({ visible, sessions, onClose, onRestore, onDelete, onClear
             <View style={hm.overlay}>
                 <TouchableOpacity style={StyleSheet.absoluteFill} onPress={onClose} activeOpacity={1} />
                 <View style={hm.sheet}>
+                    {/* macOS Liquid Glass Gradient */}
+                    <LinearGradient
+                        colors={['rgba(32, 32, 40, 0.95)', 'rgba(14, 14, 18, 0.98)', 'rgba(8, 8, 10, 0.99)']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 0.2, y: 1 }}
+                        style={StyleSheet.absoluteFill}
+                    />
+                    {/* Top Gloss Specular Highlight */}
+                    <LinearGradient
+                        colors={['rgba(255, 255, 255, 0.16)', 'rgba(255, 255, 255, 0.02)', 'transparent']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 0, y: 1 }}
+                        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 80 }}
+                        pointerEvents="none"
+                    />
+
                     <View style={hm.handle} />
                     <View style={hm.header}>
                         <Text style={hm.title}>CHAT HISTORY</Text>
@@ -209,6 +225,22 @@ function VoiceSettingsModal({ visible, voices, selectedVoice, onSelect, onClose,
             <View style={hm.overlay}>
                 <TouchableOpacity style={StyleSheet.absoluteFill} onPress={onClose} activeOpacity={1} />
                 <View style={[hm.sheet, { maxHeight: '75%' }]}>
+                    {/* macOS Liquid Glass Gradient */}
+                    <LinearGradient
+                        colors={['rgba(32, 32, 40, 0.95)', 'rgba(14, 14, 18, 0.98)', 'rgba(8, 8, 10, 0.99)']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 0.2, y: 1 }}
+                        style={StyleSheet.absoluteFill}
+                    />
+                    {/* Top Gloss Specular Highlight */}
+                    <LinearGradient
+                        colors={['rgba(255, 255, 255, 0.16)', 'rgba(255, 255, 255, 0.02)', 'transparent']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 0, y: 1 }}
+                        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 80 }}
+                        pointerEvents="none"
+                    />
+
                     <View style={hm.handle} />
                     <View style={hm.header}>
                         <Text style={hm.title}>VOICE SETTINGS</Text>
@@ -338,22 +370,22 @@ const vmStyles = StyleSheet.create({
 });
 
 const hm = StyleSheet.create({
-    overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
+    overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'flex-end' },
     sheet: {
-        backgroundColor: '#0D0D0D', borderTopLeftRadius: RADIUS.lg, borderTopRightRadius: RADIUS.lg,
-        borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)', maxHeight: '75%',
-        paddingBottom: 40,
+        backgroundColor: 'rgba(22, 22, 26, 0.95)', borderTopLeftRadius: 32, borderTopRightRadius: 32,
+        borderWidth: 1.2, borderColor: 'rgba(255,255,255,0.14)', borderBottomWidth: 0, maxHeight: '75%',
+        paddingBottom: 40, overflow: 'hidden',
     },
-    handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.15)', alignSelf: 'center', marginTop: 14, marginBottom: 20 },
+    handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.2)', alignSelf: 'center', marginTop: 14, marginBottom: 20 },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24, marginBottom: 20 },
-    title: { fontSize: 12, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 2 },
-    clearBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: RADIUS.sm, backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
-    clearText: { fontSize: 11, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 1 },
+    title: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 1.5 },
+    clearBtn: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: RADIUS.pill, backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)' },
+    clearText: { fontSize: 10.5, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 1 },
     empty: { alignItems: 'center', paddingVertical: 60 },
     emptyText: { fontSize: 13, fontFamily: FAMILY.medium, color: COLORS.textMuted },
     row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, marginBottom: 8 },
-    rowContent: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: RADIUS.md, padding: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
-    rowIcon: { width: 36, height: 36, borderRadius: RADIUS.sm, backgroundColor: 'rgba(255,255,255,0.05)', alignItems: 'center', justifyContent: 'center' },
+    rowContent: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 18, padding: 16, borderWidth: 1.2, borderColor: 'rgba(255,255,255,0.08)' },
+    rowIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.05)', alignItems: 'center', justifyContent: 'center' },
     rowTitle: { fontSize: 13, fontFamily: FAMILY.semibold, color: COLORS.text, marginBottom: 4 },
     rowDate: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.textMuted },
     deleteBtn: { padding: 12, marginLeft: 8 },

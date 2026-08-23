@@ -173,7 +173,24 @@ function EditExerciseModal({ visible, ex, onSave, onClose }) {
     return (
         <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
             <View style={styles.modalOverlay}>
+                <TouchableOpacity style={StyleSheet.absoluteFill} onPress={onClose} activeOpacity={1} />
                 <View style={styles.modalContent}>
+                    {/* macOS Liquid Glass Gradient */}
+                    <LinearGradient
+                        colors={['rgba(32, 32, 40, 0.95)', 'rgba(14, 14, 18, 0.98)', 'rgba(8, 8, 10, 0.99)']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 0.2, y: 1 }}
+                        style={StyleSheet.absoluteFill}
+                    />
+                    {/* Top Gloss Specular Highlight */}
+                    <LinearGradient
+                        colors={['rgba(255, 255, 255, 0.16)', 'rgba(255, 255, 255, 0.02)', 'transparent']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 0, y: 1 }}
+                        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 90 }}
+                        pointerEvents="none"
+                    />
+
                     <View style={styles.modalHeader}>
                         <Text style={styles.modalTitle}>EDIT TARGETS</Text>
                         <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
@@ -216,7 +233,7 @@ function EditExerciseModal({ visible, ex, onSave, onClose }) {
                     </View>
 
                     <TouchableOpacity style={styles.saveBtn} onPress={handleSave} activeOpacity={0.8}>
-                        <Text style={styles.saveBtnText}>Save Targets</Text>
+                        <Text style={styles.saveBtnText}>SAVE TARGETS</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -439,26 +456,27 @@ const styles = StyleSheet.create({
     // Edit Modal Styles
     modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.85)", justifyContent: "flex-end" },
     modalContent: {
-        backgroundColor: COLORS.bgCard, borderTopLeftRadius: RADIUS.lg, borderTopRightRadius: RADIUS.lg,
-        paddingHorizontal: 24, paddingTop: 24, paddingBottom: 12,
-        borderWidth: 1, borderColor: COLORS.border, borderBottomWidth: 0,
+        backgroundColor: "rgba(22, 22, 26, 0.95)", borderTopLeftRadius: 32, borderTopRightRadius: 32,
+        paddingHorizontal: 24, paddingTop: 26, paddingBottom: 36,
+        borderWidth: 1.2, borderColor: "rgba(255, 255, 255, 0.14)", borderBottomWidth: 0,
+        overflow: "hidden",
     },
     modalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
-    modalTitle: { fontSize: 12, fontFamily: FAMILY.bold, color: COLORS.textSub },
-    modalExName: { fontSize: 18, fontFamily: FAMILY.bold, color: COLORS.text, marginBottom: 28 },
+    modalTitle: { fontSize: 12, fontFamily: FAMILY.bold, color: COLORS.textSub, letterSpacing: 1 },
+    modalExName: { fontSize: 18, fontFamily: FAMILY.bold, color: COLORS.text, marginBottom: 26 },
     inputGrid: { flexDirection: "row", gap: 12, marginBottom: 28 },
     inputBox: { flex: 1, gap: 8 },
     inputLabel: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textSub, letterSpacing: 1 },
     input: {
-        backgroundColor: COLORS.bg, borderRadius: RADIUS.sm, padding: 12,
+        backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 16, padding: 14,
         color: COLORS.text, fontSize: 16, fontFamily: FAMILY.monoBold, textAlign: "center",
-        borderWidth: 1, borderColor: COLORS.border,
+        borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.08)",
     },
     saveBtn: {
-        backgroundColor: COLORS.primary, paddingVertical: 16, borderRadius: RADIUS.md,
-        alignItems: "center",
+        backgroundColor: COLORS.primary, height: 50, borderRadius: RADIUS.pill,
+        alignItems: "center", justifyContent: "center",
     },
-    saveBtnText: { fontSize: 13, fontFamily: FAMILY.bold, color: "#FFFFFF", letterSpacing: 0.5 },
+    saveBtnText: { fontSize: 12, fontFamily: FAMILY.bold, color: "#FFFFFF", letterSpacing: 1 },
     editBtnSmall: {
         width: 28, height: 28, borderRadius: RADIUS.pill, backgroundColor: COLORS.bg,
         alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: COLORS.border,

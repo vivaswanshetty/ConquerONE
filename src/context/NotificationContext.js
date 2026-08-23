@@ -114,7 +114,24 @@ export function NotificationProvider({ children }) {
             {/* Global Custom Dialog Modal */}
             <Modal visible={dialog.visible} transparent animationType="fade" onRequestClose={hideDialog}>
                 <View style={styles.dialogOverlay}>
+                    <TouchableOpacity style={StyleSheet.absoluteFill} onPress={hideDialog} activeOpacity={1} />
                     <View style={styles.dialogSheet}>
+                        {/* macOS Liquid Glass Gradient */}
+                        <LinearGradient
+                            colors={['rgba(36, 36, 44, 0.94)', 'rgba(16, 16, 20, 0.98)', 'rgba(8, 8, 10, 0.99)']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 0.2, y: 1 }}
+                            style={StyleSheet.absoluteFill}
+                        />
+                        {/* Top Gloss Specular Highlight */}
+                        <LinearGradient
+                            colors={['rgba(255, 255, 255, 0.16)', 'rgba(255, 255, 255, 0.02)', 'transparent']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 0, y: 1 }}
+                            style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 90 }}
+                            pointerEvents="none"
+                        />
+
                         <View style={styles.modalHandle} />
                         <Text style={styles.dialogTitle}>{dialog.title.toUpperCase()}</Text>
                         <Text style={styles.dialogMessage}>{dialog.message}</Text>
@@ -199,71 +216,76 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(0,0,0,0.85)",
     },
     dialogSheet: {
-        width: "86%",
-        backgroundColor: "#0A0A0A",
-        borderRadius: RADIUS.lg,
-        borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.08)",
-        padding: 28,
+        width: "88%",
+        maxWidth: 360,
+        backgroundColor: "rgba(22, 22, 26, 0.92)",
+        borderRadius: 28,
+        borderWidth: 1.2,
+        borderColor: "rgba(255, 255, 255, 0.16)",
+        padding: 26,
         alignItems: "center",
+        overflow: "hidden",
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.5,
-        shadowRadius: 16,
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.6,
+        shadowRadius: 20,
         elevation: 20,
     },
     modalHandle: { 
         width: 36, 
         height: 4, 
         borderRadius: 2, 
-        backgroundColor: "rgba(255,255,255,0.1)", 
+        backgroundColor: "rgba(255,255,255,0.2)", 
         alignSelf: "center", 
-        marginBottom: 24 
+        marginBottom: 20 
     },
     dialogTitle: {
-        fontSize: 14,
-        fontFamily: FAMILY.header,
+        fontSize: 15,
+        fontFamily: FAMILY.bold,
         color: COLORS.text,
-        letterSpacing: 1.5,
-        marginBottom: 12,
+        letterSpacing: 1,
+        marginBottom: 10,
         textAlign: "center",
     },
     dialogMessage: {
-        fontSize: 12,
+        fontSize: 12.5,
         fontFamily: FAMILY.regular,
         color: COLORS.textSub,
-        lineHeight: 18,
-        marginBottom: 28,
+        lineHeight: 19,
+        marginBottom: 24,
         textAlign: "center",
     },
     modalBtns: { 
         flexDirection: "row", 
-        gap: 12 
+        gap: 12,
+        width: "100%",
     },
     modalCancelBtn: { 
         flex: 1, 
-        paddingVertical: 16, 
-        borderRadius: RADIUS.md, 
-        backgroundColor: "rgba(255,255,255,0.03)", 
+        height: 48,
+        borderRadius: RADIUS.pill, 
+        backgroundColor: "rgba(255,255,255,0.06)", 
         alignItems: "center", 
+        justifyContent: "center",
         borderWidth: 1, 
-        borderColor: "rgba(255,255,255,0.05)" 
+        borderColor: "rgba(255,255,255,0.12)" 
     },
     modalCancelText: { 
-        fontSize: 12, 
+        fontSize: 11, 
         fontFamily: FAMILY.semibold, 
-        color: COLORS.textMuted, 
+        color: COLORS.textSub, 
         letterSpacing: 1 
     },
     modalSaveBtn: { 
-        flex: 2, 
-        paddingVertical: 16, 
-        borderRadius: RADIUS.md, 
+        flex: 1.6, 
+        height: 48,
+        borderRadius: RADIUS.pill, 
         backgroundColor: COLORS.primary, 
-        alignItems: "center" 
+        alignItems: "center",
+        justifyContent: "center",
     },
     modalSaveText: { 
-        fontSize: 12, 
+        fontSize: 11, 
         fontFamily: FAMILY.bold, 
         color: "#fff", 
         letterSpacing: 1 

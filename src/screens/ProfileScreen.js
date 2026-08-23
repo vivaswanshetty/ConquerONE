@@ -49,6 +49,22 @@ function EditModal({ visible, title, value, onSave, onClose, multiChoice, choice
             >
                 <TouchableOpacity style={StyleSheet.absoluteFill} onPress={onClose} activeOpacity={1} />
                 <View style={styles.modalSheet}>
+                    {/* macOS Liquid Glass Gradient */}
+                    <LinearGradient
+                        colors={['rgba(32, 32, 40, 0.95)', 'rgba(14, 14, 18, 0.98)', 'rgba(8, 8, 10, 0.99)']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 0.2, y: 1 }}
+                        style={StyleSheet.absoluteFill}
+                    />
+                    {/* Top Gloss Specular Highlight */}
+                    <LinearGradient
+                        colors={['rgba(255, 255, 255, 0.16)', 'rgba(255, 255, 255, 0.02)', 'transparent']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 0, y: 1 }}
+                        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 80 }}
+                        pointerEvents="none"
+                    />
+
                     <View style={styles.modalHandle} />
                     <Text style={styles.modalTitle}>{title}</Text>
 
@@ -1074,32 +1090,33 @@ const styles = StyleSheet.create({
     // Modal
     modalOverlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.85)" },
     modalSheet: {
-        backgroundColor: "#0A0A0A", borderTopLeftRadius: RADIUS.lg, borderTopRightRadius: RADIUS.lg,
+        backgroundColor: "rgba(22, 22, 26, 0.95)", borderTopLeftRadius: 32, borderTopRightRadius: 32,
         padding: 28, paddingBottom: 48,
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.06)",
+        borderWidth: 1.2, borderColor: "rgba(255,255,255,0.14)", borderBottomWidth: 0,
+        overflow: "hidden",
     },
-    modalHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: "rgba(255,255,255,0.1)", alignSelf: "center", marginBottom: 24 },
+    modalHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: "rgba(255,255,255,0.2)", alignSelf: "center", marginBottom: 24 },
     modalTitle: { fontSize: 16, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 0.5, marginBottom: 24 },
     modalInputWrap: {
-        backgroundColor: "rgba(255,255,255,0.02)", borderRadius: RADIUS.sm,
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
+        backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 16,
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
         paddingHorizontal: 20, paddingVertical: 16, marginBottom: 28,
         flexDirection: "row", alignItems: "center",
     },
     modalInput: { color: COLORS.text, fontFamily: FAMILY.regular, fontSize: 16, flex: 1, letterSpacing: 0.1 },
     choiceGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 28 },
     choiceBtn: {
-        paddingHorizontal: 20, paddingVertical: 14, borderRadius: RADIUS.sm,
-        backgroundColor: "rgba(255,255,255,0.02)",
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
+        paddingHorizontal: 20, paddingVertical: 14, borderRadius: 16,
+        backgroundColor: "rgba(255,255,255,0.03)",
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
     },
-    choiceBtnActive: { backgroundColor: "rgba(227, 30, 36, 0.12)", borderColor: "rgba(227, 30, 36, 0.4)" },
+    choiceBtnActive: { backgroundColor: "rgba(227, 30, 36, 0.14)", borderColor: "rgba(227, 30, 36, 0.45)" },
     choiceBtnText: { fontSize: 10, fontFamily: FAMILY.medium, color: COLORS.textMuted, letterSpacing: 0.5 },
     choiceBtnTextActive: { color: COLORS.text, fontFamily: FAMILY.bold },
     modalBtns: { flexDirection: "row", gap: 12 },
-    modalCancelBtn: { flex: 1, paddingVertical: 16, borderRadius: RADIUS.md, backgroundColor: "rgba(255,255,255,0.03)", alignItems: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.05)" },
-    modalCancelText: { fontSize: 12, fontFamily: FAMILY.medium, color: COLORS.textMuted, letterSpacing: 1 },
-    modalSaveBtn: { flex: 2, paddingVertical: 16, borderRadius: RADIUS.md, backgroundColor: COLORS.primary, alignItems: "center" },
+    modalCancelBtn: { flex: 1, height: 48, borderRadius: RADIUS.pill, backgroundColor: "rgba(255,255,255,0.06)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.12)" },
+    modalCancelText: { fontSize: 11.5, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 1 },
+    modalSaveBtn: { flex: 2, height: 48, borderRadius: RADIUS.pill, backgroundColor: COLORS.primary, alignItems: "center", justifyContent: "center" },
     modalSaveText: { fontSize: 12, fontFamily: FAMILY.bold, color: "#fff", letterSpacing: 1 },
     miniActionBtn: {
         backgroundColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 10, paddingVertical: 6,
@@ -1143,21 +1160,23 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(0,0,0,0.85)",
     },
     dialogSheet: {
-        width: "86%",
-        backgroundColor: "#0A0A0A",
-        borderRadius: RADIUS.lg,
-        borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.08)",
-        padding: 28,
+        width: "88%",
+        maxWidth: 360,
+        backgroundColor: "rgba(22, 22, 26, 0.92)",
+        borderRadius: 28,
+        borderWidth: 1.2,
+        borderColor: "rgba(255,255,255,0.16)",
+        padding: 26,
         alignItems: "center",
+        overflow: "hidden",
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.5,
-        shadowRadius: 16,
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.6,
+        shadowRadius: 20,
         elevation: 20,
     },
     dialogTitle: {
-        fontSize: 14,
+        fontSize: 15,
         fontFamily: FAMILY.bold,
         color: COLORS.text,
         letterSpacing: 0.5,
@@ -1165,11 +1184,11 @@ const styles = StyleSheet.create({
         textAlign: "center",
     },
     dialogMessage: {
-        fontSize: 12,
+        fontSize: 12.5,
         fontFamily: FAMILY.regular,
         color: COLORS.textSub,
         lineHeight: 18,
-        marginBottom: 28,
+        marginBottom: 26,
         textAlign: "center",
     },
 });
