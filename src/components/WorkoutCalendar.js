@@ -9,7 +9,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
-import { COLORS, FAMILY, RADIUS } from "../utils/theme";
+import { COLORS, FAMILY, RADIUS, getMuscleColor } from "../utils/theme";
 import { formatDuration } from "../utils/storage";
 
 const { width } = Dimensions.get("window");
@@ -197,16 +197,16 @@ export default function WorkoutCalendar({ history = [], style }) {
         const isSunday = dayOfWeek === 0;
 
         const SCHEDULED_PLAN = {
-            1: { target: "Chest + Triceps", color: "#E31E24" },
-            2: { target: "Back + Biceps + Forearms", color: "#5856D6" },
-            3: { target: "Shoulders + Abs", color: "#FF9500" },
-            4: { target: "Legs", color: "#FF2D55" },
-            5: { target: "Chest + Back (Heavy)", color: "#E31E24" },
-            6: { target: "Arms + Forearms + Abs", color: "#007AFF" },
-            0: { target: "Rest & Recovery", color: "#8E8E93" },
+            1: { target: "Chest + Triceps", color: getMuscleColor("PUSH") },
+            2: { target: "Back + Biceps + Forearms", color: getMuscleColor("PULL") },
+            3: { target: "Shoulders + Abs", color: getMuscleColor("ARMS/SHOULDERS") },
+            4: { target: "Legs", color: getMuscleColor("LEGS") },
+            5: { target: "Chest + Back (Heavy)", color: getMuscleColor("PUSH") },
+            6: { target: "Arms + Forearms + Abs", color: getMuscleColor("ARMS/SHOULDERS") },
+            0: { target: "Rest & Recovery", color: getMuscleColor("RECOVERY") },
         };
 
-        const plan = SCHEDULED_PLAN[dayOfWeek] || { target: "Workout", color: "#8E8E93" };
+        const plan = SCHEDULED_PLAN[dayOfWeek] || { target: "Workout", color: COLORS.textMuted };
 
         return {
             dateObj,
@@ -422,7 +422,8 @@ export default function WorkoutCalendar({ history = [], style }) {
                                 hour12: true,
                             });
                             return (
-                                <View key={idx} style={styles.workoutItem}>
+                                <View key={idx} style={[styles.workoutItem, { borderColor: `${getMuscleColor(w.target)}33` }]}>
+                                    <View style={[styles.workoutLeftSpine, { backgroundColor: getMuscleColor(w.target) }]} />
                                     <View style={styles.workoutItemHeader}>
                                         <View style={{ flex: 1 }}>
                                             <Text style={styles.workoutTarget}>{w.target?.toUpperCase() || "WORKOUT"}</Text>
@@ -430,29 +431,29 @@ export default function WorkoutCalendar({ history = [], style }) {
                                                 {timeStr} · {formatDuration(w.durationSec || 0)}
                                             </Text>
                                         </View>
-                                        <Ionicons name="checkmark-circle" size={18} color={COLORS.accent} />
+                                        <Ionicons name="checkmark-circle" size={18} color={getMuscleColor(w.target)} />
                                     </View>
 
                                     {/* Exercises Preview */}
                                     {w.exercises && w.exercises.length > 0 && (
                                         <View style={styles.exerciseChipsRow}>
                                             {w.exercises.slice(0, 4).map((ex, exIdx) => (
-                                                <View key={exIdx} style={styles.exerciseChip}>
-                                                    <Text style={styles.exerciseChipText} numberOfLines={1}>
-                                                        {ex.name} ({ex.sets}s)
-                                                    </Text>
-                                                </View>
-                                            ))}
-                                            {w.exercises.length > 4 && (
-                                                <View style={styles.exerciseChipMore}>
-                                                    <Text style={styles.exerciseChipText}>
-                                                        +{w.exercises.length - 4} MORE
-                                                    </Text>
-                                                </View>
-                                            )}
-                                        </View>
-                                    )}
-                                </View>
+                                                 <View key={exIdx} style={styles.exerciseChip}>
+                                                     <Text style={styles.exerciseChipText} numberOfLines={1}>
+                                                         {ex.name} ({ex.sets}s)
+                                                     </Text>
+                                                 </View>
+                                             ))}
+                                             {w.exercises.length > 4 && (
+                                                 <View style={styles.exerciseChipMore}>
+                                                     <Text style={styles.exerciseChipText}>
+                                                         +{w.exercises.length - 4} MORE
+                                                     </Text>
+                                                 </View>
+                                             )}
+                                         </View>
+                                     )}
+                                 </View>
                             );
                         })}
                     </View>
@@ -499,17 +500,17 @@ export default function WorkoutCalendar({ history = [], style }) {
 const styles = StyleSheet.create({
     container: {
         backgroundColor: COLORS.bgCard,
-        borderRadius: RADIUS.md,
+        borderRadius: RADIUS.lg,
         borderWidth: 1,
         borderColor: COLORS.border,
-        padding: 16,
+        padding: 18,
         overflow: "hidden",
     },
     header: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        marginBottom: 14,
+        marginBottom: 16,
     },
     titleWrap: {
         flexDirection: "row",
@@ -519,36 +520,37 @@ const styles = StyleSheet.create({
     titleBadge: {
         width: 3,
         height: 12,
-        backgroundColor: COLORS.accent,
+        backgroundColor: COLORS.primary,
         borderRadius: 2,
     },
     monthTitle: {
         fontSize: 14,
-        fontFamily: FAMILY.header,
+        fontFamily: FAMILY.bold,
         color: COLORS.text,
-        letterSpacing: -0.2,
+        letterSpacing: 0.5,
     },
     navRow: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 6,
+        gap: 8,
     },
     todayBtn: {
         paddingHorizontal: 10,
-        paddingVertical: 4,
+        paddingVertical: 5,
         borderRadius: RADIUS.sm,
-        backgroundColor: "rgba(237, 234, 227, 0.06)",
+        backgroundColor: "rgba(255, 255, 255, 0.05)",
         borderWidth: 1,
         borderColor: COLORS.border,
     },
     todayBtnText: {
         fontSize: 9,
-        fontFamily: FAMILY.mono,
+        fontFamily: FAMILY.monoBold,
         color: COLORS.text,
+        letterSpacing: 0.5,
     },
     navBtn: {
-        width: 28,
-        height: 28,
+        width: 30,
+        height: 30,
         borderRadius: RADIUS.pill,
         backgroundColor: COLORS.bg,
         borderWidth: 1,
@@ -566,27 +568,28 @@ const styles = StyleSheet.create({
         borderRadius: RADIUS.md,
         borderWidth: 1,
         borderColor: COLORS.border,
-        paddingVertical: 10,
-        marginBottom: 14,
+        paddingVertical: 12,
+        marginBottom: 16,
     },
     statItem: {
         alignItems: "center",
         flex: 1,
     },
     statVal: {
-        fontSize: 15,
+        fontSize: 16,
         fontFamily: FAMILY.monoBold,
         color: COLORS.text,
     },
     statLbl: {
         fontSize: 9,
-        fontFamily: FAMILY.regular,
+        fontFamily: FAMILY.bold,
         color: COLORS.textSub,
-        marginTop: 2,
+        letterSpacing: 0.5,
+        marginTop: 3,
     },
     statDivider: {
         width: 1,
-        height: 18,
+        height: 20,
         backgroundColor: COLORS.border,
     },
 
@@ -594,15 +597,16 @@ const styles = StyleSheet.create({
     weekdaysRow: {
         flexDirection: "row",
         justifyContent: "space-between",
-        marginBottom: 8,
+        marginBottom: 10,
         paddingHorizontal: 2,
     },
     weekdayLabel: {
         flex: 1,
         textAlign: "center",
-        fontSize: 9,
-        fontFamily: FAMILY.mono,
+        fontSize: 9.5,
+        fontFamily: FAMILY.bold,
         color: COLORS.textMuted,
+        letterSpacing: 0.5,
     },
 
     // Grid
@@ -610,15 +614,16 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         flexWrap: "wrap",
         justifyContent: "flex-start",
+        marginHorizontal: -2,
     },
     cell: {
         width: `${100 / 7}%`,
-        aspectRatio: 1,
-        padding: 2,
+        aspectRatio: 1.05,
+        padding: 3,
         alignItems: "center",
         justifyContent: "center",
         borderRadius: RADIUS.sm,
-        marginVertical: 2,
+        marginVertical: 3,
         borderWidth: 1,
         borderColor: "transparent",
         backgroundColor: "transparent",
@@ -632,28 +637,28 @@ const styles = StyleSheet.create({
         borderWidth: 1.5,
     },
     cellWorkout: {
-        backgroundColor: "rgba(237, 234, 227, 0.16)",
-        borderColor: "rgba(237, 234, 227, 0.3)",
+        backgroundColor: "rgba(255, 255, 255, 0.08)",
+        borderColor: "rgba(255, 255, 255, 0.18)",
     },
     cellSelected: {
-        borderColor: COLORS.text,
-        backgroundColor: "rgba(237, 234, 227, 0.12)",
+        borderColor: COLORS.primary,
+        backgroundColor: "rgba(227, 30, 36, 0.1)",
     },
     cellMissed: {
-        backgroundColor: "rgba(237, 234, 227, 0.02)",
+        backgroundColor: "rgba(255, 255, 255, 0.02)",
     },
     todayGlow: {
         position: "absolute",
-        top: 3,
-        right: 3,
+        top: 4,
+        right: 4,
         width: 4,
         height: 4,
         borderRadius: 2,
-        backgroundColor: COLORS.accent,
+        backgroundColor: COLORS.primary,
     },
 
     cellText: {
-        fontSize: 10,
+        fontSize: 10.5,
         fontFamily: FAMILY.mono,
         color: COLORS.textSub,
     },
@@ -683,9 +688,9 @@ const styles = StyleSheet.create({
         justifyContent: "center",
     },
     workoutDot: {
-        width: 3,
-        height: 3,
-        borderRadius: 1.5,
+        width: 3.5,
+        height: 3.5,
+        borderRadius: 2,
         backgroundColor: COLORS.text,
     },
     workoutCountText: {
@@ -702,50 +707,63 @@ const styles = StyleSheet.create({
 
     // Inspector Card
     inspectorCard: {
-        marginTop: 14,
-        borderRadius: RADIUS.md,
+        marginTop: 16,
+        borderRadius: RADIUS.lg,
         borderWidth: 1,
         borderColor: COLORS.border,
         backgroundColor: COLORS.bg,
-        padding: 14,
+        padding: 16,
+        overflow: "hidden",
     },
     inspectorHeader: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        paddingBottom: 8,
+        paddingBottom: 10,
         borderBottomWidth: 1,
         borderBottomColor: COLORS.border,
-        marginBottom: 10,
+        marginBottom: 12,
     },
     inspectorTitle: {
-        fontSize: 11,
-        fontFamily: FAMILY.semibold,
+        fontSize: 11.5,
+        fontFamily: FAMILY.bold,
         color: COLORS.text,
+        letterSpacing: 0.5,
     },
     inspectorBadge: {
-        paddingHorizontal: 6,
-        paddingVertical: 2,
+        paddingHorizontal: 8,
+        paddingVertical: 3,
         borderRadius: RADIUS.sm,
-        backgroundColor: "rgba(237, 234, 227, 0.05)",
+        backgroundColor: "rgba(255, 255, 255, 0.05)",
         borderWidth: 1,
         borderColor: COLORS.border,
     },
     inspectorBadgeText: {
-        fontSize: 8,
-        fontFamily: FAMILY.mono,
+        fontSize: 8.5,
+        fontFamily: FAMILY.monoBold,
         color: COLORS.textSub,
+        letterSpacing: 0.5,
     },
 
     workoutList: {
-        gap: 8,
+        gap: 10,
     },
     workoutItem: {
         backgroundColor: COLORS.bgCard,
         borderRadius: RADIUS.md,
-        padding: 12,
+        padding: 14,
+        paddingLeft: 18,
         borderWidth: 1,
         borderColor: COLORS.border,
+        position: "relative",
+        overflow: "hidden",
+    },
+    workoutLeftSpine: {
+        position: "absolute",
+        left: 0,
+        top: 0,
+        bottom: 0,
+        width: 3,
     },
     workoutItemHeader: {
         flexDirection: "row",
@@ -753,36 +771,37 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
     },
     workoutTarget: {
-        fontSize: 12,
-        fontFamily: FAMILY.semibold,
+        fontSize: 12.5,
+        fontFamily: FAMILY.bold,
         color: COLORS.text,
+        letterSpacing: 0.5,
     },
     workoutSub: {
         fontSize: 10,
         fontFamily: FAMILY.mono,
         color: COLORS.textSub,
-        marginTop: 2,
+        marginTop: 3,
     },
 
     exerciseChipsRow: {
         flexDirection: "row",
         flexWrap: "wrap",
         gap: 6,
-        marginTop: 8,
+        marginTop: 10,
     },
     exerciseChip: {
-        backgroundColor: "rgba(122, 46, 34, 0.1)",
+        backgroundColor: "rgba(255, 255, 255, 0.04)",
         paddingHorizontal: 8,
-        paddingVertical: 3,
+        paddingVertical: 4,
         borderRadius: RADIUS.sm,
         borderWidth: 1,
         borderColor: COLORS.border,
-        maxWidth: 140,
+        maxWidth: 160,
     },
     exerciseChipMore: {
-        backgroundColor: "rgba(237, 234, 227, 0.05)",
+        backgroundColor: "rgba(255, 255, 255, 0.05)",
         paddingHorizontal: 8,
-        paddingVertical: 3,
+        paddingVertical: 4,
         borderRadius: RADIUS.sm,
     },
     exerciseChipText: {
@@ -794,18 +813,20 @@ const styles = StyleSheet.create({
     emptyRestState: {
         alignItems: "center",
         justifyContent: "center",
-        paddingVertical: 14,
-        gap: 4,
+        paddingVertical: 16,
+        gap: 6,
     },
     emptyRestText: {
-        fontSize: 11,
-        fontFamily: FAMILY.medium,
+        fontSize: 11.5,
+        fontFamily: FAMILY.bold,
         color: COLORS.textSub,
+        letterSpacing: 0.5,
         marginTop: 2,
     },
     emptyRestSub: {
-        fontSize: 9,
+        fontSize: 9.5,
         fontFamily: FAMILY.regular,
         color: COLORS.textMuted,
+        textAlign: "center",
     },
 });

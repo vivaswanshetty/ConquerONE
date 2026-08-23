@@ -267,79 +267,79 @@ function TimelineTab() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#000000" },
+    container: { flex: 1, backgroundColor: COLORS.bg },
     header: {
         flexDirection: "row", alignItems: "center", justifyContent: "space-between",
         paddingHorizontal: 20, paddingBottom: 16, paddingTop: 12,
     },
     backBtn: {
-        width: 48, height: 48, borderRadius: RADIUS.md, backgroundColor: "rgba(255,255,255,0.04)",
-        alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
+        width: 36, height: 36, borderRadius: RADIUS.pill, backgroundColor: COLORS.bgCard,
+        alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: COLORS.border,
     },
     headerTitleWrap: { alignItems: "center" },
-    headerLabel: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 3 },
-    headerTitle: { fontSize: 22, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: -0.5, marginTop: 2 },
+    headerLabel: { fontSize: 8.5, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2 },
+    headerTitle: { fontSize: 18, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 0.5, marginTop: 2 },
     
     // Tab bar
     tabContainer: {
-        borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.05)",
-        height: 54, marginBottom: 20
+        borderBottomWidth: 1, borderBottomColor: COLORS.border,
+        height: 52, marginBottom: 20
     },
     tabScroll: { paddingHorizontal: 16, gap: 8, alignItems: "center" },
     tabBtn: {
-        paddingHorizontal: 16, height: 38, borderRadius: RADIUS.sm,
+        paddingHorizontal: 16, height: 36, borderRadius: RADIUS.sm,
         alignItems: "center", justifyContent: "center",
-        backgroundColor: "rgba(255,255,255,0.02)",
-        borderWidth: 1, borderColor: "rgba(255,255,255,0.05)"
+        backgroundColor: COLORS.bgCard,
+        borderWidth: 1, borderColor: COLORS.border
     },
     tabBtnActive: {
-        backgroundColor: "rgba(237,234,227,0.08)",
-        borderColor: COLORS.border
+        backgroundColor: "rgba(227, 30, 36, 0.12)",
+        borderColor: "rgba(227, 30, 36, 0.4)"
     },
-    tabText: { fontSize: 10, fontFamily: FAMILY.medium, color: COLORS.textSub, letterSpacing: 1.5 },
-    tabTextActive: { color: COLORS.text },
+    tabText: { fontSize: 10, fontFamily: FAMILY.medium, color: COLORS.textSub, letterSpacing: 1.2 },
+    tabTextActive: { color: COLORS.text, fontFamily: FAMILY.bold },
     activeTabIndicator: {
         position: "absolute", bottom: -8, width: 4, height: 4,
-        borderRadius: 2, backgroundColor: COLORS.accent
+        borderRadius: 2, backgroundColor: COLORS.primary
     },
 
     // Content layouts
     contentAnim: { flex: 1 },
     tabContent: { paddingHorizontal: 20 },
-    tabHeaderTitle: { fontSize: 26, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: -1, marginBottom: 8 },
-    tabHeaderDesc: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textSub, lineHeight: 18, marginBottom: 24, opacity: 0.8 },
+    tabHeaderTitle: { fontSize: 18, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -0.2, marginBottom: 6 },
+    tabHeaderDesc: { fontSize: 12.5, fontFamily: FAMILY.regular, color: COLORS.textSub, lineHeight: 18, marginBottom: 20, opacity: 0.85 },
 
     // Premium Card
     premiumCard: {
-        backgroundColor: "rgba(255,255,255,0.02)", borderRadius: RADIUS.lg,
-        padding: 24, borderWidth: 1, borderColor: "rgba(255,255,255,0.06)",
-        marginBottom: 16, overflow: "hidden"
+        backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg,
+        padding: 20, borderWidth: 1, borderColor: COLORS.border,
+        marginBottom: 14, overflow: "hidden"
     },
-    cardHeader: { flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 14 },
+    cardHeader: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 12 },
     accentBadge: {
         width: 30, height: 30, borderRadius: RADIUS.sm,
-        backgroundColor: "rgba(255,255,255,0.05)", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
+        backgroundColor: "rgba(255,255,255,0.03)", borderWidth: 1, borderColor: COLORS.border,
         alignItems: "center", justifyContent: "center"
     },
     accentBadgeText: { fontSize: 10, fontFamily: FAMILY.monoBold, color: COLORS.textSub },
-    cardTitle: { fontSize: 13, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 1, flex: 1 },
-    cardBody: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textSub, lineHeight: 20 },
+    cardTitle: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 0.5, flex: 1 },
+    cardBody: { fontSize: 12.5, fontFamily: FAMILY.regular, color: COLORS.textSub, lineHeight: 19 },
 
     // Progression layout
     cardRow: { flexDirection: "row", alignItems: "center" },
     progressionMeta: { width: 84, gap: 4 },
-    progressionWeek: { fontSize: 18, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: -0.5 },
+    progressionWeek: { fontSize: 15, fontFamily: FAMILY.monoBold, color: COLORS.text, letterSpacing: -0.5 },
     progressionReps: { fontSize: 11, fontFamily: FAMILY.monoBold, color: COLORS.text, letterSpacing: 0.5 },
     progressionIso: { fontSize: 9, fontFamily: FAMILY.mono, color: COLORS.textSub, opacity: 0.7 },
-    dividerVertical: { width: 1, height: 60, backgroundColor: "rgba(255,255,255,0.06)" },
-    progressionLabel: { fontSize: 8, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 2, marginBottom: 6 },
+    dividerVertical: { width: 1, height: 60, backgroundColor: COLORS.border },
+    progressionLabel: { fontSize: 8.5, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1.5, marginBottom: 6 },
     progressionDesc: { fontSize: 12, fontFamily: FAMILY.regular, color: COLORS.textSub, lineHeight: 18 },
 
     // Timeline layout
     timelineRow: { flexDirection: "row", gap: 16 },
     timelinePoint: { alignItems: "center", width: 16 },
-    timelineDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.accent, marginTop: 24, zIndex: 2 },
-    timelineLine: { width: 1, flex: 1, backgroundColor: "rgba(255,255,255,0.05)" },
-    timelineTime: { fontSize: 14, fontFamily: FAMILY.monoBold, color: COLORS.text, letterSpacing: 1, marginBottom: 6 },
-    timelineResult: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textSub, lineHeight: 18 }
+    timelineDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.primary, marginTop: 24, zIndex: 2 },
+    timelineLine: { width: 1, flex: 1, backgroundColor: COLORS.border },
+    timelineTime: { fontSize: 13, fontFamily: FAMILY.monoBold, color: COLORS.text, letterSpacing: 1, marginBottom: 6 },
+    timelineResult: { fontSize: 12.5, fontFamily: FAMILY.regular, color: COLORS.textSub, lineHeight: 18 }
 });

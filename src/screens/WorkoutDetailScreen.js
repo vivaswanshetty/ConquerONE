@@ -8,7 +8,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
-import { COLORS, FONTS, SPACING, RADIUS, FAMILY } from "../utils/theme";
+import { COLORS, FONTS, SPACING, RADIUS, FAMILY, getMuscleColor } from "../utils/theme";
 import { saveExerciseConfig, getWorkoutOverrides } from "../utils/workoutConfig";
 import { getSuggestedWeight } from "../data/workoutData";
 
@@ -21,15 +21,6 @@ function totalTime(day) {
         if (ex.unilateral) s += ex.sets * setDuration;
     });
     return Math.ceil(s / 60);
-}
-
-function getMuscleColor(target) {
-    const t = target.toUpperCase();
-    if (t.includes("CHEST") || t.includes("TRICEPS") || t.includes("PUSH")) return COLORS.accent; // Titanium Silver
-    if (t.includes("BACK") || t.includes("BICEPS") || t.includes("PULL")) return "#FF9500"; // Gold
-    if (t.includes("LEGS") || t.includes("QUADS") || t.includes("LOWER")) return "#D1D1D1"; // Silver/Titanium
-    if (t.includes("SHOULDERS") || t.includes("CORE") || t.includes("ARMS")) return "#30B0C7"; // Steel teal
-    return "#8E8E93";
 }
 
 const estimateCalories = (durationMin) => {
@@ -349,13 +340,13 @@ const styles = StyleSheet.create({
         borderRadius: RADIUS.sm, marginBottom: 12,
         borderWidth: 0.5, borderColor: COLORS.border,
     },
-    heroBadgeText: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 1.5 },
-    heroTitle: { fontSize: 36, fontFamily: FAMILY.header, color: COLORS.text, lineHeight: 40, letterSpacing: -0.5 },
+    heroBadgeText: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textSub, letterSpacing: 1.5 },
+    heroTitle: { fontSize: 32, fontFamily: FAMILY.bold, color: COLORS.text, lineHeight: 36, letterSpacing: -0.5 },
     heroSub: { fontSize: 13, color: COLORS.textSub, fontFamily: FAMILY.regular, marginTop: 8 },
 
     metaStrip: {
         flexDirection: "row", alignItems: "center",
-        backgroundColor: COLORS.bgCard, borderRadius: RADIUS.md,
+        backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg,
         marginHorizontal: SPACING.base, marginTop: -24, paddingVertical: 16, paddingHorizontal: 8,
         borderWidth: 1, borderColor: COLORS.border,
     },
@@ -372,28 +363,28 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.primary, marginHorizontal: SPACING.base, marginTop: 20,
         paddingVertical: 16, borderRadius: RADIUS.md,
     },
-    ctaText: { fontSize: 14, fontFamily: FAMILY.semibold, color: COLORS.text, letterSpacing: 0.5 },
+    ctaText: { fontSize: 13, fontFamily: FAMILY.bold, color: "#FFFFFF", letterSpacing: 0.8 },
 
     sectionHeader: {
         flexDirection: "row", justifyContent: "space-between", alignItems: "baseline",
         paddingHorizontal: SPACING.base, marginTop: 36, marginBottom: 14,
     },
-    sectionLabel: { fontSize: 16, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: -0.2 },
-    sectionCount: { fontSize: 12, color: COLORS.textSub, fontFamily: FAMILY.mono },
+    sectionLabel: { fontSize: 14, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 0.5 },
+    sectionCount: { fontSize: 12, color: COLORS.textSub, fontFamily: FAMILY.monoBold },
 
     exList: {
         marginHorizontal: SPACING.base, gap: 10,
     },
     exRow: {
         paddingHorizontal: 18, paddingVertical: 18,
-        backgroundColor: COLORS.bgCard, borderRadius: RADIUS.md,
+        backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg,
         borderWidth: 1, borderColor: COLORS.border,
         overflow: "hidden",
     },
     exRowHeader: { flexDirection: "row", alignItems: "center", gap: 12 },
     exRowNum: { width: 24, fontSize: 12, color: COLORS.textSub, fontFamily: FAMILY.monoBold },
     exRowInfo: { flex: 1, minWidth: 0 },
-    exRowName: { fontSize: 15, fontFamily: FAMILY.semibold, color: COLORS.text, letterSpacing: -0.2 },
+    exRowName: { fontSize: 15, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -0.2 },
     exRowMeta: { flexDirection: "row", marginTop: 4 },
     exRowMetaText: {
         fontSize: 11,
@@ -409,7 +400,7 @@ const styles = StyleSheet.create({
         alignItems: 'center', minWidth: 70,
     },
     chipPillMuted: { backgroundColor: 'transparent', borderColor: 'transparent' },
-    chipPillText: { fontSize: 10, color: COLORS.text, fontFamily: FAMILY.mono },
+    chipPillText: { fontSize: 10, color: COLORS.text, fontFamily: FAMILY.monoBold },
     exRowControls: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
 
     exExpanded: { paddingTop: 18, borderTopWidth: 1, borderTopColor: COLORS.border, marginTop: 16 },
@@ -440,7 +431,7 @@ const styles = StyleSheet.create({
     },
     noteText: { fontSize: 12, color: COLORS.textSub, fontFamily: FAMILY.regular },
 
-    formLabel: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.text, marginBottom: 12 },
+    formLabel: { fontSize: 12, fontFamily: FAMILY.bold, color: COLORS.text, marginBottom: 12 },
     tipRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 10 },
     tipDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: COLORS.textSub, marginTop: 8 },
     tipText: { fontSize: 13, color: COLORS.textSub, flex: 1, lineHeight: 20, fontFamily: FAMILY.regular },
@@ -453,11 +444,11 @@ const styles = StyleSheet.create({
         borderWidth: 1, borderColor: COLORS.border, borderBottomWidth: 0,
     },
     modalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
-    modalTitle: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.textSub },
-    modalExName: { fontSize: 20, fontFamily: FAMILY.header, color: COLORS.text, marginBottom: 28 },
+    modalTitle: { fontSize: 12, fontFamily: FAMILY.bold, color: COLORS.textSub },
+    modalExName: { fontSize: 18, fontFamily: FAMILY.bold, color: COLORS.text, marginBottom: 28 },
     inputGrid: { flexDirection: "row", gap: 12, marginBottom: 28 },
     inputBox: { flex: 1, gap: 8 },
-    inputLabel: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 1 },
+    inputLabel: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textSub, letterSpacing: 1 },
     input: {
         backgroundColor: COLORS.bg, borderRadius: RADIUS.sm, padding: 12,
         color: COLORS.text, fontSize: 16, fontFamily: FAMILY.monoBold, textAlign: "center",
@@ -467,7 +458,7 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.primary, paddingVertical: 16, borderRadius: RADIUS.md,
         alignItems: "center",
     },
-    saveBtnText: { fontSize: 13, fontFamily: FAMILY.semibold, color: COLORS.text, letterSpacing: 0.5 },
+    saveBtnText: { fontSize: 13, fontFamily: FAMILY.bold, color: "#FFFFFF", letterSpacing: 0.5 },
     editBtnSmall: {
         width: 28, height: 28, borderRadius: RADIUS.pill, backgroundColor: COLORS.bg,
         alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: COLORS.border,

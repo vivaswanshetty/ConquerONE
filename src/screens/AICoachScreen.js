@@ -886,8 +886,8 @@ const styles = StyleSheet.create({
         gap: 12,
     },
     headerCenter: { flex: 1 },
-    headerSub: { fontSize: 8, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 2.5, marginBottom: 2 },
-    headerTitle: { fontSize: 20, fontFamily: FAMILY.header, color: "#fff", letterSpacing: -0.5 },
+    headerSub: { fontSize: 8.5, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2, marginBottom: 2 },
+    headerTitle: { fontSize: 18, fontFamily: FAMILY.bold, color: "#fff", letterSpacing: 0.5 },
     headerActions: { flexDirection: 'row', gap: 8 },
     headerBtn: {
         width: 40, height: 40, borderRadius: RADIUS.md,
@@ -903,8 +903,8 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.04)',
     },
     statusDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#22c55e' },
-    statusText: { fontSize: 9, fontFamily: FAMILY.medium, color: COLORS.textMuted, letterSpacing: 1 },
-    msgCount: { fontSize: 9, fontFamily: FAMILY.mono, color: COLORS.textMuted, letterSpacing: 1 },
+    statusText: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1 },
+    msgCount: { fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.textMuted, letterSpacing: 1 },
 
     // Chat
     chatBody: { flex: 1 },

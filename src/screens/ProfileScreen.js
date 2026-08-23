@@ -908,8 +908,8 @@ const styles = StyleSheet.create({
         letterSpacing: 0.5, marginBottom: 4,
     },
     heroName: {
-        fontSize: 28, fontFamily: FAMILY.header, color: COLORS.text,
-        marginBottom: 4,
+        fontSize: 28, fontFamily: FAMILY.bold, color: COLORS.text,
+        marginBottom: 4, letterSpacing: -0.5,
     },
     heroEmail: {
         fontSize: 12, fontFamily: FAMILY.regular, color: COLORS.textMuted,
@@ -937,7 +937,7 @@ const styles = StyleSheet.create({
     },
     statCard: {
         flex: 1, alignItems: "center", paddingVertical: 22, gap: 8,
-        backgroundColor: "rgba(13,13,13,0.75)", borderRadius: RADIUS.md,
+        backgroundColor: "rgba(13,13,13,0.75)", borderRadius: RADIUS.lg,
         borderWidth: 1, borderColor: "rgba(255,255,255,0.06)",
         overflow: "hidden",
     },
@@ -953,16 +953,16 @@ const styles = StyleSheet.create({
         borderWidth: 0.5, borderColor: "rgba(255,255,255,0.05)",
     },
     statValue: { fontSize: 24, fontFamily: FAMILY.monoBold, color: COLORS.text },
-    statLabel: { fontSize: 8, fontFamily: FAMILY.medium, color: COLORS.textMuted, letterSpacing: 1.2 },
+    statLabel: { fontSize: 8.5, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1.2 },
 
     // Sections
     sectionTitle: {
-        fontSize: 10, fontFamily: FAMILY.semibold, color: COLORS.textMuted,
-        letterSpacing: 1.5, marginHorizontal: 20, marginBottom: 14, marginTop: 24,
+        fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.textMuted,
+        letterSpacing: 1.2, marginHorizontal: 20, marginBottom: 14, marginTop: 28,
     },
     card: {
         marginHorizontal: 20, marginBottom: 16,
-        backgroundColor: "rgba(13,13,13,0.75)", borderRadius: RADIUS.md,
+        backgroundColor: "rgba(13,13,13,0.75)", borderRadius: RADIUS.lg,
         borderWidth: 1, borderColor: "rgba(255,255,255,0.06)", overflow: "hidden",
     },
 
@@ -1017,7 +1017,7 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(255,255,255,0.03)",
         borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
     },
-    serviceActionText: { fontSize: 9, fontFamily: FAMILY.medium, color: COLORS.text, letterSpacing: 1 },
+    serviceActionText: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 1 },
     
     // Live syncing badges
     liveBadge: {
@@ -1052,7 +1052,7 @@ const styles = StyleSheet.create({
         flexDirection: "row", alignItems: "center", gap: 12,
         paddingHorizontal: 20, paddingVertical: 18,
     },
-    dangerText: { fontSize: 14, fontFamily: FAMILY.medium, color: COLORS.primary },
+    dangerText: { fontSize: 14, fontFamily: FAMILY.bold, color: COLORS.primary },
 
     footerSection: {
         alignItems: 'center', paddingVertical: 48, gap: 8,
@@ -1062,8 +1062,8 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.04)', marginBottom: 16,
     },
     footerBrand: {
-        fontSize: 11, fontFamily: FAMILY.header, color: 'rgba(255,255,255,0.15)',
-        letterSpacing: 3,
+        fontSize: 11, fontFamily: FAMILY.bold, color: 'rgba(255,255,255,0.15)',
+        letterSpacing: 2,
     },
     footerAuthor: {
         fontSize: 10, fontFamily: FAMILY.regular, color: 'rgba(255,255,255,0.08)',
@@ -1079,7 +1079,7 @@ const styles = StyleSheet.create({
         borderWidth: 1, borderColor: "rgba(255,255,255,0.06)",
     },
     modalHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: "rgba(255,255,255,0.1)", alignSelf: "center", marginBottom: 24 },
-    modalTitle: { fontSize: 16, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: 0.2, marginBottom: 24 },
+    modalTitle: { fontSize: 16, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 0.5, marginBottom: 24 },
     modalInputWrap: {
         backgroundColor: "rgba(255,255,255,0.02)", borderRadius: RADIUS.sm,
         borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
@@ -1093,9 +1093,9 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(255,255,255,0.02)",
         borderWidth: 1, borderColor: "rgba(255,255,255,0.05)",
     },
-    choiceBtnActive: { backgroundColor: "rgba(237,234,227,0.08)", borderColor: COLORS.border },
+    choiceBtnActive: { backgroundColor: "rgba(227, 30, 36, 0.12)", borderColor: "rgba(227, 30, 36, 0.4)" },
     choiceBtnText: { fontSize: 10, fontFamily: FAMILY.medium, color: COLORS.textMuted, letterSpacing: 0.5 },
-    choiceBtnTextActive: { color: COLORS.text },
+    choiceBtnTextActive: { color: COLORS.text, fontFamily: FAMILY.bold },
     modalBtns: { flexDirection: "row", gap: 12 },
     modalCancelBtn: { flex: 1, paddingVertical: 16, borderRadius: RADIUS.md, backgroundColor: "rgba(255,255,255,0.03)", alignItems: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.05)" },
     modalCancelText: { fontSize: 12, fontFamily: FAMILY.medium, color: COLORS.textMuted, letterSpacing: 1 },
@@ -1158,9 +1158,9 @@ const styles = StyleSheet.create({
     },
     dialogTitle: {
         fontSize: 14,
-        fontFamily: FAMILY.header,
+        fontFamily: FAMILY.bold,
         color: COLORS.text,
-        letterSpacing: 1.5,
+        letterSpacing: 0.5,
         marginBottom: 12,
         textAlign: "center",
     },

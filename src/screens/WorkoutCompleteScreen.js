@@ -365,30 +365,30 @@ const styles = StyleSheet.create({
         borderWidth: 1,
     },
 
-    completedLabel: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 2, marginBottom: 8 },
-    completedTitle: { fontSize: 30, fontFamily: FAMILY.header, color: COLORS.text, textAlign: "center", letterSpacing: -0.5, lineHeight: 34, width: "100%", marginBottom: 28 },
+    completedLabel: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2, marginBottom: 8 },
+    completedTitle: { fontSize: 26, fontFamily: FAMILY.bold, color: COLORS.text, textAlign: "center", letterSpacing: -0.5, lineHeight: 30, width: "100%", marginBottom: 28 },
 
     statsRow: {
         flexDirection: "row", width: "100%",
         backgroundColor: COLORS.bgCard,
-        borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border,
+        borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border,
         paddingVertical: 18, marginBottom: 24,
     },
     statBox: { flex: 1, alignItems: "center", justifyContent: "center", gap: 2 },
     statBoxCenter: { borderLeftWidth: 1, borderRightWidth: 1, borderColor: COLORS.border },
-    statLabel: { fontSize: 8, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 1.5, marginBottom: 2 },
+    statLabel: { fontSize: 8.5, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1.2, marginBottom: 2 },
     statValue: { fontSize: 20, fontFamily: FAMILY.monoBold, color: COLORS.text, letterSpacing: -0.5 },
 
     streakRow: {
         width: "100%", paddingVertical: 12, paddingHorizontal: 16,
         marginBottom: 16, backgroundColor: COLORS.bgCard,
-        borderWidth: 1, borderColor: COLORS.border,
-        borderRadius: RADIUS.md, flexDirection: "row", alignItems: "center", gap: 10,
+        borderWidth: 1, borderColor: "rgba(255, 149, 0, 0.25)",
+        borderRadius: RADIUS.lg, flexDirection: "row", alignItems: "center", gap: 10,
     },
-    streakText: { fontSize: 12, fontFamily: FAMILY.medium, color: COLORS.textSub, flex: 1 },
+    streakText: { fontSize: 12, fontFamily: FAMILY.monoBold, color: "#FF9500", flex: 1 },
 
     prCard: {
-        width: "100%", borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border,
+        width: "100%", borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border,
         backgroundColor: COLORS.bgCard, marginBottom: 16, overflow: "hidden",
     },
     prHeader: {
@@ -396,28 +396,28 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: COLORS.border,
         backgroundColor: COLORS.bg,
     },
-    prTitle: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.text },
+    prTitle: { fontSize: 12.5, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 0.5 },
     prList: { paddingHorizontal: 16, paddingVertical: 12 },
     prRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 8 },
     prName: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.text, flex: 1, paddingRight: 8 },
     prValBox: { backgroundColor: COLORS.bg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.border },
-    prVal: { fontSize: 11, fontFamily: FAMILY.mono, color: COLORS.textSub },
+    prVal: { fontSize: 11, fontFamily: FAMILY.monoBold, color: COLORS.textSub },
 
     homeBtn: {
-        width: "100%", backgroundColor: COLORS.primary, height: 56,
+        width: "100%", backgroundColor: COLORS.primary, height: 52,
         borderRadius: RADIUS.md, alignItems: "center", justifyContent: "center", marginTop: 24, marginBottom: 20,
     },
-    homeBtnText: { fontSize: 14, fontFamily: FAMILY.semibold, color: COLORS.text, letterSpacing: 0.5 },
+    homeBtnText: { fontSize: 13, fontFamily: FAMILY.bold, color: "#FFFFFF", letterSpacing: 1 },
 
     linkRow: { flexDirection: "row", alignItems: "center", gap: 32 },
     histLink: { paddingVertical: 8 },
-    histLinkText: { fontSize: 12, fontFamily: FAMILY.medium, color: COLORS.textSub },
+    histLinkText: { fontSize: 12, fontFamily: FAMILY.bold, color: COLORS.textSub, letterSpacing: 0.5 },
     linkDiv: { width: 1, height: 12, backgroundColor: COLORS.border },
 
     // Rank Up Card
     rankUpCard: {
         flexDirection: "row", alignItems: "center", gap: 14,
-        width: "100%", padding: 16, borderRadius: RADIUS.md, marginTop: 16,
+        width: "100%", padding: 16, borderRadius: RADIUS.lg, marginTop: 16,
         borderWidth: 1, borderColor: COLORS.border,
         backgroundColor: COLORS.bgCard, overflow: "hidden",
     },
@@ -426,8 +426,8 @@ const styles = StyleSheet.create({
         alignItems: "center", justifyContent: "center",
         backgroundColor: COLORS.bg,
     },
-    rankUpLabel: { fontSize: 8, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 1.5 },
-    rankUpTitle: { fontSize: 16, fontFamily: FAMILY.header, letterSpacing: -0.2, marginTop: 2 },
+    rankUpLabel: { fontSize: 8.5, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1.5 },
+    rankUpTitle: { fontSize: 16, fontFamily: FAMILY.bold, letterSpacing: 0.5, marginTop: 2 },
     rankUpDesc: { fontSize: 11, fontFamily: FAMILY.regular, color: COLORS.textSub, marginTop: 2 },
     xpAwardBanner: {
         flexDirection: "row",

@@ -389,8 +389,8 @@ const styles = StyleSheet.create({
         width: 36, height: 36, borderRadius: RADIUS.pill, backgroundColor: COLORS.bgCard,
         alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: COLORS.border,
     },
-    headerTitle: { fontSize: 24, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: -0.5 },
-    savedBadge: { backgroundColor: "rgba(237, 234, 227, 0.06)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.border },
+    headerTitle: { fontSize: 18, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 0.5 },
+    savedBadge: { backgroundColor: "rgba(255, 255, 255, 0.06)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.border },
     savedText: { fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.text },
 
     tabs: {
@@ -398,33 +398,33 @@ const styles = StyleSheet.create({
         gap: 20, borderBottomWidth: 1, borderBottomColor: COLORS.border,
     },
     tab: { paddingVertical: 12 },
-    tabActive: { borderBottomWidth: 2, borderBottomColor: COLORS.text },
+    tabActive: { borderBottomWidth: 2, borderBottomColor: COLORS.primary },
     tabText: { fontSize: 12, fontFamily: FAMILY.medium, color: COLORS.textMuted },
-    tabTextActive: { color: COLORS.text, fontFamily: FAMILY.semibold },
+    tabTextActive: { color: COLORS.text, fontFamily: FAMILY.bold },
 
-    sectionHeader: { paddingHorizontal: 20, marginTop: 32, marginBottom: 12 },
-    sectionLabel: { fontSize: 11, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 1.5 },
+    sectionHeader: { paddingHorizontal: 20, marginTop: 28, marginBottom: 12 },
+    sectionLabel: { fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1.2 },
     card: {
         marginHorizontal: 20, backgroundColor: COLORS.bgCard,
-        borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border,
+        borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border,
         padding: 18,
     },
     saveBtn: {
         backgroundColor: COLORS.primary, borderRadius: RADIUS.md,
         paddingVertical: 14, alignItems: "center", marginTop: 20,
     },
-    saveBtnText: { fontSize: 13, fontFamily: FAMILY.semibold, color: COLORS.text, letterSpacing: 0.5 },
+    saveBtnText: { fontSize: 13, fontFamily: FAMILY.bold, color: "#FFFFFF", letterSpacing: 0.5 },
 
     tableRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 18, paddingVertical: 12 },
     tableHeaderRow: { backgroundColor: COLORS.bg, borderBottomWidth: 1, borderBottomColor: COLORS.border },
     tableBorder: { borderBottomWidth: 1, borderBottomColor: COLORS.border },
     tableCell: { flex: 1, textAlign: "center" },
-    tableHeader: { fontSize: 10, fontFamily: FAMILY.semibold, color: COLORS.textMuted },
+    tableHeader: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 0.5 },
     tableDateCell: { flex: 1.4, color: COLORS.textSub, fontFamily: FAMILY.mono, fontSize: 10 },
     tableValueCell: { flex: 1, fontSize: 12, fontFamily: FAMILY.monoBold, color: COLORS.text, textAlign: "center" },
 
     empty: { alignItems: "center", paddingTop: 80, paddingHorizontal: 40 },
     emptyIcon: { width: 64, height: 64, borderRadius: RADIUS.pill, backgroundColor: COLORS.bgCard, alignItems: "center", justifyContent: "center", marginBottom: 20, borderWidth: 1, borderColor: COLORS.border },
-    emptyTitle: { fontSize: 14, fontFamily: FAMILY.semibold, color: COLORS.text, marginBottom: 6 },
+    emptyTitle: { fontSize: 14, fontFamily: FAMILY.bold, color: COLORS.text, marginBottom: 6 },
     emptySub: { fontSize: 12, color: COLORS.textMuted, textAlign: "center", lineHeight: 18, fontFamily: FAMILY.regular },
 });
