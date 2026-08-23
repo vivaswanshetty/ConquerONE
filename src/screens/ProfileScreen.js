@@ -533,33 +533,30 @@ export default function ProfileScreen({ navigation }) {
                         pointerEvents="none"
                     />
 
-                    {/* Concentric Breathing Avatar Halos */}
-                    <View style={styles.avatarRingsContainer}>
-                        <Animated.View style={[
-                            styles.avatarHaloRing,
-                            {
-                                transform: [{ scale: ringAnim2 }],
-                                opacity: ringAnim2.interpolate({ inputRange: [1, 1.28], outputRange: [0.35, 0.06] }),
-                                borderColor: 'rgba(255, 255, 255, 0.12)'
-                            }
-                        ]} />
-                        <Animated.View style={[
-                            styles.avatarHaloRing,
-                            {
-                                transform: [{ scale: ringAnim1 }],
-                                opacity: ringAnim1.interpolate({ inputRange: [1, 1.15], outputRange: [0.6, 0.12] }),
-                                borderColor: COLORS.primary
-                            }
-                        ]} />
-                    </View>
-
-                    {/* Interactive Avatar */}
+                    {/* Interactive Avatar with Concentric Breathing Halos */}
                     <TouchableOpacity
                         style={styles.avatarWrap}
                         onPress={pickImage}
                         activeOpacity={0.85}
                         disabled={isUploading}
                     >
+                        <Animated.View style={[
+                            styles.avatarHaloRing,
+                            {
+                                transform: [{ scale: ringAnim2 }],
+                                opacity: ringAnim2.interpolate({ inputRange: [1, 1.28], outputRange: [0.35, 0.06] }),
+                                borderColor: 'rgba(255, 255, 255, 0.14)'
+                            }
+                        ]} pointerEvents="none" />
+                        <Animated.View style={[
+                            styles.avatarHaloRing,
+                            {
+                                transform: [{ scale: ringAnim1 }],
+                                opacity: ringAnim1.interpolate({ inputRange: [1, 1.15], outputRange: [0.65, 0.12] }),
+                                borderColor: COLORS.primary
+                            }
+                        ]} pointerEvents="none" />
+
                         <View style={styles.avatarRing}>
                             {(() => {
                                 const hasImage = typeof currentAvatarUrl === 'string' && currentAvatarUrl.length > 0;
@@ -943,40 +940,49 @@ const styles = StyleSheet.create({
     },
 
     /* Breathing Avatar Rings */
-    avatarRingsContainer: {
-        position: 'absolute',
-        top: 24,
-        width: 180,
-        height: 110,
-        alignItems: 'center',
-        justifyContent: 'center',
+    avatarWrap: {
+        width: 104,
+        height: 104,
+        alignItems: "center",
+        justifyContent: "center",
+        position: "relative",
+        marginBottom: 14,
     },
     avatarHaloRing: {
-        position: 'absolute',
-        width: 110,
-        height: 110,
-        borderRadius: 55,
+        position: "absolute",
+        width: 104,
+        height: 104,
+        borderRadius: 52,
         borderWidth: 1.5,
     },
-    avatarWrap: { position: "relative", marginBottom: 14 },
     avatarRing: {
-        padding: 3,
-        borderRadius: 50,
+        width: 96,
+        height: 96,
+        borderRadius: 48,
         borderWidth: 2,
-        borderColor: "rgba(255,255,255,0.12)",
+        borderColor: "rgba(255, 255, 255, 0.12)",
+        backgroundColor: COLORS.bgCard,
+        alignItems: "center",
+        justifyContent: "center",
+        overflow: "hidden",
     },
     avatarBg: {
-        width: 90,
-        height: 90,
-        borderRadius: 45,
-        backgroundColor: "rgba(255,255,255,0.03)",
+        width: 92,
+        height: 92,
+        borderRadius: 46,
+        backgroundColor: "rgba(255, 255, 255, 0.03)",
         alignItems: "center",
         justifyContent: "center",
     },
-    avatarImg: { width: 90, height: 90, borderRadius: 45, backgroundColor: "#000" },
+    avatarImg: {
+        width: 92,
+        height: 92,
+        borderRadius: 46,
+        backgroundColor: "#000",
+    },
     avatarProgressOverlay: {
         ...StyleSheet.absoluteFillObject,
-        borderRadius: 45,
+        borderRadius: 46,
         backgroundColor: "rgba(0,0,0,0.6)",
         alignItems: "center",
         justifyContent: "center",
@@ -989,8 +995,8 @@ const styles = StyleSheet.create({
     initials: { fontSize: 28, fontFamily: FAMILY.bold, color: COLORS.textMuted },
     cameraBtn: {
         position: "absolute",
-        bottom: 2,
-        right: 2,
+        bottom: 0,
+        right: 0,
         width: 28,
         height: 28,
         borderRadius: 14,
