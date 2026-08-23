@@ -96,7 +96,12 @@ function MetallicText({ text, style, height = 44 }) {
 function LiveStatusStrip({ total, streak, xp }) {
     const currentRank = getRankData(total);
 
-    const items = [
+    const items = total === 0 ? [
+        "WELCOME TO CONQUER ONE",
+        "START YOUR FIRST WORKOUT",
+        "6-DAY ELITE SPLIT",
+        "RANK · RECRUIT",
+    ] : [
         `${total} SESSIONS LOGGED`,
         `${streak} DAY STREAK`,
         `${currentRank.title} · RANK`,
@@ -844,9 +849,9 @@ export default function HomeScreen({ navigation, route }) {
                                     <View>
                                         <View style={styles.heroBadge}>
                                             <Svg
-                                                width={164}
+                                                width={total === 0 ? 176 : 164}
                                                 height={26}
-                                                viewBox="0 0 164 26"
+                                                viewBox={`0 0 ${total === 0 ? 176 : 164} 26`}
                                                 style={StyleSheet.absoluteFillObject}
                                             >
                                                 <Defs>
@@ -855,18 +860,20 @@ export default function HomeScreen({ navigation, route }) {
                                                         <Stop offset="100%" stopColor="#3C1A0C" stopOpacity="0.95" />
                                                     </SvgGradient>
                                                 </Defs>
-                                                <Polygon points="0,0 152,0 164,26 0,26" fill="url(#heroBadgeGrad)" stroke="rgba(255, 100, 40, 0.4)" strokeWidth={1} />
+                                                <Polygon points={`0,0 ${total === 0 ? 164 : 152},0 ${total === 0 ? 176 : 164},26 0,26`} fill="url(#heroBadgeGrad)" stroke="rgba(255, 100, 40, 0.4)" strokeWidth={1} />
                                             </Svg>
                                             <View style={styles.heroBadgeContent}>
                                                 <View style={styles.heroBadgeDot} />
-                                                <Text style={styles.heroBadgeText}>TODAY · DAY 0{todayWorkout.day}</Text>
+                                                <Text style={styles.heroBadgeText}>
+                                                    {total === 0 ? "START HERE · DAY 01" : `TODAY · DAY 0${todayWorkout.day}`}
+                                                </Text>
                                             </View>
                                         </View>
                                         <Text style={styles.heroTitle} numberOfLines={1} adjustsFontSizeToFit>
-                                            {todayWorkout.dayName ? todayWorkout.dayName.toUpperCase() : (todayWorkout.target.toUpperCase().includes("DAY") ? todayWorkout.target.toUpperCase() : `${todayWorkout.target.toUpperCase()} (HEAVY)`)}
+                                            {total === 0 ? "READY WHEN YOU ARE" : (todayWorkout.dayName ? todayWorkout.dayName.toUpperCase() : (todayWorkout.target.toUpperCase().includes("DAY") ? todayWorkout.target.toUpperCase() : `${todayWorkout.target.toUpperCase()} (HEAVY)`))}
                                         </Text>
                                         <Text style={styles.heroSub}>
-                                            6-day split · pull & push combined
+                                            {total === 0 ? `Your 6-day split begins with ${todayWorkout.target.toLowerCase()}` : "6-day split · pull & push combined"}
                                         </Text>
                                     </View>
 
@@ -891,14 +898,16 @@ export default function HomeScreen({ navigation, route }) {
                                             }}
                                         >
                                             <Svg
-                                                width={128}
+                                                width={total === 0 ? 180 : 128}
                                                 height={42}
-                                                viewBox="0 0 128 42"
+                                                viewBox={`0 0 ${total === 0 ? 180 : 128} 42`}
                                                 style={StyleSheet.absoluteFillObject}
                                             >
-                                                <Polygon points="10,0 128,0 128,42 0,42" fill={COLORS.primary} />
+                                                <Polygon points={`10,0 ${total === 0 ? 180 : 128},0 ${total === 0 ? 180 : 128},42 0,42`} fill={COLORS.primary} />
                                             </Svg>
-                                            <Text style={styles.heroCtaText}>Start session ›</Text>
+                                            <Text style={styles.heroCtaText}>
+                                                {total === 0 ? "Start your first session ›" : "Start session ›"}
+                                            </Text>
                                         </TouchableOpacity>
                                     </View>
                                 </View>
@@ -915,9 +924,9 @@ export default function HomeScreen({ navigation, route }) {
                     const radius = 36;
                     const strokeWidth = 4.5;
                     const circumference = 2 * Math.PI * radius; // ~226.19
-                    const strokeDashoffset = circumference - (circumference * progressPercent) / 100;
+                    const strokeDashoffset = total === 0 ? circumference : (circumference - (circumference * progressPercent) / 100);
                     const currentRank = getRankData(total);
-                    const categoryColor = todayWorkout?.target ? getMuscleColor(todayWorkout.target) : COLORS.primary;
+                    const categoryColor = total === 0 ? "rgba(255,255,255,0.08)" : (todayWorkout?.target ? getMuscleColor(todayWorkout.target) : COLORS.primary);
 
                     return (
                         <View style={[styles.dashboardCard, { borderColor: `${categoryColor}4D` }]}>
@@ -937,7 +946,7 @@ export default function HomeScreen({ navigation, route }) {
                                         cx={43}
                                         cy={43}
                                         r={radius}
-                                        stroke="rgba(255,255,255,0.08)"
+                                        stroke="rgba(255,255,255,0.06)"
                                         strokeWidth={strokeWidth}
                                         fill="none"
                                     />
@@ -945,7 +954,7 @@ export default function HomeScreen({ navigation, route }) {
                                         cx={43}
                                         cy={43}
                                         r={radius}
-                                        stroke={COLORS.primary}
+                                        stroke={total === 0 ? "rgba(255,255,255,0.06)" : COLORS.primary}
                                         strokeWidth={strokeWidth}
                                         fill="none"
                                         strokeDasharray={circumference}
@@ -954,7 +963,9 @@ export default function HomeScreen({ navigation, route }) {
                                     />
                                 </Svg>
                                 <View style={styles.dashboardRingTextContainer} pointerEvents="none">
-                                    <Text style={styles.dashboardRingPercent}>{progressPercent}%</Text>
+                                    <Text style={[styles.dashboardRingPercent, total === 0 && { color: COLORS.textMuted }]}>
+                                        {total === 0 ? "0%" : `${progressPercent}%`}
+                                    </Text>
                                     <Text style={styles.dashboardRingLabel}>PROGRESS</Text>
                                 </View>
                             </View>
@@ -970,10 +981,21 @@ export default function HomeScreen({ navigation, route }) {
                                         setStreakAnalyticsVisible(true);
                                     }}
                                 >
-                                    <Ionicons name="flame" size={14} color="#FF9500" style={{ marginBottom: 3 }} />
+                                    <Ionicons
+                                        name="flame"
+                                        size={14}
+                                        color={total === 0 ? COLORS.textMuted : "#FF9500"}
+                                        style={{ marginBottom: 3 }}
+                                    />
                                     <Text style={styles.dashboardStatLabel}>STREAK</Text>
-                                    <Text style={[styles.dashboardStatValue, { color: "#FF9500" }]} numberOfLines={1}>
-                                        {streak}D
+                                    <Text
+                                        style={[
+                                            styles.dashboardStatValue,
+                                            { color: total === 0 ? COLORS.textMuted : "#FF9500" }
+                                        ]}
+                                        numberOfLines={1}
+                                    >
+                                        {total === 0 ? "0D" : `${streak}D`}
                                     </Text>
                                 </TouchableOpacity>
 
@@ -984,9 +1006,20 @@ export default function HomeScreen({ navigation, route }) {
 
                                 {/* Sessions Cell */}
                                 <View style={styles.dashboardStatCell}>
-                                    <Ionicons name="checkmark-done" size={14} color={COLORS.textSub} style={{ marginBottom: 3 }} />
+                                    <Ionicons
+                                        name="checkmark-done"
+                                        size={14}
+                                        color={total === 0 ? COLORS.textMuted : COLORS.textSub}
+                                        style={{ marginBottom: 3 }}
+                                    />
                                     <Text style={styles.dashboardStatLabel}>SESSIONS</Text>
-                                    <Text style={[styles.dashboardStatValue, { color: "#FFFFFF" }]} numberOfLines={1}>
+                                    <Text
+                                        style={[
+                                            styles.dashboardStatValue,
+                                            { color: total === 0 ? COLORS.textMuted : "#FFFFFF" }
+                                        ]}
+                                        numberOfLines={1}
+                                    >
                                         {total}
                                     </Text>
                                 </View>
@@ -1005,13 +1038,18 @@ export default function HomeScreen({ navigation, route }) {
                                         navigation.navigate("Rank");
                                     }}
                                 >
-                                    <Ionicons name={currentRank.icon} size={14} color={currentRank.color} style={{ marginBottom: 3 }} />
+                                    <Ionicons
+                                        name={currentRank.icon}
+                                        size={14}
+                                        color={total === 0 ? COLORS.textMuted : currentRank.color}
+                                        style={{ marginBottom: 3 }}
+                                    />
                                     <Text style={styles.dashboardStatLabel}>RANK</Text>
                                     <Text
                                         style={[
                                             styles.dashboardStatValue,
                                             styles.dashboardRankValue,
-                                            { color: currentRank.color }
+                                            { color: total === 0 ? COLORS.textMuted : currentRank.color }
                                         ]}
                                         numberOfLines={1}
                                         adjustsFontSizeToFit
@@ -1047,7 +1085,9 @@ export default function HomeScreen({ navigation, route }) {
                         </View>
                         <View style={styles.consistencyBadge}>
                             <Text style={styles.consistencyBadgeText}>
-                                <Text style={{ fontFamily: FAMILY.monoBold, color: COLORS.text }}>{completedDays.length}</Text>/6 SESSIONS
+                                <Text style={{ fontFamily: FAMILY.monoBold, color: total === 0 ? COLORS.textMuted : COLORS.text }}>
+                                    {total === 0 ? 0 : completedDays.length}
+                                </Text>/6 SESSIONS
                             </Text>
                         </View>
                     </View>
@@ -1055,10 +1095,9 @@ export default function HomeScreen({ navigation, route }) {
                     <View style={styles.consistencyGridContainer}>
                         {DAY_LABELS.map((label, index) => {
                             const dayNum = index + 1;
-                            const isCompleted = completedDays.includes(dayNum);
-                            const isDayFrozen = freezeDays.includes(dayNum);
-                            const isToday = todayDay === dayNum;
-                            const isFuture = dayNum > todayDay;
+                            const isCompleted = total > 0 && completedDays.includes(dayNum);
+                            const isDayFrozen = total > 0 && freezeDays.includes(dayNum);
+                            const isToday = total > 0 && todayDay === dayNum;
                             const isSunday = dayNum === 7;
                             const dayTarget = completedTargets[dayNum] || (WORKOUT_PLAN.find(d => d.day === dayNum)?.target);
                             const muscleColor = getMuscleColor(dayTarget);
