@@ -1683,15 +1683,30 @@ Download: https://conquer-one.app`, title: expandedMoment?.title
 
 function RestDayCard({ navigation }) {
     const RECOVERY_PLAN = [
-        "10MIN MOBILITY & LIGHT STRETCHING",
-        "3L WATER MINIMUM HYDRATION",
-        "8H RESTORATIVE SLEEP CYCLE",
-        "HIGH-PROTEIN NUTRIENT LOADING",
+        {
+            icon: "walk-outline",
+            metric: "10 MIN",
+            title: "Active Mobility",
+            desc: "Joint flow & dynamic stretching",
+        },
+        {
+            icon: "water-outline",
+            metric: "3.0 L",
+            title: "Hydration",
+            desc: "Baseline water & electrolytes",
+        },
+        {
+            icon: "moon-outline",
+            metric: "8-9 HRS",
+            title: "Sleep Cycle",
+            desc: "Deep restorative cellular repair",
+        },
     ];
+
     return (
         <TouchableOpacity
             style={styles.restCard}
-            activeOpacity={0.9}
+            activeOpacity={0.92}
             onPress={() => navigation.navigate("RestDay")}
         >
             <ImageBackground
@@ -1700,19 +1715,43 @@ function RestDayCard({ navigation }) {
                 resizeMode="cover"
             >
                 <LinearGradient
-                    colors={["rgba(0,0,0,0.6)", "rgba(0,0,0,0.95)"]}
+                    colors={["rgba(10,10,11,0.55)", "rgba(10,10,11,0.88)", "rgba(10,10,11,0.98)"]}
                     style={StyleSheet.absoluteFill}
                 />
                 <View style={styles.restContent}>
-                    <Text style={styles.restEyebrow}>REST & RECOVERY</Text>
+                    {/* Header Row */}
+                    <View style={styles.restEyebrowRow}>
+                        <View style={styles.restStatusPill}>
+                            <View style={styles.restStatusDot} />
+                            <Text style={styles.restEyebrow}>REST & RECOVERY</Text>
+                        </View>
+                        <Text style={styles.restDayTag}>DAY 07</Text>
+                    </View>
+
                     <Text style={styles.restTitle}>RECOVERY IS{"\n"}THE GOAL.</Text>
+
+                    {/* Rest Protocols */}
                     <View style={styles.restTimeline}>
-                        {RECOVERY_PLAN.map((point, i) => (
+                        {RECOVERY_PLAN.map((item, i) => (
                             <View key={i} style={styles.restPoint}>
-                                <View style={styles.restDot} />
-                                <Text style={styles.restPointText}>{point}</Text>
+                                <View style={styles.restIconWrap}>
+                                    <Ionicons name={item.icon} size={15} color={COLORS.text} />
+                                </View>
+                                <View style={styles.restPointBody}>
+                                    <View style={styles.restPointHeader}>
+                                        <Text style={styles.restPointTitle}>{item.title}</Text>
+                                        <Text style={styles.restPointMetric}>{item.metric}</Text>
+                                    </View>
+                                    <Text style={styles.restPointDesc}>{item.desc}</Text>
+                                </View>
                             </View>
                         ))}
+                    </View>
+
+                    {/* Bottom Action Footer */}
+                    <View style={styles.restFooterRow}>
+                        <Text style={styles.restFooterText}>View Full Protocol</Text>
+                        <Ionicons name="chevron-forward" size={14} color={COLORS.primary} />
                     </View>
                 </View>
             </ImageBackground>
@@ -2309,47 +2348,102 @@ const styles = StyleSheet.create({
     // Rest Card
     restCard: {
         marginHorizontal: SPACING.base, borderRadius: RADIUS.lg, overflow: "hidden",
-        borderWidth: 1, borderColor: COLORS.border, minHeight: 220, backgroundColor: COLORS.bgCard,
+        borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bgCard,
     },
-    restContent: { paddingVertical: 18, paddingHorizontal: 20, paddingBottom: 20, flex: 1 },
-    hudShortcutBar: {
-        marginTop: 14,
-    },
-    hudShortcutBarContent: {
+    restContent: { paddingVertical: 20, paddingHorizontal: 20, flex: 1 },
+    restEyebrowRow: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 8,
-        paddingRight: 20,
+        justifyContent: "space-between",
+        marginBottom: 12,
     },
-    hudShortcutBtn: {
+    restStatusPill: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: COLORS.bgCard,
-        borderWidth: 1,
-        borderColor: COLORS.border,
+        gap: 6,
+        backgroundColor: "rgba(48, 209, 88, 0.12)",
+        paddingHorizontal: 8,
+        paddingVertical: 3.5,
         borderRadius: RADIUS.sm,
-        paddingVertical: 7,
-        paddingHorizontal: 14,
+        borderWidth: 1,
+        borderColor: "rgba(48, 209, 88, 0.25)",
     },
-    hudShortcutBtnText: {
-        fontSize: 11,
-        fontFamily: FAMILY.medium,
-        color: COLORS.text,
+    restStatusDot: {
+        width: 5,
+        height: 5,
+        borderRadius: 2.5,
+        backgroundColor: "#30D158",
     },
     restEyebrow: {
-        fontSize: 9, fontFamily: FAMILY.semibold,
-        color: COLORS.textSub, letterSpacing: 1.5, marginBottom: 8,
+        fontSize: 9, fontFamily: FAMILY.bold,
+        color: "#30D158", letterSpacing: 1.2,
+    },
+    restDayTag: {
+        fontSize: 10, fontFamily: FAMILY.monoBold,
+        color: COLORS.textMuted, letterSpacing: 1,
     },
     restTitle: {
-        fontSize: 30, fontFamily: FAMILY.bold,
-        color: COLORS.text, lineHeight: 34, marginBottom: 20, letterSpacing: -0.5,
+        fontSize: 28, fontFamily: FAMILY.bold,
+        color: COLORS.text, lineHeight: 32, marginBottom: 18, letterSpacing: -0.5,
     },
-    restTimeline: { gap: 10 },
+    restTimeline: { gap: 9, marginBottom: 16 },
     restPoint: {
-        flexDirection: "row", alignItems: "center", gap: 12,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        backgroundColor: "rgba(255, 255, 255, 0.03)",
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.06)",
+        borderRadius: RADIUS.md,
+        paddingVertical: 10,
+        paddingHorizontal: 12,
     },
-    restDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: COLORS.textSub },
-    restPointText: { fontSize: 12, fontFamily: FAMILY.regular, color: COLORS.textSub, flex: 1 },
+    restIconWrap: {
+        width: 32,
+        height: 32,
+        borderRadius: RADIUS.sm,
+        backgroundColor: "rgba(255, 255, 255, 0.05)",
+        alignItems: "center",
+        justifyContent: "center",
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+    },
+    restPointBody: { flex: 1 },
+    restPointHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+    },
+    restPointTitle: {
+        fontSize: 12.5,
+        fontFamily: FAMILY.bold,
+        color: COLORS.text,
+        letterSpacing: 0.2,
+    },
+    restPointMetric: {
+        fontSize: 11,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textSub,
+    },
+    restPointDesc: {
+        fontSize: 11,
+        fontFamily: FAMILY.regular,
+        color: COLORS.textMuted,
+        marginTop: 2,
+    },
+    restFooterRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "flex-end",
+        gap: 4,
+        marginTop: 4,
+    },
+    restFooterText: {
+        fontSize: 11.5,
+        fontFamily: FAMILY.bold,
+        color: COLORS.primary,
+        letterSpacing: 0.5,
+    },
 
     // Week Grid
     weekCell: {
