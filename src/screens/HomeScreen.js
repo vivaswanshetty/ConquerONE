@@ -812,12 +812,12 @@ export default function HomeScreen({ navigation, route }) {
                                 style={styles.shortcutItem}
                                 onPress={() => {
                                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                    setFreezeModal(true);
+                                    setStreakAnalyticsVisible(true);
                                 }}
                                 activeOpacity={0.7}
                             >
-                                <View style={[styles.shortcutIconBox, isFrozen && { borderColor: 'rgba(227, 30, 36, 0.4)' }]}>
-                                    <Ionicons name={isFrozen ? "snow" : "snow-outline"} size={18} color={isFrozen ? "#30B0C7" : COLORS.textSub} />
+                                <View style={styles.shortcutIconBox}>
+                                    <Ionicons name="flame-outline" size={18} color={COLORS.primary} />
                                 </View>
                                 <Text style={styles.shortcutLabel}>Streak</Text>
                             </TouchableOpacity>
