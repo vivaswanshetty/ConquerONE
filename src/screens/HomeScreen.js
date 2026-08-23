@@ -22,6 +22,7 @@ import MaskedView from "@react-native-masked-view/masked-view";
 import * as Haptics from "expo-haptics";
 import Svg, { Circle, Path, Defs, LinearGradient as SvgGradient, Stop, Text as SvgText, Polygon, Line } from "react-native-svg";
 import WorkoutCalendar from "../components/WorkoutCalendar";
+import { getRankData } from "./RankScreen";
 
 
 // Auth
@@ -43,10 +44,11 @@ function totalTime(day) {
 function getMuscleColor(target) {
     if (!target) return "#8E8E93";
     const t = String(target).toUpperCase();
-    if (t.includes("CHEST") || t.includes("TRICEPS") || t.includes("PUSH")) return "#E31E24"; // Crimson Red
-    if (t.includes("BACK") || t.includes("BICEPS") || t.includes("PULL")) return "#FF9500"; // Gold Amber
-    if (t.includes("SHOULDERS") || t.includes("CORE") || t.includes("ARMS") || t.includes("ABS")) return "#30B0C7"; // Steel Teal
-    if (t.includes("LEGS") || t.includes("QUADS") || t.includes("LOWER") || t.includes("CALVES")) return "#D1D1D1"; // Silver
+    if (t.includes("CHEST") || t.includes("TRICEPS") || t.includes("PUSH")) return "#E31E24";
+    if (t.includes("BACK") || t.includes("BICEPS") || t.includes("PULL")) return "#FF9500";
+    if (t.includes("SHOULDERS") || t.includes("CORE") || t.includes("ARMS") || t.includes("ABS")) return "#30B0C7";
+    if (t.includes("LEGS") || t.includes("QUADS") || t.includes("LOWER") || t.includes("CALVES")) return "#D1D1D1";
+    if (t.includes("RECOVERY") || t.includes("REST") || t.includes("MOBILITY") || t.includes("MINDFULNESS")) return "#30D158";
     return "#8E8E93";
 }
 
@@ -70,18 +72,20 @@ function GradientText({ text, style, colors = GRADIENTS.diamond, height = 50 }) 
     );
 }
 
-function MetallicText({ text, style, height = 50 }) {
+function MetallicText({ text, style, height = 36 }) {
     return (
         <MaskedView
-            style={{ height, width: '100%' }}
             maskElement={
-                <Text style={style} adjustsFontSizeToFit numberOfLines={1}>{text}</Text>
+                <Text style={style} adjustsFontSizeToFit numberOfLines={1}>
+                    {text}
+                </Text>
             }
         >
             <LinearGradient
-                colors={["#FFFFFF", "#F5F5F7", "#B0B0B5", "#FFFFFF", "#8E8E93"]}
+                colors={["#FFFFFF", "#C0C0C0", "#E8E8E8", "#787878", "#C8C8C8"]}
                 start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0.8 }}
+                end={{ x: 1, y: 1 }}
+                locations={[0, 0.25, 0.5, 0.75, 1]}
                 style={StyleSheet.absoluteFill}
             >
                 <Text style={[style, { opacity: 0 }]} adjustsFontSizeToFit numberOfLines={1}>{text}</Text>
@@ -91,18 +95,14 @@ function MetallicText({ text, style, height = 50 }) {
 }
 
 function LiveStatusStrip({ total, streak, xp }) {
-    const tier = total >= 100 ? 'TIER 06' :
-        total >= 50 ? 'TIER 05' :
-            total >= 25 ? 'TIER 04' :
-                total >= 10 ? 'TIER 03' :
-                    total >= 5 ? 'TIER 02' : 'TIER 01';
+    const currentRank = getRankData(total);
 
     const items = [
         `${total} SESSIONS LOGGED`,
         `${streak} DAY STREAK`,
-        `${tier} · MILESTONE`,
+        `${currentRank.title} · RANK`,
         `${xp % 100}% XP PROGRESS`,
-    ];
+    ];;
 
     const [index, setIndex] = useState(0);
     const textAnim = useRef(new Animated.Value(1)).current;
@@ -917,11 +917,7 @@ export default function HomeScreen({ navigation, route }) {
                     const strokeWidth = 4.5;
                     const circumference = 2 * Math.PI * radius; // ~226.19
                     const strokeDashoffset = circumference - (circumference * progressPercent) / 100;
-                    const tierNum = total >= 100 ? '06' :
-                        total >= 50 ? '05' :
-                            total >= 25 ? '04' :
-                                total >= 10 ? '03' :
-                                    total >= 5 ? '02' : '01';
+                    const currentRank = getRankData(total);
                     const categoryColor = todayWorkout?.target ? getMuscleColor(todayWorkout.target) : COLORS.primary;
 
                     return (
@@ -1001,7 +997,7 @@ export default function HomeScreen({ navigation, route }) {
                                     <Line x1="7" y1="0" x2="3" y2="38" stroke="rgba(255,255,255,0.08)" strokeWidth={1} strokeLinecap="round" />
                                 </Svg>
 
-                                {/* Rank/Tier Cell */}
+                                {/* Rank Cell */}
                                 <TouchableOpacity
                                     style={styles.dashboardStatCell}
                                     activeOpacity={0.8}
@@ -1010,10 +1006,18 @@ export default function HomeScreen({ navigation, route }) {
                                         navigation.navigate("Rank");
                                     }}
                                 >
-                                    <Ionicons name="trophy-outline" size={14} color={COLORS.accent} style={{ marginBottom: 3 }} />
-                                    <Text style={styles.dashboardStatLabel}>TIER</Text>
-                                    <Text style={[styles.dashboardStatValue, { color: "#EDEAE3" }]} numberOfLines={1}>
-                                        {tierNum}
+                                    <Ionicons name={currentRank.icon} size={14} color={currentRank.color} style={{ marginBottom: 3 }} />
+                                    <Text style={styles.dashboardStatLabel}>RANK</Text>
+                                    <Text
+                                        style={[
+                                            styles.dashboardStatValue,
+                                            styles.dashboardRankValue,
+                                            { color: currentRank.color }
+                                        ]}
+                                        numberOfLines={1}
+                                        adjustsFontSizeToFit
+                                    >
+                                        {currentRank.title}
                                     </Text>
                                 </TouchableOpacity>
                             </View>
@@ -2110,6 +2114,11 @@ const styles = StyleSheet.create({
         fontSize: 22,
         fontFamily: FAMILY.monoBold,
         textAlign: "center",
+    },
+    dashboardRankValue: {
+        fontSize: 13,
+        fontFamily: FAMILY.bold,
+        letterSpacing: 0.3,
     },
     dashboardStatDivider: {
         width: 1,

@@ -14,7 +14,7 @@ import { useAuth } from "../context/AuthContext";
 
 const { width } = Dimensions.get("window");
 
-const RANKS = [
+export const RANKS = [
     { level: 1, title: "RECRUIT", icon: "shield-outline", min: 0, max: 4, color: "#8E8E93", desc: "Every legend starts with a single rep. Welcome to the arena." },
     { level: 2, title: "ROOKIE", icon: "star-outline", min: 5, max: 9, color: "#30B0C7", desc: "You've proven you're serious. Keep building momentum." },
     { level: 3, title: "CHADLITE", icon: "trending-up", min: 10, max: 24, color: "#30D158", desc: "Others are taking notice. Your consistency is paying off." },
@@ -23,7 +23,7 @@ const RANKS = [
     { level: 6, title: "LEGEND", icon: "trophy-outline", min: 100, max: 999, color: "#E31E24", desc: "The pinnacle. You've conquered everything. Pure excellence." },
 ];
 
-function getRankData(total) {
+export function getRankData(total) {
     for (let i = RANKS.length - 1; i >= 0; i--) {
         if (total >= RANKS[i].min) return { ...RANKS[i], index: i };
     }
