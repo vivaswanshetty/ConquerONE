@@ -72,9 +72,10 @@ function GradientText({ text, style, colors = GRADIENTS.diamond, height = 50 }) 
     );
 }
 
-function MetallicText({ text, style, height = 36 }) {
+function MetallicText({ text, style, height = 42 }) {
     return (
         <MaskedView
+            style={{ height, width: '100%' }}
             maskElement={
                 <Text style={style} adjustsFontSizeToFit numberOfLines={1}>
                     {text}
@@ -102,7 +103,7 @@ function LiveStatusStrip({ total, streak, xp }) {
         `${streak} DAY STREAK`,
         `${currentRank.title} · RANK`,
         `${xp % 100}% XP PROGRESS`,
-    ];;
+    ];
 
     const [index, setIndex] = useState(0);
     const textAnim = useRef(new Animated.Value(1)).current;
