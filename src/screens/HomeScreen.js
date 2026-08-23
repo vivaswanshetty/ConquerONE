@@ -997,9 +997,23 @@ export default function HomeScreen({ navigation, route }) {
                         setStreakAnalyticsVisible(true);
                     }}
                 >
+                    <LinearGradient
+                        colors={[COLORS.bgCard, COLORS.bgRaised]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={StyleSheet.absoluteFillObject}
+                        pointerEvents="none"
+                    />
                     <View style={styles.consistencyHeader}>
-                        <Text style={styles.consistencyTitle}>THIS WEEK</Text>
-                        <Text style={styles.consistencySubtitle}>Colored by muscle group</Text>
+                        <View>
+                            <Text style={styles.consistencyTitle}>THIS WEEK</Text>
+                            <Text style={styles.consistencySubtitle}>Colored by muscle group</Text>
+                        </View>
+                        <View style={styles.consistencyBadge}>
+                            <Text style={styles.consistencyBadgeText}>
+                                <Text style={{ fontFamily: FAMILY.monoBold, color: COLORS.text }}>{completedDays.length}</Text>/6 SESSIONS
+                            </Text>
+                        </View>
                     </View>
 
                     <View style={styles.consistencyGridContainer}>
@@ -1015,20 +1029,29 @@ export default function HomeScreen({ navigation, route }) {
 
                             return (
                                 <View key={label} style={styles.gridCellWrapper}>
-                                    <Text style={styles.gridCellDayLabel}>{label[0]}</Text>
+                                    <Text style={[
+                                        styles.gridCellDayLabel,
+                                        isToday && { color: "#FF9500", fontFamily: FAMILY.bold },
+                                        isCompleted && { color: COLORS.text, fontFamily: FAMILY.bold }
+                                    ]}>
+                                        {label[0]}
+                                    </Text>
                                     <View
                                         style={[
                                             styles.gridCircle,
-                                            isCompleted && { backgroundColor: muscleColor, borderColor: muscleColor },
+                                            isCompleted && {
+                                                backgroundColor: muscleColor,
+                                                borderColor: "rgba(255, 255, 255, 0.25)",
+                                            },
                                             isToday && !isCompleted && styles.gridCircleToday,
                                             isDayFrozen && styles.gridCircleFrozen,
                                             !isCompleted && !isDayFrozen && !isToday && styles.gridCircleInactive,
                                         ]}
                                     >
                                         {isCompleted ? (
-                                            <Ionicons name="checkmark" size={14} color="#000000" />
+                                            <Ionicons name="flash" size={13} color="#FFFFFF" />
                                         ) : isDayFrozen ? (
-                                            <Ionicons name="snow" size={12} color={COLORS.textSub} />
+                                            <Ionicons name="snow" size={12} color="#30B0C7" />
                                         ) : isToday ? (
                                             <View style={styles.gridCircleTodayDot} />
                                         ) : null}
@@ -2029,11 +2052,12 @@ const styles = StyleSheet.create({
     consistencyCard: {
         marginHorizontal: SPACING.base,
         marginTop: 12,
-        borderRadius: 18,
+        borderRadius: RADIUS.lg,
         borderWidth: 1,
         borderColor: COLORS.border,
         backgroundColor: COLORS.bgCard,
         padding: 18,
+        overflow: "hidden",
     },
     consistencyHeader: {
         flexDirection: "row",
@@ -2043,13 +2067,27 @@ const styles = StyleSheet.create({
     },
     consistencyTitle: {
         fontSize: 13,
-        fontFamily: FAMILY.accent2,
+        fontFamily: FAMILY.bold,
         letterSpacing: 0.8,
-        color: "#FFFFFF",
+        color: COLORS.text,
     },
     consistencySubtitle: {
-        fontSize: 11,
+        fontSize: 10.5,
         fontFamily: FAMILY.regular,
+        color: COLORS.textSub,
+        marginTop: 1,
+    },
+    consistencyBadge: {
+        backgroundColor: "rgba(255, 255, 255, 0.04)",
+        paddingHorizontal: 8,
+        paddingVertical: 3.5,
+        borderRadius: RADIUS.sm,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+    },
+    consistencyBadgeText: {
+        fontSize: 9.5,
+        fontFamily: FAMILY.mono,
         color: COLORS.textSub,
     },
     consistencyGridContainer: {
@@ -2062,15 +2100,15 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     gridCellDayLabel: {
-        fontFamily: FAMILY.regular,
+        fontFamily: FAMILY.medium,
         fontSize: 11,
-        color: COLORS.textSub,
+        color: COLORS.textMuted,
         textAlign: "center",
     },
     gridCircle: {
-        width: 34,
-        height: 34,
-        borderRadius: 17,
+        width: 36,
+        height: 36,
+        borderRadius: 18,
         borderWidth: 1,
         justifyContent: "center",
         alignItems: "center",
@@ -2087,8 +2125,8 @@ const styles = StyleSheet.create({
         backgroundColor: "#FF9500",
     },
     gridCircleFrozen: {
-        borderColor: COLORS.border,
-        backgroundColor: "rgba(237, 234, 227, 0.15)",
+        borderColor: "rgba(48, 176, 199, 0.4)",
+        backgroundColor: "rgba(48, 176, 199, 0.12)",
     },
     gridCircleInactive: {
         borderColor: "rgba(255, 255, 255, 0.08)",
@@ -2099,7 +2137,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "space-between",
         borderTopWidth: 1,
-        borderTopColor: "rgba(255, 255, 255, 0.05)",
+        borderTopColor: "rgba(255, 255, 255, 0.06)",
         marginTop: 16,
         paddingTop: 14,
     },
@@ -2115,7 +2153,7 @@ const styles = StyleSheet.create({
     },
     legendText: {
         fontSize: 10,
-        fontFamily: FAMILY.regular,
+        fontFamily: FAMILY.medium,
         color: COLORS.textSub,
     },
 
