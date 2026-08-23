@@ -395,7 +395,11 @@ export default function HistoryScreen({ navigation }) {
         }
     };
 
-    const totalMin = useMemo(() => Math.round(history.reduce((s, h) => s + (h.durationSec || 0), 0) / 60), [history]);
+    const totalHours = useMemo(() => {
+        const sec = history.reduce((s, h) => s + (h.durationSec || 0), 0);
+        const hrs = sec / 3600;
+        return hrs >= 100 ? Math.round(hrs).toString() : hrs.toFixed(1);
+    }, [history]);
     const weeklyData = useMemo(() => computeWeeklyData(history), [history]);
     const prs = useMemo(() => computePRs(history), [history]);
     const dayCounts = useMemo(() => {
@@ -441,7 +445,7 @@ export default function HistoryScreen({ navigation }) {
             const summary = `\n\n📊 CONQUER ONE WORKOUT REPORT\n━━━━━━━━━━━━━━━━━━━━━━━━\n` +
                 `Total Sessions: ${total}\n` +
                 `Current Streak: ${streak} days\n` +
-                `Total Time: ${totalMin} minutes\n` +
+                `Total Time: ${totalHours} hours\n` +
                 `━━━━━━━━━━━━━━━━━━━━━━━━\n\n` + csv;
 
             await Share.share({
@@ -549,15 +553,15 @@ export default function HistoryScreen({ navigation }) {
                             {/* Total Duration Card (Main Card) */}
                             <View style={styles.statLarge}>
                                 <LinearGradient
-                                    colors={["rgba(255, 255, 255, 0.05)", "rgba(255, 255, 255, 0.01)"]}
-                                    start={{ x: 0, y: 0 }}
-                                    end={{ x: 1, y: 1 }}
+                                    colors={["rgba(227, 30, 36, 0.08)", "rgba(255, 255, 255, 0.02)"]}
+                                    start={{ x: 1, y: 1 }}
+                                    end={{ x: 0, y: 0 }}
                                     style={StyleSheet.absoluteFillObject}
                                     pointerEvents="none"
                                 />
-                                {/* Subtle decorative background watermark */}
-                                <View style={{ position: "absolute", right: -20, bottom: -20, opacity: 0.07 }} pointerEvents="none">
-                                    <Ionicons name="time-outline" size={120} color="#FFFFFF" />
+                                {/* Red decorative background watermark */}
+                                <View style={{ position: "absolute", right: -20, bottom: -20, opacity: 0.16 }} pointerEvents="none">
+                                    <Ionicons name="time-outline" size={120} color={COLORS.primary} />
                                 </View>
 
                                 <View style={styles.statSmallTop}>
@@ -566,7 +570,7 @@ export default function HistoryScreen({ navigation }) {
                                 </View>
                                 <View>
                                     <Text style={[styles.statValue, { fontSize: 34, lineHeight: 38 }]}>
-                                        {totalMin}<Text style={{ fontSize: 18, color: COLORS.textSub }}>m</Text>
+                                        {totalHours}<Text style={{ fontSize: 18, color: COLORS.textSub }}>h</Text>
                                     </Text>
                                     <Text style={styles.statSubLabel}>cumulative volume</Text>
                                 </View>
