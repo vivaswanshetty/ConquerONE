@@ -723,7 +723,7 @@ export default function HomeScreen({ navigation, route }) {
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 overScrollMode="never"
-                contentContainerStyle={{ paddingTop: insets.top + SPACING.base, paddingBottom: 16 }}
+                contentContainerStyle={{ paddingTop: insets.top + SPACING.base, paddingBottom: 0 }}
             >
                 {/* ── Header ── */}
                 <View style={styles.headerRow}>
@@ -1314,7 +1314,7 @@ export default function HomeScreen({ navigation, route }) {
                     </View>
                 </TouchableOpacity>
 
-                <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+                <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
                     <View style={styles.footerDivider} />
                     <Text style={styles.footerVersion}>CONQUER ONE · {APP_VERSION}</Text>
                     <Text style={styles.footerAuthor}>BUILT FOR PERFORMANCE BY <Text style={{ color: COLORS.textSub }}>VIVASWAN SHETTY</Text></Text>
@@ -2917,10 +2917,10 @@ const styles = StyleSheet.create({
     unfreezeLinkText: { fontSize: 11, fontFamily: FAMILY.semibold, color: 'rgba(255, 255, 255, 0.45)', letterSpacing: 0.8 },
     
     // Footer
-    footer: { alignItems: "center", marginTop: 40, paddingHorizontal: SPACING.base },
-    footerDivider: { width: 32, height: 1, backgroundColor: COLORS.border, marginBottom: 16 },
-    footerVersion: { fontSize: 9, fontFamily: FAMILY.mono, color: COLORS.textMuted, marginBottom: 4 },
-    footerAuthor: { fontSize: 8, fontFamily: FAMILY.regular, color: COLORS.textMuted },
+    footer: { alignItems: "center", marginTop: 20, paddingHorizontal: SPACING.base },
+    footerDivider: { width: 28, height: 1, backgroundColor: "rgba(255, 255, 255, 0.08)", marginBottom: 10 },
+    footerVersion: { fontSize: 9.5, fontFamily: FAMILY.mono, color: COLORS.textMuted, marginBottom: 3 },
+    footerAuthor: { fontSize: 8.5, fontFamily: FAMILY.medium, color: COLORS.textMuted, letterSpacing: 0.4 },
 
     // Streak Reset Modal Styles
     resetOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 20 },
