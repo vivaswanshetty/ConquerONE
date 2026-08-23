@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
         letterSpacing: 4, marginBottom: 20,
     },
     title: {
-        fontSize: 72, fontFamily: FAMILY.header,
+        fontSize: 72, fontFamily: FAMILY.accent2,
         color: "#fff", letterSpacing: -3, lineHeight: 68,
         marginBottom: 28,
     },

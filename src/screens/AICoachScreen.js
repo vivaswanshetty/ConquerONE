@@ -336,7 +336,7 @@ const hm = StyleSheet.create({
     },
     handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.15)', alignSelf: 'center', marginTop: 14, marginBottom: 20 },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24, marginBottom: 20 },
-    title: { fontSize: 12, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: 2 },
+    title: { fontSize: 12, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 2 },
     clearBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: RADIUS.sm, backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
     clearText: { fontSize: 11, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 1 },
     empty: { alignItems: 'center', paddingVertical: 60 },

@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 32,
-        fontFamily: FAMILY.header,
+        fontFamily: FAMILY.accent2,
         color: COLORS.text,
         textAlign: "center",
         letterSpacing: 2,

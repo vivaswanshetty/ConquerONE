@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
 
     header: { marginBottom: 48 },
     eyebrow: { fontSize: 10, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 4, marginBottom: 12 },
-    title: { fontSize: 52, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: -2, lineHeight: 52, marginBottom: 10 },
+    title: { fontSize: 52, fontFamily: FAMILY.accent2, color: COLORS.text, letterSpacing: -2, lineHeight: 52, marginBottom: 10 },
     subtitle: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textMuted },
 
     form: { gap: 20, marginBottom: 40 },

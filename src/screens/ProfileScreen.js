@@ -895,7 +895,7 @@ const styles = StyleSheet.create({
     avatarProgressText: {
         fontSize: 14, fontFamily: FAMILY.monoBold, color: "#fff",
     },
-    initials: { fontSize: 32, fontFamily: FAMILY.header, color: COLORS.textMuted },
+    initials: { fontSize: 32, fontFamily: FAMILY.bold, color: COLORS.textMuted },
     cameraBtn: {
         position: "absolute", bottom: 6, right: 6, width: 32, height: 32, borderRadius: 16,
         backgroundColor: COLORS.primary, alignItems: "center", justifyContent: "center",

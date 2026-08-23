@@ -313,7 +313,7 @@ const pm = StyleSheet.create({
         backgroundColor: "rgba(227,30,36,0.05)", borderWidth: 1, borderColor: "rgba(227,30,36,0.2)",
         alignItems: "center", justifyContent: "center",
     },
-    title: { fontSize: 13, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: 1.5 },
+    title: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 1.5 },
     subtitle: { fontSize: 18, fontFamily: FAMILY.medium, color: COLORS.textSub, marginTop: 4 },
     targetText: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.primary, marginTop: 6, letterSpacing: 0.5 },
     suggestedText: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.accent, marginTop: 6, letterSpacing: 0.5 },
@@ -407,7 +407,7 @@ const pt = StyleSheet.create({
     },
     info: { flex: 1 },
     label: { fontSize: 8, fontFamily: FAMILY.semibold, color: COLORS.primary, letterSpacing: 1.5 },
-    name: { fontSize: 13, fontFamily: FAMILY.header, color: COLORS.text, marginTop: 4 },
+    name: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.text, marginTop: 4 },
     valBox: {
         backgroundColor: "rgba(255,255,255,0.06)",
         paddingHorizontal: 12, paddingVertical: 8, borderRadius: RADIUS.sm,
@@ -556,7 +556,7 @@ const ro = StyleSheet.create({
         padding: 24, alignItems: "center", marginBottom: 24,
     },
     nextLabel: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 2.5, marginBottom: 12 },
-    nextName: { fontSize: 24, fontFamily: FAMILY.header, color: COLORS.text, textAlign: "center", marginBottom: 16, width: "100%" },
+    nextName: { fontSize: 24, fontFamily: FAMILY.accent2, color: COLORS.text, textAlign: "center", marginBottom: 16, width: "100%" },
     nextImgBox: { width: "100%", height: 140, borderRadius: RADIUS.lg, overflow: "hidden", backgroundColor: "rgba(255,255,255,0.03)" },
     nextImg: { width: "100%", height: "100%", opacity: 0.5 },
     tipCard: {
@@ -1574,7 +1574,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20, paddingBottom: 12,
     },
     topCenter: { alignItems: "center", flex: 1 },
-    topTitle: { fontSize: 15, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: -0.2 },
+    topTitle: { fontSize: 15, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: -0.2 },
     topSub: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.textSub, marginTop: 2 },
     quitBtn: {
         width: 36, height: 36, borderRadius: RADIUS.pill,
@@ -1606,7 +1606,7 @@ const styles = StyleSheet.create({
     phaseTagText: { fontSize: 9, fontFamily: FAMILY.semibold, letterSpacing: 1.5, color: COLORS.text },
 
     exName: {
-        fontSize: 30, fontFamily: FAMILY.header, color: COLORS.text,
+        fontSize: 30, fontFamily: FAMILY.accent2, color: COLORS.text,
         textAlign: "center", marginTop: 16, paddingHorizontal: 32,
         lineHeight: 34, letterSpacing: -0.5, width: "100%"
     },
@@ -1698,7 +1698,7 @@ const styles = StyleSheet.create({
         fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 1.5, marginBottom: 6,
     },
     infoPanelTitle: {
-        fontSize: 18, fontFamily: FAMILY.header, color: COLORS.text, textAlign: "center", marginBottom: 14, letterSpacing: -0.3, lineHeight: 22,
+        fontSize: 18, fontFamily: FAMILY.bold, color: COLORS.text, textAlign: "center", marginBottom: 14, letterSpacing: -0.3, lineHeight: 22,
     },
     infoPanelBadgeRow: {
         flexDirection: "row", gap: 8, justifyContent: "center", alignItems: "center",
