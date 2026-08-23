@@ -1180,14 +1180,14 @@ export default function HomeScreen({ navigation, route }) {
                                     const isDayFrozen = total > 0 && freezeDays.includes(dayNum);
                                     const isToday = total > 0 && todayDay === dayNum;
                                     const isSunday = dayNum === 7;
-                                    const dayTarget = completedTargets[dayNum] || (WORKOUT_PLAN.find(d => d.day === dayNum)?.target);
-                                    const muscleColor = getMuscleColor(dayTarget);
+                                    const dayTarget = isSunday ? "Active Recovery" : (completedTargets[dayNum] || (WORKOUT_PLAN.find(d => d.day === dayNum)?.target));
+                                    const muscleColor = isSunday ? "#30D158" : getMuscleColor(dayTarget);
 
                                     return (
                                         <View key={label} style={styles.gridCellWrapper}>
                                             <Text style={[
                                                 styles.gridCellDayLabel,
-                                                isToday && { color: "#FF9500", fontFamily: FAMILY.bold },
+                                                isToday && { color: muscleColor, fontFamily: FAMILY.bold },
                                                 isCompleted && { color: COLORS.text, fontFamily: FAMILY.bold }
                                             ]}>
                                                 {label[0]}
@@ -1199,7 +1199,11 @@ export default function HomeScreen({ navigation, route }) {
                                                         backgroundColor: muscleColor,
                                                         borderColor: "rgba(255, 255, 255, 0.25)",
                                                     },
-                                                    isToday && !isCompleted && styles.gridCircleToday,
+                                                    isToday && !isCompleted && {
+                                                        borderColor: isSunday ? "rgba(48, 209, 88, 0.6)" : muscleColor,
+                                                        borderWidth: 2,
+                                                        backgroundColor: isSunday ? "rgba(48, 209, 88, 0.12)" : `${muscleColor}1F`,
+                                                    },
                                                     isDayFrozen && styles.gridCircleFrozen,
                                                     !isCompleted && !isDayFrozen && !isToday && styles.gridCircleInactive,
                                                 ]}
@@ -1209,7 +1213,13 @@ export default function HomeScreen({ navigation, route }) {
                                                 ) : isDayFrozen ? (
                                                     <Ionicons name="snow" size={12} color="#30B0C7" />
                                                 ) : isToday ? (
-                                                    <View style={styles.gridCircleTodayDot} />
+                                                    isSunday ? (
+                                                        <Ionicons name="moon" size={12} color="#30D158" />
+                                                    ) : (
+                                                        <View style={[styles.gridCircleTodayDot, { backgroundColor: muscleColor }]} />
+                                                    )
+                                                ) : isSunday ? (
+                                                    <Ionicons name="moon-outline" size={11} color="rgba(255, 255, 255, 0.15)" />
                                                 ) : null}
                                             </View>
                                         </View>
@@ -2308,15 +2318,15 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     gridCircleToday: {
-        borderColor: "#FF9500",
+        borderColor: COLORS.primary,
         borderWidth: 2,
-        backgroundColor: "rgba(255, 149, 0, 0.12)",
+        backgroundColor: "rgba(227, 30, 36, 0.12)",
     },
     gridCircleTodayDot: {
         width: 8,
         height: 8,
         borderRadius: 4,
-        backgroundColor: "#FF9500",
+        backgroundColor: COLORS.primary,
     },
     gridCircleFrozen: {
         borderColor: "rgba(48, 176, 199, 0.4)",
