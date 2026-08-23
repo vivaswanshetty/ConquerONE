@@ -1270,6 +1270,12 @@ export default function HomeScreen({ navigation, route }) {
                     </Animated.View>
                 )}
 
+                {/* ── Moments & Milestones ── */}
+                <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionLabel}>MOMENTS & MILESTONES</Text>
+                </View>
+                <MomentsGallery streak={streak} total={total} profile={profile} />
+
                 {/* ── Workout Library ── */}
                 <View style={styles.sectionHeader}>
                     <Text style={styles.sectionLabel}>WORKOUT LIBRARY</Text>
@@ -2889,13 +2895,39 @@ const styles = StyleSheet.create({
 
     // Moments
     momentCard: {
-        width: 180, height: 110, padding: 16, borderRadius: RADIUS.md,
-        backgroundColor: COLORS.bgCard, borderWidth: 1, borderColor: COLORS.border,
-        justifyContent: "space-between", overflow: "hidden"
+        width: 176,
+        height: 104,
+        padding: 14,
+        borderRadius: 20,
+        backgroundColor: COLORS.bgCard,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+        justifyContent: "space-between",
+        overflow: "hidden",
     },
-    momentIconWrap: { width: 32, height: 32, borderRadius: RADIUS.pill, backgroundColor: "rgba(237, 234, 227, 0.06)", alignItems: "center", justifyContent: "center" },
-    momentTitle: { fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 1, marginBottom: 4 },
-    momentSub: { fontSize: 13, fontFamily: FAMILY.semibold, color: COLORS.text },
+    momentIconWrap: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: "rgba(255, 255, 255, 0.06)",
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    momentTitle: {
+        fontSize: 9.5,
+        fontFamily: FAMILY.bold,
+        color: COLORS.primary,
+        letterSpacing: 1.1,
+        marginBottom: 3,
+    },
+    momentSub: {
+        fontSize: 13,
+        fontFamily: FAMILY.bold,
+        color: COLORS.text,
+        lineHeight: 17,
+    },
 
     // Moment Detail
     momentDetailBlur: { flex: 1, justifyContent: "center", alignItems: "center" },
