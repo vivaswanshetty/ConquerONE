@@ -23,6 +23,8 @@ import * as Haptics from "expo-haptics";
 import Svg, { Circle, Path, Defs, LinearGradient as SvgGradient, Stop, Text as SvgText, Polygon, Line } from "react-native-svg";
 import WorkoutCalendar from "../components/WorkoutCalendar";
 import SkeletonBlock from "../components/SkeletonBlock";
+import ViewShot from "react-native-view-shot";
+import * as Sharing from "expo-sharing";
 import { getRankData, RANKS } from "./RankScreen";
 import { syncAndroidWidget } from "../utils/widgetSync";
 
@@ -1779,6 +1781,8 @@ export default function HomeScreen({ navigation, route }) {
 
 function MomentsGallery({ streak, total, profile = null }) {
     const [expandedMoment, setExpandedMoment] = useState(null);
+    const [isSharingMoment, setIsSharingMoment] = useState(false);
+    const momentShotRef = useRef(null);
     const anim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
@@ -1792,6 +1796,48 @@ function MomentsGallery({ streak, total, profile = null }) {
             anim.setValue(0);
         }
     }, [expandedMoment]);
+
+    const handleShareMoment = async () => {
+        if (!expandedMoment) return;
+        try {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+            const isAvailable = await Sharing.isAvailableAsync();
+            if (!isAvailable) {
+                Share.share({
+                    message: `🏆 Just unlocked: ${expandedMoment?.title}! Training with CONQUER ONE.`,
+                    title: expandedMoment?.title,
+                });
+                return;
+            }
+
+            setIsSharingMoment(true);
+            setTimeout(async () => {
+                try {
+                    if (momentShotRef.current && momentShotRef.current.capture) {
+                        const uri = await momentShotRef.current.capture();
+                        setIsSharingMoment(false);
+                        await Sharing.shareAsync(uri, {
+                            mimeType: "image/png",
+                            dialogTitle: `CONQUER ONE - ${expandedMoment?.title || "Achievement"}`,
+                            UTI: "public.png",
+                        });
+                    } else {
+                        setIsSharingMoment(false);
+                    }
+                } catch (err) {
+                    setIsSharingMoment(false);
+                    console.warn("Moment card capture error:", err);
+                    Share.share({
+                        message: `🏆 Just unlocked: ${expandedMoment?.title}! Training with CONQUER ONE.`,
+                        title: expandedMoment?.title,
+                    });
+                }
+            }, 150);
+        } catch (e) {
+            setIsSharingMoment(false);
+            console.warn("handleShareMoment error:", e);
+        }
+    };
 
     const MOMENTS = [
         {
@@ -2014,20 +2060,137 @@ function MomentsGallery({ streak, total, profile = null }) {
                             </TouchableOpacity>
 
                             <TouchableOpacity
-                                style={styles.momentShareBtn}
-                                onPress={() => Share.share({
-                                    message: `🏆 Just hit a milestone: ${expandedMoment?.title}! Training with CONQUER ONE.
-
-Download: https://conquer-one.app`, title: expandedMoment?.title
-                                })}
+                                style={[styles.momentShareBtn, isSharingMoment && { opacity: 0.6 }]}
+                                onPress={handleShareMoment}
+                                disabled={isSharingMoment}
+                                activeOpacity={0.75}
                             >
-                                <Ionicons name="share-social-outline" size={14} color="rgba(255,255,255,0.4)" style={{ marginRight: 8 }} />
-                                <Text style={styles.momentShareText}>SHARE ACHIEVEMENT</Text>
+                                <Ionicons name="share-social-outline" size={15} color={expandedMoment?.color || COLORS.primary} style={{ marginRight: 8 }} />
+                                <Text style={[styles.momentShareText, { color: expandedMoment?.color || COLORS.text }]}>
+                                    {isSharingMoment ? "GENERATING CARD..." : "SHARE ACHIEVEMENT"}
+                                </Text>
                             </TouchableOpacity>
                         </LinearGradient>
                     </Animated.View>
                 </Animated.View>
             </Modal>
+
+            {/* ── Purpose-Built Branded Moment Share Card (Off-Screen Captured ViewShot) ── */}
+            <View style={styles.momentOffscreenWrap} pointerEvents="none">
+                <ViewShot ref={momentShotRef} options={{ format: "png", quality: 1 }}>
+                    <View style={styles.momentShareCard} collapsable={false}>
+                        {/* Background Gradient & Ambient Sheen */}
+                        <LinearGradient
+                            colors={["#141418", "#0A0A0C", "#040406"]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 0.3, y: 1 }}
+                            style={StyleSheet.absoluteFill}
+                        />
+                        <LinearGradient
+                            colors={[`${expandedMoment?.color || '#E31E24'}33`, `${expandedMoment?.color || '#E31E24'}08`, "transparent"]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 0, y: 1 }}
+                            style={{ position: "absolute", top: 0, left: 0, right: 0, height: 140 }}
+                        />
+
+                        {/* Top Card Header */}
+                        <View style={styles.momentShareCardHeader}>
+                            <View style={[styles.momentShareBadge, { borderColor: `${expandedMoment?.color || COLORS.primary}4D`, backgroundColor: `${expandedMoment?.color || COLORS.primary}1A` }]}>
+                                <View style={[styles.momentShareBadgeDot, { backgroundColor: expandedMoment?.color || COLORS.primary }]} />
+                                <Text style={[styles.momentShareBadgeText, { color: expandedMoment?.color || COLORS.primary }]}>
+                                    ACHIEVEMENT UNLOCKED
+                                </Text>
+                            </View>
+                            <Text style={styles.momentShareCardDate}>
+                                {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }).toUpperCase()}
+                            </Text>
+                        </View>
+
+                        {/* Athlete Row */}
+                        <View style={styles.momentShareAthleteRow}>
+                            <View style={styles.momentShareAvatarBox}>
+                                {profile?.photoURL ? (
+                                    <Image source={{ uri: profile.photoURL }} style={styles.momentShareAvatarImg} />
+                                ) : (
+                                    <Text style={styles.momentShareAvatarTxt}>
+                                        {(profile?.fullName?.[0] || "A").toUpperCase()}
+                                    </Text>
+                                )}
+                            </View>
+                            <View>
+                                <Text style={styles.momentShareAthleteName}>
+                                    {(profile?.fullName || "CONQUER ATHLETE").toUpperCase()}
+                                </Text>
+                                <Text style={styles.momentShareAthleteTag}>CONQUER ONE ATHLETE</Text>
+                            </View>
+                        </View>
+
+                        {/* Center Moment Icon & Title */}
+                        <View style={styles.momentShareCenterBlock}>
+                            <View style={[styles.momentShareBigIconWrap, { backgroundColor: `${expandedMoment?.color || COLORS.primary}1F`, borderColor: `${expandedMoment?.color || COLORS.primary}59` }]}>
+                                <Ionicons name={expandedMoment?.icon || "trophy"} size={42} color={expandedMoment?.color || COLORS.primary} />
+                            </View>
+                            <Text style={[styles.momentShareCardTitle, { color: expandedMoment?.color || COLORS.text }]}>
+                                {expandedMoment?.title}
+                            </Text>
+                            <Text style={styles.momentShareCardSub}>
+                                {expandedMoment?.sub}
+                            </Text>
+                            <View style={styles.momentShareDescBox}>
+                                <Text style={styles.momentShareCardDesc}>
+                                    "{expandedMoment?.desc}"
+                                </Text>
+                            </View>
+                        </View>
+
+                        {/* Stats Highlight Grid */}
+                        <View style={styles.momentShareStatsGrid}>
+                            <View style={styles.momentShareStatBox}>
+                                <Text style={styles.momentShareStatLabel}>STREAK</Text>
+                                <Text style={[styles.momentShareStatVal, { color: COLORS.primary }]}>
+                                    {streak} <Text style={styles.momentShareStatUnit}>DAYS</Text>
+                                </Text>
+                            </View>
+                            <View style={[styles.momentShareStatBox, styles.momentShareStatDivider]}>
+                                <Text style={styles.momentShareStatLabel}>TOTAL SESSIONS</Text>
+                                <Text style={styles.momentShareStatVal}>
+                                    {total} <Text style={styles.momentShareStatUnit}>LOGS</Text>
+                                </Text>
+                            </View>
+                            <View style={styles.momentShareStatBox}>
+                                <Text style={styles.momentShareStatLabel}>STATUS</Text>
+                                <Text style={[styles.momentShareStatVal, { color: expandedMoment?.color || COLORS.text }]}>
+                                    EARNED
+                                </Text>
+                            </View>
+                        </View>
+
+                        {/* Card Footer Brandmark */}
+                        <View style={styles.momentShareFooter}>
+                            <View style={styles.momentShareFooterLeft}>
+                                <Image
+                                    source={require("../../assets/logo_barbell.png")}
+                                    style={styles.momentShareBarbell}
+                                    resizeMode="contain"
+                                />
+                                <View style={styles.momentShareBrandTextGroup}>
+                                    <Image
+                                        source={require("../../assets/logo_text.png")}
+                                        style={styles.momentShareLogoText}
+                                        resizeMode="contain"
+                                    />
+                                    <Text style={styles.momentShareTagline}>ELITE PERFORMANCE PROTOCOL</Text>
+                                </View>
+                            </View>
+                            <View style={[styles.momentShareAccentPill, { backgroundColor: `${expandedMoment?.color || COLORS.primary}1A`, borderColor: `${expandedMoment?.color || COLORS.primary}4D` }]}>
+                                <Text style={[styles.momentSharePillText, { color: expandedMoment?.color || COLORS.primary }]}>
+                                    MILESTONE
+                                </Text>
+                            </View>
+                        </View>
+                    </View>
+                </ViewShot>
+            </View>
         </>
     );
 }
@@ -3135,8 +3298,234 @@ const styles = StyleSheet.create({
     momentDetailDesc: { fontSize: 13, fontFamily: FAMILY.regular, color: COLORS.textSub, textAlign: "center", lineHeight: 20, marginBottom: 24 },
     momentActionBtn: { width: '100%', height: 50, borderRadius: RADIUS.pill, backgroundColor: COLORS.primary, alignItems: "center", justifyContent: "center" },
     momentActionText: { fontSize: 12, fontFamily: FAMILY.semibold, color: COLORS.text, letterSpacing: 1 },
-    momentShareBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", marginTop: 14, paddingVertical: 8 },
-    momentShareText: { fontSize: 10, fontFamily: FAMILY.medium, color: COLORS.textSub },
+    momentShareBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        marginTop: 14,
+        paddingVertical: 10,
+        paddingHorizontal: 18,
+        borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(255, 255, 255, 0.05)",
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.1)",
+        width: "100%",
+    },
+    momentShareText: { fontSize: 11, fontFamily: FAMILY.bold, letterSpacing: 0.5 },
+
+    /* Moment Share Card Offscreen & Template */
+    momentOffscreenWrap: {
+        position: "absolute",
+        left: -3500,
+        top: 0,
+        opacity: 0,
+    },
+    momentShareCard: {
+        width: 360,
+        minHeight: 480,
+        backgroundColor: "#08080A",
+        borderRadius: 24,
+        borderWidth: 1.2,
+        borderColor: "rgba(255, 255, 255, 0.16)",
+        padding: 24,
+        justifyContent: "space-between",
+        overflow: "hidden",
+    },
+    momentShareCardHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom: 16,
+    },
+    momentShareBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: RADIUS.pill,
+        borderWidth: 1,
+    },
+    momentShareBadgeDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+    },
+    momentShareBadgeText: {
+        fontSize: 9,
+        fontFamily: FAMILY.bold,
+        letterSpacing: 1,
+    },
+    momentShareCardDate: {
+        fontSize: 9.5,
+        fontFamily: FAMILY.mono,
+        color: COLORS.textMuted,
+        letterSpacing: 0.5,
+    },
+    momentShareAthleteRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+        marginBottom: 16,
+        paddingBottom: 14,
+        borderBottomWidth: 1,
+        borderBottomColor: "rgba(255, 255, 255, 0.06)",
+    },
+    momentShareAvatarBox: {
+        width: 38,
+        height: 38,
+        borderRadius: 19,
+        backgroundColor: "#1C1C1E",
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.14)",
+        alignItems: "center",
+        justifyContent: "center",
+        overflow: "hidden",
+    },
+    momentShareAvatarImg: {
+        width: "100%",
+        height: "100%",
+    },
+    momentShareAvatarTxt: {
+        fontSize: 14,
+        fontFamily: FAMILY.bold,
+        color: COLORS.text,
+    },
+    momentShareAthleteName: {
+        fontSize: 13,
+        fontFamily: FAMILY.bold,
+        color: COLORS.text,
+        letterSpacing: 0.5,
+    },
+    momentShareAthleteTag: {
+        fontSize: 8.5,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textMuted,
+        letterSpacing: 1,
+    },
+    momentShareCenterBlock: {
+        alignItems: "center",
+        marginBottom: 16,
+    },
+    momentShareBigIconWrap: {
+        width: 76,
+        height: 76,
+        borderRadius: 38,
+        alignItems: "center",
+        justifyContent: "center",
+        borderWidth: 1.5,
+        marginBottom: 12,
+    },
+    momentShareCardTitle: {
+        fontSize: 22,
+        fontFamily: FAMILY.bold,
+        letterSpacing: 0.5,
+        textAlign: "center",
+        marginBottom: 4,
+    },
+    momentShareCardSub: {
+        fontSize: 11,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textSub,
+        letterSpacing: 1,
+        textAlign: "center",
+        marginBottom: 10,
+    },
+    momentShareDescBox: {
+        backgroundColor: "rgba(255, 255, 255, 0.03)",
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.06)",
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        marginHorizontal: 8,
+    },
+    momentShareCardDesc: {
+        fontSize: 11,
+        fontFamily: FAMILY.regular,
+        color: "rgba(255, 255, 255, 0.75)",
+        textAlign: "center",
+        lineHeight: 16,
+    },
+    momentShareStatsGrid: {
+        flexDirection: "row",
+        backgroundColor: "rgba(255, 255, 255, 0.03)",
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+        paddingVertical: 12,
+        marginBottom: 16,
+    },
+    momentShareStatBox: {
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        paddingHorizontal: 4,
+    },
+    momentShareStatDivider: {
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+    },
+    momentShareStatLabel: {
+        fontSize: 7.5,
+        fontFamily: FAMILY.bold,
+        color: COLORS.textMuted,
+        letterSpacing: 1,
+        marginBottom: 4,
+    },
+    momentShareStatVal: {
+        fontSize: 15,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.text,
+        letterSpacing: -0.2,
+    },
+    momentShareStatUnit: {
+        fontSize: 9,
+        fontFamily: FAMILY.mono,
+        color: COLORS.textMuted,
+    },
+    momentShareFooter: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingTop: 12,
+        borderTopWidth: 1,
+        borderTopColor: "rgba(255, 255, 255, 0.06)",
+    },
+    momentShareFooterLeft: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+    },
+    momentShareBarbell: {
+        width: 30,
+        height: 20,
+    },
+    momentShareBrandTextGroup: {
+        gap: 1,
+    },
+    momentShareLogoText: {
+        width: 90,
+        height: 12,
+    },
+    momentShareTagline: {
+        fontSize: 6.5,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textMuted,
+        letterSpacing: 1,
+    },
+    momentShareAccentPill: {
+        paddingHorizontal: 9,
+        paddingVertical: 4,
+        borderRadius: RADIUS.pill,
+        borderWidth: 1,
+    },
+    momentSharePillText: {
+        fontSize: 8.5,
+        fontFamily: FAMILY.monoBold,
+        letterSpacing: 1,
+    },
 
     // Freeze Modal
     freezeOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 20 },
