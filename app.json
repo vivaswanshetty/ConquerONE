@@ -81,7 +81,25 @@
       ],
       "@react-native-google-signin/google-signin",
       "expo-apple-authentication",
-      "./plugins/withTTSQueries"
+      "./plugins/withTTSQueries",
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "ConquerStreakWidget",
+              "label": "ConquerONE Streak & Today's Workout",
+              "description": "Shows current streak and today's workout target.",
+              "minWidth": "160dp",
+              "minHeight": "100dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
+      ]
     ],
     "extra": {
       "eas": {

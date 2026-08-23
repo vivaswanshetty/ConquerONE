@@ -1,6 +1,10 @@
 import { registerRootComponent } from 'expo';
-
+import { registerWidgetTaskHandler } from 'react-native-android-widget';
+import { widgetTaskHandler } from './src/widgets/widget-task-handler';
 import App from './App';
+
+// Register Android home screen widget background task handler
+registerWidgetTaskHandler(widgetTaskHandler);
 
 // registerRootComponent calls AppRegistry.registerComponent('main', () => App);
 // It also ensures that whether you load the app in Expo Go or in a native build,

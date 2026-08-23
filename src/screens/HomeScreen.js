@@ -24,6 +24,7 @@ import Svg, { Circle, Path, Defs, LinearGradient as SvgGradient, Stop, Text as S
 import WorkoutCalendar from "../components/WorkoutCalendar";
 import SkeletonBlock from "../components/SkeletonBlock";
 import { getRankData } from "./RankScreen";
+import { syncAndroidWidget } from "../utils/widgetSync";
 
 
 // Auth
@@ -654,6 +655,9 @@ export default function HomeScreen({ navigation, route }) {
                 finishInitialLoading();
             }
         }
+
+        // Sync Android Widget with latest streak & day target
+        syncAndroidWidget().catch(() => {});
     };
 
     const handleUnfreeze = async () => {

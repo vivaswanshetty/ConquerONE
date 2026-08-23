@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { COLORS, FONTS, SPACING, RADIUS, FAMILY } from "../utils/theme";
 import { saveWorkoutComplete, formatDuration, tryUpdatePR, getPRRecords, getWorkoutHistory, saveActiveWorkoutSession, getActiveWorkoutSession, clearActiveWorkoutSession } from "../utils/storage";
+import { syncAndroidWidget } from "../utils/widgetSync";
 import { scheduleRestNotification, cancelNotification } from "../utils/notifications";
 import { getSettings, estimateCalories, displayWeight } from "../utils/settings";
 import { getSuggestedWeight } from "../data/workoutData";
@@ -1174,6 +1175,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
         try {
             const currDay = activeDayRef.current || {};
             const result = await saveWorkoutComplete(currDay.day || 1, currDay.target || "Workout", dur, loggedExercisesRef.current);
+            syncAndroidWidget().catch(() => {});
             navigation.replace("WorkoutComplete", {
                 day: { ...currDay, exercises: loggedExercisesRef.current },
                 durationSec: dur,
