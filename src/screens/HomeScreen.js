@@ -1716,7 +1716,8 @@ function MomentsGallery({ streak, total, profile = null }) {
             sub: 'WELCOME TO CONQUER ONE',
             desc: "Your training regimen is officially live. The hard part is starting, and you've already conquered that. Focus on the next set, the next rep, and the next day. You are built for this.",
             icon: 'shield-checkmark',
-            color: COLORS.accent,
+            color: '#30D158',
+            bgTint: 'rgba(48, 209, 88, 0.12)',
             show: true
         },
         {
@@ -1725,7 +1726,8 @@ function MomentsGallery({ streak, total, profile = null }) {
             sub: 'THE JOURNEY BEGINS',
             desc: "The first session is the most important one. You've officially broken the seal and stepped into the arena. Remember this feeling—it's the foundation of everything you will become.",
             icon: 'skull',
-            color: COLORS.accent,
+            color: '#E31E24',
+            bgTint: 'rgba(227, 30, 36, 0.14)',
             show: total >= 1
         },
         {
@@ -1734,7 +1736,8 @@ function MomentsGallery({ streak, total, profile = null }) {
             sub: `${streak} DAYS OF DISCIPLINE`,
             desc: "Discipline is the bridge between goals and accomplishment. Consistent effort is what separates the elite from the average. Keep building that momentum—your future self is watching.",
             icon: 'flame',
-            color: COLORS.accent,
+            color: '#FF9500',
+            bgTint: 'rgba(255, 149, 0, 0.14)',
             show: streak >= 3
         },
         {
@@ -1743,7 +1746,8 @@ function MomentsGallery({ streak, total, profile = null }) {
             sub: '7 DAY STREAK UNLOCKED',
             desc: "You are officially on fire. Seven days of zero excuses. This isn't a fluke anymore—it's a habit. The momentum is now working for you. Don't let the fire go out.",
             icon: 'bonfire',
-            color: COLORS.accent,
+            color: '#FF5722',
+            bgTint: 'rgba(255, 87, 34, 0.14)',
             show: streak >= 7
         },
         {
@@ -1752,7 +1756,8 @@ function MomentsGallery({ streak, total, profile = null }) {
             sub: `${total} SESSIONS COMPLETED`,
             desc: "The archives don't lie. You've consistently shown up and put in the work. You are no longer just 'trying'—you are an athlete in pursuit of absolute performance. Respect the grind.",
             icon: 'trophy',
-            color: COLORS.accent,
+            color: '#FFD700',
+            bgTint: 'rgba(255, 215, 0, 0.14)',
             show: total >= 10
         },
         {
@@ -1761,7 +1766,8 @@ function MomentsGallery({ streak, total, profile = null }) {
             sub: '50 SESSIONS LOGGED',
             desc: "Halfway to a century. You've moved weights, crushed sets, and evolved. You've proven that you have the endurance for the long game. You are becoming a Titan of the arena.",
             icon: 'medal',
-            color: COLORS.accent,
+            color: '#30B0C7',
+            bgTint: 'rgba(48, 176, 199, 0.14)',
             show: total >= 50
         },
         {
@@ -1770,7 +1776,8 @@ function MomentsGallery({ streak, total, profile = null }) {
             sub: '100 SESSIONS OF POWER',
             desc: "One hundred sessions. A monumental feat of human willpower. You have reconstructed yourself through pure iron and sweat. You are part of the elite 1% who never quit. Legend status.",
             icon: 'trending-up',
-            color: COLORS.accent,
+            color: '#A855F7',
+            bgTint: 'rgba(168, 85, 247, 0.16)',
             show: total >= 100
         },
         {
@@ -1779,7 +1786,8 @@ function MomentsGallery({ streak, total, profile = null }) {
             sub: 'CHASE PROGRESS, NOT PERFECTION',
             desc: "Take a breath and appreciate what your body is capable of today. Every session is a gift to your future self. Be proud of how far you've come while staying hungry for where you're going.",
             icon: 'heart',
-            color: COLORS.accent,
+            color: '#FF2D55',
+            bgTint: 'rgba(255, 45, 85, 0.14)',
             show: true
         }
     ];
@@ -1793,7 +1801,8 @@ function MomentsGallery({ streak, total, profile = null }) {
             sub: `${streak}D STREAK · ${total} SESSIONS`,
             desc: `Weekly briefing: ${streak}-day streak and ${total} total sessions completed. Rest and recharge for the next cycle.`,
             icon: 'bar-chart',
-            color: COLORS.accent,
+            color: '#38BDF8',
+            bgTint: 'rgba(56, 189, 248, 0.14)',
             show: total > 0
         });
     }
@@ -1809,7 +1818,8 @@ function MomentsGallery({ streak, total, profile = null }) {
                 sub: `HAPPY BIRTHDAY, ${profile?.fullName?.split(" ")[0] || "ATHLETE"}!`,
                 desc: "A new year of life means a new year of strength. Celebrate how far you've come and take this momentum forward into your next year. Have an incredible day!",
                 icon: 'gift',
-                color: COLORS.accent,
+                color: '#FBBF24',
+                bgTint: 'rgba(251, 191, 36, 0.16)',
                 show: true
             });
         }
@@ -1828,18 +1838,25 @@ function MomentsGallery({ streak, total, profile = null }) {
                 {activeMoments.map((m, i) => (
                     <TouchableOpacity
                         key={m.id}
-                        style={styles.momentCard}
+                        style={[styles.momentCard, { borderColor: `${m.color}33` }]}
                         activeOpacity={0.8}
                         onPress={() => {
                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                             setExpandedMoment(m);
                         }}
                     >
-                        <View style={styles.momentIconWrap}>
-                            <Ionicons name={m.icon} size={16} color={COLORS.text} />
+                        <LinearGradient
+                            colors={[`${m.color}14`, "transparent"]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={StyleSheet.absoluteFillObject}
+                            pointerEvents="none"
+                        />
+                        <View style={[styles.momentIconWrap, { backgroundColor: m.bgTint || `${m.color}1F`, borderColor: `${m.color}4D` }]}>
+                            <Ionicons name={m.icon} size={16} color={m.color} />
                         </View>
                         <View>
-                            <Text style={styles.momentTitle}>{m.title}</Text>
+                            <Text style={[styles.momentTitle, { color: m.color }]}>{m.title}</Text>
                             <Text style={styles.momentSub} numberOfLines={1}>{m.sub}</Text>
                         </View>
                     </TouchableOpacity>
@@ -1872,11 +1889,11 @@ function MomentsGallery({ streak, total, profile = null }) {
                     ]}>
                         <LinearGradient
                             colors={["rgba(32, 32, 40, 0.94)", "rgba(14, 14, 18, 0.98)"]}
-                            style={styles.momentDetailCard}
+                            style={[styles.momentDetailCard, { borderColor: `${expandedMoment?.color || 'rgba(255,255,255,0.16)'}4D` }]}
                         >
                             {/* Top Gloss Specular Highlight */}
                             <LinearGradient
-                                colors={['rgba(255, 255, 255, 0.16)', 'rgba(255, 255, 255, 0.02)', 'transparent']}
+                                colors={[`${expandedMoment?.color || 'rgba(255, 255, 255, 0.16)'}26`, `${expandedMoment?.color || 'rgba(255, 255, 255, 0.02)'}08`, 'transparent']}
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 0, y: 1 }}
                                 style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 90 }}
@@ -1889,11 +1906,11 @@ function MomentsGallery({ streak, total, profile = null }) {
                                 <Ionicons name="close" size={20} color={COLORS.text} />
                             </TouchableOpacity>
 
-                            <View style={styles.momentDetailIconWrap}>
-                                <Ionicons name={expandedMoment?.icon} size={32} color={COLORS.text} />
+                            <View style={[styles.momentDetailIconWrap, { backgroundColor: `${expandedMoment?.color}1F`, borderColor: `${expandedMoment?.color}4D` }]}>
+                                <Ionicons name={expandedMoment?.icon} size={32} color={expandedMoment?.color} />
                             </View>
 
-                            <Text style={styles.momentDetailTitle}>
+                            <Text style={[styles.momentDetailTitle, { color: expandedMoment?.color }]}>
                                 {expandedMoment?.title}
                             </Text>
                             <Text style={styles.momentDetailSub}>
@@ -1904,10 +1921,12 @@ function MomentsGallery({ streak, total, profile = null }) {
                             </Text>
 
                             <TouchableOpacity
-                                style={styles.momentActionBtn}
+                                style={[styles.momentActionBtn, { backgroundColor: expandedMoment?.color || COLORS.primary }]}
                                 onPress={() => setExpandedMoment(null)}
                             >
-                                <Text style={styles.momentActionText}>RECOGNIZED</Text>
+                                <Text style={[styles.momentActionText, { color: (expandedMoment?.color === '#FFD700' || expandedMoment?.color === '#FBBF24') ? '#000' : '#FFF' }]}>
+                                    RECOGNIZED
+                                </Text>
                             </TouchableOpacity>
 
                             <TouchableOpacity
