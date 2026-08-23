@@ -231,7 +231,7 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
                                         ]
                                     }
                                 ]}>
-                                    <Ionicons name="sparkles" size={12} color={COLORS.textSub} />
+                                    <Ionicons name="trophy-outline" size={12} color={COLORS.textSub} />
                                     <Text style={styles.xpAwardText}>
                                         <Text style={{ fontFamily: FAMILY.monoBold, color: COLORS.text }}>+{xpGained} XP</Text>
                                         <Text style={{ color: COLORS.textSub }}> · {multiplierText} multiplier</Text>

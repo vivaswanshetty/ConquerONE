@@ -26,12 +26,12 @@ const VOICE_RATE_KEY = "@ai_coach_voice_rate";
 const MAX_SESSIONS = 20;
 
 const ACTION_CHIPS = [
-    "Give me a motivation quote",
-    "How is my streak doing?",
-    "Suggest a workout tip",
-    "How should I recover?",
-    "Best post-workout meal?",
-    "How to avoid burnout?",
+    { label: "Give me a motivation quote", icon: "flame-outline" },
+    { label: "How is my streak doing?", icon: "trending-up-outline" },
+    { label: "Suggest a workout tip", icon: "bulb-outline" },
+    { label: "How should I recover?", icon: "heart-outline" },
+    { label: "Best post-workout meal?", icon: "nutrition-outline" },
+    { label: "How to avoid burnout?", icon: "shield-checkmark-outline" },
 ];
 
 const WELCOME_MSG = {
@@ -806,20 +806,24 @@ export default function AICoachScreen({ navigation }) {
                         style={styles.chipsScroll}
                         contentContainerStyle={styles.chipsRow}
                     >
-                        {ACTION_CHIPS.map((chip, i) => (
-                            <TouchableOpacity
-                                key={i}
-                                style={styles.chip}
-                                onPress={() => {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                    handleSend(chip);
-                                }}
-                                activeOpacity={0.7}
-                            >
-                                <Ionicons name="sparkles-sharp" size={10} color={COLORS.primary} style={{ marginRight: 6 }} />
-                                <Text style={styles.chipText}>{chip.toUpperCase()}</Text>
-                            </TouchableOpacity>
-                        ))}
+                        {ACTION_CHIPS.map((chip, i) => {
+                            const label = typeof chip === "string" ? chip : chip.label;
+                            const iconName = typeof chip === "object" ? chip.icon : "chatbubble-ellipses-outline";
+                            return (
+                                <TouchableOpacity
+                                    key={i}
+                                    style={styles.chip}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        handleSend(label);
+                                    }}
+                                    activeOpacity={0.7}
+                                >
+                                    <Ionicons name={iconName} size={11} color={COLORS.primary} style={{ marginRight: 6 }} />
+                                    <Text style={styles.chipText}>{label.toUpperCase()}</Text>
+                                </TouchableOpacity>
+                            );
+                        })}
                     </GHScrollView>
                 )}
 
