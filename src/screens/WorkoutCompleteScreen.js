@@ -465,11 +465,18 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
                         <View style={styles.shareCardFooter}>
                             <View style={styles.shareCardFooterLeft}>
                                 <Image
-                                    source={require("../../assets/logo_lockup.png")}
-                                    style={styles.shareCardBrandLockup}
+                                    source={require("../../assets/logo_barbell.png")}
+                                    style={styles.shareCardBarbell}
                                     resizeMode="contain"
                                 />
-                                <Text style={styles.shareCardTagline}>ELITE PERFORMANCE PROTOCOL</Text>
+                                <View style={styles.shareCardBrandTextGroup}>
+                                    <Image
+                                        source={require("../../assets/logo_text.png")}
+                                        style={styles.shareCardLogoText}
+                                        resizeMode="contain"
+                                    />
+                                    <Text style={styles.shareCardTagline}>ELITE PERFORMANCE PROTOCOL</Text>
+                                </View>
                             </View>
                             <View style={[styles.shareCardAccentPill, { backgroundColor: "rgba(227, 30, 36, 0.15)", borderColor: "rgba(227, 30, 36, 0.4)" }]}>
                                 <Text style={[styles.shareCardTargetTag, { color: COLORS.primary }]}>
@@ -787,20 +794,28 @@ const styles = StyleSheet.create({
         borderTopColor: "rgba(255, 255, 255, 0.06)",
     },
     shareCardFooterLeft: {
-        flexDirection: "column",
+        flexDirection: "row",
         alignItems: "center",
-        gap: 3,
+        gap: 8,
     },
-    shareCardBrandLockup: {
-        width: 140,
-        height: 20,
+    shareCardBarbell: {
+        width: 32,
+        height: 22,
+    },
+    shareCardBrandTextGroup: {
+        flexDirection: "column",
+        alignItems: "flex-start",
+        gap: 2.5,
+    },
+    shareCardLogoText: {
+        width: 108,
+        height: 10,
     },
     shareCardTagline: {
         fontSize: 7,
         fontFamily: FAMILY.mono,
         color: COLORS.textMuted,
-        letterSpacing: 0.8,
-        textAlign: "center",
+        letterSpacing: 0.6,
     },
     shareCardAccentPill: {
         paddingHorizontal: 10,

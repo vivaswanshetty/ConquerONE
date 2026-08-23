@@ -695,10 +695,18 @@ function GalleryCardItem({ workout, streak, onShare, isSharing }) {
             <View style={gc.footer}>
                 <View style={gc.brandLeft}>
                     <Image
-                        source={require("../../assets/logo_lockup.png")}
-                        style={gc.brandLockup}
+                        source={require("../../assets/logo_barbell.png")}
+                        style={gc.brandBarbell}
                         resizeMode="contain"
                     />
+                    <View style={gc.brandTextGroup}>
+                        <Image
+                            source={require("../../assets/logo_text.png")}
+                            style={gc.brandLogoText}
+                            resizeMode="contain"
+                        />
+                        <Text style={gc.brandSub}>TRAINING PROTOCOL</Text>
+                    </View>
                 </View>
                 <TouchableOpacity
                     style={gc.shareBtn}
@@ -767,10 +775,25 @@ const gc = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: "rgba(255, 255, 255, 0.06)",
     },
-    brandLeft: { flexDirection: "row", alignItems: "center" },
-    brandLockup: {
-        width: 124,
+    brandLeft: { flexDirection: "row", alignItems: "center", gap: 7 },
+    brandBarbell: {
+        width: 26,
         height: 18,
+    },
+    brandTextGroup: {
+        flexDirection: "column",
+        alignItems: "flex-start",
+        gap: 2,
+    },
+    brandLogoText: {
+        width: 88,
+        height: 8.5,
+    },
+    brandSub: {
+        fontSize: 6,
+        fontFamily: FAMILY.mono,
+        color: COLORS.textMuted,
+        letterSpacing: 0.6,
     },
     shareBtn: {
         flexDirection: "row",
@@ -1652,11 +1675,18 @@ export default function HistoryScreen({ navigation }) {
                         <View style={styles.shareCardFooter}>
                             <View style={styles.shareCardFooterLeft}>
                                 <Image
-                                    source={require("../../assets/logo_lockup.png")}
-                                    style={styles.shareCardBrandLockup}
+                                    source={require("../../assets/logo_barbell.png")}
+                                    style={styles.shareCardBarbell}
                                     resizeMode="contain"
                                 />
-                                <Text style={styles.shareCardTagline}>ELITE PERFORMANCE PROTOCOL</Text>
+                                <View style={styles.shareCardBrandTextGroup}>
+                                    <Image
+                                        source={require("../../assets/logo_text.png")}
+                                        style={styles.shareCardLogoText}
+                                        resizeMode="contain"
+                                    />
+                                    <Text style={styles.shareCardTagline}>ELITE PERFORMANCE PROTOCOL</Text>
+                                </View>
                             </View>
                             <View style={[styles.shareCardAccentPill, { backgroundColor: `${getMuscleColor(activeShareTarget?.target)}20`, borderColor: `${getMuscleColor(activeShareTarget?.target)}4D` }]}>
                                 <Text style={[styles.shareCardTargetTag, { color: getMuscleColor(activeShareTarget?.target) }]}>
@@ -2166,20 +2196,28 @@ const styles = StyleSheet.create({
         borderTopColor: "rgba(255, 255, 255, 0.06)",
     },
     shareCardFooterLeft: {
-        flexDirection: "column",
+        flexDirection: "row",
         alignItems: "center",
-        gap: 3,
+        gap: 8,
     },
-    shareCardBrandLockup: {
-        width: 140,
-        height: 20,
+    shareCardBarbell: {
+        width: 32,
+        height: 22,
+    },
+    shareCardBrandTextGroup: {
+        flexDirection: "column",
+        alignItems: "flex-start",
+        gap: 2.5,
+    },
+    shareCardLogoText: {
+        width: 108,
+        height: 10,
     },
     shareCardTagline: {
         fontSize: 7,
         fontFamily: FAMILY.mono,
         color: COLORS.textMuted,
-        letterSpacing: 0.8,
-        textAlign: "center",
+        letterSpacing: 0.6,
     },
     shareCardAccentPill: {
         paddingHorizontal: 10,
