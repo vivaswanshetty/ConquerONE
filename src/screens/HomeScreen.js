@@ -493,6 +493,7 @@ export default function HomeScreen({ navigation, route }) {
     const [freezeDays, setFreezeDays] = useState([]);
     const [history, setHistory] = useState([]);
     const [streakAnalyticsVisible, setStreakAnalyticsVisible] = useState(false);
+    const [quickMenuVisible, setQuickMenuVisible] = useState(false);
     const [activeSession, setActiveSession] = useState(null);
     const greetingAnim = useRef(new Animated.Value(0)).current;
     const navAnim = useRef(new Animated.Value(0)).current;
@@ -754,84 +755,41 @@ export default function HomeScreen({ navigation, route }) {
                             <MetallicText text={displayName.toUpperCase()} style={styles.name} height={42} />
                         </View>
 
-                        <View style={styles.avatarContainer}>
+                        <View style={styles.headerRightActions}>
+                            {/* Menu Trigger Button */}
                             <TouchableOpacity
-                                style={styles.profileCircle}
-                                onPressIn={handleAvatarPressIn}
-                                onPressOut={handleAvatarPressOut}
-                                activeOpacity={0.85}
+                                style={styles.headerMenuBtn}
+                                onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    setQuickMenuVisible(true);
+                                }}
+                                activeOpacity={0.75}
+                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                             >
-                                {profile?.photoURL ? (
-                                    <Image source={{ uri: profile.photoURL }} style={styles.headerAvatar} />
-                                ) : (
-                                    <View style={styles.avatarPlaceholder}>
-                                        <Text style={styles.avatarText}>{displayName[0]?.toUpperCase()}</Text>
-                                    </View>
-                                )}
+                                <Ionicons name="grid-outline" size={19} color={COLORS.text} />
                             </TouchableOpacity>
+
+                            {/* Profile Avatar */}
+                            <View style={styles.avatarContainer}>
+                                <TouchableOpacity
+                                    style={styles.profileCircle}
+                                    onPressIn={handleAvatarPressIn}
+                                    onPressOut={handleAvatarPressOut}
+                                    activeOpacity={0.85}
+                                >
+                                    {profile?.photoURL ? (
+                                        <Image source={{ uri: profile.photoURL }} style={styles.headerAvatar} />
+                                    ) : (
+                                        <View style={styles.avatarPlaceholder}>
+                                            <Text style={styles.avatarText}>{displayName[0]?.toUpperCase()}</Text>
+                                        </View>
+                                    )}
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     </Animated.View>
 
                     <LiveStatusStrip total={total} streak={streak} xp={xp} />
-
-                    {/* Action Shortcut Bar */}
-                    <Animated.View
-                        style={{
-                            opacity: navAnim,
-                            transform: [{
-                                translateY: navAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] })
-                            }],
-                        }}
-                    >
-                        <View style={styles.shortcutRow}>
-                            <TouchableOpacity
-                                style={styles.shortcutItem}
-                                onPress={() => navigation.navigate("AICoach")}
-                                activeOpacity={0.7}
-                            >
-                                <View style={styles.shortcutIconBox}>
-                                    <Ionicons name="chatbubble-ellipses-outline" size={18} color={COLORS.textSub} />
-                                </View>
-                                <Text style={styles.shortcutLabel}>Coach</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={styles.shortcutItem}
-                                onPress={() => navigation.navigate("History")}
-                                activeOpacity={0.7}
-                            >
-                                <View style={styles.shortcutIconBox}>
-                                    <Ionicons name="time-outline" size={18} color={COLORS.textSub} />
-                                </View>
-                                <Text style={styles.shortcutLabel}>History</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={styles.shortcutItem}
-                                onPress={() => navigation.navigate("Settings")}
-                                activeOpacity={0.7}
-                            >
-                                <View style={styles.shortcutIconBox}>
-                                    <Ionicons name="settings-outline" size={18} color={COLORS.textSub} />
-                                </View>
-                                <Text style={styles.shortcutLabel}>Settings</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={styles.shortcutItem}
-                                onPress={() => {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                    setStreakAnalyticsVisible(true);
-                                }}
-                                activeOpacity={0.7}
-                            >
-                                <View style={styles.shortcutIconBox}>
-                                    <Ionicons name="flame-outline" size={18} color={COLORS.primary} />
-                                </View>
-                                <Text style={styles.shortcutLabel}>Streak</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </Animated.View>
                 </View>
 
                 {/* Active Workout Resume Banner */}
@@ -1477,6 +1435,132 @@ export default function HomeScreen({ navigation, route }) {
                 </View>
             </Modal>
 
+            {/* Quick Actions Menu Sheet Modal */}
+            <Modal
+                visible={quickMenuVisible}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setQuickMenuVisible(false)}
+            >
+                <View style={styles.quickMenuOverlay}>
+                    <TouchableOpacity
+                        style={StyleSheet.absoluteFillObject}
+                        onPress={() => setQuickMenuVisible(false)}
+                        activeOpacity={1}
+                    />
+                    <View style={[styles.quickMenuCard, { paddingBottom: Math.max(insets.bottom, 20) + 12 }]}>
+                        <LinearGradient
+                            colors={["rgba(30, 30, 38, 0.98)", "rgba(14, 14, 18, 0.99)"]}
+                            style={StyleSheet.absoluteFillObject}
+                            pointerEvents="none"
+                        />
+                        {/* Drag Handle */}
+                        <View style={styles.quickMenuHandle} />
+
+                        {/* Header */}
+                        <View style={styles.quickMenuHeader}>
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                                <View style={styles.quickMenuHeaderIconBox}>
+                                    <Ionicons name="grid-outline" size={16} color={COLORS.primary} />
+                                </View>
+                                <View>
+                                    <Text style={styles.quickMenuTitle}>MENU</Text>
+                                    <Text style={styles.quickMenuSubtitle}>QUICK NAVIGATION</Text>
+                                </View>
+                            </View>
+                            <TouchableOpacity
+                                style={styles.quickMenuCloseBtn}
+                                onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    setQuickMenuVisible(false);
+                                }}
+                            >
+                                <Ionicons name="close" size={18} color={COLORS.text} />
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* Menu Options List */}
+                        <View style={styles.quickMenuList}>
+                            <TouchableOpacity
+                                style={styles.quickMenuItem}
+                                activeOpacity={0.75}
+                                onPress={() => {
+                                    setQuickMenuVisible(false);
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    navigation.navigate("AICoach");
+                                }}
+                            >
+                                <View style={[styles.quickMenuIconWrap, { backgroundColor: "rgba(48, 176, 199, 0.14)", borderColor: "rgba(48, 176, 199, 0.3)" }]}>
+                                    <Ionicons name="chatbubble-ellipses" size={20} color="#30B0C7" />
+                                </View>
+                                <View style={styles.quickMenuItemBody}>
+                                    <Text style={styles.quickMenuItemTitle}>AI Coach</Text>
+                                    <Text style={styles.quickMenuItemSub}>Fitness advice, form checks & intel</Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={styles.quickMenuItem}
+                                activeOpacity={0.75}
+                                onPress={() => {
+                                    setQuickMenuVisible(false);
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    navigation.navigate("History");
+                                }}
+                            >
+                                <View style={[styles.quickMenuIconWrap, { backgroundColor: "rgba(56, 189, 248, 0.14)", borderColor: "rgba(56, 189, 248, 0.3)" }]}>
+                                    <Ionicons name="time" size={20} color="#38BDF8" />
+                                </View>
+                                <View style={styles.quickMenuItemBody}>
+                                    <Text style={styles.quickMenuItemTitle}>Workout History</Text>
+                                    <Text style={styles.quickMenuItemSub}>Logs, consistency & share cards</Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={styles.quickMenuItem}
+                                activeOpacity={0.75}
+                                onPress={() => {
+                                    setQuickMenuVisible(false);
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    setStreakAnalyticsVisible(true);
+                                }}
+                            >
+                                <View style={[styles.quickMenuIconWrap, { backgroundColor: "rgba(255, 149, 0, 0.14)", borderColor: "rgba(255, 149, 0, 0.3)" }]}>
+                                    <Ionicons name="flame" size={20} color="#FF9500" />
+                                </View>
+                                <View style={styles.quickMenuItemBody}>
+                                    <Text style={styles.quickMenuItemTitle}>Streak Analytics</Text>
+                                    <Text style={styles.quickMenuItemSub}>Active streak, freeze protection & tiers</Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={styles.quickMenuItem}
+                                activeOpacity={0.75}
+                                onPress={() => {
+                                    setQuickMenuVisible(false);
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    navigation.navigate("Settings");
+                                }}
+                            >
+                                <View style={[styles.quickMenuIconWrap, { backgroundColor: "rgba(255, 255, 255, 0.08)", borderColor: "rgba(255, 255, 255, 0.15)" }]}>
+                                    <Ionicons name="settings" size={20} color="#E0E0E0" />
+                                </View>
+                                <View style={styles.quickMenuItemBody}>
+                                    <Text style={styles.quickMenuItemTitle}>Settings</Text>
+                                    <Text style={styles.quickMenuItemSub}>Preferences, sounds & customizations</Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+
             {/* Streak Analytics Modal Sheet */}
             <Modal
                 visible={streakAnalyticsVisible}
@@ -2087,34 +2171,121 @@ const styles = StyleSheet.create({
         lineHeight: 36,
     },
 
-    // Action Shortcuts
-    shortcutRow: {
+    headerRightActions: {
         flexDirection: "row",
-        justifyContent: "space-between",
         alignItems: "center",
-        paddingTop: 8,
-        paddingBottom: 4,
+        gap: 10,
     },
-    shortcutItem: {
-        alignItems: "center",
-        flex: 1,
-    },
-    shortcutIconBox: {
-        width: 58,
-        height: 58,
-        borderRadius: 16,
-        backgroundColor: "rgba(255, 255, 255, 0.04)",
+    headerMenuBtn: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: "rgba(255, 255, 255, 0.05)",
         borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.07)",
+        borderColor: "rgba(255, 255, 255, 0.1)",
         alignItems: "center",
         justifyContent: "center",
     },
-    shortcutLabel: {
-        fontSize: 11,
-        fontFamily: FAMILY.medium,
+
+    // Quick Menu Sheet Modal
+    quickMenuOverlay: {
+        flex: 1,
+        backgroundColor: "rgba(0, 0, 0, 0.75)",
+        justifyContent: "flex-end",
+    },
+    quickMenuCard: {
+        backgroundColor: "#16161A",
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.12)",
+        paddingTop: 12,
+        paddingHorizontal: SPACING.base,
+        overflow: "hidden",
+    },
+    quickMenuHandle: {
+        width: 36,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: "rgba(255, 255, 255, 0.2)",
+        alignSelf: "center",
+        marginBottom: 16,
+    },
+    quickMenuHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom: 16,
+        paddingHorizontal: 4,
+    },
+    quickMenuHeaderIconBox: {
+        width: 34,
+        height: 34,
+        borderRadius: 17,
+        backgroundColor: "rgba(227, 30, 36, 0.12)",
+        borderWidth: 1,
+        borderColor: "rgba(227, 30, 36, 0.3)",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    quickMenuTitle: {
+        fontSize: 16,
+        fontFamily: FAMILY.bold,
+        color: COLORS.text,
+        letterSpacing: 0.5,
+    },
+    quickMenuSubtitle: {
+        fontSize: 10,
+        fontFamily: FAMILY.monoBold,
         color: COLORS.textSub,
-        marginTop: 8,
-        textAlign: "center",
+        letterSpacing: 1,
+        marginTop: 1,
+    },
+    quickMenuCloseBtn: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: "rgba(255, 255, 255, 0.08)",
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.12)",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    quickMenuList: {
+        gap: 10,
+        marginBottom: 8,
+    },
+    quickMenuItem: {
+        flexDirection: "row",
+        alignItems: "center",
+        padding: 14,
+        borderRadius: 18,
+        backgroundColor: "rgba(255, 255, 255, 0.03)",
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.07)",
+    },
+    quickMenuIconWrap: {
+        width: 42,
+        height: 42,
+        borderRadius: 21,
+        alignItems: "center",
+        justifyContent: "center",
+        marginRight: 14,
+        borderWidth: 1,
+    },
+    quickMenuItemBody: {
+        flex: 1,
+    },
+    quickMenuItemTitle: {
+        fontSize: 15,
+        fontFamily: FAMILY.bold,
+        color: COLORS.text,
+        marginBottom: 2,
+    },
+    quickMenuItemSub: {
+        fontSize: 12,
+        fontFamily: FAMILY.regular,
+        color: COLORS.textSub,
     },
 
     // Hero Card
