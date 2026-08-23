@@ -1,9 +1,7 @@
 import React from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ConquerStreakWidget } from "./ConquerStreakWidget";
 import { WORKOUT_PLAN } from "../data/workoutData";
-
-const STREAK_KEY = "workout_streak";
+import { getStreakLocal } from "../utils/storage";
 
 /**
  * Resolves current streak and today's scheduled workout from local storage/data.
@@ -11,10 +9,7 @@ const STREAK_KEY = "workout_streak";
 async function getWidgetData() {
     let streak = 0;
     try {
-        const storedStreak = await AsyncStorage.getItem(STREAK_KEY);
-        if (storedStreak) {
-            streak = parseInt(storedStreak, 10) || 0;
-        }
+        streak = await getStreakLocal();
     } catch (e) {
         console.warn("Widget streak read error:", e);
     }
