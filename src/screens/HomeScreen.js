@@ -774,7 +774,24 @@ export default function HomeScreen({ navigation, route }) {
                                     end={{ x: 1, y: 1 }}
                                     style={StyleSheet.absoluteFillObject}
                                 />
-                                <Ionicons name="apps" size={20} color="#FFFFFF" />
+                                {/* 3x3 Dot Matrix with Red Accent Dots */}
+                                <View style={styles.menuDotMatrix} pointerEvents="none">
+                                    <View style={styles.menuMatrixRow}>
+                                        <View style={[styles.menuMatrixDot, { backgroundColor: "#FFFFFF" }]} />
+                                        <View style={[styles.menuMatrixDot, { backgroundColor: "#FFFFFF" }]} />
+                                        <View style={[styles.menuMatrixDot, { backgroundColor: "#E31E24", shadowColor: "#E31E24", shadowOpacity: 0.8, shadowRadius: 3, elevation: 2 }]} />
+                                    </View>
+                                    <View style={styles.menuMatrixRow}>
+                                        <View style={[styles.menuMatrixDot, { backgroundColor: "#FFFFFF" }]} />
+                                        <View style={[styles.menuMatrixDot, { backgroundColor: "#E31E24", shadowColor: "#E31E24", shadowOpacity: 0.8, shadowRadius: 3, elevation: 2 }]} />
+                                        <View style={[styles.menuMatrixDot, { backgroundColor: "#FFFFFF" }]} />
+                                    </View>
+                                    <View style={styles.menuMatrixRow}>
+                                        <View style={[styles.menuMatrixDot, { backgroundColor: "#E31E24", shadowColor: "#E31E24", shadowOpacity: 0.8, shadowRadius: 3, elevation: 2 }]} />
+                                        <View style={[styles.menuMatrixDot, { backgroundColor: "#FFFFFF" }]} />
+                                        <View style={[styles.menuMatrixDot, { backgroundColor: "#FFFFFF" }]} />
+                                    </View>
+                                </View>
                             </TouchableOpacity>
 
                             {/* Profile Avatar */}
@@ -1469,7 +1486,23 @@ export default function HomeScreen({ navigation, route }) {
                         <View style={styles.quickMenuHeader}>
                             <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                                 <View style={styles.quickMenuHeaderIconBox}>
-                                    <Ionicons name="apps" size={16} color={COLORS.primary} />
+                                    <View style={{ width: 14, height: 14, justifyContent: "space-between" }}>
+                                        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                                            <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: "#FFFFFF" }} />
+                                            <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: "#FFFFFF" }} />
+                                            <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: "#E31E24" }} />
+                                        </View>
+                                        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                                            <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: "#FFFFFF" }} />
+                                            <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: "#E31E24" }} />
+                                            <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: "#FFFFFF" }} />
+                                        </View>
+                                        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                                            <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: "#E31E24" }} />
+                                            <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: "#FFFFFF" }} />
+                                            <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: "#FFFFFF" }} />
+                                        </View>
+                                    </View>
                                 </View>
                                 <View>
                                     <Text style={styles.quickMenuTitle}>MENU</Text>
@@ -2355,6 +2388,23 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         overflow: "hidden",
+    },
+    menuDotMatrix: {
+        width: 20,
+        height: 20,
+        justifyContent: "space-between",
+        alignItems: "center",
+    },
+    menuMatrixRow: {
+        flexDirection: "row",
+        width: "100%",
+        justifyContent: "space-between",
+        alignItems: "center",
+    },
+    menuMatrixDot: {
+        width: 4.2,
+        height: 4.2,
+        borderRadius: 2.1,
     },
 
     // Quick Menu Sheet Modal
