@@ -1331,7 +1331,7 @@ export default function HomeScreen({ navigation, route }) {
                 <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
                     <View style={styles.footerDivider} />
                     <Text style={styles.footerVersion}>CONQUER ONE · {APP_VERSION}</Text>
-                    <Text style={styles.footerAuthor}>BUILT FOR PERFORMANCE BY <Text style={{ color: COLORS.textSub }}>VIVASWAN SHETTY</Text></Text>
+                    <Text style={styles.footerAuthor}>BUILT FOR PERFORMANCE BY <Text style={{ color: COLORS.primary, fontFamily: FAMILY.bold }}>VIVASWAN SHETTY</Text></Text>
                 </View>
             </ScrollView>
 

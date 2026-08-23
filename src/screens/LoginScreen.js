@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
     },
     socialBtnText: { fontSize: 10, fontFamily: FAMILY.medium, color: COLORS.text, letterSpacing: 1 },
 
-    signatureWrap: { marginTop: 60, alignItems: "center", opacity: 0.25 },
-    signatureText: { fontSize: 7, fontFamily: FAMILY.medium, color: COLORS.textMuted, letterSpacing: 3 },
-    signatureHighlight: { color: COLORS.accent },
+    signatureWrap: { marginTop: 60, alignItems: "center", opacity: 0.7 },
+    signatureText: { fontSize: 8, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 2 },
+    signatureHighlight: { color: COLORS.primary, fontFamily: FAMILY.bold },
 });

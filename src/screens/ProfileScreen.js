@@ -824,7 +824,7 @@ export default function ProfileScreen({ navigation }) {
                 <View style={styles.footerSection}>
                     <View style={styles.footerDivider} />
                     <Text style={styles.footerBrand}>CONQUER ONE</Text>
-                    <Text style={styles.footerAuthor}>by <Text style={{ color: COLORS.accent }}>Vivaswan Shetty</Text></Text>
+                    <Text style={styles.footerAuthor}>by <Text style={{ color: COLORS.primary, fontFamily: FAMILY.bold }}>Vivaswan Shetty</Text></Text>
                     <Text style={styles.version}>{APP_VERSION}</Text>
                 </View>
 

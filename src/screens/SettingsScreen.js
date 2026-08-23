@@ -921,7 +921,7 @@ const styles = StyleSheet.create({
 
     creditWrap: { marginTop: 40, alignItems: "center", paddingHorizontal: 40 },
     creditText: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1.5, textAlign: "center" },
-    creditName: { color: COLORS.text, opacity: 1 },
+    creditName: { color: COLORS.primary, fontFamily: FAMILY.bold },
     creditVersion: { fontSize: 9, fontFamily: FAMILY.mono, color: COLORS.textMuted, marginTop: 4 },
 
     modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.85)", justifyContent: "flex-end" },
