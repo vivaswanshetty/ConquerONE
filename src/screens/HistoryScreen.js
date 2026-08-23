@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo, useRef } from "react";
 import {
-    View, Text, ScrollView, StyleSheet, TouchableOpacity, StatusBar, Dimensions, Share, Animated,
+    View, Text, ScrollView, StyleSheet, TouchableOpacity, StatusBar, Dimensions, Share, Animated, Modal,
 } from "react-native";
 import { useNotification } from "../context/NotificationContext";
 import Svg, { Polyline, Circle, Path, Defs, LinearGradient as SvgGradient, Stop } from "react-native-svg";
@@ -10,6 +10,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ViewShot from "react-native-view-shot";
 import * as Sharing from "expo-sharing";
+import * as FileSystem from "expo-file-system";
 import { COLORS, FONTS, SPACING, RADIUS, FAMILY, getMuscleColor } from "../utils/theme";
 import { getWorkoutHistory, getStreak, getTotalWorkouts, formatDuration, getStreakLocal, getTotalWorkoutsLocal, getWorkoutHistoryLocal } from "../utils/storage";
 import { WORKOUT_PLAN } from "../data/workoutData";
@@ -132,6 +133,139 @@ function computeHallOfFame(history) {
         heaviestLift: maxLift.weightKg > 0 ? maxLift : null,
         longestSession: maxDuration.durationSec > 0 ? maxDuration : null,
     };
+}
+
+/* ── Export Generators ─────────────────────────────────────── */
+
+function generateStructuredCSV(history, streak, total, totalHours) {
+    const headers = [
+        "Workout ID",
+        "Date",
+        "Time",
+        "Day Code",
+        "Target Muscle Group",
+        "Duration (Seconds)",
+        "Duration (Formatted)",
+        "Calories (kcal)",
+        "Exercise Count",
+        "Detailed Log (Sets x Reps @ Weight)"
+    ];
+
+    const escapeCsv = (str) => {
+        if (!str) return '""';
+        const escaped = String(str).replace(/"/g, '""');
+        return `"${escaped}"`;
+    };
+
+    const rows = history.map((h, idx) => {
+        const d = toDate(h.completedAt);
+        const dateStr = d.toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" });
+        const timeStr = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
+        const dayCode = h.day === 0 ? "Custom" : `Day 0${h.day}`;
+        const target = h.target || "Workout";
+        const durSec = h.durationSec || 0;
+        const durFormatted = formatDuration(durSec);
+        const cals = h.caloriesBurned || Math.round(durSec * 0.11);
+        const exCount = h.exercises ? h.exercises.length : 0;
+
+        let exBreakdown = "—";
+        if (h.exercises && h.exercises.length > 0) {
+            exBreakdown = h.exercises.map(ex => {
+                let sLog = "";
+                if (ex.loggedSets && ex.loggedSets.length > 0) {
+                    const setsStr = ex.loggedSets
+                        .filter(s => s.completed)
+                        .map(s => `${s.weightKg > 0 ? s.weightKg + "kg" : "BW"} × ${s.reps || 0}r`)
+                        .join(", ");
+                    sLog = setsStr ? ` [${setsStr}]` : "";
+                }
+                return `${ex.name} (${ex.sets}s)${sLog}`;
+            }).join(" | ");
+        }
+
+        return [
+            escapeCsv(h.id || `session_${idx + 1}`),
+            escapeCsv(dateStr),
+            escapeCsv(timeStr),
+            escapeCsv(dayCode),
+            escapeCsv(target),
+            durSec,
+            escapeCsv(durFormatted),
+            cals,
+            exCount,
+            escapeCsv(exBreakdown)
+        ].join(",");
+    });
+
+    return [headers.join(","), ...rows].join("\n");
+}
+
+function generateStructuredJSON(history, streak, total, totalHours) {
+    return {
+        conquerOneExport: {
+            app: "ConquerONE",
+            version: "1.0",
+            exportedAt: new Date().toISOString(),
+            athleteStats: {
+                totalSessionsLogged: total,
+                currentStreakDays: streak,
+                cumulativeVolumeHours: totalHours
+            },
+            workouts: history.map((h, i) => ({
+                id: h.id || `session_${i + 1}`,
+                completedAt: toDate(h.completedAt).toISOString(),
+                day: h.day,
+                target: h.target,
+                durationSec: h.durationSec,
+                durationFormatted: formatDuration(h.durationSec),
+                caloriesBurned: h.caloriesBurned || Math.round((h.durationSec || 0) * 0.11),
+                exercises: (h.exercises || []).map(ex => ({
+                    name: ex.name,
+                    sets: ex.sets,
+                    loggedSets: ex.loggedSets || [],
+                    suggestedWeightKg: ex.weightKg || null
+                }))
+            }))
+        }
+    };
+}
+
+function generateStructuredText(history, streak, total, totalHours) {
+    let text = `========================================\n` +
+        `   CONQUER ONE — ATHLETE PERFORMANCE LOG\n` +
+        `========================================\n` +
+        `Generated: ${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}\n` +
+        `Total Sessions Logged: ${total}\n` +
+        `Active Streak: ${streak} Days\n` +
+        `Cumulative Training Volume: ${totalHours} Hours\n` +
+        `========================================\n\n`;
+
+    history.forEach((h, i) => {
+        const d = toDate(h.completedAt);
+        const dateStr = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+        const timeStr = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+        const cals = h.caloriesBurned || Math.round((h.durationSec || 0) * 0.11);
+
+        text += `#${history.length - i} · ${h.target.toUpperCase()}\n`;
+        text += `Date: ${dateStr} at ${timeStr}\n`;
+        text += `Duration: ${formatDuration(h.durationSec)} | Calories: ${cals} kcal\n`;
+        if (h.exercises && h.exercises.length > 0) {
+            text += `Exercises (${h.exercises.length}):\n`;
+            h.exercises.forEach(ex => {
+                let setDetails = "";
+                if (ex.loggedSets && ex.loggedSets.some(s => s.completed)) {
+                    setDetails = " -> " + ex.loggedSets
+                        .filter(s => s.completed)
+                        .map(s => `${s.weightKg > 0 ? s.weightKg + "kg" : "BW"} × ${s.reps}r`)
+                        .join(", ");
+                }
+                text += `  • ${ex.name} (${ex.sets} sets)${setDetails}\n`;
+            });
+        }
+        text += `----------------------------------------\n\n`;
+    });
+
+    return text;
 }
 
 /* ── Line chart ────────────────────────────────────────────── */
@@ -655,6 +789,8 @@ export default function HistoryScreen({ navigation }) {
     const [activeTab, setActiveTab] = useState("analytics"); // "analytics" | "logs" | "cards"
     const [selectedWorkout, setSelectedWorkout] = useState(null);
     const [sharingCard, setSharingCard] = useState(false);
+    const [exportModalVisible, setExportModalVisible] = useState(false);
+    const [exportingType, setExportingType] = useState(null);
     const shareShotRef = useRef(null);
 
     const [loading, setLoading] = useState(true);
@@ -782,44 +918,132 @@ export default function HistoryScreen({ navigation }) {
         }
     };
 
-    const exportHistory = async () => {
+    /* ── Export Actions ── */
+    const handleExportCSV = async () => {
         if (history.length === 0) {
             showDialog({
                 title: "NO DATA",
-                message: "Complete some workouts first to export history.",
+                message: "Complete workouts to generate export data.",
                 confirmText: "CLOSE",
-                singleButton: true
+                singleButton: true,
             });
             return;
         }
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
         try {
-            let csv = "Date,Time,Workout,Duration (min),Exercises\n";
-            history.forEach(h => {
-                const d = toDate(h.completedAt);
-                const date = d.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
-                const time = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
-                const dur = Math.round((h.durationSec || 0) / 60);
-                const exercises = h.exercises ? h.exercises.map(e => `${e.name} (${e.sets}s)`).join(" | ") : "—";
-                csv += `${date},${time},${h.target},${dur},"${exercises}"\n`;
+            setExportingType("csv");
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            const csvContent = generateStructuredCSV(history, streak, total, totalHours);
+            const filename = `ConquerONE_Workouts_${new Date().toISOString().split("T")[0]}.csv`;
+            const baseDir = FileSystem.cacheDirectory || FileSystem.documentDirectory;
+            const fileUri = `${baseDir}${filename}`;
+
+            await FileSystem.writeAsStringAsync(fileUri, csvContent, {
+                encoding: FileSystem.EncodingType.UTF8,
             });
 
-            const summary = `\n\n📊 CONQUER ONE WORKOUT REPORT\n━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-                `Total Sessions: ${total}\n` +
-                `Current Streak: ${streak} days\n` +
-                `Total Time: ${totalHours} hours\n` +
-                `━━━━━━━━━━━━━━━━━━━━━━━━\n\n` + csv;
+            setExportModalVisible(false);
+            setExportingType(null);
 
-            await Share.share({
-                message: summary,
-                title: "CONQUER ONE - Workout History",
-            });
+            if (await Sharing.isAvailableAsync()) {
+                await Sharing.shareAsync(fileUri, {
+                    mimeType: "text/csv",
+                    dialogTitle: "Export Workout Logs (CSV)",
+                    UTI: "public.comma-separated-values-text",
+                });
+            } else {
+                await Share.share({ message: csvContent, title: "ConquerONE CSV Logs" });
+            }
         } catch (e) {
+            setExportingType(null);
+            console.warn("CSV export failed", e);
             showDialog({
                 title: "EXPORT FAILED",
-                message: e.message,
+                message: "Unable to export CSV file.",
                 confirmText: "CLOSE",
-                singleButton: true
+                singleButton: true,
+            });
+        }
+    };
+
+    const handleExportJSON = async () => {
+        if (history.length === 0) {
+            showDialog({
+                title: "NO DATA",
+                message: "Complete workouts to generate export data.",
+                confirmText: "CLOSE",
+                singleButton: true,
+            });
+            return;
+        }
+
+        try {
+            setExportingType("json");
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            const jsonObject = generateStructuredJSON(history, streak, total, totalHours);
+            const jsonString = JSON.stringify(jsonObject, null, 2);
+            const filename = `ConquerONE_Backup_${new Date().toISOString().split("T")[0]}.json`;
+            const baseDir = FileSystem.cacheDirectory || FileSystem.documentDirectory;
+            const fileUri = `${baseDir}${filename}`;
+
+            await FileSystem.writeAsStringAsync(fileUri, jsonString, {
+                encoding: FileSystem.EncodingType.UTF8,
+            });
+
+            setExportModalVisible(false);
+            setExportingType(null);
+
+            if (await Sharing.isAvailableAsync()) {
+                await Sharing.shareAsync(fileUri, {
+                    mimeType: "application/json",
+                    dialogTitle: "Export Full Data Backup (JSON)",
+                    UTI: "public.json",
+                });
+            } else {
+                await Share.share({ message: jsonString, title: "ConquerONE Backup JSON" });
+            }
+        } catch (e) {
+            setExportingType(null);
+            console.warn("JSON export failed", e);
+            showDialog({
+                title: "EXPORT FAILED",
+                message: "Unable to export JSON backup.",
+                confirmText: "CLOSE",
+                singleButton: true,
+            });
+        }
+    };
+
+    const handleExportText = async () => {
+        if (history.length === 0) {
+            showDialog({
+                title: "NO DATA",
+                message: "Complete workouts to generate export data.",
+                confirmText: "CLOSE",
+                singleButton: true,
+            });
+            return;
+        }
+
+        try {
+            setExportingType("text");
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            const textReport = generateStructuredText(history, streak, total, totalHours);
+            setExportModalVisible(false);
+            setExportingType(null);
+
+            await Share.share({
+                message: textReport,
+                title: "CONQUER ONE — Athlete Performance Log",
+            });
+        } catch (e) {
+            setExportingType(null);
+            console.warn("Text export failed", e);
+            showDialog({
+                title: "EXPORT FAILED",
+                message: "Unable to share performance log.",
+                confirmText: "CLOSE",
+                singleButton: true,
             });
         }
     };
@@ -841,7 +1065,14 @@ export default function HistoryScreen({ navigation }) {
                     <Ionicons name="chevron-back" size={22} color={COLORS.text} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>HISTORY</Text>
-                <TouchableOpacity style={styles.backBtn} onPress={exportHistory} activeOpacity={0.7}>
+                <TouchableOpacity
+                    style={styles.backBtn}
+                    onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setExportModalVisible(true);
+                    }}
+                    activeOpacity={0.7}
+                >
                     <Ionicons name="download-outline" size={18} color={COLORS.text} />
                 </TouchableOpacity>
             </View>
@@ -1138,7 +1369,23 @@ export default function HistoryScreen({ navigation }) {
                            ══════════════════════════════════════════════ */}
                         {activeTab === "logs" && (
                             <View>
-                                <SectionLabel text={`LOGGED SESSIONS (${history.length})`} />
+                                <View style={styles.logsHeaderRow}>
+                                    <SectionLabel text={`LOGGED SESSIONS (${history.length})`} />
+                                    {history.length > 0 && (
+                                        <TouchableOpacity
+                                            style={styles.exportPillBtn}
+                                            onPress={() => {
+                                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                                setExportModalVisible(true);
+                                            }}
+                                            activeOpacity={0.7}
+                                        >
+                                            <Ionicons name="download-outline" size={13} color={COLORS.primary} />
+                                            <Text style={styles.exportPillText}>EXPORT LOGS</Text>
+                                        </TouchableOpacity>
+                                    )}
+                                </View>
+
                                 {history.length === 0 ? (
                                     <View style={styles.empty}>
                                         <View style={styles.emptyIconBox}>
@@ -1202,6 +1449,121 @@ export default function HistoryScreen({ navigation }) {
                     </Animated.View>
                 )}
             </ScrollView>
+
+            {/* ── Structured Data Export Modal ── */}
+            <Modal
+                visible={exportModalVisible}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setExportModalVisible(false)}
+            >
+                <View style={styles.modalBackdrop}>
+                    <View style={styles.exportModalContent}>
+                        {/* Header */}
+                        <View style={styles.exportModalHeader}>
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                                <View style={styles.exportHeaderIconBox}>
+                                    <Ionicons name="cloud-download-outline" size={16} color={COLORS.primary} />
+                                </View>
+                                <Text style={styles.exportModalTitle}>EXPORT TRAINING LOGS</Text>
+                            </View>
+                            <TouchableOpacity
+                                style={styles.exportModalCloseBtn}
+                                onPress={() => setExportModalVisible(false)}
+                                activeOpacity={0.7}
+                            >
+                                <Ionicons name="close" size={18} color={COLORS.textSub} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <Text style={styles.exportModalSub}>
+                            Export your entire workout history in structured formats for spreadsheets, backup, or personal records.
+                        </Text>
+
+                        {/* Export Options */}
+                        <View style={styles.exportOptionsList}>
+                            {/* Option 1: CSV Spreadsheet */}
+                            <TouchableOpacity
+                                style={styles.exportOptionCard}
+                                onPress={handleExportCSV}
+                                activeOpacity={0.8}
+                                disabled={exportingType !== null}
+                            >
+                                <LinearGradient
+                                    colors={["rgba(48, 209, 88, 0.08)", "transparent"]}
+                                    style={StyleSheet.absoluteFillObject}
+                                    pointerEvents="none"
+                                />
+                                <View style={[styles.exportOptionIconBox, { backgroundColor: "rgba(48, 209, 88, 0.12)", borderColor: "rgba(48, 209, 88, 0.3)" }]}>
+                                    <Ionicons name="grid-outline" size={18} color="#30D158" />
+                                </View>
+                                <View style={styles.exportOptionInfo}>
+                                    <Text style={styles.exportOptionTitle}>Spreadsheet (.CSV)</Text>
+                                    <Text style={styles.exportOptionDesc}>
+                                        Tabular log formatted for Excel, Google Sheets, or Notion with all sets, reps, and weights.
+                                    </Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />
+                            </TouchableOpacity>
+
+                            {/* Option 2: JSON Backup */}
+                            <TouchableOpacity
+                                style={styles.exportOptionCard}
+                                onPress={handleExportJSON}
+                                activeOpacity={0.8}
+                                disabled={exportingType !== null}
+                            >
+                                <LinearGradient
+                                    colors={["rgba(255, 149, 0, 0.08)", "transparent"]}
+                                    style={StyleSheet.absoluteFillObject}
+                                    pointerEvents="none"
+                                />
+                                <View style={[styles.exportOptionIconBox, { backgroundColor: "rgba(255, 149, 0, 0.12)", borderColor: "rgba(255, 149, 0, 0.3)" }]}>
+                                    <Ionicons name="code-slash" size={18} color="#FF9500" />
+                                </View>
+                                <View style={styles.exportOptionInfo}>
+                                    <Text style={styles.exportOptionTitle}>Full JSON Backup (.JSON)</Text>
+                                    <Text style={styles.exportOptionDesc}>
+                                        Complete raw data payload including all exercise metadata, timestamps, and streaks.
+                                    </Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />
+                            </TouchableOpacity>
+
+                            {/* Option 3: Formatted Summary Report */}
+                            <TouchableOpacity
+                                style={styles.exportOptionCard}
+                                onPress={handleExportText}
+                                activeOpacity={0.8}
+                                disabled={exportingType !== null}
+                            >
+                                <LinearGradient
+                                    colors={["rgba(48, 176, 199, 0.08)", "transparent"]}
+                                    style={StyleSheet.absoluteFillObject}
+                                    pointerEvents="none"
+                                />
+                                <View style={[styles.exportOptionIconBox, { backgroundColor: "rgba(48, 176, 199, 0.12)", borderColor: "rgba(48, 176, 199, 0.3)" }]}>
+                                    <Ionicons name="document-text-outline" size={18} color="#30B0C7" />
+                                </View>
+                                <View style={styles.exportOptionInfo}>
+                                    <Text style={styles.exportOptionTitle}>Athlete Summary Report (.TXT)</Text>
+                                    <Text style={styles.exportOptionDesc}>
+                                        Clean formatted performance log ready for pasting into notes, journals, or chat.
+                                    </Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* Footer stats tag */}
+                        <View style={styles.exportModalFooter}>
+                            <Text style={styles.exportModalFooterText}>
+                                {total} Sessions Logged · {totalHours} Hours Volume · {streak}d Streak
+                            </Text>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
 
             {/* ── Purpose-Built Branded Social Share Card (Off-Screen Captured ViewShot) ── */}
             <View style={styles.offscreenWrap} pointerEvents="none">
@@ -1454,9 +1816,9 @@ const styles = StyleSheet.create({
     sectionLabelRow: {
         flexDirection: "row",
         alignItems: "center",
-        marginHorizontal: 20,
         marginTop: 24,
         marginBottom: 12,
+        marginHorizontal: 20,
         gap: 8,
     },
     sectionAccentLine: {
@@ -1470,6 +1832,31 @@ const styles = StyleSheet.create({
         fontFamily: FAMILY.bold,
         color: COLORS.textSub,
         letterSpacing: 1.2,
+    },
+
+    logsHeaderRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingRight: 20,
+    },
+    exportPillBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 5,
+        paddingHorizontal: 10,
+        paddingVertical: 4.5,
+        borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(227, 30, 36, 0.10)",
+        borderWidth: 1,
+        borderColor: "rgba(227, 30, 36, 0.25)",
+        marginTop: 12,
+    },
+    exportPillText: {
+        fontSize: 9.5,
+        fontFamily: FAMILY.bold,
+        color: COLORS.primary,
+        letterSpacing: 0.8,
     },
 
     card: {
@@ -1511,6 +1898,108 @@ const styles = StyleSheet.create({
     },
     emptyTitle: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.textSub, marginBottom: 6, letterSpacing: 0.5 },
     emptySub: { fontSize: 11.5, color: COLORS.textMuted, textAlign: "center", lineHeight: 17, fontFamily: FAMILY.regular },
+
+    /* Export Modal */
+    modalBackdrop: {
+        flex: 1,
+        backgroundColor: "rgba(0, 0, 0, 0.78)",
+        justifyContent: "flex-end",
+    },
+    exportModalContent: {
+        backgroundColor: "#141416",
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.12)",
+        padding: 24,
+        paddingBottom: 36,
+    },
+    exportModalHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom: 8,
+    },
+    exportHeaderIconBox: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: "rgba(227, 30, 36, 0.12)",
+        borderWidth: 1,
+        borderColor: "rgba(227, 30, 36, 0.3)",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    exportModalTitle: {
+        fontSize: 15,
+        fontFamily: FAMILY.bold,
+        color: COLORS.text,
+        letterSpacing: 0.5,
+    },
+    exportModalCloseBtn: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: "rgba(255, 255, 255, 0.06)",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    exportModalSub: {
+        fontSize: 12,
+        fontFamily: FAMILY.regular,
+        color: COLORS.textMuted,
+        lineHeight: 18,
+        marginBottom: 20,
+    },
+    exportOptionsList: {
+        gap: 12,
+        marginBottom: 16,
+    },
+    exportOptionCard: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: COLORS.bgCard,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        padding: 16,
+        gap: 14,
+        overflow: "hidden",
+        position: "relative",
+    },
+    exportOptionIconBox: {
+        width: 38,
+        height: 38,
+        borderRadius: 19,
+        borderWidth: 1,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    exportOptionInfo: {
+        flex: 1,
+    },
+    exportOptionTitle: {
+        fontSize: 13.5,
+        fontFamily: FAMILY.semibold,
+        color: COLORS.text,
+        marginBottom: 3,
+    },
+    exportOptionDesc: {
+        fontSize: 10.5,
+        fontFamily: FAMILY.regular,
+        color: COLORS.textSub,
+        lineHeight: 15,
+    },
+    exportModalFooter: {
+        alignItems: "center",
+        paddingTop: 10,
+    },
+    exportModalFooterText: {
+        fontSize: 10,
+        fontFamily: FAMILY.mono,
+        color: COLORS.textMuted,
+        letterSpacing: 0.5,
+    },
 
     /* Purpose-Built Social Share Card Template */
     offscreenWrap: {
