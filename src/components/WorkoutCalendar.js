@@ -344,20 +344,59 @@ export default function WorkoutCalendar({ history = [], style }) {
                                 {hasWorkout ? (
                                     <View style={styles.workoutBadge}>
                                         {dayWorkouts.length > 1 ? (
-                                            <Text style={styles.workoutCountText}>{dayWorkouts.length}</Text>
+                                            <View style={styles.multiWorkoutDotsRow}>
+                                                {dayWorkouts.slice(0, 3).map((w, wIdx) => (
+                                                    <View
+                                                        key={wIdx}
+                                                        style={[
+                                                            styles.workoutDot,
+                                                            { backgroundColor: getMuscleColor(w.target) }
+                                                        ]}
+                                                    />
+                                                ))}
+                                            </View>
                                         ) : (
-                                            <View style={[styles.workoutDot, isSelected && { backgroundColor: COLORS.primary }]} />
+                                            <View
+                                                style={[
+                                                    styles.workoutDot,
+                                                    { backgroundColor: getMuscleColor(dayWorkouts[0]?.target) }
+                                                ]}
+                                            />
                                         )}
                                     </View>
                                 ) : isSunday && !cell.isFuture ? (
                                     <View style={styles.restDotWrap}>
-                                        <Ionicons name="moon-outline" size={7} color="#71717A" />
+                                        <Ionicons name="moon-outline" size={7} color="#30D158" />
                                     </View>
                                 ) : null}
                             </TouchableOpacity>
                         </View>
                     );
                 })}
+            </View>
+
+            {/* Muscle Group & Indicator Legend */}
+            <View style={styles.legendContainer}>
+                <View style={styles.legendItem}>
+                    <View style={[styles.legendDot, { backgroundColor: "#E31E24" }]} />
+                    <Text style={styles.legendText}>PUSH</Text>
+                </View>
+                <View style={styles.legendItem}>
+                    <View style={[styles.legendDot, { backgroundColor: "#FF9500" }]} />
+                    <Text style={styles.legendText}>PULL</Text>
+                </View>
+                <View style={styles.legendItem}>
+                    <View style={[styles.legendDot, { backgroundColor: "#30B0C7" }]} />
+                    <Text style={styles.legendText}>ARMS/ABS</Text>
+                </View>
+                <View style={styles.legendItem}>
+                    <View style={[styles.legendDot, { backgroundColor: "#D1D1D1" }]} />
+                    <Text style={styles.legendText}>LEGS</Text>
+                </View>
+                <View style={styles.legendItem}>
+                    <View style={[styles.legendDot, { backgroundColor: "#30D158" }]} />
+                    <Text style={styles.legendText}>REST</Text>
+                </View>
             </View>
 
             {/* Inspector Card: Selected Day Details */}
@@ -696,11 +735,15 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
     },
+    multiWorkoutDotsRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 2,
+    },
     workoutDot: {
-        width: 3.5,
-        height: 3.5,
+        width: 4,
+        height: 4,
         borderRadius: 2,
-        backgroundColor: "#FFFFFF",
     },
     workoutCountText: {
         fontSize: 7,
@@ -712,6 +755,37 @@ const styles = StyleSheet.create({
         bottom: 2,
         alignItems: "center",
         justifyContent: "center",
+    },
+
+    // Legend Bar
+    legendContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: 10,
+        paddingVertical: 10,
+        backgroundColor: "rgba(255, 255, 255, 0.02)",
+        borderRadius: RADIUS.sm,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.05)",
+        marginTop: 4,
+        marginBottom: 4,
+    },
+    legendItem: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 5,
+    },
+    legendDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+    },
+    legendText: {
+        fontSize: 9.5,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textSub,
+        letterSpacing: 0.5,
     },
 
     // Inspector Card
