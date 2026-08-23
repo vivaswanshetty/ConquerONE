@@ -695,14 +695,10 @@ function GalleryCardItem({ workout, streak, onShare, isSharing }) {
             <View style={gc.footer}>
                 <View style={gc.brandLeft}>
                     <Image
-                        source={require("../../assets/icon.png")}
-                        style={gc.brandLogo}
+                        source={require("../../assets/logo_lockup.png")}
+                        style={gc.brandLockup}
                         resizeMode="contain"
                     />
-                    <View>
-                        <Text style={gc.brandTag}>CONQUER ONE</Text>
-                        <Text style={gc.brandSub}>TRAINING PROTOCOL</Text>
-                    </View>
                 </View>
                 <TouchableOpacity
                     style={gc.shareBtn}
@@ -771,16 +767,11 @@ const gc = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: "rgba(255, 255, 255, 0.06)",
     },
-    brandLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
-    brandLogo: {
-        width: 22,
-        height: 22,
-        borderRadius: 6,
-        borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.12)",
+    brandLeft: { flexDirection: "row", alignItems: "center" },
+    brandLockup: {
+        width: 124,
+        height: 18,
     },
-    brandTag: { fontSize: 10.5, fontFamily: FAMILY.accent2, color: COLORS.text, letterSpacing: 1.5 },
-    brandSub: { fontSize: 6.5, fontFamily: FAMILY.mono, color: COLORS.textMuted, letterSpacing: 0.8, marginTop: 1 },
     shareBtn: {
         flexDirection: "row",
         alignItems: "center",
@@ -1661,14 +1652,11 @@ export default function HistoryScreen({ navigation }) {
                         <View style={styles.shareCardFooter}>
                             <View style={styles.shareCardFooterLeft}>
                                 <Image
-                                    source={require("../../assets/icon.png")}
-                                    style={styles.shareCardLogo}
+                                    source={require("../../assets/logo_lockup.png")}
+                                    style={styles.shareCardBrandLockup}
                                     resizeMode="contain"
                                 />
-                                <View>
-                                    <Text style={styles.shareCardBrand}>CONQUER ONE</Text>
-                                    <Text style={styles.shareCardTagline}>ELITE PERFORMANCE PROTOCOL</Text>
-                                </View>
+                                <Text style={styles.shareCardTagline}>ELITE PERFORMANCE PROTOCOL</Text>
                             </View>
                             <View style={[styles.shareCardAccentPill, { backgroundColor: `${getMuscleColor(activeShareTarget?.target)}20`, borderColor: `${getMuscleColor(activeShareTarget?.target)}4D` }]}>
                                 <Text style={[styles.shareCardTargetTag, { color: getMuscleColor(activeShareTarget?.target) }]}>
@@ -2178,29 +2166,19 @@ const styles = StyleSheet.create({
         borderTopColor: "rgba(255, 255, 255, 0.06)",
     },
     shareCardFooterLeft: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 10,
+        flexDirection: "column",
+        alignItems: "flex-start",
+        gap: 3,
     },
-    shareCardLogo: {
-        width: 28,
-        height: 28,
-        borderRadius: 7,
-        borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.15)",
-    },
-    shareCardBrand: {
-        fontSize: 12,
-        fontFamily: FAMILY.accent2,
-        color: COLORS.text,
-        letterSpacing: 1.5,
+    shareCardBrandLockup: {
+        width: 140,
+        height: 20,
     },
     shareCardTagline: {
         fontSize: 7,
         fontFamily: FAMILY.mono,
         color: COLORS.textMuted,
         letterSpacing: 0.6,
-        marginTop: 1,
     },
     shareCardAccentPill: {
         paddingHorizontal: 10,
