@@ -1,6 +1,6 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useRef } from "react";
 import {
-    View, Text, ScrollView, StyleSheet, TouchableOpacity, StatusBar, Dimensions, Share,
+    View, Text, ScrollView, StyleSheet, TouchableOpacity, StatusBar, Dimensions, Share, Animated,
 } from "react-native";
 import { useNotification } from "../context/NotificationContext";
 import Svg, { Polyline, Circle, Path, Defs, LinearGradient as SvgGradient, Stop } from "react-native-svg";
@@ -13,6 +13,7 @@ import { getWorkoutHistory, getStreak, getTotalWorkouts, formatDuration, getStre
 import { WORKOUT_PLAN } from "../data/workoutData";
 import * as Haptics from "expo-haptics";
 import WorkoutCalendar from "../components/WorkoutCalendar";
+import SkeletonBlock from "../components/SkeletonBlock";
 
 const { width } = Dimensions.get("window");
 const CARD_PADDING = 24;
@@ -345,6 +346,22 @@ export default function HistoryScreen({ navigation }) {
     const [streak, setStreak] = useState(0);
     const [total, setTotal] = useState(0);
 
+    const [loading, setLoading] = useState(true);
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const isInitialMountRef = useRef(true);
+
+    const finishLoading = () => {
+        if (isInitialMountRef.current) {
+            isInitialMountRef.current = false;
+            setLoading(false);
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 200,
+                useNativeDriver: true,
+            }).start();
+        }
+    };
+
     useFocusEffect(useCallback(() => { load(); }, []));
     const load = async () => {
         // 1. Immediate local cache load
@@ -355,8 +372,10 @@ export default function HistoryScreen({ navigation }) {
             setHistory(cachedHistory);
             setStreak(cachedStreak);
             setTotal(cachedTotal);
+            finishLoading();
         } catch (e) {
             console.warn("Failed to load cached history in HistoryScreen", e);
+            finishLoading();
         }
 
         // 2. Background cloud sync
@@ -369,8 +388,10 @@ export default function HistoryScreen({ navigation }) {
             setHistory(nextHistory);
             setStreak(nextStreak);
             setTotal(nextTotal);
+            finishLoading();
         } catch (e) {
             console.warn("History background sync failed", e);
+            finishLoading();
         }
     };
 
@@ -413,15 +434,15 @@ export default function HistoryScreen({ navigation }) {
                 const date = d.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
                 const time = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
                 const dur = Math.round((h.durationSec || 0) / 60);
-                const exercises = h.exercises ? h.exercises.map(e => `${e.name} (${e.sets}s)`).join(" | ") : "\u2014";
+                const exercises = h.exercises ? h.exercises.map(e => `${e.name} (${e.sets}s)`).join(" | ") : "—";
                 csv += `${date},${time},${h.target},${dur},"${exercises}"\n`;
             });
 
-            const summary = `\n\n\ud83d\udcca CONQUER ONE WORKOUT REPORT\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n` +
+            const summary = `\n\n📊 CONQUER ONE WORKOUT REPORT\n━━━━━━━━━━━━━━━━━━━━━━━━\n` +
                 `Total Sessions: ${total}\n` +
                 `Current Streak: ${streak} days\n` +
                 `Total Time: ${totalMin} minutes\n` +
-                `\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n\n` + csv;
+                `━━━━━━━━━━━━━━━━━━━━━━━━\n\n` + csv;
 
             await Share.share({
                 message: summary,
@@ -452,131 +473,169 @@ export default function HistoryScreen({ navigation }) {
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} overScrollMode="never" contentContainerStyle={{ paddingBottom: 60 }}>
-
-                {/* Stats Asymmetric Grid */}
-                <View style={styles.statsRow}>
-                    <View style={styles.statsLeft}>
-                        {/* Streak Card */}
-                        <View style={[styles.statSmall, { borderColor: "rgba(255, 149, 0, 0.25)" }]}>
-                            <LinearGradient
-                                colors={["rgba(255, 149, 0, 0.08)", "transparent"]}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 1 }}
-                                style={StyleSheet.absoluteFillObject}
-                                pointerEvents="none"
-                            />
-                            <View style={styles.statSmallTop}>
-                                <Ionicons name="flame" size={14} color="#FF9500" />
-                                <Text style={styles.statLabel}>STREAK</Text>
+                {loading ? (
+                    <View style={{ width: "100%" }}>
+                        {/* Stats Asymmetric Grid Skeleton */}
+                        <View style={styles.statsRow}>
+                            <View style={styles.statsLeft}>
+                                <SkeletonBlock width="100%" height={74} borderRadius={RADIUS.md} index={0} />
+                                <SkeletonBlock width="100%" height={74} borderRadius={RADIUS.md} index={1} />
                             </View>
-                            <Text style={[styles.statValue, { color: "#FF9500" }]}>{streak}D</Text>
+                            <SkeletonBlock width="auto" height={160} borderRadius={RADIUS.lg} index={2} style={{ flex: 1 }} />
                         </View>
 
-                        {/* Sessions Card */}
-                        <View style={styles.statSmall}>
-                            <LinearGradient
-                                colors={["rgba(255, 255, 255, 0.03)", "transparent"]}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 1 }}
-                                style={StyleSheet.absoluteFillObject}
-                                pointerEvents="none"
-                            />
-                            <View style={styles.statSmallTop}>
-                                <Ionicons name="fitness-outline" size={14} color={COLORS.textSub} />
-                                <Text style={styles.statLabel}>SESSIONS</Text>
-                            </View>
-                            <Text style={styles.statValue}>{total}</Text>
-                        </View>
-                    </View>
-
-                    {/* Total Duration Card (Main Card) */}
-                    <View style={styles.statLarge}>
-                        <LinearGradient
-                            colors={["rgba(255, 255, 255, 0.05)", "rgba(255, 255, 255, 0.01)"]}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={StyleSheet.absoluteFillObject}
-                            pointerEvents="none"
+                        {/* Monthly Progress Calendar Skeleton */}
+                        <SectionLabel text="MONTHLY PROGRESS CALENDAR" />
+                        <SkeletonBlock
+                            width="auto"
+                            height={140}
+                            borderRadius={RADIUS.lg}
+                            index={3}
+                            style={{ marginHorizontal: 20 }}
                         />
-                        {/* Subtle decorative background watermark */}
-                        <View style={{ position: "absolute", right: -20, bottom: -20, opacity: 0.07 }} pointerEvents="none">
-                            <Ionicons name="time-outline" size={120} color="#FFFFFF" />
-                        </View>
 
-                        <View style={styles.statSmallTop}>
-                            <Ionicons name="time-outline" size={16} color={COLORS.textSub} />
-                            <Text style={styles.statLabel}>TOTAL DURATION</Text>
-                        </View>
-                        <View>
-                            <Text style={[styles.statValue, { fontSize: 34, lineHeight: 38 }]}>
-                                {totalMin}<Text style={{ fontSize: 18, color: COLORS.textSub }}>m</Text>
-                            </Text>
-                            <Text style={styles.statSubLabel}>cumulative volume</Text>
-                        </View>
-                    </View>
-                </View>
-
-                {/* ── Monthly Progress Calendar ── */}
-                <SectionLabel text="MONTHLY PROGRESS CALENDAR" />
-                <WorkoutCalendar history={history} style={{ marginHorizontal: 20 }} />
-
-                {total > 0 && (
-                    <>
-                        <SectionLabel text="WEEKLY FLOW" />
-                        <View style={styles.card}>
-                            <LineChart data={weeklyData} />
-                        </View>
-                    </>
-                )}
-
-                {prs.length > 0 && (
-                    <>
-                        <SectionLabel text="PERSONAL BESTS" />
-                        <View style={[styles.card, { padding: 0, overflow: "hidden" }]}>
-                            {prs.map((pr, i) => (
-                                <PRCard key={i} pr={pr} />
+                        {/* Workout Log Skeleton Rows */}
+                        <SectionLabel text="WORKOUT LOG" />
+                        <View style={{ marginHorizontal: 20, gap: 10 }}>
+                            {[0, 1, 2, 3].map((i) => (
+                                <SkeletonBlock
+                                    key={i}
+                                    width="100%"
+                                    height={64}
+                                    borderRadius={RADIUS.md}
+                                    index={4 + i}
+                                />
                             ))}
                         </View>
-                    </>
-                )}
-
-                {total > 0 && (
-                    <>
-                        <SectionLabel text="TARGET FOCUS" />
-                        <View style={styles.card}>
-                            {WORKOUT_PLAN.map((day) => {
-                                const count = dayCounts[day.day] || 0;
-                                return (
-                                    <View key={day.day}>
-                                        <BreakdownBar day={day} count={count} max={maxCount} />
-                                    </View>
-                                );
-                            })}
-                        </View>
-                    </>
-                )}
-
-                <SectionLabel text="WORKOUT LOG" />
-                {history.length === 0 ? (
-                    <View style={styles.empty}>
-                        <Text style={styles.emptyTitle}>NO WORKOUTS YET</Text>
-                        <Text style={styles.emptySub}>Start your first session to see your progress tracked here.</Text>
                     </View>
                 ) : (
-                    Object.keys(groups).map((week) => (
-                        <View key={week} style={styles.weekContainer}>
-                            <Text style={styles.weekLabel}>{week.toUpperCase()}</Text>
-                            <View style={styles.weekCard}>
-                                {groups[week].map((entry, i) => (
-                                    <HistoryRow
-                                        key={i}
-                                        entry={entry}
-                                        isLast={i === groups[week].length - 1}
+                    <Animated.View style={{ opacity: fadeAnim }}>
+                        {/* Stats Asymmetric Grid */}
+                        <View style={styles.statsRow}>
+                            <View style={styles.statsLeft}>
+                                {/* Streak Card */}
+                                <View style={[styles.statSmall, { borderColor: "rgba(255, 149, 0, 0.25)" }]}>
+                                    <LinearGradient
+                                        colors={["rgba(255, 149, 0, 0.08)", "transparent"]}
+                                        start={{ x: 0, y: 0 }}
+                                        end={{ x: 1, y: 1 }}
+                                        style={StyleSheet.absoluteFillObject}
+                                        pointerEvents="none"
                                     />
-                                ))}
+                                    <View style={styles.statSmallTop}>
+                                        <Ionicons name="flame" size={14} color="#FF9500" />
+                                        <Text style={styles.statLabel}>STREAK</Text>
+                                    </View>
+                                    <Text style={[styles.statValue, { color: "#FF9500" }]}>{streak}D</Text>
+                                </View>
+
+                                {/* Sessions Card */}
+                                <View style={styles.statSmall}>
+                                    <LinearGradient
+                                        colors={["rgba(255, 255, 255, 0.03)", "transparent"]}
+                                        start={{ x: 0, y: 0 }}
+                                        end={{ x: 1, y: 1 }}
+                                        style={StyleSheet.absoluteFillObject}
+                                        pointerEvents="none"
+                                    />
+                                    <View style={styles.statSmallTop}>
+                                        <Ionicons name="fitness-outline" size={14} color={COLORS.textSub} />
+                                        <Text style={styles.statLabel}>SESSIONS</Text>
+                                    </View>
+                                    <Text style={styles.statValue}>{total}</Text>
+                                </View>
+                            </View>
+
+                            {/* Total Duration Card (Main Card) */}
+                            <View style={styles.statLarge}>
+                                <LinearGradient
+                                    colors={["rgba(255, 255, 255, 0.05)", "rgba(255, 255, 255, 0.01)"]}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 1 }}
+                                    style={StyleSheet.absoluteFillObject}
+                                    pointerEvents="none"
+                                />
+                                {/* Subtle decorative background watermark */}
+                                <View style={{ position: "absolute", right: -20, bottom: -20, opacity: 0.07 }} pointerEvents="none">
+                                    <Ionicons name="time-outline" size={120} color="#FFFFFF" />
+                                </View>
+
+                                <View style={styles.statSmallTop}>
+                                    <Ionicons name="time-outline" size={16} color={COLORS.textSub} />
+                                    <Text style={styles.statLabel}>TOTAL DURATION</Text>
+                                </View>
+                                <View>
+                                    <Text style={[styles.statValue, { fontSize: 34, lineHeight: 38 }]}>
+                                        {totalMin}<Text style={{ fontSize: 18, color: COLORS.textSub }}>m</Text>
+                                    </Text>
+                                    <Text style={styles.statSubLabel}>cumulative volume</Text>
+                                </View>
                             </View>
                         </View>
-                    ))
+
+                        {/* ── Monthly Progress Calendar ── */}
+                        <SectionLabel text="MONTHLY PROGRESS CALENDAR" />
+                        <WorkoutCalendar history={history} style={{ marginHorizontal: 20 }} />
+
+                        {total > 0 && (
+                            <>
+                                <SectionLabel text="WEEKLY FLOW" />
+                                <View style={styles.card}>
+                                    <LineChart data={weeklyData} />
+                                </View>
+                            </>
+                        )}
+
+                        {prs.length > 0 && (
+                            <>
+                                <SectionLabel text="PERSONAL BESTS" />
+                                <View style={[styles.card, { padding: 0, overflow: "hidden" }]}>
+                                    {prs.map((pr, i) => (
+                                        <PRCard key={i} pr={pr} />
+                                    ))}
+                                </View>
+                            </>
+                        )}
+
+                        {total > 0 && (
+                            <>
+                                <SectionLabel text="TARGET FOCUS" />
+                                <View style={styles.card}>
+                                    {WORKOUT_PLAN.map((day) => {
+                                        const count = dayCounts[day.day] || 0;
+                                        return (
+                                            <View key={day.day}>
+                                                <BreakdownBar day={day} count={count} max={maxCount} />
+                                            </View>
+                                        );
+                                    })}
+                                </View>
+                            </>
+                        )}
+
+                        <SectionLabel text="WORKOUT LOG" />
+                        {history.length === 0 ? (
+                            <View style={styles.empty}>
+                                <Text style={styles.emptyTitle}>NO WORKOUTS YET</Text>
+                                <Text style={styles.emptySub}>Start your first session to see your progress tracked here.</Text>
+                            </View>
+                        ) : (
+                            Object.keys(groups).map((week) => (
+                                <View key={week} style={styles.weekContainer}>
+                                    <Text style={styles.weekLabel}>{week.toUpperCase()}</Text>
+                                    <View style={styles.weekCard}>
+                                        {groups[week].map((entry, i) => (
+                                            <HistoryRow
+                                                key={i}
+                                                entry={entry}
+                                                isLast={i === groups[week].length - 1}
+                                            />
+                                        ))}
+                                    </View>
+                                </View>
+                            ))
+                        )}
+                    </Animated.View>
                 )}
             </ScrollView>
         </View>

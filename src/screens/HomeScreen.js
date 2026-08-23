@@ -22,6 +22,7 @@ import MaskedView from "@react-native-masked-view/masked-view";
 import * as Haptics from "expo-haptics";
 import Svg, { Circle, Path, Defs, LinearGradient as SvgGradient, Stop, Text as SvgText, Polygon, Line } from "react-native-svg";
 import WorkoutCalendar from "../components/WorkoutCalendar";
+import SkeletonBlock from "../components/SkeletonBlock";
 import { getRankData } from "./RankScreen";
 
 
@@ -472,6 +473,22 @@ export default function HomeScreen({ navigation, route }) {
 
     const displayName = profile?.fullName?.split(" ")[0] || user?.displayName?.split(" ")[0] || "ATHLETE";
 
+    const [initialLoading, setInitialLoading] = useState(true);
+    const contentFadeAnim = useRef(new Animated.Value(0)).current;
+    const isInitialMountRef = useRef(true);
+
+    const finishInitialLoading = () => {
+        if (isInitialMountRef.current) {
+            isInitialMountRef.current = false;
+            setInitialLoading(false);
+            Animated.timing(contentFadeAnim, {
+                toValue: 1,
+                duration: 200,
+                useNativeDriver: true,
+            }).start();
+        }
+    };
+
     useFocusEffect(useCallback(() => {
         loadStats(false); // Instantly load local cache on focus (0ms latency, no blocking)
         (async () => {
@@ -558,8 +575,11 @@ export default function HomeScreen({ navigation, route }) {
             setCompletedDays(localComp);
             setFreezeDays(localFrz);
             setCompletedTargets(localTargets || {});
+
+            finishInitialLoading();
         } catch (e) {
             console.warn("Failed to load cached stats in HomeScreen", e);
+            finishInitialLoading();
         }
 
         // 2. checkAndCleanStreak (which resets streak if broken)
@@ -600,8 +620,11 @@ export default function HomeScreen({ navigation, route }) {
                 setCompletedDays(syncComp);
                 setFreezeDays(syncFrz);
                 setCompletedTargets(syncTargets || {});
+
+                finishInitialLoading();
             } catch (e) {
                 console.warn("HomeScreen background sync failed", e);
+                finishInitialLoading();
             }
         }
     };
@@ -810,127 +833,298 @@ export default function HomeScreen({ navigation, route }) {
                     </TouchableOpacity>
                 )}
 
-                {/* ── Today's Workout Hero Card (Focal Point) ── */}
-                <Animated.View
-                    style={{
-                        opacity: heroAnim,
-                        transform: [{
-                            translateY: heroAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] })
-                        }],
-                    }}
-                >
-                    {todayWorkout ? (
-                        <TouchableOpacity
-                            style={styles.heroCard}
-                            activeOpacity={0.9}
-                            onPress={() => navigation.navigate("WorkoutDetail", { day: todayWorkout })}
+                {initialLoading ? (
+                    <View style={{ width: "100%" }}>
+                        {/* Hero Card Skeleton */}
+                        <SkeletonBlock
+                            width="100%"
+                            height={220}
+                            borderRadius={0}
+                            index={0}
+                            style={{ alignSelf: "stretch" }}
+                        />
+
+                        {/* Unified Dashboard Card Skeleton */}
+                        <SkeletonBlock
+                            width="auto"
+                            height={88}
+                            borderRadius={18}
+                            index={1}
+                            style={{ marginHorizontal: SPACING.base, marginTop: 14 }}
+                        />
+
+                        {/* 7-Day Consistency Grid Skeleton */}
+                        <SkeletonBlock
+                            width="auto"
+                            height={126}
+                            borderRadius={RADIUS.lg}
+                            index={2}
+                            style={{ marginHorizontal: SPACING.base, marginTop: 12 }}
+                        />
+                    </View>
+                ) : (
+                    <Animated.View style={{ opacity: contentFadeAnim }}>
+                        {/* ── Today's Workout Hero Card (Focal Point) ── */}
+                        <Animated.View
+                            style={{
+                                opacity: heroAnim,
+                                transform: [{
+                                    translateY: heroAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] })
+                                }],
+                            }}
                         >
-                            <ImageBackground
-                                source={todayWorkout.headerImage || require("../../assets/home_hero_bg.png")}
-                                style={StyleSheet.absoluteFill}
-                                resizeMode="cover"
-                            >
-                                <LinearGradient
-                                    colors={["rgba(0,0,0,0.3)", "rgba(10,10,11,0.85)", "rgba(10,10,11,0.98)"]}
-                                    style={StyleSheet.absoluteFill}
-                                />
-
-                                {/* Large Faded Day Number in Background */}
-                                <Text
-                                    style={styles.heroBgNumber}
-                                    numberOfLines={1}
-                                    adjustsFontSizeToFit={false}
-                                    pointerEvents="none"
+                            {todayWorkout ? (
+                                <TouchableOpacity
+                                    style={styles.heroCard}
+                                    activeOpacity={0.9}
+                                    onPress={() => navigation.navigate("WorkoutDetail", { day: todayWorkout })}
                                 >
-                                    {todayWorkout.day < 10 ? `0${todayWorkout.day}` : todayWorkout.day}
-                                </Text>
+                                    <ImageBackground
+                                        source={todayWorkout.headerImage || require("../../assets/home_hero_bg.png")}
+                                        style={StyleSheet.absoluteFill}
+                                        resizeMode="cover"
+                                    >
+                                        <LinearGradient
+                                            colors={["rgba(0,0,0,0.3)", "rgba(10,10,11,0.85)", "rgba(10,10,11,0.98)"]}
+                                            style={StyleSheet.absoluteFill}
+                                        />
 
-                                <View style={styles.heroContent}>
-                                    <View>
-                                        <View style={styles.heroBadge}>
-                                            <Svg
-                                                width={total === 0 ? 176 : 164}
-                                                height={26}
-                                                viewBox={`0 0 ${total === 0 ? 176 : 164} 26`}
-                                                style={StyleSheet.absoluteFillObject}
-                                            >
-                                                <Defs>
-                                                    <SvgGradient id="heroBadgeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                                                        <Stop offset="0%" stopColor="#280A0A" stopOpacity="0.95" />
-                                                        <Stop offset="100%" stopColor="#3C1A0C" stopOpacity="0.95" />
-                                                    </SvgGradient>
-                                                </Defs>
-                                                <Polygon points={`0,0 ${total === 0 ? 164 : 152},0 ${total === 0 ? 176 : 164},26 0,26`} fill="url(#heroBadgeGrad)" stroke="rgba(255, 100, 40, 0.4)" strokeWidth={1} />
-                                            </Svg>
-                                            <View style={styles.heroBadgeContent}>
-                                                <View style={styles.heroBadgeDot} />
-                                                <Text style={styles.heroBadgeText}>
-                                                    {total === 0 ? "START HERE · DAY 01" : `TODAY · DAY 0${todayWorkout.day}`}
+                                        {/* Large Faded Day Number in Background */}
+                                        <Text
+                                            style={styles.heroBgNumber}
+                                            numberOfLines={1}
+                                            adjustsFontSizeToFit={false}
+                                            pointerEvents="none"
+                                        >
+                                            {todayWorkout.day < 10 ? `0${todayWorkout.day}` : todayWorkout.day}
+                                        </Text>
+
+                                        <View style={styles.heroContent}>
+                                            <View>
+                                                <View style={styles.heroBadge}>
+                                                    <Svg
+                                                        width={total === 0 ? 176 : 164}
+                                                        height={26}
+                                                        viewBox={`0 0 ${total === 0 ? 176 : 164} 26`}
+                                                        style={StyleSheet.absoluteFillObject}
+                                                    >
+                                                        <Defs>
+                                                            <SvgGradient id="heroBadgeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                                <Stop offset="0%" stopColor="#280A0A" stopOpacity="0.95" />
+                                                                <Stop offset="100%" stopColor="#3C1A0C" stopOpacity="0.95" />
+                                                            </SvgGradient>
+                                                        </Defs>
+                                                        <Polygon points={`0,0 ${total === 0 ? 164 : 152},0 ${total === 0 ? 176 : 164},26 0,26`} fill="url(#heroBadgeGrad)" stroke="rgba(255, 100, 40, 0.4)" strokeWidth={1} />
+                                                    </Svg>
+                                                    <View style={styles.heroBadgeContent}>
+                                                        <View style={styles.heroBadgeDot} />
+                                                        <Text style={styles.heroBadgeText}>
+                                                            {total === 0 ? "START HERE · DAY 01" : `TODAY · DAY 0${todayWorkout.day}`}
+                                                        </Text>
+                                                    </View>
+                                                </View>
+                                                <Text style={styles.heroTitle} numberOfLines={1} adjustsFontSizeToFit>
+                                                    {total === 0 ? "READY WHEN YOU ARE" : (todayWorkout.dayName ? todayWorkout.dayName.toUpperCase() : (todayWorkout.target.toUpperCase().includes("DAY") ? todayWorkout.target.toUpperCase() : `${todayWorkout.target.toUpperCase()} (HEAVY)`))}
+                                                </Text>
+                                                <Text style={styles.heroSub}>
+                                                    {total === 0 ? `Your 6-day split begins with ${todayWorkout.target.toLowerCase()}` : "6-day split · pull & push combined"}
                                                 </Text>
                                             </View>
+
+                                            <View style={styles.heroMetaRow}>
+                                                <View style={{ flexDirection: "row", gap: 20 }}>
+                                                    <View style={styles.heroMeta}>
+                                                        <Text style={styles.heroMetaLabel}>VOLUME</Text>
+                                                        <Text style={styles.heroMetaValue}>{todayWorkout.exercises.length} EX</Text>
+                                                    </View>
+                                                    <View style={styles.heroMeta}>
+                                                        <Text style={styles.heroMetaLabel}>DURATION</Text>
+                                                        <Text style={styles.heroMetaValue}>{totalTime(todayWorkout)} MIN</Text>
+                                                    </View>
+                                                </View>
+
+                                                <TouchableOpacity
+                                                    style={styles.heroCta}
+                                                    activeOpacity={0.85}
+                                                    onPress={() => {
+                                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                                        navigation.navigate("WorkoutDetail", { day: todayWorkout });
+                                                    }}
+                                                >
+                                                    <Svg
+                                                        width={total === 0 ? 180 : 128}
+                                                        height={42}
+                                                        viewBox={`0 0 ${total === 0 ? 180 : 128} 42`}
+                                                        style={StyleSheet.absoluteFillObject}
+                                                    >
+                                                        <Polygon points={`10,0 ${total === 0 ? 180 : 128},0 ${total === 0 ? 180 : 128},42 0,42`} fill={COLORS.primary} />
+                                                    </Svg>
+                                                    <Text style={styles.heroCtaText}>
+                                                        {total === 0 ? "Start your first session ›" : "Start session ›"}
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            </View>
                                         </View>
-                                        <Text style={styles.heroTitle} numberOfLines={1} adjustsFontSizeToFit>
-                                            {total === 0 ? "READY WHEN YOU ARE" : (todayWorkout.dayName ? todayWorkout.dayName.toUpperCase() : (todayWorkout.target.toUpperCase().includes("DAY") ? todayWorkout.target.toUpperCase() : `${todayWorkout.target.toUpperCase()} (HEAVY)`))}
-                                        </Text>
-                                        <Text style={styles.heroSub}>
-                                            {total === 0 ? `Your 6-day split begins with ${todayWorkout.target.toLowerCase()}` : "6-day split · pull & push combined"}
-                                        </Text>
+                                    </ImageBackground>
+                                </TouchableOpacity>
+                            ) : (
+                                <RestDayCard navigation={navigation} />
+                            )}
+                        </Animated.View>
+
+                        {/* ── Unified Dashboard Card ── */}
+                        {(() => {
+                            const progressPercent = xp % 100;
+                            const radius = 36;
+                            const strokeWidth = 4.5;
+                            const circumference = 2 * Math.PI * radius; // ~226.19
+                            const strokeDashoffset = total === 0 ? circumference : (circumference - (circumference * progressPercent) / 100);
+                            const currentRank = getRankData(total);
+                            const categoryColor = total === 0 ? "rgba(255,255,255,0.08)" : (todayWorkout?.target ? getMuscleColor(todayWorkout.target) : COLORS.primary);
+
+                            return (
+                                <View style={[styles.dashboardCard, { borderColor: `${categoryColor}4D` }]}>
+                                    {/* Subtle Matte Linear Gradient */}
+                                    <LinearGradient
+                                        colors={[COLORS.bgCard, COLORS.bgRaised]}
+                                        start={{ x: 0, y: 0 }}
+                                        end={{ x: 1, y: 1 }}
+                                        style={StyleSheet.absoluteFillObject}
+                                        pointerEvents="none"
+                                    />
+
+                                    {/* Left: SVG XP Progress Ring */}
+                                    <View style={styles.dashboardRingWrapper}>
+                                        <Svg width={86} height={86} style={{ transform: [{ rotate: "-90deg" }] }}>
+                                            <Circle
+                                                cx={43}
+                                                cy={43}
+                                                r={radius}
+                                                stroke="rgba(255,255,255,0.06)"
+                                                strokeWidth={strokeWidth}
+                                                fill="none"
+                                            />
+                                            <Circle
+                                                cx={43}
+                                                cy={43}
+                                                r={radius}
+                                                stroke={total === 0 ? "rgba(255,255,255,0.06)" : COLORS.primary}
+                                                strokeWidth={strokeWidth}
+                                                fill="none"
+                                                strokeDasharray={circumference}
+                                                strokeDashoffset={strokeDashoffset}
+                                                strokeLinecap="round"
+                                            />
+                                        </Svg>
+                                        <View style={styles.dashboardRingTextContainer} pointerEvents="none">
+                                            <Text style={[styles.dashboardRingPercent, total === 0 && { color: COLORS.textMuted }]}>
+                                                {total === 0 ? "0%" : `${progressPercent}%`}
+                                            </Text>
+                                            <Text style={styles.dashboardRingLabel}>PROGRESS</Text>
+                                        </View>
                                     </View>
 
-                                    <View style={styles.heroMetaRow}>
-                                        <View style={{ flexDirection: "row", gap: 20 }}>
-                                            <View style={styles.heroMeta}>
-                                                <Text style={styles.heroMetaLabel}>VOLUME</Text>
-                                                <Text style={styles.heroMetaValue}>{todayWorkout.exercises.length} EX</Text>
-                                            </View>
-                                            <View style={styles.heroMeta}>
-                                                <Text style={styles.heroMetaLabel}>DURATION</Text>
-                                                <Text style={styles.heroMetaValue}>{totalTime(todayWorkout)} MIN</Text>
-                                            </View>
-                                        </View>
-
+                                    {/* Right: 3 Stats Cells */}
+                                    <View style={styles.dashboardStatsRow}>
+                                        {/* Streak Cell */}
                                         <TouchableOpacity
-                                            style={styles.heroCta}
-                                            activeOpacity={0.85}
+                                            style={styles.dashboardStatCell}
+                                            activeOpacity={0.8}
                                             onPress={() => {
-                                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                                navigation.navigate("WorkoutDetail", { day: todayWorkout });
+                                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                                setStreakAnalyticsVisible(true);
                                             }}
                                         >
-                                            <Svg
-                                                width={total === 0 ? 180 : 128}
-                                                height={42}
-                                                viewBox={`0 0 ${total === 0 ? 180 : 128} 42`}
-                                                style={StyleSheet.absoluteFillObject}
+                                            <Ionicons
+                                                name="flame"
+                                                size={14}
+                                                color={total === 0 ? COLORS.textMuted : "#FF9500"}
+                                                style={{ marginBottom: 3 }}
+                                            />
+                                            <Text style={styles.dashboardStatLabel}>STREAK</Text>
+                                            <Text
+                                                style={[
+                                                    styles.dashboardStatValue,
+                                                    { color: total === 0 ? COLORS.textMuted : "#FF9500" }
+                                                ]}
+                                                numberOfLines={1}
                                             >
-                                                <Polygon points={`10,0 ${total === 0 ? 180 : 128},0 ${total === 0 ? 180 : 128},42 0,42`} fill={COLORS.primary} />
-                                            </Svg>
-                                            <Text style={styles.heroCtaText}>
-                                                {total === 0 ? "Start your first session ›" : "Start session ›"}
+                                                {total === 0 ? "0D" : `${streak}D`}
+                                            </Text>
+                                        </TouchableOpacity>
+
+                                        {/* Diagonal Divider */}
+                                        <Svg width={10} height={38} style={{ marginHorizontal: 2 }}>
+                                            <Line x1="7" y1="0" x2="3" y2="38" stroke="rgba(255,255,255,0.08)" strokeWidth={1} strokeLinecap="round" />
+                                        </Svg>
+
+                                        {/* Sessions Cell */}
+                                        <View style={styles.dashboardStatCell}>
+                                            <Ionicons
+                                                name="checkmark-done"
+                                                size={14}
+                                                color={total === 0 ? COLORS.textMuted : COLORS.textSub}
+                                                style={{ marginBottom: 3 }}
+                                            />
+                                            <Text style={styles.dashboardStatLabel}>SESSIONS</Text>
+                                            <Text
+                                                style={[
+                                                    styles.dashboardStatValue,
+                                                    { color: total === 0 ? COLORS.textMuted : "#FFFFFF" }
+                                                ]}
+                                                numberOfLines={1}
+                                            >
+                                                {total}
+                                            </Text>
+                                        </View>
+
+                                        {/* Diagonal Divider */}
+                                        <Svg width={10} height={38} style={{ marginHorizontal: 2 }}>
+                                            <Line x1="7" y1="0" x2="3" y2="38" stroke="rgba(255,255,255,0.08)" strokeWidth={1} strokeLinecap="round" />
+                                        </Svg>
+
+                                        {/* Rank Cell */}
+                                        <TouchableOpacity
+                                            style={styles.dashboardStatCell}
+                                            activeOpacity={0.8}
+                                            onPress={() => {
+                                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                                navigation.navigate("Rank");
+                                            }}
+                                        >
+                                            <Ionicons
+                                                name={currentRank.icon}
+                                                size={14}
+                                                color={total === 0 ? COLORS.textMuted : currentRank.color}
+                                                style={{ marginBottom: 3 }}
+                                            />
+                                            <Text style={styles.dashboardStatLabel}>RANK</Text>
+                                            <Text
+                                                style={[
+                                                    styles.dashboardStatValue,
+                                                    styles.dashboardRankValue,
+                                                    { color: total === 0 ? COLORS.textMuted : currentRank.color }
+                                                ]}
+                                                numberOfLines={1}
+                                                adjustsFontSizeToFit
+                                            >
+                                                {currentRank.title}
                                             </Text>
                                         </TouchableOpacity>
                                     </View>
                                 </View>
-                            </ImageBackground>
-                        </TouchableOpacity>
-                    ) : (
-                        <RestDayCard navigation={navigation} />
-                    )}
-                </Animated.View>
+                            );
+                        })()}
 
-                {/* ── Unified Dashboard Card ── */}
-                {(() => {
-                    const progressPercent = xp % 100;
-                    const radius = 36;
-                    const strokeWidth = 4.5;
-                    const circumference = 2 * Math.PI * radius; // ~226.19
-                    const strokeDashoffset = total === 0 ? circumference : (circumference - (circumference * progressPercent) / 100);
-                    const currentRank = getRankData(total);
-                    const categoryColor = total === 0 ? "rgba(255,255,255,0.08)" : (todayWorkout?.target ? getMuscleColor(todayWorkout.target) : COLORS.primary);
-
-                    return (
-                        <View style={[styles.dashboardCard, { borderColor: `${categoryColor}4D` }]}>
-                            {/* Subtle Matte Linear Gradient */}
+                        {/* ── 7-Day Consistency Grid Card ── */}
+                        <TouchableOpacity
+                            style={styles.consistencyCard}
+                            activeOpacity={0.88}
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                setStreakAnalyticsVisible(true);
+                            }}
+                        >
                             <LinearGradient
                                 colors={[COLORS.bgCard, COLORS.bgRaised]}
                                 start={{ x: 0, y: 0 }}
@@ -938,224 +1132,86 @@ export default function HomeScreen({ navigation, route }) {
                                 style={StyleSheet.absoluteFillObject}
                                 pointerEvents="none"
                             />
-
-                            {/* Left: SVG XP Progress Ring */}
-                            <View style={styles.dashboardRingWrapper}>
-                                <Svg width={86} height={86} style={{ transform: [{ rotate: "-90deg" }] }}>
-                                    <Circle
-                                        cx={43}
-                                        cy={43}
-                                        r={radius}
-                                        stroke="rgba(255,255,255,0.06)"
-                                        strokeWidth={strokeWidth}
-                                        fill="none"
-                                    />
-                                    <Circle
-                                        cx={43}
-                                        cy={43}
-                                        r={radius}
-                                        stroke={total === 0 ? "rgba(255,255,255,0.06)" : COLORS.primary}
-                                        strokeWidth={strokeWidth}
-                                        fill="none"
-                                        strokeDasharray={circumference}
-                                        strokeDashoffset={strokeDashoffset}
-                                        strokeLinecap="round"
-                                    />
-                                </Svg>
-                                <View style={styles.dashboardRingTextContainer} pointerEvents="none">
-                                    <Text style={[styles.dashboardRingPercent, total === 0 && { color: COLORS.textMuted }]}>
-                                        {total === 0 ? "0%" : `${progressPercent}%`}
+                            <View style={styles.consistencyHeader}>
+                                <View>
+                                    <Text style={styles.consistencyTitle}>THIS WEEK</Text>
+                                    <Text style={styles.consistencySubtitle}>Colored by muscle group</Text>
+                                </View>
+                                <View style={styles.consistencyBadge}>
+                                    <Text style={styles.consistencyBadgeText}>
+                                        <Text style={{ fontFamily: FAMILY.monoBold, color: total === 0 ? COLORS.textMuted : COLORS.text }}>
+                                            {total === 0 ? 0 : completedDays.length}
+                                        </Text>/6 SESSIONS
                                     </Text>
-                                    <Text style={styles.dashboardRingLabel}>PROGRESS</Text>
                                 </View>
                             </View>
 
-                            {/* Right: 3 Stats Cells */}
-                            <View style={styles.dashboardStatsRow}>
-                                {/* Streak Cell */}
-                                <TouchableOpacity
-                                    style={styles.dashboardStatCell}
-                                    activeOpacity={0.8}
-                                    onPress={() => {
-                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                        setStreakAnalyticsVisible(true);
-                                    }}
-                                >
-                                    <Ionicons
-                                        name="flame"
-                                        size={14}
-                                        color={total === 0 ? COLORS.textMuted : "#FF9500"}
-                                        style={{ marginBottom: 3 }}
-                                    />
-                                    <Text style={styles.dashboardStatLabel}>STREAK</Text>
-                                    <Text
-                                        style={[
-                                            styles.dashboardStatValue,
-                                            { color: total === 0 ? COLORS.textMuted : "#FF9500" }
-                                        ]}
-                                        numberOfLines={1}
-                                    >
-                                        {total === 0 ? "0D" : `${streak}D`}
-                                    </Text>
-                                </TouchableOpacity>
+                            <View style={styles.consistencyGridContainer}>
+                                {DAY_LABELS.map((label, index) => {
+                                    const dayNum = index + 1;
+                                    const isCompleted = total > 0 && completedDays.includes(dayNum);
+                                    const isDayFrozen = total > 0 && freezeDays.includes(dayNum);
+                                    const isToday = total > 0 && todayDay === dayNum;
+                                    const isSunday = dayNum === 7;
+                                    const dayTarget = completedTargets[dayNum] || (WORKOUT_PLAN.find(d => d.day === dayNum)?.target);
+                                    const muscleColor = getMuscleColor(dayTarget);
 
-                                {/* Diagonal Divider */}
-                                <Svg width={10} height={38} style={{ marginHorizontal: 2 }}>
-                                    <Line x1="7" y1="0" x2="3" y2="38" stroke="rgba(255,255,255,0.08)" strokeWidth={1} strokeLinecap="round" />
-                                </Svg>
-
-                                {/* Sessions Cell */}
-                                <View style={styles.dashboardStatCell}>
-                                    <Ionicons
-                                        name="checkmark-done"
-                                        size={14}
-                                        color={total === 0 ? COLORS.textMuted : COLORS.textSub}
-                                        style={{ marginBottom: 3 }}
-                                    />
-                                    <Text style={styles.dashboardStatLabel}>SESSIONS</Text>
-                                    <Text
-                                        style={[
-                                            styles.dashboardStatValue,
-                                            { color: total === 0 ? COLORS.textMuted : "#FFFFFF" }
-                                        ]}
-                                        numberOfLines={1}
-                                    >
-                                        {total}
-                                    </Text>
-                                </View>
-
-                                {/* Diagonal Divider */}
-                                <Svg width={10} height={38} style={{ marginHorizontal: 2 }}>
-                                    <Line x1="7" y1="0" x2="3" y2="38" stroke="rgba(255,255,255,0.08)" strokeWidth={1} strokeLinecap="round" />
-                                </Svg>
-
-                                {/* Rank Cell */}
-                                <TouchableOpacity
-                                    style={styles.dashboardStatCell}
-                                    activeOpacity={0.8}
-                                    onPress={() => {
-                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                        navigation.navigate("Rank");
-                                    }}
-                                >
-                                    <Ionicons
-                                        name={currentRank.icon}
-                                        size={14}
-                                        color={total === 0 ? COLORS.textMuted : currentRank.color}
-                                        style={{ marginBottom: 3 }}
-                                    />
-                                    <Text style={styles.dashboardStatLabel}>RANK</Text>
-                                    <Text
-                                        style={[
-                                            styles.dashboardStatValue,
-                                            styles.dashboardRankValue,
-                                            { color: total === 0 ? COLORS.textMuted : currentRank.color }
-                                        ]}
-                                        numberOfLines={1}
-                                        adjustsFontSizeToFit
-                                    >
-                                        {currentRank.title}
-                                    </Text>
-                                </TouchableOpacity>
+                                    return (
+                                        <View key={label} style={styles.gridCellWrapper}>
+                                            <Text style={[
+                                                styles.gridCellDayLabel,
+                                                isToday && { color: "#FF9500", fontFamily: FAMILY.bold },
+                                                isCompleted && { color: COLORS.text, fontFamily: FAMILY.bold }
+                                            ]}>
+                                                {label[0]}
+                                            </Text>
+                                            <View
+                                                style={[
+                                                    styles.gridCircle,
+                                                    isCompleted && {
+                                                        backgroundColor: muscleColor,
+                                                        borderColor: "rgba(255, 255, 255, 0.25)",
+                                                    },
+                                                    isToday && !isCompleted && styles.gridCircleToday,
+                                                    isDayFrozen && styles.gridCircleFrozen,
+                                                    !isCompleted && !isDayFrozen && !isToday && styles.gridCircleInactive,
+                                                ]}
+                                            >
+                                                {isCompleted ? (
+                                                    <Ionicons name="flash" size={13} color="#FFFFFF" />
+                                                ) : isDayFrozen ? (
+                                                    <Ionicons name="snow" size={12} color="#30B0C7" />
+                                                ) : isToday ? (
+                                                    <View style={styles.gridCircleTodayDot} />
+                                                ) : null}
+                                            </View>
+                                        </View>
+                                    );
+                                })}
                             </View>
-                        </View>
-                    );
-                })()}
 
-                {/* ── 7-Day Consistency Grid Card ── */}
-                <TouchableOpacity
-                    style={styles.consistencyCard}
-                    activeOpacity={0.88}
-                    onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                        setStreakAnalyticsVisible(true);
-                    }}
-                >
-                    <LinearGradient
-                        colors={[COLORS.bgCard, COLORS.bgRaised]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={StyleSheet.absoluteFillObject}
-                        pointerEvents="none"
-                    />
-                    <View style={styles.consistencyHeader}>
-                        <View>
-                            <Text style={styles.consistencyTitle}>THIS WEEK</Text>
-                            <Text style={styles.consistencySubtitle}>Colored by muscle group</Text>
-                        </View>
-                        <View style={styles.consistencyBadge}>
-                            <Text style={styles.consistencyBadgeText}>
-                                <Text style={{ fontFamily: FAMILY.monoBold, color: total === 0 ? COLORS.textMuted : COLORS.text }}>
-                                    {total === 0 ? 0 : completedDays.length}
-                                </Text>/6 SESSIONS
-                            </Text>
-                        </View>
-                    </View>
-
-                    <View style={styles.consistencyGridContainer}>
-                        {DAY_LABELS.map((label, index) => {
-                            const dayNum = index + 1;
-                            const isCompleted = total > 0 && completedDays.includes(dayNum);
-                            const isDayFrozen = total > 0 && freezeDays.includes(dayNum);
-                            const isToday = total > 0 && todayDay === dayNum;
-                            const isSunday = dayNum === 7;
-                            const dayTarget = completedTargets[dayNum] || (WORKOUT_PLAN.find(d => d.day === dayNum)?.target);
-                            const muscleColor = getMuscleColor(dayTarget);
-
-                            return (
-                                <View key={label} style={styles.gridCellWrapper}>
-                                    <Text style={[
-                                        styles.gridCellDayLabel,
-                                        isToday && { color: "#FF9500", fontFamily: FAMILY.bold },
-                                        isCompleted && { color: COLORS.text, fontFamily: FAMILY.bold }
-                                    ]}>
-                                        {label[0]}
-                                    </Text>
-                                    <View
-                                        style={[
-                                            styles.gridCircle,
-                                            isCompleted && {
-                                                backgroundColor: muscleColor,
-                                                borderColor: "rgba(255, 255, 255, 0.25)",
-                                            },
-                                            isToday && !isCompleted && styles.gridCircleToday,
-                                            isDayFrozen && styles.gridCircleFrozen,
-                                            !isCompleted && !isDayFrozen && !isToday && styles.gridCircleInactive,
-                                        ]}
-                                    >
-                                        {isCompleted ? (
-                                            <Ionicons name="flash" size={13} color="#FFFFFF" />
-                                        ) : isDayFrozen ? (
-                                            <Ionicons name="snow" size={12} color="#30B0C7" />
-                                        ) : isToday ? (
-                                            <View style={styles.gridCircleTodayDot} />
-                                        ) : null}
-                                    </View>
+                            {/* Legend Row */}
+                            <View style={styles.consistencyLegendRow}>
+                                <View style={styles.legendItem}>
+                                    <View style={[styles.legendDot, { backgroundColor: "#E31E24" }]} />
+                                    <Text style={styles.legendText}>Chest/triceps</Text>
                                 </View>
-                            );
-                        })}
-                    </View>
-
-                    {/* Legend Row */}
-                    <View style={styles.consistencyLegendRow}>
-                        <View style={styles.legendItem}>
-                            <View style={[styles.legendDot, { backgroundColor: "#E31E24" }]} />
-                            <Text style={styles.legendText}>Chest/triceps</Text>
-                        </View>
-                        <View style={styles.legendItem}>
-                            <View style={[styles.legendDot, { backgroundColor: "#FF9500" }]} />
-                            <Text style={styles.legendText}>Back/biceps</Text>
-                        </View>
-                        <View style={styles.legendItem}>
-                            <View style={[styles.legendDot, { backgroundColor: "#30B0C7" }]} />
-                            <Text style={styles.legendText}>Shoulders/core</Text>
-                        </View>
-                        <View style={styles.legendItem}>
-                            <View style={[styles.legendDot, { backgroundColor: "#D1D1D1" }]} />
-                            <Text style={styles.legendText}>Legs</Text>
-                        </View>
-                    </View>
-                </TouchableOpacity>
+                                <View style={styles.legendItem}>
+                                    <View style={[styles.legendDot, { backgroundColor: "#FF9500" }]} />
+                                    <Text style={styles.legendText}>Back/biceps</Text>
+                                </View>
+                                <View style={styles.legendItem}>
+                                    <View style={[styles.legendDot, { backgroundColor: "#30B0C7" }]} />
+                                    <Text style={styles.legendText}>Shoulders/core</Text>
+                                </View>
+                                <View style={styles.legendItem}>
+                                    <View style={[styles.legendDot, { backgroundColor: "#D1D1D1" }]} />
+                                    <Text style={styles.legendText}>Legs</Text>
+                                </View>
+                            </View>
+                        </TouchableOpacity>
+                    </Animated.View>
+                )}
 
                 {/* ── Workout Library ── */}
                 <View style={styles.sectionHeader}>
