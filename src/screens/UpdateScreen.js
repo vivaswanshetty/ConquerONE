@@ -52,8 +52,8 @@ export default function UpdateScreen() {
             <Animated.View style={[styles.content, { opacity: fade }]}>
                 {/* Header */}
                 <View style={styles.header}>
-                    <Text style={styles.title}>UPDATING{"\n"}PROTOCOLS</Text>
-                    <Text style={styles.subtitle}>SYSTEM SYNC IN PROGRESS</Text>
+                    <Text style={styles.title}>UPDATING{"\n"}CONQUER ONE</Text>
+                    <Text style={styles.subtitle}>DOWNLOADING LATEST UPDATE</Text>
                 </View>
 
                 {/* Progress Ring */}

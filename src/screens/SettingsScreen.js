@@ -480,14 +480,14 @@ export default function SettingsScreen({ navigation, route }) {
                     <TouchableOpacity
                         style={styles.toggleRow}
                         activeOpacity={0.7}
-                        onPress={() => Share.share({ message: "💪 CONQUER ONE — Elite Training Protocol. Train like a champion!\n\nDownload: https://conquer-one.app", title: "CONQUER ONE" })}
+                        onPress={() => Share.share({ message: "💪 CONQUER ONE — Elite Training Program. Train like a champion!\n\nDownload: https://conquer-one.app", title: "CONQUER ONE" })}
                     >
                         <View style={styles.toggleIconWrap}>
                             <Ionicons name="share-social-outline" size={18} color={COLORS.textSub} />
                         </View>
                         <View style={styles.toggleInfo}>
                             <Text style={styles.toggleLabel}>SHARE APP</Text>
-                            <Text style={styles.toggleSub}>Invite other athletes to the protocol</Text>
+                            <Text style={styles.toggleSub}>Invite friends to train with ConquerONE</Text>
                         </View>
                         <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.1)" />
                     </TouchableOpacity>
@@ -694,7 +694,7 @@ export default function SettingsScreen({ navigation, route }) {
 
                 <View style={[styles.creditWrap, { paddingBottom: Math.max(insets.bottom, 16) }]}>
                     <Text style={styles.creditText}>BUILT FOR POWER BY <Text style={styles.creditName}>VIVASWAN SHETTY</Text></Text>
-                    <Text style={styles.creditVersion}>CONQUER ONE CORE PROTOCOL {APP_VERSION}</Text>
+                    <Text style={styles.creditVersion}>CONQUER ONE v{APP_VERSION}</Text>
                 </View>
             </Animated.ScrollView>
 

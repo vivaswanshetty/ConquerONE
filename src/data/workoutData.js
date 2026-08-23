@@ -842,7 +842,7 @@ export const PLAN_SCIENCE = [
     },
     {
         principle: "Arms + Forearms on Sat",
-        meaning: "Both muscles fresh, not pre-fatigued. Dedicated forearm protocol added."
+        meaning: "Both muscles fresh, not pre-fatigued. Dedicated forearm training added."
     },
     {
         principle: "Legs get their own day",
@@ -948,7 +948,7 @@ export const RESULTS_TIMELINE = [
 ];
 
 export const FOREARM_PROTOCOL_INFO = {
-    title: "FOREARM PROTOCOL — THE FULL BREAKDOWN",
+    title: "FOREARM GUIDE — THE FULL BREAKDOWN",
     truth: "Forearms are the most genetically determined muscle group. Muscle belly length and insertions are largely fixed. BUT the brachioradialis — the thick muscle on top of your forearm — DOES grow significantly with training. Wrist flexors and extensors add measurable thickness too. Expect real results in 4–6 months of consistent direct work. Not 4 weeks.",
     targets: [
         {

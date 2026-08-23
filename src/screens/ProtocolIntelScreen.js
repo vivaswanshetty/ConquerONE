@@ -47,7 +47,7 @@ export default function ProtocolIntelScreen({ navigation }) {
                     <Ionicons name="chevron-back" size={22} color={COLORS.text} />
                 </TouchableOpacity>
                 <View style={styles.headerTitleWrap}>
-                    <Text style={styles.headerLabel}>ELITE PROTOCOL</Text>
+                    <Text style={styles.headerLabel}>PROGRAM GUIDE</Text>
                     <Text style={styles.headerTitle}>HANDBOOK</Text>
                 </View>
                 <View style={{ width: 48 }} />
@@ -117,7 +117,7 @@ function ScienceTab() {
 function ForearmsTab() {
     return (
         <View style={styles.tabContent}>
-            <Text style={styles.tabHeaderTitle}>FOREARM PROTOCOL</Text>
+            <Text style={styles.tabHeaderTitle}>FOREARM GUIDE</Text>
             <Text style={styles.tabHeaderDesc}>The complete breakdown of direct forearm training and muscle targets.</Text>
 
             {/* The Honest Truth Card */}

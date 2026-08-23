@@ -139,7 +139,7 @@ export default function RestDayScreen({ navigation }) {
                             style={{ marginRight: 6 }}
                         />
                         <Text style={[styles.zentabText, activeTab === 0 ? { color: COLORS.text } : { color: COLORS.textMuted }]}>
-                            PROTOCOL
+                            RECOVERY
                         </Text>
                     </TouchableOpacity>
 
@@ -193,7 +193,7 @@ export default function RestDayScreen({ navigation }) {
                 >
                     <View style={styles.meditationContent}>
                         <View style={styles.medHeaderRow}>
-                            <Text style={styles.medHeader}>ZEN PROTOCOL</Text>
+                            <Text style={styles.medHeader}>MINDFULNESS SESSION</Text>
                         </View>
                         <Text style={styles.medTitle}>Guided Breathwork</Text>
                         <Text style={styles.medSub}>8 MIN · CALM RECOVERY PHASE</Text>
@@ -219,7 +219,7 @@ export default function RestDayScreen({ navigation }) {
                     }}
                     activeOpacity={0.85}
                 >
-                    <Text style={styles.doneBtnText}>ACKNOWLEDGE PROTOCOL ›</Text>
+                    <Text style={styles.doneBtnText}>COMPLETE REST DAY ›</Text>
                 </TouchableOpacity>
             </View>
         </View>

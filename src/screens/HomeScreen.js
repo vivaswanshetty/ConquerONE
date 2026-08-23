@@ -1322,8 +1322,8 @@ export default function HomeScreen({ navigation, route }) {
                     activeOpacity={0.8}
                 >
                     <View style={{ flex: 1 }}>
-                        <Text style={styles.customTitle}>Plan Intelligence</Text>
-                        <Text style={styles.customSub}>The Science · Rules · 12-Week System</Text>
+                        <Text style={styles.customTitle}>Program Guide</Text>
+                        <Text style={styles.customSub}>The Science · Principles · 12-Week System</Text>
                     </View>
                     <View style={styles.customIconWrap}>
                         <Ionicons name="book-outline" size={18} color={COLORS.text} />
@@ -1505,7 +1505,7 @@ export default function HomeScreen({ navigation, route }) {
                         <View style={styles.modalHeader}>
                             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                                 <Ionicons name="flame" size={18} color="#FF9500" />
-                                <Text style={styles.modalHeaderTitle}>STREAK INTELLIGENCE</Text>
+                                <Text style={styles.modalHeaderTitle}>STREAK ANALYTICS</Text>
                             </View>
                             <TouchableOpacity
                                 style={styles.modalCloseBtn}
@@ -1992,7 +1992,7 @@ function RestDayCard({ navigation }) {
 
                     {/* Bottom Action Footer */}
                     <View style={styles.restFooterRow}>
-                        <Text style={styles.restFooterText}>View Full Protocol</Text>
+                        <Text style={styles.restFooterText}>View Recovery Guide</Text>
                         <Ionicons name="chevron-forward" size={14} color={COLORS.primary} />
                     </View>
                 </View>
