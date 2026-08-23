@@ -769,19 +769,12 @@ export default function HomeScreen({ navigation, route }) {
                                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                             >
                                 <LinearGradient
-                                    colors={["rgba(227, 30, 36, 0.28)", "rgba(255, 255, 255, 0.08)", "rgba(14, 14, 18, 0.95)"]}
+                                    colors={["rgba(255, 255, 255, 0.09)", "rgba(255, 255, 255, 0.02)"]}
                                     start={{ x: 0, y: 0 }}
                                     end={{ x: 1, y: 1 }}
                                     style={StyleSheet.absoluteFillObject}
                                 />
-                                <LinearGradient
-                                    colors={["rgba(255, 255, 255, 0.28)", "transparent"]}
-                                    start={{ x: 0, y: 0 }}
-                                    end={{ x: 0, y: 0.9 }}
-                                    style={{ position: "absolute", top: 0, left: 0, right: 0, height: 18 }}
-                                />
-                                <Ionicons name="sparkles" size={19} color="#FF3B30" />
-                                <View style={styles.menuBtnPulseDot} />
+                                <Ionicons name="apps" size={20} color="#FFFFFF" />
                             </TouchableOpacity>
 
                             {/* Profile Avatar */}
@@ -1476,7 +1469,7 @@ export default function HomeScreen({ navigation, route }) {
                         <View style={styles.quickMenuHeader}>
                             <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                                 <View style={styles.quickMenuHeaderIconBox}>
-                                    <Ionicons name="sparkles" size={16} color={COLORS.primary} />
+                                    <Ionicons name="apps" size={16} color={COLORS.primary} />
                                 </View>
                                 <View>
                                     <Text style={styles.quickMenuTitle}>MENU</Text>
@@ -2353,34 +2346,15 @@ const styles = StyleSheet.create({
         gap: 10,
     },
     headerMenuBtn: {
-        width: 46,
-        height: 46,
-        borderRadius: 23,
-        backgroundColor: "#141418",
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: "rgba(255, 255, 255, 0.06)",
         borderWidth: 1.2,
-        borderColor: "rgba(227, 30, 36, 0.4)",
+        borderColor: "rgba(255, 255, 255, 0.14)",
         alignItems: "center",
         justifyContent: "center",
         overflow: "hidden",
-        shadowColor: "#E31E24",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.35,
-        shadowRadius: 8,
-        elevation: 4,
-    },
-    menuBtnPulseDot: {
-        position: "absolute",
-        top: 7,
-        right: 8,
-        width: 5,
-        height: 5,
-        borderRadius: 2.5,
-        backgroundColor: "#FF3B30",
-        shadowColor: "#FF3B30",
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.9,
-        shadowRadius: 4,
-        elevation: 3,
     },
 
     // Quick Menu Sheet Modal
