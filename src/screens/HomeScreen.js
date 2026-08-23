@@ -72,25 +72,23 @@ function GradientText({ text, style, colors = GRADIENTS.diamond, height = 50 }) 
     );
 }
 
-function MetallicText({ text, style, height = 42 }) {
+function MetallicText({ text, style, height = 44 }) {
     return (
         <MaskedView
             style={{ height, width: '100%' }}
             maskElement={
-                <Text style={style} adjustsFontSizeToFit numberOfLines={1}>
+                <Text style={style} numberOfLines={1}>
                     {text}
                 </Text>
             }
         >
             <LinearGradient
-                colors={["#FFFFFF", "#C0C0C0", "#E8E8E8", "#787878", "#C8C8C8"]}
+                colors={["#FFFFFF", "#D1D1D6", "#FFFFFF", "#8E8E93", "#E5E5EA"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 locations={[0, 0.25, 0.5, 0.75, 1]}
                 style={StyleSheet.absoluteFill}
-            >
-                <Text style={[style, { opacity: 0 }]} adjustsFontSizeToFit numberOfLines={1}>{text}</Text>
-            </LinearGradient>
+            />
         </MaskedView>
     );
 }
