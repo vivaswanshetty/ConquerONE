@@ -1240,7 +1240,7 @@ export default function HistoryScreen({ navigation }) {
                                         </View>
                                         <View>
                                             <Text style={[styles.statValue, { fontSize: 34, lineHeight: 38 }]}>
-                                                {totalHours}<Text style={{ fontSize: 18, color: COLORS.textSub }}>h</Text>
+                                                {totalHours}<Text style={{ fontSize: 18, color: COLORS.textSub }}> HRS</Text>
                                             </Text>
                                             <Text style={styles.statSubLabel}>cumulative volume</Text>
                                         </View>
