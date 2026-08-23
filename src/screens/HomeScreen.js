@@ -285,7 +285,7 @@ const getStreakTierInfo = (streak) => {
 
 const renderSvgChart = (weeklyData) => {
     const chartWidth = width - 64;
-    const chartHeight = 140;
+    const chartHeight = 145;
     const padding = 25;
 
     // Coordinates
@@ -316,20 +316,36 @@ const renderSvgChart = (weeklyData) => {
     }
 
     const labels = ["3 Wks Ago", "2 Wks Ago", "1 Wk Ago", "This Wk"];
+    const currentWeekSessions = weeklyData[weeklyData.length - 1] || 0;
 
     return (
         <View style={styles.chartWrapper}>
-            <Text style={styles.chartTitle}>WEEKLY CONSISTENCY (4-WEEK PROFILE)</Text>
+            <View style={styles.chartHeaderRow}>
+                <View>
+                    <Text style={styles.chartTitle}>WEEKLY CONSISTENCY</Text>
+                    <Text style={styles.chartSubTitle}>4-Week training volume profile</Text>
+                </View>
+                <View style={styles.chartBadge}>
+                    <View style={styles.chartBadgeDot} />
+                    <Text style={styles.chartBadgeText}>
+                        <Text style={{ fontFamily: FAMILY.monoBold, color: COLORS.text }}>{currentWeekSessions}</Text> SESSIONS
+                    </Text>
+                </View>
+            </View>
+
             <View style={styles.svgContainer}>
                 <Svg width={chartWidth} height={chartHeight}>
                     <Defs>
+                        {/* Crimson to Gold ambient glow under curve */}
                         <SvgGradient id="chartGlow" x1="0" y1="0" x2="0" y2="1">
-                            <Stop offset="0%" stopColor={COLORS.accent} stopOpacity="0.25" />
-                            <Stop offset="100%" stopColor={COLORS.accent} stopOpacity="0.0" />
+                            <Stop offset="0%" stopColor={COLORS.primary} stopOpacity="0.32" />
+                            <Stop offset="60%" stopColor="#FF9500" stopOpacity="0.08" />
+                            <Stop offset="100%" stopColor={COLORS.primary} stopOpacity="0.0" />
                         </SvgGradient>
+                        {/* High-voltage gradient stroke across line */}
                         <SvgGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
-                            <Stop offset="0%" stopColor={COLORS.accent} />
-                            <Stop offset="100%" stopColor={COLORS.text} />
+                            <Stop offset="0%" stopColor="#FF9500" />
+                            <Stop offset="100%" stopColor={COLORS.primary} />
                         </SvgGradient>
                     </Defs>
 
@@ -358,45 +374,62 @@ const renderSvgChart = (weeklyData) => {
                             d={d}
                             fill="none"
                             stroke="url(#lineGrad)"
-                            strokeWidth={2.5}
+                            strokeWidth={2.8}
                         />
                     )}
 
                     {/* Data Points */}
-                    {points.map((p, idx) => (
-                        <React.Fragment key={idx}>
-                            <Circle
-                                cx={p.x}
-                                cy={p.y}
-                                r={3.5}
-                                fill="#FFFFFF"
-                            />
-                            <Circle
-                                cx={p.x}
-                                cy={p.y}
-                                r={7}
-                                fill={COLORS.accent}
-                                fillOpacity={0.2}
-                            />
-                            <SvgText
-                                x={p.x}
-                                y={p.y - 10}
-                                fill="#FFFFFF"
-                                fontSize="9"
-                                fontWeight="bold"
-                                textAnchor="middle"
-                                fontFamily={FAMILY.mono}
-                            >
-                                {p.value}
-                            </SvgText>
-                        </React.Fragment>
-                    ))}
+                    {points.map((p, idx) => {
+                        const isLatest = idx === points.length - 1;
+                        const pointColor = isLatest ? COLORS.primary : "#FF9500";
+                        return (
+                            <React.Fragment key={idx}>
+                                <Circle
+                                    cx={p.x}
+                                    cy={p.y}
+                                    r={isLatest ? 8 : 6}
+                                    fill={pointColor}
+                                    fillOpacity={isLatest ? 0.35 : 0.2}
+                                />
+                                <Circle
+                                    cx={p.x}
+                                    cy={p.y}
+                                    r={isLatest ? 4.5 : 3.5}
+                                    fill="#FFFFFF"
+                                    stroke={pointColor}
+                                    strokeWidth={isLatest ? 2 : 1.5}
+                                />
+                                <SvgText
+                                    x={p.x}
+                                    y={p.y - 9}
+                                    fill={isLatest ? "#FFFFFF" : "#D1D1D1"}
+                                    fontSize="10"
+                                    fontWeight="bold"
+                                    textAnchor="middle"
+                                    fontFamily={FAMILY.mono}
+                                >
+                                    {p.value}
+                                </SvgText>
+                            </React.Fragment>
+                        );
+                    })}
                 </Svg>
             </View>
             <View style={styles.chartLabelsRow}>
-                {labels.map((lbl) => (
-                    <Text key={lbl} style={styles.chartLabelText}>{lbl.toUpperCase()}</Text>
-                ))}
+                {labels.map((lbl, idx) => {
+                    const isLatest = idx === labels.length - 1;
+                    return (
+                        <Text
+                            key={lbl}
+                            style={[
+                                styles.chartLabelText,
+                                isLatest && { color: COLORS.primary, fontFamily: FAMILY.bold }
+                            ]}
+                        >
+                            {lbl.toUpperCase()}
+                        </Text>
+                    );
+                })}
             </View>
         </View>
     );
@@ -1328,12 +1361,15 @@ export default function HomeScreen({ navigation, route }) {
 
                         {/* Header */}
                         <View style={styles.modalHeader}>
-                            <Text style={styles.modalHeaderTitle}>STREAK INTELLIGENCE</Text>
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                                <Ionicons name="flame" size={18} color="#FF9500" />
+                                <Text style={styles.modalHeaderTitle}>STREAK INTELLIGENCE</Text>
+                            </View>
                             <TouchableOpacity
                                 style={styles.modalCloseBtn}
                                 onPress={() => setStreakAnalyticsVisible(false)}
                             >
-                                <Ionicons name="close" size={20} color={COLORS.text} />
+                                <Ionicons name="close" size={18} color={COLORS.text} />
                             </TouchableOpacity>
                         </View>
 
@@ -1343,17 +1379,33 @@ export default function HomeScreen({ navigation, route }) {
                                 const tierInfo = getStreakTierInfo(streak);
                                 return (
                                     <View style={styles.summaryMetricsRow}>
-                                        <View style={styles.metricCard}>
-                                            <Text style={styles.metricLabel}>ACTIVE STREAK</Text>
-                                            <Text style={[styles.metricValue, { color: tierInfo.color }]}>
-                                                {streak} <Text style={{ fontSize: 12, color: COLORS.textMuted }}>DAYS</Text>
+                                        <View style={[styles.metricCard, { borderColor: "rgba(255, 149, 0, 0.35)" }]}>
+                                            <LinearGradient
+                                                colors={["rgba(255, 149, 0, 0.10)", "transparent"]}
+                                                style={StyleSheet.absoluteFillObject}
+                                                pointerEvents="none"
+                                            />
+                                            <View style={styles.metricHeaderRow}>
+                                                <Text style={styles.metricLabel}>ACTIVE STREAK</Text>
+                                                <Ionicons name="flame" size={14} color="#FF9500" />
+                                            </View>
+                                            <Text style={[styles.metricValue, { color: "#FF9500" }]}>
+                                                {streak} <Text style={{ fontSize: 12, color: COLORS.textMuted, fontFamily: FAMILY.mono }}>DAYS</Text>
                                             </Text>
-                                            <Text style={styles.metricSub}>{tierInfo.name} TIER ACTIVE</Text>
+                                            <Text style={[styles.metricSub, { color: tierInfo.color, fontFamily: FAMILY.monoBold }]}>{tierInfo.name} TIER ACTIVE</Text>
                                         </View>
                                         <View style={styles.metricCard}>
-                                            <Text style={styles.metricLabel}>ALL-TIME RECORD</Text>
-                                            <Text style={[styles.metricValue, { color: "#FF9500" }]}>
-                                                {recordStreak} <Text style={{ fontSize: 12, color: COLORS.textMuted }}>DAYS</Text>
+                                            <LinearGradient
+                                                colors={["rgba(255, 255, 255, 0.03)", "transparent"]}
+                                                style={StyleSheet.absoluteFillObject}
+                                                pointerEvents="none"
+                                            />
+                                            <View style={styles.metricHeaderRow}>
+                                                <Text style={styles.metricLabel}>ALL-TIME RECORD</Text>
+                                                <Ionicons name="trophy-outline" size={14} color={COLORS.accent} />
+                                            </View>
+                                            <Text style={[styles.metricValue, { color: COLORS.text }]}>
+                                                {recordStreak} <Text style={{ fontSize: 12, color: COLORS.textMuted, fontFamily: FAMILY.mono }}>DAYS</Text>
                                             </Text>
                                             <Text style={styles.metricSub}>RECORD TO BEAT</Text>
                                         </View>
@@ -1372,7 +1424,7 @@ export default function HomeScreen({ navigation, route }) {
 
                             {/* Tiers Breakdown */}
                             <View style={styles.modalSection}>
-                                <Text style={styles.modalSectionTitle}>STREAK TIERS & MULTIPLIERS</Text>
+                                <Text style={styles.modalSectionTitle}>STREAK TIERS & XP MULTIPLIERS</Text>
                                 {["SPARK", "IGNITION", "OVERLOAD", "TITAN"].map((tName) => {
                                     let tierRange = "";
                                     let tierMult = "";
@@ -1406,17 +1458,26 @@ export default function HomeScreen({ navigation, route }) {
                                             key={tName}
                                             style={[
                                                 styles.tierRow,
-                                                isActive && [styles.tierRowActive, { borderColor: `${tierCol}50` }]
+                                                isActive && [styles.tierRowActive, { borderColor: `${tierCol}80`, backgroundColor: `${tierCol}14` }]
                                             ]}
                                         >
-                                            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                                                <Ionicons name="flame" size={16} color={tierCol} />
+                                            <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                                                <View style={[styles.tierIconWrap, { backgroundColor: `${tierCol}18` }]}>
+                                                    <Ionicons name={isActive ? "flame" : "flame-outline"} size={16} color={tierCol} />
+                                                </View>
                                                 <View>
-                                                    <Text style={[styles.tierRowName, { color: tierCol }]}>{tName}</Text>
+                                                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                                                        <Text style={[styles.tierRowName, { color: isActive ? tierCol : COLORS.text }]}>{tName}</Text>
+                                                        {isActive && (
+                                                            <View style={[styles.activeTierPill, { backgroundColor: tierCol }]}>
+                                                                <Text style={styles.activeTierText}>CURRENT</Text>
+                                                            </View>
+                                                        )}
+                                                    </View>
                                                     <Text style={styles.tierRowRange}>{tierRange}</Text>
                                                 </View>
                                             </View>
-                                            <View style={[styles.tierMultiplierBadge, { backgroundColor: `${tierCol}15` }]}>
+                                            <View style={[styles.tierMultiplierBadge, { backgroundColor: `${tierCol}1F`, borderColor: `${tierCol}4D` }]}>
                                                 <Text style={[styles.tierMultiplierText, { color: tierCol }]}>{tierMult}</Text>
                                             </View>
                                         </View>
@@ -1426,8 +1487,16 @@ export default function HomeScreen({ navigation, route }) {
 
                             {/* Quick Streak Freeze Action */}
                             <View style={styles.freezeActionSection}>
+                                <LinearGradient
+                                    colors={isFrozen ? ["rgba(48, 176, 199, 0.14)", "rgba(48, 176, 199, 0.02)"] : ["rgba(255, 255, 255, 0.03)", "transparent"]}
+                                    style={StyleSheet.absoluteFillObject}
+                                    pointerEvents="none"
+                                />
                                 <View style={styles.freezeActionTextWrap}>
-                                    <Text style={styles.freezeSectionTitle}>STREAK SHIELD STATUS</Text>
+                                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                                        <Ionicons name={isFrozen ? "snow" : "shield-checkmark"} size={14} color={isFrozen ? "#30B0C7" : COLORS.primary} />
+                                        <Text style={styles.freezeSectionTitle}>STREAK SHIELD STATUS</Text>
+                                    </View>
                                     <Text style={styles.freezeSectionDesc}>
                                         {isFrozen
                                             ? "Today is frozen. Missing a session won't break your streak."
@@ -1452,18 +1521,18 @@ export default function HomeScreen({ navigation, route }) {
                                 <TouchableOpacity
                                     style={[
                                         styles.freezeToggleButton,
-                                        isFrozen && styles.freezeToggleButtonActive
+                                        isFrozen ? styles.freezeToggleButtonActive : { backgroundColor: COLORS.primary, borderColor: COLORS.primary }
                                     ]}
                                     onPress={handleFreezeToggle}
-                                    activeOpacity={0.8}
+                                    activeOpacity={0.85}
                                 >
                                     <Ionicons
-                                        name={isFrozen ? "snow" : "shield-half"}
-                                        size={16}
-                                        color={isFrozen ? "#60A5FA" : "#FFFFFF"}
+                                        name={isFrozen ? "snow" : "shield-outline"}
+                                        size={15}
+                                        color="#FFFFFF"
                                     />
-                                    <Text style={[styles.freezeToggleText, isFrozen && { color: "#60A5FA" }]}>
-                                        {isFrozen ? "FROZEN (TAP TO MELT)" : "ACTIVATE SHIELD"}
+                                    <Text style={[styles.freezeToggleText, { color: "#FFFFFF" }]}>
+                                        {isFrozen ? "FROZEN (MELT)" : "ACTIVATE"}
                                     </Text>
                                 </TouchableOpacity>
                             </View>
@@ -2224,6 +2293,13 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: COLORS.border,
         padding: 16,
+        overflow: "hidden",
+    },
+    metricHeaderRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 2,
     },
     metricLabel: {
         fontFamily: FAMILY.bold,
@@ -2250,12 +2326,45 @@ const styles = StyleSheet.create({
         padding: 16,
         marginBottom: 20,
     },
+    chartHeaderRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 12,
+    },
     chartTitle: {
         fontFamily: FAMILY.bold,
         fontSize: 12.5,
         color: COLORS.text,
         letterSpacing: 0.5,
-        marginBottom: 12,
+    },
+    chartSubTitle: {
+        fontSize: 10,
+        fontFamily: FAMILY.regular,
+        color: COLORS.textSub,
+        marginTop: 1,
+    },
+    chartBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 5,
+        backgroundColor: "rgba(227, 30, 36, 0.08)",
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: RADIUS.sm,
+        borderWidth: 1,
+        borderColor: "rgba(227, 30, 36, 0.25)",
+    },
+    chartBadgeDot: {
+        width: 4,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: COLORS.primary,
+    },
+    chartBadgeText: {
+        fontSize: 9.5,
+        fontFamily: FAMILY.mono,
+        color: COLORS.textSub,
     },
     svgContainer: {
         alignItems: "center",
@@ -2294,13 +2403,32 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     tierRowActive: {
-        borderColor: "rgba(227, 30, 36, 0.4)",
-        backgroundColor: "rgba(227, 30, 36, 0.08)",
+        borderWidth: 1.5,
+    },
+    tierIconWrap: {
+        width: 32,
+        height: 32,
+        borderRadius: RADIUS.sm,
+        alignItems: "center",
+        justifyContent: "center",
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.06)",
     },
     tierRowName: {
         fontFamily: FAMILY.bold,
         fontSize: 13,
         color: COLORS.text,
+    },
+    activeTierPill: {
+        paddingHorizontal: 6,
+        paddingVertical: 1.5,
+        borderRadius: RADIUS.xs,
+    },
+    activeTierText: {
+        fontSize: 8,
+        fontFamily: FAMILY.bold,
+        color: "#FFFFFF",
+        letterSpacing: 0.5,
     },
     tierRowRange: {
         fontFamily: FAMILY.mono,
@@ -2328,6 +2456,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "space-between",
         gap: 12,
+        overflow: "hidden",
     },
     freezeActionTextWrap: {
         flex: 1,
