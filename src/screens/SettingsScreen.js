@@ -691,7 +691,7 @@ export default function SettingsScreen({ navigation, route }) {
                     <Text style={styles.resetText}>RESTORE DEFAULT SETTINGS</Text>
                 </TouchableOpacity>
 
-                <View style={[styles.creditWrap, { paddingBottom: insets.bottom + 20 }]}>
+                <View style={[styles.creditWrap, { paddingBottom: Math.max(insets.bottom, 16) }]}>
                     <Text style={styles.creditText}>BUILT FOR POWER BY <Text style={styles.creditName}>VIVASWAN SHETTY</Text></Text>
                     <Text style={styles.creditVersion}>CONQUER ONE CORE PROTOCOL {APP_VERSION}</Text>
                 </View>
@@ -919,10 +919,10 @@ const styles = StyleSheet.create({
     updateCheckRow: { flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 18, paddingVertical: 16 },
     updateCheckText: { fontSize: 13, fontFamily: FAMILY.medium, color: COLORS.text },
 
-    creditWrap: { marginTop: 40, alignItems: "center", paddingHorizontal: 40 },
+    creditWrap: { marginTop: 20, alignItems: "center", paddingHorizontal: 40 },
     creditText: { fontSize: 9, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1.5, textAlign: "center" },
     creditName: { color: COLORS.primary, fontFamily: FAMILY.bold },
-    creditVersion: { fontSize: 9, fontFamily: FAMILY.mono, color: COLORS.textMuted, marginTop: 4 },
+    creditVersion: { fontSize: 8.5, fontFamily: FAMILY.mono, color: COLORS.textMuted, marginTop: 4 },
 
     modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.85)", justifyContent: "flex-end" },
     modalSheet: {

@@ -23,7 +23,7 @@ import * as Haptics from "expo-haptics";
 import Svg, { Circle, Path, Defs, LinearGradient as SvgGradient, Stop, Text as SvgText, Polygon, Line } from "react-native-svg";
 import WorkoutCalendar from "../components/WorkoutCalendar";
 import SkeletonBlock from "../components/SkeletonBlock";
-import { getRankData } from "./RankScreen";
+import { getRankData, RANKS } from "./RankScreen";
 import { syncAndroidWidget } from "../utils/widgetSync";
 
 
@@ -124,6 +124,11 @@ function MetallicText({ text, style, height = 44 }) {
 
 function LiveStatusStrip({ total, streak, xp }) {
     const currentRank = getRankData(total);
+    const nextRank = currentRank.index < RANKS.length - 1 ? RANKS[currentRank.index + 1] : null;
+    const progressInRank = nextRank
+        ? Math.min((total - currentRank.min) / (nextRank.min - currentRank.min), 1)
+        : 1;
+    const progressPercent = total === 0 ? 0 : Math.round(progressInRank * 100);
 
     const items = total === 0 ? [
         "WELCOME TO CONQUER ONE",
@@ -134,7 +139,7 @@ function LiveStatusStrip({ total, streak, xp }) {
         `${total} SESSIONS LOGGED`,
         `${streak} DAY STREAK`,
         `${currentRank.title} · RANK`,
-        `${xp % 100}% XP PROGRESS`,
+        nextRank ? `${progressPercent}% TO ${nextRank.title}` : "100% MAX RANK",
     ];
 
     const [index, setIndex] = useState(0);
@@ -1005,12 +1010,16 @@ export default function HomeScreen({ navigation, route }) {
 
                         {/* ── Unified Dashboard Card ── */}
                         {(() => {
-                            const progressPercent = xp % 100;
+                            const currentRank = getRankData(total);
+                            const nextRank = currentRank.index < RANKS.length - 1 ? RANKS[currentRank.index + 1] : null;
+                            const progressInRank = nextRank
+                                ? Math.min((total - currentRank.min) / (nextRank.min - currentRank.min), 1)
+                                : 1;
+                            const progressPercent = total === 0 ? 0 : Math.round(progressInRank * 100);
                             const radius = 36;
                             const strokeWidth = 4.5;
                             const circumference = 2 * Math.PI * radius; // ~226.19
-                            const strokeDashoffset = total === 0 ? circumference : (circumference - (circumference * progressPercent) / 100);
-                            const currentRank = getRankData(total);
+                            const strokeDashoffset = total === 0 ? circumference : (circumference - (circumference * progressInRank));
                             const categoryColor = total === 0 ? "rgba(255,255,255,0.08)" : (todayWorkout?.target ? getMuscleColor(todayWorkout.target) : COLORS.primary);
 
                             return (

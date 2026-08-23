@@ -1143,7 +1143,7 @@ export default function HistoryScreen({ navigation }) {
                 </View>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} overScrollMode="never" contentContainerStyle={{ paddingBottom: 60 }}>
+            <ScrollView showsVerticalScrollIndicator={false} overScrollMode="never" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 16) + 20 }}>
                 {loading ? (
                     <View style={{ width: "100%" }}>
                         {/* Skeleton */}

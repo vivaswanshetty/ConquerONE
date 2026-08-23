@@ -88,7 +88,7 @@ export default function RankScreen({ navigation }) {
             <Animated.ScrollView
                 style={{ opacity: fadeAnim }}
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
+                contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 16) + 12 }}
             >
                 {/* ── Hero Card ── */}
                 <Animated.View style={[s.heroCard, { borderColor: `${activeRankColor}4D`, transform: [{ scale: scaleAnim }] }]}>
@@ -370,6 +370,6 @@ const s = StyleSheet.create({
     },
 
     // Footer
-    footer: { alignItems: 'center', paddingVertical: 20, paddingHorizontal: 36 },
-    footerText: { fontSize: 12, fontFamily: FAMILY.regular, color: COLORS.textMuted, textAlign: 'center', lineHeight: 18 },
+    footer: { alignItems: 'center', paddingTop: 10, paddingBottom: 6, paddingHorizontal: 36 },
+    footerText: { fontSize: 11.5, fontFamily: FAMILY.regular, color: COLORS.textMuted, textAlign: 'center', lineHeight: 17 },
 });

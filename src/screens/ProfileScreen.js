@@ -864,7 +864,7 @@ const styles = StyleSheet.create({
         alignItems: "center", justifyContent: "center",
         borderWidth: 1, borderColor: "rgba(255,255,255,0.08)",
     },
-    scroll: { paddingBottom: 40 },
+    scroll: { paddingBottom: 16 },
 
     // Hero
     heroSection: {
@@ -1071,21 +1071,21 @@ const styles = StyleSheet.create({
     dangerText: { fontSize: 14, fontFamily: FAMILY.bold, color: COLORS.primary },
 
     footerSection: {
-        alignItems: 'center', paddingVertical: 48, gap: 8,
+        alignItems: 'center', paddingTop: 16, paddingBottom: 10, gap: 4,
     },
     footerDivider: {
-        width: 40, height: 2, borderRadius: 1,
-        backgroundColor: 'rgba(255,255,255,0.04)', marginBottom: 16,
+        width: 32, height: 1.5, borderRadius: 1,
+        backgroundColor: 'rgba(255,255,255,0.06)', marginBottom: 8,
     },
     footerBrand: {
-        fontSize: 11, fontFamily: FAMILY.bold, color: 'rgba(255,255,255,0.15)',
+        fontSize: 10, fontFamily: FAMILY.bold, color: 'rgba(255,255,255,0.18)',
         letterSpacing: 2,
     },
     footerAuthor: {
-        fontSize: 10, fontFamily: FAMILY.regular, color: 'rgba(255,255,255,0.08)',
+        fontSize: 9.5, fontFamily: FAMILY.regular, color: 'rgba(255,255,255,0.1)',
         letterSpacing: 0.5,
     },
-    version: { fontSize: 9, fontFamily: FAMILY.mono, color: "rgba(255,255,255,0.06)", letterSpacing: 1.5 },
+    version: { fontSize: 8.5, fontFamily: FAMILY.mono, color: "rgba(255,255,255,0.06)", letterSpacing: 1.2 },
 
     // Modal
     modalOverlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.85)" },
