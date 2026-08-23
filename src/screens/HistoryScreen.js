@@ -8,7 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { COLORS, FONTS, SPACING, RADIUS, FAMILY } from "../utils/theme";
+import { COLORS, FONTS, SPACING, RADIUS, FAMILY, getMuscleColor } from "../utils/theme";
 import { getWorkoutHistory, getStreak, getTotalWorkouts, formatDuration, getStreakLocal, getTotalWorkoutsLocal, getWorkoutHistoryLocal } from "../utils/storage";
 import { WORKOUT_PLAN } from "../data/workoutData";
 import * as Haptics from "expo-haptics";
@@ -87,34 +87,71 @@ function LineChart({ data }) {
     const areaPath = `M${pts[0].x},${CHART_H} ` +
         pts.map(p => `L${p.x},${p.y}`).join(" ") +
         ` L${pts[pts.length - 1].x},${CHART_H} Z`;
+    const lastPt = pts[pts.length - 1];
 
     return (
         <View style={lc.wrap}>
             <View style={lc.header}>
-                <Text style={lc.title}>WEEKLY ACTIVITY</Text>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    <Ionicons name="stats-chart" size={13} color={COLORS.primary} />
+                    <Text style={lc.title}>WEEKLY ACTIVITY</Text>
+                </View>
+                <View style={lc.badge}>
+                    <Text style={lc.badgeText}>8-WK FLOW</Text>
+                </View>
             </View>
             <Svg width={CHART_W} height={CHART_H + 20}>
                 <Defs>
                     <SvgGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                        <Stop offset="0" stopColor={COLORS.accent} stopOpacity="0.2" />
-                        <Stop offset="1" stopColor={COLORS.accent} stopOpacity="0.0" />
+                        <Stop offset="0" stopColor={COLORS.primary} stopOpacity="0.38" />
+                        <Stop offset="0.65" stopColor={COLORS.primary} stopOpacity="0.08" />
+                        <Stop offset="1" stopColor={COLORS.primary} stopOpacity="0.0" />
+                    </SvgGradient>
+                    <SvgGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+                        <Stop offset="0" stopColor="rgba(227, 30, 36, 0.7)" />
+                        <Stop offset="1" stopColor={COLORS.primary} />
                     </SvgGradient>
                 </Defs>
                 <Path d={areaPath} fill="url(#areaGrad)" />
                 <Polyline
                     points={polyPoints}
                     fill="none"
-                    stroke={COLORS.accent}
-                    strokeWidth={2}
+                    stroke="url(#lineGrad)"
+                    strokeWidth={2.5}
                     strokeLinejoin="round"
                     strokeLinecap="round"
                 />
-                <Circle cx={pts[pts.length - 1].x} cy={pts[pts.length - 1].y} r={3.5} fill={COLORS.text} />
+                {/* Data Points */}
+                {pts.map((p, i) => {
+                    const isLast = i === pts.length - 1;
+                    if (isLast) return null;
+                    return (
+                        <Circle
+                            key={i}
+                            cx={p.x}
+                            cy={p.y}
+                            r={p.count > 0 ? 3 : 2}
+                            fill={p.count > 0 ? COLORS.primary : "rgba(255,255,255,0.2)"}
+                        />
+                    );
+                })}
+                {/* Active "NOW" Point with Outer Glow Ring */}
+                <Circle cx={lastPt.x} cy={lastPt.y} r={6.5} fill="rgba(227, 30, 36, 0.3)" />
+                <Circle cx={lastPt.x} cy={lastPt.y} r={3.5} fill={COLORS.primary} />
+                <Circle cx={lastPt.x} cy={lastPt.y} r={1.5} fill="#FFFFFF" />
             </Svg>
             <View style={lc.labels}>
                 {pts.map((p, i) => (
                     (i === 0 || i === pts.length - 1 || i % 2 === 0) && (
-                        <Text key={i} style={lc.label}>{p.label}</Text>
+                        <Text
+                            key={i}
+                            style={[
+                                lc.label,
+                                i === pts.length - 1 && { color: COLORS.primary, fontFamily: FAMILY.monoBold }
+                            ]}
+                        >
+                            {p.label}
+                        </Text>
                     )
                 ))}
             </View>
@@ -124,8 +161,17 @@ function LineChart({ data }) {
 
 const lc = StyleSheet.create({
     wrap: { paddingTop: 4 },
-    header: { marginBottom: 24 },
-    title: { fontSize: 10, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 2 },
+    header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 20 },
+    title: { fontSize: 10, fontFamily: FAMILY.bold, color: COLORS.textSub, letterSpacing: 2 },
+    badge: {
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(227, 30, 36, 0.12)",
+        borderWidth: 0.5,
+        borderColor: "rgba(227, 30, 36, 0.35)",
+    },
+    badgeText: { fontSize: 8, fontFamily: FAMILY.monoBold, color: COLORS.primary, letterSpacing: 0.5 },
     labels: { flexDirection: "row", justifyContent: "space-between", marginTop: 12 },
     label: { fontSize: 8, fontFamily: FAMILY.mono, color: COLORS.textMuted, letterSpacing: 1.5 },
 });
@@ -133,14 +179,18 @@ const lc = StyleSheet.create({
 /* ── Muscle breakdown bar ───────────────────────────────────── */
 function BreakdownBar({ day, count, max }) {
     const pct = max > 0 ? count / max : 0;
+    const color = getMuscleColor(day.target);
     return (
         <View style={bb.row}>
-            <Text style={bb.label}>{day.target.split(" ")[0].toUpperCase()}</Text>
+            <View style={bb.labelWrap}>
+                <View style={[bb.dot, { backgroundColor: color }]} />
+                <Text style={bb.label} numberOfLines={1}>{day.target.split(" ")[0].toUpperCase()}</Text>
+            </View>
             <View style={bb.track}>
-                <View style={[bb.fill, { width: `${pct * 100}%`, backgroundColor: COLORS.accent }]} />
+                <View style={[bb.fill, { width: `${pct * 100}%`, backgroundColor: color }]} />
             </View>
             <View style={bb.countBox}>
-                <Text style={bb.count}>{count}</Text>
+                <Text style={[bb.count, count > 0 && { color }]}>{count}</Text>
             </View>
         </View>
     );
@@ -148,26 +198,37 @@ function BreakdownBar({ day, count, max }) {
 
 const bb = StyleSheet.create({
     row: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 12 },
-    label: { fontSize: 11, fontFamily: FAMILY.medium, color: COLORS.textSub, width: 84 },
+    labelWrap: { flexDirection: "row", alignItems: "center", gap: 6, width: 88 },
+    dot: { width: 5, height: 5, borderRadius: 2.5 },
+    label: { fontSize: 11, fontFamily: FAMILY.medium, color: COLORS.textSub, flex: 1 },
     track: { flex: 1, height: 4, backgroundColor: COLORS.bg, borderRadius: 2, overflow: "hidden", borderWidth: 0.5, borderColor: COLORS.border },
     fill: { height: "100%", borderRadius: 2 },
     countBox: { width: 28, alignItems: "flex-end" },
-    count: { fontSize: 11, fontFamily: FAMILY.monoBold, color: COLORS.text },
+    count: { fontSize: 11, fontFamily: FAMILY.monoBold, color: COLORS.textMuted },
 });
 
 /* ── PR card ────────────────────────────────────────────────── */
 function PRCard({ pr }) {
+    const muscleColor = getMuscleColor(pr.target);
     return (
         <View style={pr_s.card}>
+            <View style={pr_s.trophyWrap}>
+                <Ionicons name="trophy" size={14} color="#FFD700" />
+            </View>
             <View style={pr_s.info}>
-                <Text style={pr_s.target}>{pr.target}</Text>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    <View style={[pr_s.muscleDot, { backgroundColor: muscleColor }]} />
+                    <Text style={pr_s.target}>{pr.target}</Text>
+                </View>
                 <Text style={pr_s.date}>
                     {toDate(pr.completedAt).toLocaleDateString("en-US", { day: "numeric", month: "short" })}
                 </Text>
             </View>
             <View style={pr_s.right}>
                 <Text style={pr_s.duration}>{formatDuration(pr.durationSec)}</Text>
-                <Text style={pr_s.label}>Best Time</Text>
+                <View style={pr_s.bestBadge}>
+                    <Text style={pr_s.bestBadgeText}>RECORD</Text>
+                </View>
             </View>
         </View>
     );
@@ -178,13 +239,30 @@ const pr_s = StyleSheet.create({
         flexDirection: "row", alignItems: "center",
         paddingVertical: 14, paddingHorizontal: 18,
         borderBottomWidth: 1, borderBottomColor: COLORS.border,
+        gap: 12,
+    },
+    trophyWrap: {
+        width: 32, height: 32, borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(255, 215, 0, 0.10)",
+        borderWidth: 1, borderColor: "rgba(255, 215, 0, 0.25)",
+        alignItems: "center", justifyContent: "center",
     },
     info: { flex: 1 },
+    muscleDot: { width: 6, height: 6, borderRadius: 3 },
     target: { fontSize: 13, fontFamily: FAMILY.semibold, color: COLORS.text },
     date: { fontSize: 10, color: COLORS.textMuted, marginTop: 2, fontFamily: FAMILY.mono },
     right: { alignItems: "flex-end" },
-    duration: { fontSize: 15, fontFamily: FAMILY.monoBold, color: COLORS.text },
-    label: { fontSize: 10, fontFamily: FAMILY.regular, color: COLORS.textSub, marginTop: 2 },
+    duration: { fontSize: 14, fontFamily: FAMILY.monoBold, color: "#FFD700" },
+    bestBadge: {
+        marginTop: 3,
+        paddingHorizontal: 6,
+        paddingVertical: 1.5,
+        borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(255, 215, 0, 0.10)",
+        borderWidth: 0.5,
+        borderColor: "rgba(255, 215, 0, 0.3)",
+    },
+    bestBadgeText: { fontSize: 8, fontFamily: FAMILY.bold, color: "#FFD700", letterSpacing: 0.8 },
 });
 
 /* ── History row ────────────────────────────────────────────── */
@@ -195,6 +273,8 @@ function HistoryRow({ entry, isLast }) {
     const timeStr = date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
 
     const hasExercises = entry.exercises && entry.exercises.length > 0;
+    const isCustom = entry.day === 0;
+    const itemColor = isCustom ? "#AF52DE" : getMuscleColor(entry.target);
 
     return (
         <TouchableOpacity
@@ -202,7 +282,7 @@ function HistoryRow({ entry, isLast }) {
             activeOpacity={hasExercises ? 0.7 : 1}
         >
             <View style={[hr.row, isLast && !expanded && { borderBottomWidth: 0 }]}>
-                <View style={[hr.indicator, expanded && { backgroundColor: COLORS.accent, opacity: 1 }]} />
+                <View style={[hr.indicator, { backgroundColor: itemColor }]} />
                 <View style={hr.left}>
                     <Text style={hr.target}>{entry.target}</Text>
                     <Text style={hr.date}>{dateStr} · {timeStr}</Text>
@@ -210,9 +290,11 @@ function HistoryRow({ entry, isLast }) {
                 <View style={hr.right}>
                     <Text style={hr.duration}>{formatDuration(entry.durationSec)}</Text>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                        <Text style={hr.dayLabel}>
-                            {entry.day === 0 ? `Custom · ${entry.exercises?.length || 0} ex` : `Day 0${entry.day}`}
-                        </Text>
+                        <View style={[hr.dayBadge, { backgroundColor: `${itemColor}18`, borderColor: `${itemColor}38` }]}>
+                            <Text style={[hr.dayLabel, { color: itemColor }]}>
+                                {isCustom ? `Custom · ${entry.exercises?.length || 0} ex` : `Day 0${entry.day}`}
+                            </Text>
+                        </View>
                         {hasExercises && (
                             <Ionicons
                                 name={expanded ? "chevron-up" : "chevron-down"}
@@ -229,7 +311,7 @@ function HistoryRow({ entry, isLast }) {
                     {entry.exercises.map((ex, idx) => (
                         <View key={idx} style={hr.exerciseContainer}>
                             <View style={hr.detailRow}>
-                                <View style={hr.detailDot} />
+                                <View style={[hr.detailDot, { backgroundColor: itemColor }]} />
                                 <Text style={hr.detailText}>
                                     {ex.name}{ex.side ? ` (${ex.side})` : ""}
                                 </Text>
@@ -241,6 +323,7 @@ function HistoryRow({ entry, isLast }) {
                                         <View key={sIdx} style={hr.loggedSetRow}>
                                             <Text style={hr.loggedSetLabel}>Set {s.set}</Text>
                                             <View style={hr.loggedSetValBox}>
+                                                <Ionicons name="checkmark" size={10} color={COLORS.primary} style={{ marginRight: 2 }} />
                                                 <Text style={hr.loggedSetVal}>
                                                     {s.weightKg > 0 ? `${s.weightKg} kg` : "Bodyweight"}
                                                     {s.reps > 0 ? ` × ${s.reps} reps` : ""}
@@ -265,13 +348,20 @@ const hr = StyleSheet.create({
         paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: COLORS.border,
         gap: 14,
     },
-    indicator: { width: 3, height: 28, borderRadius: 1.5, backgroundColor: COLORS.border },
+    indicator: { width: 3, height: 28, borderRadius: 1.5 },
     left: { flex: 1 },
     target: { fontSize: 14, fontFamily: FAMILY.semibold, color: COLORS.text },
     date: { fontSize: 10, color: COLORS.textMuted, marginTop: 2, fontFamily: FAMILY.mono },
     right: { alignItems: "flex-end" },
     duration: { fontSize: 14, fontFamily: FAMILY.monoBold, color: COLORS.text },
-    dayLabel: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.textSub, marginTop: 2 },
+    dayBadge: {
+        paddingHorizontal: 6,
+        paddingVertical: 1.5,
+        borderRadius: RADIUS.pill,
+        borderWidth: 0.5,
+        marginTop: 2,
+    },
+    dayLabel: { fontSize: 9, fontFamily: FAMILY.monoBold },
     detailLines: {
         paddingLeft: 18,
         paddingBottom: 6,
@@ -285,10 +375,9 @@ const hr = StyleSheet.create({
         gap: 8,
     },
     detailDot: {
-        width: 3,
-        height: 3,
-        borderRadius: 1.5,
-        backgroundColor: COLORS.textMuted,
+        width: 4,
+        height: 4,
+        borderRadius: 2,
     },
     detailText: {
         fontSize: 11,
@@ -324,6 +413,8 @@ const hr = StyleSheet.create({
         width: 32,
     },
     loggedSetValBox: {
+        flexDirection: "row",
+        alignItems: "center",
         backgroundColor: COLORS.bg,
         paddingHorizontal: 8,
         paddingVertical: 2,
@@ -570,7 +661,7 @@ export default function HistoryScreen({ navigation }) {
                                 </View>
                                 <View>
                                     <Text style={[styles.statValue, { fontSize: 34, lineHeight: 38 }]}>
-                                        {totalHours}<Text style={{ fontSize: 18, color: COLORS.textSub }}>h</Text>
+                                        {totalHours}<Text style={{ fontSize: 18, color: COLORS.textSub }}> HRS</Text>
                                     </Text>
                                     <Text style={styles.statSubLabel}>cumulative volume</Text>
                                 </View>
@@ -648,7 +739,10 @@ export default function HistoryScreen({ navigation }) {
 
 function SectionLabel({ text }) {
     return (
-        <Text style={styles.sectionLabel}>{text}</Text>
+        <View style={styles.sectionLabelRow}>
+            <View style={styles.sectionAccentLine} />
+            <Text style={styles.sectionLabel}>{text}</Text>
+        </View>
     );
 }
 
@@ -683,9 +777,25 @@ const styles = StyleSheet.create({
     statLabel: { fontSize: 9.5, color: COLORS.textSub, fontFamily: FAMILY.semibold, letterSpacing: 1, flex: 1 },
     statSubLabel: { fontSize: 9, color: COLORS.textMuted, fontFamily: FAMILY.regular, marginTop: 2 },
 
+    sectionLabelRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginHorizontal: 20,
+        marginTop: 28,
+        marginBottom: 12,
+        gap: 8,
+    },
+    sectionAccentLine: {
+        width: 3,
+        height: 12,
+        borderRadius: 1.5,
+        backgroundColor: COLORS.primary,
+    },
     sectionLabel: {
-        fontSize: 12, fontFamily: FAMILY.bold, color: COLORS.textMuted,
-        letterSpacing: 1.2, marginHorizontal: 20, marginTop: 28, marginBottom: 12
+        fontSize: 11.5,
+        fontFamily: FAMILY.bold,
+        color: COLORS.textSub,
+        letterSpacing: 1.2,
     },
 
     card: {
