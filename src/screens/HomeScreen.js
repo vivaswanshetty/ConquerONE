@@ -1711,11 +1711,11 @@ function RestDayCard({ navigation }) {
         >
             <ImageBackground
                 source={require("../../assets/onboarding_bg.png")}
-                style={StyleSheet.absoluteFill}
+                style={styles.restCardBg}
                 resizeMode="cover"
             >
                 <LinearGradient
-                    colors={["rgba(10,10,11,0.55)", "rgba(10,10,11,0.88)", "rgba(10,10,11,0.98)"]}
+                    colors={["rgba(10,10,11,0.65)", "rgba(10,10,11,0.92)", "rgba(10,10,11,0.98)"]}
                     style={StyleSheet.absoluteFill}
                 />
                 <View style={styles.restContent}>
@@ -2347,10 +2347,22 @@ const styles = StyleSheet.create({
 
     // Rest Card
     restCard: {
-        marginHorizontal: SPACING.base, borderRadius: RADIUS.lg, overflow: "hidden",
-        borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bgCard,
+        marginHorizontal: SPACING.base,
+        borderRadius: RADIUS.lg,
+        overflow: "hidden",
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        backgroundColor: COLORS.bgCard,
+        marginBottom: 20,
+        marginTop: 4,
     },
-    restContent: { paddingVertical: 20, paddingHorizontal: 20, flex: 1 },
+    restCardBg: {
+        width: "100%",
+    },
+    restContent: {
+        paddingVertical: 20,
+        paddingHorizontal: 20,
+    },
     restEyebrowRow: {
         flexDirection: "row",
         alignItems: "center",
