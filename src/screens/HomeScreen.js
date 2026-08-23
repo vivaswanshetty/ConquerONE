@@ -53,6 +53,33 @@ function getMuscleColor(target) {
     return "#8E8E93";
 }
 
+const LIBRARY_DAYS = [
+    ...WORKOUT_PLAN,
+    {
+        day: 7,
+        dayName: "Sunday",
+        target: "Active Recovery",
+        isRest: true,
+        exercises: [],
+    },
+];
+
+const getLibraryDayCode = (day) => {
+    if (day?.dayName) return day.dayName.slice(0, 3).toUpperCase();
+    return `0${day?.day || 1}`;
+};
+
+const getLibraryTitle = (day) => {
+    if (day.day === 1) return "Chest &\nTriceps";
+    if (day.day === 2) return "Back & Biceps";
+    if (day.day === 3) return "Shoulders &\nAbs";
+    if (day.day === 4) return "Legs";
+    if (day.day === 5) return "Chest &\nBack";
+    if (day.day === 6) return "Arms &\nAbs";
+    if (day.day === 7) return "Active\nRecovery";
+    return (day.target || "").replace(/\s*\+\s*/g, " &\n");
+};
+
 function GradientText({ text, style, colors = GRADIENTS.diamond, height = 50 }) {
     return (
         <MaskedView
@@ -1218,86 +1245,43 @@ export default function HomeScreen({ navigation, route }) {
                     <Text style={styles.sectionLabel}>WORKOUT LIBRARY</Text>
                 </View>
 
-                <View style={styles.dayList}>
-                    {WORKOUT_PLAN.map((day) => (
-                        <TouchableOpacity
-                            key={day.day}
-                            style={styles.dayRow}
-                            onPress={() => {
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                navigation.navigate("WorkoutDetail", { day });
-                            }}
-                            activeOpacity={0.75}
-                        >
-                            <LinearGradient
-                                colors={[`${getMuscleColor(day.target)}14`, "transparent"]}
-                                start={{ x: 0, y: 0.5 }}
-                                end={{ x: 0.35, y: 0.5 }}
-                                style={StyleSheet.absoluteFillObject}
-                                pointerEvents="none"
-                            />
-                            <View style={[styles.dayLeftSpine, { backgroundColor: getMuscleColor(day.target) }]} />
-                            <View style={styles.dayRowLeft}>
-                                <View style={styles.dayNumRow}>
-                                    <Text style={styles.dayNum}>0{day.day}</Text>
-                                    <View style={[
-                                        styles.muscleBadge,
-                                        {
-                                            backgroundColor: `${getMuscleColor(day.target)}1F`,
-                                            borderColor: `${getMuscleColor(day.target)}4D`,
-                                        }
-                                    ]}>
-                                        <Text style={[styles.muscleBadgeText, { color: getMuscleColor(day.target) }]}>{day.target}</Text>
-                                    </View>
-                                </View>
-                                <Text style={styles.dayTargetTitle}>{day.target}</Text>
-                                <Text style={styles.dayMeta}>{day.exercises.length} Exercises · {totalTime(day)} Min</Text>
-                            </View>
-                            <View style={styles.dayRowRight}>
-                                <Ionicons name="chevron-forward" size={18} color={COLORS.textSub} />
-                            </View>
-                        </TouchableOpacity>
-                    ))}
-
-                    {/* Day 07 — Rest & Recovery */}
-                    <TouchableOpacity
-                        key="day-07-rest"
-                        style={styles.dayRow}
-                        onPress={() => {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                            navigation.navigate("RestDay");
-                        }}
-                        activeOpacity={0.75}
-                    >
-                        <LinearGradient
-                            colors={["rgba(48, 209, 88, 0.12)", "transparent"]}
-                            start={{ x: 0, y: 0.5 }}
-                            end={{ x: 0.35, y: 0.5 }}
-                            style={StyleSheet.absoluteFillObject}
-                            pointerEvents="none"
-                        />
-                        <View style={[styles.dayLeftSpine, { backgroundColor: COLORS.success }]} />
-                        <View style={styles.dayRowLeft}>
-                            <View style={styles.dayNumRow}>
-                                <Text style={styles.dayNum}>07</Text>
-                                <View style={[
-                                    styles.muscleBadge,
-                                    {
-                                        backgroundColor: "rgba(48, 209, 88, 0.15)",
-                                        borderColor: "rgba(48, 209, 88, 0.35)",
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.libraryScroll}
+                >
+                    {LIBRARY_DAYS.map((day) => {
+                        const color = day.isRest ? COLORS.success : getMuscleColor(day.target);
+                        return (
+                            <TouchableOpacity
+                                key={day.day}
+                                style={styles.libraryCard}
+                                onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    if (day.isRest || day.day === 7) {
+                                        navigation.navigate("RestDay");
+                                    } else {
+                                        navigation.navigate("WorkoutDetail", { day });
                                     }
-                                ]}>
-                                    <Text style={[styles.muscleBadgeText, { color: COLORS.success }]}>REST & RECOVERY</Text>
+                                }}
+                                activeOpacity={0.75}
+                            >
+                                <LinearGradient
+                                    colors={[`${color}18`, "transparent"]}
+                                    start={{ x: 0, y: 0.5 }}
+                                    end={{ x: 0.85, y: 0.5 }}
+                                    style={StyleSheet.absoluteFillObject}
+                                    pointerEvents="none"
+                                />
+                                <View style={[styles.libraryCardSpine, { backgroundColor: color }]} />
+                                <View>
+                                    <Text style={styles.libraryDayText}>{getLibraryDayCode(day)}</Text>
+                                    <Text style={styles.libraryTitleText}>{getLibraryTitle(day)}</Text>
                                 </View>
-                            </View>
-                            <Text style={styles.dayTargetTitle}>Active Recovery</Text>
-                            <Text style={styles.dayMeta}>Mobility · Hydration · 8H Sleep Protocol</Text>
-                        </View>
-                        <View style={styles.dayRowRight}>
-                            <Ionicons name="chevron-forward" size={18} color={COLORS.textSub} />
-                        </View>
-                    </TouchableOpacity>
-                </View>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </ScrollView>
 
                 <TouchableOpacity
                     style={[styles.customCard, { marginTop: 10 }]}
@@ -2815,40 +2799,46 @@ const styles = StyleSheet.create({
         color: COLORS.textSub,
     },
 
-    // Library List Items
-    dayList: {
-        marginHorizontal: SPACING.base, gap: 10,
+    // Library Horizontal Cards
+    libraryScroll: {
+        paddingHorizontal: SPACING.base,
+        gap: 12,
+        paddingBottom: 4,
     },
-    dayRow: {
-        flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-        paddingLeft: 22, paddingRight: 18, paddingVertical: 16, backgroundColor: COLORS.bgCard,
-        borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border,
-        minHeight: 84,
+    libraryCard: {
+        width: 142,
+        height: 104,
+        backgroundColor: COLORS.bgCard,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+        padding: 16,
+        paddingLeft: 18,
+        justifyContent: "center",
         position: "relative",
         overflow: "hidden",
     },
-    dayLeftSpine: {
+    libraryCardSpine: {
         position: "absolute",
         left: 0,
         top: 0,
         bottom: 0,
         width: 3.5,
-        borderTopLeftRadius: RADIUS.md,
-        borderBottomLeftRadius: RADIUS.md,
     },
-    dayRowLeft: { flex: 1 },
-    dayNumRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
-    dayNum: { fontSize: 10, fontFamily: FAMILY.monoBold, color: COLORS.textSub },
-    muscleBadge: {
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-        borderRadius: RADIUS.sm,
-        borderWidth: 0.5,
+    libraryDayText: {
+        fontSize: 11,
+        fontFamily: FAMILY.bold,
+        color: "rgba(255, 255, 255, 0.45)",
+        letterSpacing: 1.2,
+        marginBottom: 6,
     },
-    muscleBadgeText: { fontSize: 8, fontFamily: FAMILY.semibold },
-    dayTargetTitle: { fontSize: 17, fontFamily: FAMILY.semibold, color: COLORS.text, letterSpacing: -0.2 },
-    dayMeta: { fontSize: 11, color: COLORS.textSub, marginTop: 4, fontFamily: FAMILY.monoRegular },
-    dayRowRight: { opacity: 0.6 },
+    libraryTitleText: {
+        fontSize: 15,
+        fontFamily: FAMILY.bold,
+        color: COLORS.text,
+        lineHeight: 19,
+        letterSpacing: -0.2,
+    },
 
     customCard: {
         marginHorizontal: SPACING.base, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.md,
