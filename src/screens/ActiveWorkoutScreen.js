@@ -3,6 +3,7 @@ import {
     View, Text, TouchableOpacity, StyleSheet, Image,
     Dimensions, StatusBar, ScrollView, Animated,
     Modal, TextInput, KeyboardAvoidingView, Platform, AppState,
+    ActivityIndicator,
 } from "react-native";
 import { useNotification } from "../context/NotificationContext";
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from "react-native-svg";
@@ -610,6 +611,10 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
     const activeDayRef = useRef(activeDay);
     useEffect(() => { activeDayRef.current = activeDay; }, [activeDay]);
 
+    // Compute initial workout queue and phases synchronously for instant (0ms) render
+    const initialQueue = useMemo(() => rawDay?.exercises ? buildQueue(rawDay.exercises) : [], [rawDay]);
+    const initialPhases = useMemo(() => initialQueue.length > 0 ? buildPhases(initialQueue, 0) : [], [initialQueue]);
+
     const insets = useSafeAreaInsets();
     const { showDialog } = useNotification();
     const [settings, setSettings] = useState({
@@ -619,7 +624,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
     });
     const [phaseIdx, setPhaseIdx] = useState(0);
     const [history, setHistory] = useState([]);
-    const [timeLeft, setTimeLeft] = useState(0);
+    const [timeLeft, setTimeLeft] = useState(() => initialPhases[0]?.duration ?? 45);
     const [running, setRunning] = useState(false);
     const [paused, setPaused] = useState(false);
     const workoutStartRef = useRef(Date.now());
@@ -627,12 +632,27 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
     const restNotifIdRef = useRef(null);
     const appStateRef = useRef(AppState.currentState);
     const [elapsedSec, setElapsedSec] = useState(0);
-    const [phases, setPhases] = useState([]);
+    const [phases, setPhases] = useState(() => initialPhases);
     const [isHydrated, setIsHydrated] = useState(false);
     const [prModal, setPRModal] = useState({ visible: false, exerciseName: "", exIdx: 0, setNum: 0, initialWeight: "", initialReps: "" });
     const [prToast, setPRToast] = useState({ visible: false, exerciseName: "", weightKg: 0, reps: 0 });
     const [newPRsFound, setNewPRsFound] = useState([]);
-    const [loggedExercises, setLoggedExercises] = useState([]);
+    const [loggedExercises, setLoggedExercises] = useState(() => {
+        if (initialQueue.length > 0) {
+            return initialQueue.map((ex) => ({
+                name: ex.name,
+                side: ex.side,
+                sets: ex.sets,
+                loggedSets: Array.from({ length: ex.sets }, (_, i) => ({
+                    set: i + 1,
+                    weightKg: 0,
+                    reps: 0,
+                    completed: false
+                }))
+            }));
+        }
+        return [];
+    });
     const loggedExercisesRef = useRef([]);
     const prRecordsRef = useRef({});
 
@@ -1264,8 +1284,25 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
 
     if (!currentPhase || phases.length === 0) {
         return (
-            <View style={[styles.container, { alignItems: "center", justifyContent: "center" }]}>
-                <Text style={{ color: COLORS.textSub }}>Loading…</Text>
+            <View style={[styles.container, styles.loadingCenterContainer]}>
+                <StatusBar barStyle="light-content" backgroundColor="#000" translucent />
+                {/* Cybernetic Accent Background Glow */}
+                <View style={styles.loadingGlow} />
+
+                {/* Animated Loading Indicator */}
+                <View style={styles.loadingPulseRing}>
+                    <ActivityIndicator size="large" color={COLORS.primary} />
+                </View>
+
+                <View style={styles.loadingTextBlock}>
+                    <View style={styles.loadingBadge}>
+                        <Text style={styles.loadingBadgeText}>PRE-SESSION CALIBRATION</Text>
+                    </View>
+                    <Text style={styles.loadingProtocolTitle}>
+                        {activeDay?.target ? activeDay.target.toUpperCase() : "INITIALIZING PROTOCOL"}
+                    </Text>
+                    <Text style={styles.loadingProtocolSub}>CALIBRATING MOVEMENTS & WORKLOAD...</Text>
+                </View>
             </View>
         );
     }
@@ -1790,4 +1827,62 @@ const styles = StyleSheet.create({
     },
     recentSetBadgeText: { fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.text },
     recentSetText: { fontSize: 11, fontFamily: FAMILY.mono, color: COLORS.text },
+
+    // Enhanced Loading / Calibration Screen Styles
+    loadingCenterContainer: {
+        alignItems: "center",
+        justifyContent: "center",
+        paddingHorizontal: 24,
+    },
+    loadingGlow: {
+        position: "absolute",
+        width: 240,
+        height: 240,
+        borderRadius: 120,
+        backgroundColor: "rgba(227, 30, 36, 0.08)",
+    },
+    loadingPulseRing: {
+        width: 72,
+        height: 72,
+        borderRadius: 36,
+        backgroundColor: "rgba(227, 30, 36, 0.12)",
+        borderWidth: 1.5,
+        borderColor: "rgba(227, 30, 36, 0.35)",
+        alignItems: "center",
+        justifyContent: "center",
+        marginBottom: 24,
+    },
+    loadingTextBlock: {
+        alignItems: "center",
+    },
+    loadingBadge: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(255, 255, 255, 0.05)",
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.1)",
+        marginBottom: 10,
+    },
+    loadingBadgeText: {
+        fontSize: 9,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textMuted,
+        letterSpacing: 1.2,
+    },
+    loadingProtocolTitle: {
+        fontSize: 20,
+        fontFamily: FAMILY.bold,
+        color: "#FFFFFF",
+        letterSpacing: 0.5,
+        textAlign: "center",
+        marginBottom: 6,
+    },
+    loadingProtocolSub: {
+        fontSize: 10.5,
+        fontFamily: FAMILY.mono,
+        color: COLORS.textSub,
+        letterSpacing: 1,
+        textAlign: "center",
+    },
 });
