@@ -17,7 +17,7 @@ import { useNotification } from "../context/NotificationContext";
 
 const { width } = Dimensions.get("window");
 const FAVORITES_KEY = "@custom_workout_favorites_v2";
-const BLUEPRINTS_KEY = "@custom_workout_blueprints_v2";
+const ROUTINES_KEY = "@custom_workout_routines_v2";
 
 // ── Curated "Most Effective" Compound Kings (High Hypertrophy ROI) ──
 const MOST_EFFECTIVE_NAMES = new Set([
@@ -106,7 +106,7 @@ const ALL_EXERCISES = (() => {
     return Array.from(map.values());
 })();
 
-// ── Curated Quick Express Workout Blueprint Packs ──
+// ── Curated Quick Express Workout Routine Packs ──
 const CURATED_PRESET_PACKS = [
     {
         id: "preset_upper_express",
@@ -158,38 +158,43 @@ const CURATED_PRESET_PACKS = [
 export default function CustomWorkoutScreen({ navigation }) {
     const insets = useSafeAreaInsets();
     const { showDialog } = useNotification();
+    const scrollRef = useRef(null);
 
     // ── State ──
     const [selected, setSelected] = useState(new Set());
-    const [activeTab, setActiveTab] = useState("ALL"); // ALL | FAVORITES | EFFECTIVE | MAX_REPS | PRESETS | BLUEPRINTS
+    const [activeTab, setActiveTab] = useState("ALL"); // ALL | ROUTINES | FAVORITES | EFFECTIVE | MAX_REPS | PRESETS
     const [muscleFilter, setMuscleFilter] = useState("ALL"); // ALL | CHEST | BACK | LEGS | SHOULDERS | ARMS | CORE
     const [searchQuery, setSearchQuery] = useState("");
     const [favorites, setFavorites] = useState(new Set());
-    const [blueprints, setBlueprints] = useState([]);
+    const [routines, setRoutines] = useState([]);
     const [prRecords, setPRRecords] = useState({});
     const [saveModalVisible, setSaveModalVisible] = useState(false);
-    const [blueprintTitle, setBlueprintTitle] = useState("");
+    const [routineTitle, setRoutineTitle] = useState("");
+    const [statusBanner, setStatusBanner] = useState(null);
 
-    // ── Load Favorites, Blueprints & PRs ──
+    // ── Load Favorites, Routines & PRs ──
     useEffect(() => {
         (async () => {
             try {
                 const favRaw = await AsyncStorage.getItem(FAVORITES_KEY);
                 if (favRaw) setFavorites(new Set(JSON.parse(favRaw)));
 
-                const bpRaw = await AsyncStorage.getItem(BLUEPRINTS_KEY);
-                let localBp = bpRaw ? JSON.parse(bpRaw) : [];
+                const rRaw = await AsyncStorage.getItem(ROUTINES_KEY);
+                let localRoutines = rRaw ? JSON.parse(rRaw) : [];
                 
-                // Try fetching cloud custom workouts
-                const cloudBp = await fsGetCustomWorkouts();
-                if (cloudBp && cloudBp.length > 0) {
-                    const merged = [...localBp];
-                    cloudBp.forEach((cbp) => {
-                        if (!merged.some(b => b.id === cbp.id)) merged.push(cbp);
-                    });
-                    localBp = merged;
-                }
-                setBlueprints(localBp);
+                // Fetch cloud custom workouts
+                try {
+                    const cloudRoutines = await fsGetCustomWorkouts();
+                    if (cloudRoutines && cloudRoutines.length > 0) {
+                        const merged = [...localRoutines];
+                        cloudRoutines.forEach((cr) => {
+                            if (!merged.some(r => r.id === cr.id)) merged.push(cr);
+                        });
+                        localRoutines = merged;
+                    }
+                } catch { }
+
+                setRoutines(localRoutines);
 
                 const prs = await getPRRecords();
                 setPRRecords(prs || {});
@@ -198,6 +203,12 @@ export default function CustomWorkoutScreen({ navigation }) {
             }
         })();
     }, []);
+
+    // ── Flash Status Banner ──
+    const showFlash = (msg) => {
+        setStatusBanner(msg);
+        setTimeout(() => setStatusBanner(null), 3000);
+    };
 
     // ── Toggle Favorite ──
     const toggleFavorite = async (name) => {
@@ -231,45 +242,66 @@ export default function CustomWorkoutScreen({ navigation }) {
             if (match) next.add(match.name);
         });
         setSelected(next);
+        showFlash(`Loaded "${pack.title}" (${next.size} movements)`);
     };
 
-    // ── Save Blueprint ──
-    const handleSaveBlueprint = async () => {
-        if (!blueprintTitle.trim() || selected.size === 0) return;
+    // ── Save Routine ──
+    const handleSaveRoutine = async () => {
+        const trimmed = routineTitle.trim();
+        if (!trimmed) {
+            showDialog({ title: "NAME REQUIRED", message: "Please enter a name for your custom routine." });
+            return;
+        }
+        if (selected.size === 0) {
+            showDialog({ title: "NO MOVEMENTS", message: "Please select at least 1 exercise for this routine." });
+            return;
+        }
+
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-        const newBlueprint = {
-            id: `bp_${Date.now()}`,
-            title: blueprintTitle.trim().toUpperCase(),
+        const newRoutine = {
+            id: `routine_${Date.now()}`,
+            title: trimmed.toUpperCase(),
             exerciseNames: Array.from(selected),
             createdAt: new Date().toISOString(),
             exerciseCount: selected.size,
         };
 
-        const next = [newBlueprint, ...blueprints];
-        setBlueprints(next);
-        await AsyncStorage.setItem(BLUEPRINTS_KEY, JSON.stringify(next));
-        try { await fsSaveCustomWorkout(newBlueprint); } catch { }
+        const next = [newRoutine, ...routines];
+        setRoutines(next);
+        
+        try {
+            await AsyncStorage.setItem(ROUTINES_KEY, JSON.stringify(next));
+            await fsSaveCustomWorkout(newRoutine);
+        } catch (e) {
+            console.warn("[CustomWorkout] Save routine error", e);
+        }
 
-        setBlueprintTitle("");
+        setRoutineTitle("");
         setSaveModalVisible(false);
-        setActiveTab("BLUEPRINTS");
+        setActiveTab("ROUTINES");
+        showFlash(`Saved routine "${newRoutine.title}"!`);
+
+        if (scrollRef.current) {
+            scrollRef.current.scrollTo({ y: 0, animated: true });
+        }
     };
 
-    // ── Delete Blueprint ──
-    const handleDeleteBlueprint = async (id) => {
+    // ── Delete Routine ──
+    const handleDeleteRoutine = async (id) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         showDialog({
-            title: "DELETE BLUEPRINT?",
-            message: "This custom routine will be permanently removed.",
+            title: "DELETE ROUTINE?",
+            message: "This custom routine will be permanently removed from your library.",
             confirmText: "DELETE",
             cancelText: "CANCEL",
             isDestructive: true,
             onConfirm: async () => {
-                const next = blueprints.filter(b => b.id !== id);
-                setBlueprints(next);
-                await AsyncStorage.setItem(BLUEPRINTS_KEY, JSON.stringify(next));
+                const next = routines.filter(r => r.id !== id);
+                setRoutines(next);
+                await AsyncStorage.setItem(ROUTINES_KEY, JSON.stringify(next));
                 try { await fsDeleteCustomWorkout(id); } catch { }
+                showFlash("Routine deleted.");
             }
         });
     };
@@ -371,7 +403,7 @@ export default function CustomWorkoutScreen({ navigation }) {
         <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#000" translucent />
 
-            {/* ── 1. Top Navigation Bar (Fixed for smooth navigation) ── */}
+            {/* ── 1. Top Navigation Bar (Fixed) ── */}
             <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
                 <TouchableOpacity
                     style={styles.backBtn}
@@ -386,7 +418,7 @@ export default function CustomWorkoutScreen({ navigation }) {
 
                 <View style={styles.headerCenter}>
                     <Text style={styles.headerTitle}>CUSTOM WORKOUT</Text>
-                    <Text style={styles.headerSubtitle}>DYNAMIC PROTOCOL BUILDER</Text>
+                    <Text style={styles.headerSubtitle}>DYNAMIC ROUTINE BUILDER</Text>
                 </View>
 
                 <View style={[styles.countBadge, selected.size > 0 && styles.countBadgeActive]}>
@@ -396,8 +428,17 @@ export default function CustomWorkoutScreen({ navigation }) {
                 </View>
             </View>
 
-            {/* ── 2. Unified Vertical ScrollView (All headers, search, tabs, & lists scroll together) ── */}
+            {/* ── Optional Status Banner ── */}
+            {statusBanner && (
+                <View style={styles.statusBanner}>
+                    <Ionicons name="checkmark-circle" size={14} color="#30D158" style={{ marginRight: 6 }} />
+                    <Text style={styles.statusBannerText}>{statusBanner}</Text>
+                </View>
+            )}
+
+            {/* ── 2. Unified Vertical ScrollView ── */}
             <ScrollView
+                ref={scrollRef}
                 showsVerticalScrollIndicator={false}
                 overScrollMode="never"
                 style={{ flex: 1 }}
@@ -426,7 +467,7 @@ export default function CustomWorkoutScreen({ navigation }) {
                     </View>
                 </View>
 
-                {/* ── Smart Curation Tabs ── */}
+                {/* ── Smart Curation Tabs (High Visibility with MY ROUTINES prominently up front) ── */}
                 <View style={styles.tabsSection}>
                     <ScrollView
                         horizontal
@@ -437,11 +478,11 @@ export default function CustomWorkoutScreen({ navigation }) {
                     >
                         {[
                             { key: "ALL", label: "ALL MOVEMENTS", icon: "grid-outline" },
+                            { key: "ROUTINES", label: `MY ROUTINES (${routines.length})`, icon: "layers" },
                             { key: "FAVORITES", label: `FAVORITES (${favorites.size})`, icon: "star" },
                             { key: "EFFECTIVE", label: "⚡ MOST EFFECTIVE", icon: "flash-outline" },
                             { key: "MAX_REPS", label: "🔥 MAX REPS / PUMP", icon: "flame-outline" },
                             { key: "PRESETS", label: "⏱️ EXPRESS PRESETS", icon: "timer-outline" },
-                            { key: "BLUEPRINTS", label: `💾 MY BLUEPRINTS (${blueprints.length})`, icon: "layers-outline" },
                         ].map((tab) => {
                             const isActive = activeTab === tab.key;
                             return (
@@ -470,7 +511,7 @@ export default function CustomWorkoutScreen({ navigation }) {
                 </View>
 
                 {/* ── Muscle Filter Row (When viewing exercise lists) ── */}
-                {activeTab !== "PRESETS" && activeTab !== "BLUEPRINTS" && (
+                {activeTab !== "PRESETS" && activeTab !== "ROUTINES" && (
                     <View style={styles.muscleFilterSection}>
                         <ScrollView
                             horizontal
@@ -507,8 +548,8 @@ export default function CustomWorkoutScreen({ navigation }) {
                     {activeTab === "PRESETS" && (
                         <View style={styles.sectionContainer}>
                             <View style={styles.sectionHeaderRow}>
-                                <Text style={styles.sectionHeaderTitle}>EXPRESS COMBAT PROTOCOLS</Text>
-                                <Text style={styles.sectionHeaderCount}>{CURATED_PRESET_PACKS.length} PROTOCOLS</Text>
+                                <Text style={styles.sectionHeaderTitle}>EXPRESS PROTOCOL PRESETS</Text>
+                                <Text style={styles.sectionHeaderCount}>{CURATED_PRESET_PACKS.length} PRESETS</Text>
                             </View>
                             {CURATED_PRESET_PACKS.map((pack) => (
                                 <PresetPackCard
@@ -520,33 +561,54 @@ export default function CustomWorkoutScreen({ navigation }) {
                         </View>
                     )}
 
-                    {/* ── Mode B: Saved User Blueprints Tab ── */}
-                    {activeTab === "BLUEPRINTS" && (
+                    {/* ── Mode B: Saved User Routines Tab ── */}
+                    {activeTab === "ROUTINES" && (
                         <View style={styles.sectionContainer}>
                             <View style={styles.sectionHeaderRow}>
-                                <Text style={styles.sectionHeaderTitle}>MY SAVED BLUEPRINTS</Text>
-                                <Text style={styles.sectionHeaderCount}>{blueprints.length} SAVED</Text>
+                                <Text style={styles.sectionHeaderTitle}>MY SAVED ROUTINES</Text>
+                                <Text style={styles.sectionHeaderCount}>{routines.length} ROUTINES</Text>
                             </View>
 
-                            {blueprints.length === 0 ? (
+                            {selected.size > 0 && (
+                                <TouchableOpacity
+                                    style={styles.quickSaveRoutineBanner}
+                                    onPress={() => setSaveModalVisible(true)}
+                                    activeOpacity={0.8}
+                                >
+                                    <Ionicons name="add-circle" size={18} color={COLORS.primary} style={{ marginRight: 8 }} />
+                                    <Text style={styles.quickSaveRoutineText}>
+                                        SAVE CURRENT {selected.size} MOVEMENTS AS NEW ROUTINE
+                                    </Text>
+                                </TouchableOpacity>
+                            )}
+
+                            {routines.length === 0 ? (
                                 <View style={styles.emptyCard}>
                                     <Ionicons name="layers-outline" size={32} color={COLORS.textMuted} style={{ marginBottom: 12 }} />
-                                    <Text style={styles.emptyTitle}>NO SAVED BLUEPRINTS YET</Text>
+                                    <Text style={styles.emptyTitle}>NO SAVED ROUTINES YET</Text>
                                     <Text style={styles.emptySub}>
-                                        Select any exercises and tap "SAVE AS BLUEPRINT" to build your custom library.
+                                        Select any movements in "ALL MOVEMENTS" and tap "SAVE ROUTINE" to build your custom workout library.
                                     </Text>
+                                    <TouchableOpacity
+                                        style={styles.emptyActionBtn}
+                                        onPress={() => setActiveTab("ALL")}
+                                        activeOpacity={0.8}
+                                    >
+                                        <Text style={styles.emptyActionBtnText}>BROWSE ALL MOVEMENTS</Text>
+                                    </TouchableOpacity>
                                 </View>
                             ) : (
-                                blueprints.map((bp) => (
-                                    <BlueprintCard
-                                        key={bp.id}
-                                        blueprint={bp}
+                                routines.map((r) => (
+                                    <RoutineCard
+                                        key={r.id}
+                                        routine={r}
                                         onApply={() => {
                                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                            const next = new Set(bp.exerciseNames);
+                                            const next = new Set(r.exerciseNames);
                                             setSelected(next);
+                                            showFlash(`Loaded routine "${r.title}" (${next.size} movements)`);
                                         }}
-                                        onDelete={() => handleDeleteBlueprint(bp.id)}
+                                        onDelete={() => handleDeleteRoutine(r.id)}
                                     />
                                 ))
                             )}
@@ -554,7 +616,7 @@ export default function CustomWorkoutScreen({ navigation }) {
                     )}
 
                     {/* ── Mode C: Standard Exercise Catalog List ── */}
-                    {activeTab !== "PRESETS" && activeTab !== "BLUEPRINTS" && (
+                    {activeTab !== "PRESETS" && activeTab !== "ROUTINES" && (
                         <View style={styles.sectionContainer}>
                             <View style={styles.sectionHeaderRow}>
                                 <Text style={styles.sectionHeaderTitle}>
@@ -639,11 +701,14 @@ export default function CustomWorkoutScreen({ navigation }) {
                     <View style={styles.dockActionsRow}>
                         <TouchableOpacity
                             style={styles.dockSaveBtn}
-                            onPress={() => setSaveModalVisible(true)}
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                setSaveModalVisible(true);
+                            }}
                             activeOpacity={0.8}
                         >
                             <Ionicons name="bookmark-outline" size={15} color={COLORS.text} />
-                            <Text style={styles.dockSaveBtnText}>SAVE BLUEPRINT</Text>
+                            <Text style={styles.dockSaveBtnText}>SAVE ROUTINE</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
@@ -664,11 +729,15 @@ export default function CustomWorkoutScreen({ navigation }) {
                 </View>
             )}
 
-            {/* ── 4. Save Custom Blueprint Modal ── */}
-            <Modal visible={saveModalVisible} transparent animationType="fade" onRequestClose={() => setSaveModalVisible(false)}>
+            {/* ── 4. Save Custom Routine Modal ── */}
+            <Modal visible={saveModalVisible} transparent animationType="slide" onRequestClose={() => setSaveModalVisible(false)}>
                 <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
                     <View style={styles.modalOverlay}>
-                        <TouchableOpacity style={StyleSheet.absoluteFill} onPress={() => setSaveModalVisible(false)} activeOpacity={1} />
+                        <TouchableOpacity
+                            style={StyleSheet.absoluteFill}
+                            onPress={() => setSaveModalVisible(false)}
+                            activeOpacity={1}
+                        />
                         <View style={styles.modalSheet}>
                             <LinearGradient
                                 colors={['rgba(28, 28, 36, 0.98)', 'rgba(14, 14, 18, 0.99)', 'rgba(8, 8, 10, 1)']}
@@ -681,7 +750,7 @@ export default function CustomWorkoutScreen({ navigation }) {
                                     <Ionicons name="bookmark" size={18} color={COLORS.primary} />
                                 </View>
                                 <View style={{ flex: 1 }}>
-                                    <Text style={styles.modalTitle}>SAVE CUSTOM BLUEPRINT</Text>
+                                    <Text style={styles.modalTitle}>SAVE CUSTOM ROUTINE</Text>
                                     <Text style={styles.modalSub}>{selected.size} MOVEMENTS SELECTED</Text>
                                 </View>
                                 <TouchableOpacity onPress={() => setSaveModalVisible(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -692,17 +761,18 @@ export default function CustomWorkoutScreen({ navigation }) {
                             <Text style={styles.inputLabel}>ROUTINE NAME</Text>
                             <TextInput
                                 style={styles.modalInput}
-                                placeholder="e.g. Heavy Upper Destruction, Arm Pump..."
+                                placeholder="e.g. Heavy Chest & Triceps, Arm Pump..."
                                 placeholderTextColor={COLORS.textMuted}
-                                value={blueprintTitle}
-                                onChangeText={setBlueprintTitle}
+                                value={routineTitle}
+                                onChangeText={setRoutineTitle}
+                                returnKeyType="done"
+                                onSubmitEditing={handleSaveRoutine}
                                 autoFocus
                             />
 
                             <TouchableOpacity
-                                style={[styles.modalActionBtn, !blueprintTitle.trim() && { opacity: 0.5 }]}
-                                onPress={handleSaveBlueprint}
-                                disabled={!blueprintTitle.trim()}
+                                style={[styles.modalActionBtn, !routineTitle.trim() && { opacity: 0.5 }]}
+                                onPress={handleSaveRoutine}
                                 activeOpacity={0.85}
                             >
                                 <LinearGradient
@@ -712,7 +782,7 @@ export default function CustomWorkoutScreen({ navigation }) {
                                     style={StyleSheet.absoluteFill}
                                 />
                                 <Ionicons name="checkmark-circle" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
-                                <Text style={styles.modalActionBtnText}>SAVE TO MY BLUEPRINTS</Text>
+                                <Text style={styles.modalActionBtnText}>SAVE TO MY ROUTINES</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -855,24 +925,24 @@ function PresetPackCard({ pack, onApply }) {
     );
 }
 
-// ── Component: Blueprint Card ──
-function BlueprintCard({ blueprint, onApply, onDelete }) {
+// ── Component: Routine Card (Replaced Blueprint) ──
+function RoutineCard({ routine, onApply, onDelete }) {
     return (
         <View style={styles.packCard}>
             <View style={styles.packHeaderRow}>
                 <View style={[styles.packTagBadge, { borderColor: "rgba(255,255,255,0.15)", backgroundColor: "rgba(255,255,255,0.06)" }]}>
-                    <Text style={[styles.packTagBadgeText, { color: "#FFFFFF" }]}>SAVED BLUEPRINT</Text>
+                    <Text style={[styles.packTagBadgeText, { color: "#FFFFFF" }]}>CUSTOM ROUTINE</Text>
                 </View>
                 <TouchableOpacity onPress={onDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                     <Ionicons name="trash-outline" size={16} color={COLORS.textMuted} />
                 </TouchableOpacity>
             </View>
 
-            <Text style={styles.packTitle}>{blueprint.title}</Text>
-            <Text style={styles.packSub}>{blueprint.exerciseCount || blueprint.exerciseNames.length} Custom Movements Configured</Text>
+            <Text style={styles.packTitle}>{routine.title}</Text>
+            <Text style={styles.packSub}>{routine.exerciseCount || routine.exerciseNames.length} Custom Movements Configured</Text>
 
             <View style={styles.packExercisesList}>
-                {blueprint.exerciseNames.map((name, i) => (
+                {routine.exerciseNames.map((name, i) => (
                     <View key={i} style={styles.packExItem}>
                         <Ionicons name="barbell-outline" size={12} color={COLORS.textSub} style={{ marginRight: 6 }} />
                         <Text style={styles.packExText}>{name}</Text>
@@ -888,7 +958,7 @@ function BlueprintCard({ blueprint, onApply, onDelete }) {
                     style={StyleSheet.absoluteFill}
                 />
                 <Ionicons name="play" size={13} color="#FFFFFF" style={{ marginRight: 6 }} />
-                <Text style={styles.packApplyBtnText}>SELECT & LAUNCH BLUEPRINT</Text>
+                <Text style={styles.packApplyBtnText}>SELECT & LAUNCH ROUTINE</Text>
             </TouchableOpacity>
         </View>
     );
@@ -951,6 +1021,26 @@ const styles = StyleSheet.create({
     },
     countBadgeTextActive: {
         color: "#FFFFFF",
+    },
+
+    // Status Banner
+    statusBanner: {
+        marginHorizontal: 20,
+        marginBottom: 8,
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: RADIUS.sm,
+        backgroundColor: "rgba(48, 209, 88, 0.12)",
+        borderWidth: 1,
+        borderColor: "rgba(48, 209, 88, 0.3)",
+        flexDirection: "row",
+        alignItems: "center",
+    },
+    statusBannerText: {
+        fontSize: 11,
+        fontFamily: FAMILY.monoBold,
+        color: "#30D158",
+        letterSpacing: 0.5,
     },
 
     // Search Section
@@ -1058,6 +1148,24 @@ const styles = StyleSheet.create({
         fontSize: 9.5,
         fontFamily: FAMILY.monoBold,
         color: COLORS.textMuted,
+    },
+
+    quickSaveRoutineBanner: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "rgba(227, 30, 36, 0.1)",
+        paddingHorizontal: 14,
+        paddingVertical: 12,
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: "rgba(227, 30, 36, 0.3)",
+        marginBottom: 8,
+    },
+    quickSaveRoutineText: {
+        fontSize: 10.5,
+        fontFamily: FAMILY.bold,
+        color: "#FFFFFF",
+        letterSpacing: 0.5,
     },
 
     // Exercise Card
@@ -1193,7 +1301,7 @@ const styles = StyleSheet.create({
         padding: 6,
     },
 
-    // Preset & Blueprint Cards
+    // Preset & Routine Cards
     packCard: {
         backgroundColor: "rgba(22, 22, 28, 0.9)",
         borderRadius: 18,
@@ -1302,6 +1410,21 @@ const styles = StyleSheet.create({
         textAlign: "center",
         lineHeight: 16,
     },
+    emptyActionBtn: {
+        marginTop: 16,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(255, 255, 255, 0.08)",
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.15)",
+    },
+    emptyActionBtnText: {
+        fontSize: 10,
+        fontFamily: FAMILY.monoBold,
+        color: "#FFFFFF",
+        letterSpacing: 0.5,
+    },
 
     // Bottom Selection Dock
     bottomDock: {
@@ -1400,7 +1523,7 @@ const styles = StyleSheet.create({
         letterSpacing: 1,
     },
 
-    // Save Blueprint Modal
+    // Save Routine Modal
     modalOverlay: {
         flex: 1,
         backgroundColor: "rgba(0,0,0,0.85)",
