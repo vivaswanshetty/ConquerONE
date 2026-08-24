@@ -16,6 +16,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
+import Svg, { Circle, Line, G, Path, Defs, LinearGradient as SvgGradient, Stop } from "react-native-svg";
 import ViewShot from "react-native-view-shot";
 import * as Sharing from "expo-sharing";
 import { COLORS, FAMILY, RADIUS, SPACING, getMuscleColor } from "../utils/theme";
@@ -54,6 +55,591 @@ function formatDuration(seconds) {
     return `${mins}m`;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// 1. BEAUTIFUL CUSTOM CALENDAR PICKER MODAL
+// ═══════════════════════════════════════════════════════════════════════════
+function CalendarPickerModal({
+    visible,
+    selectedDate,
+    onSelectDate,
+    onClose,
+}) {
+    const today = useMemo(() => new Date(), []);
+    const todayStr = useMemo(() => formatDateStr(new Date()), []);
+    const yesterdayStr = useMemo(() => {
+        const d = new Date();
+        d.setDate(d.getDate() - 1);
+        return formatDateStr(d);
+    }, []);
+    const twoDaysAgoStr = useMemo(() => {
+        const d = new Date();
+        d.setDate(d.getDate() - 2);
+        return formatDateStr(d);
+    }, []);
+
+    // Active viewed month & year
+    const [viewDate, setViewDate] = useState(() => {
+        if (selectedDate) {
+            const [y, m, d] = selectedDate.split("-").map(Number);
+            return new Date(y, m - 1, 1);
+        }
+        return new Date();
+    });
+
+    const [tempSelectedDate, setTempSelectedDate] = useState(selectedDate || yesterdayStr);
+
+    useEffect(() => {
+        if (visible) {
+            const initial = selectedDate || yesterdayStr;
+            setTempSelectedDate(initial);
+            if (initial) {
+                const [y, m, d] = initial.split("-").map(Number);
+                setViewDate(new Date(y, m - 1, 1));
+            }
+        }
+    }, [visible, selectedDate, yesterdayStr]);
+
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth();
+
+    const monthName = viewDate.toLocaleDateString("en-US", { month: "long", year: "numeric" }).toUpperCase();
+
+    const prevMonth = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        setViewDate(new Date(year, month - 1, 1));
+    };
+
+    const nextMonth = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        const next = new Date(year, month + 1, 1);
+        // Do not navigate past current month in the future
+        if (next.getFullYear() > today.getFullYear() || (next.getFullYear() === today.getFullYear() && next.getMonth() > today.getMonth())) {
+            return;
+        }
+        setViewDate(next);
+    };
+
+    const canGoNext = !(year > today.getFullYear() || (year === today.getFullYear() && month >= today.getMonth()));
+    const daysOfWeek = ["M", "T", "W", "T", "F", "S", "S"];
+
+    // Calendar grid cells calculation (Monday start)
+    const calendarCells = useMemo(() => {
+        const firstDayOfMonth = new Date(year, month, 1);
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const daysInPrevMonth = new Date(year, month, 0).getDate();
+        const startDayIndex = (firstDayOfMonth.getDay() + 6) % 7; // Monday=0
+
+        const cells = [];
+
+        // Previous month trailing days
+        for (let i = startDayIndex - 1; i >= 0; i--) {
+            const dayNum = daysInPrevMonth - i;
+            const dateObj = new Date(year, month - 1, dayNum);
+            cells.push({
+                key: `prev-${dayNum}`,
+                dayNum,
+                dateStr: formatDateStr(dateObj),
+                isCurrentMonth: false,
+                isFuture: true,
+            });
+        }
+
+        // Current month days
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateObj = new Date(year, month, d);
+            const dateStr = formatDateStr(dateObj);
+            const isFuture = dateStr > todayStr;
+            cells.push({
+                key: `curr-${d}`,
+                dayNum: d,
+                dateStr,
+                isCurrentMonth: true,
+                isToday: dateStr === todayStr,
+                isFuture,
+            });
+        }
+
+        // Fill remaining row to complete 7-col grid
+        const remaining = (7 - (cells.length % 7)) % 7;
+        for (let i = 1; i <= remaining; i++) {
+            const dateObj = new Date(year, month + 1, i);
+            cells.push({
+                key: `next-${i}`,
+                dayNum: i,
+                dateStr: formatDateStr(dateObj),
+                isCurrentMonth: false,
+                isFuture: true,
+            });
+        }
+
+        return cells;
+    }, [year, month, todayStr]);
+
+    return (
+        <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+            <View style={styles.pickerOverlay}>
+                <View style={styles.calendarModalCard}>
+                    <LinearGradient
+                        colors={["#1A1A24", "#101015", "#0B0B0E"]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 0, y: 1 }}
+                        style={StyleSheet.absoluteFill}
+                    />
+
+                    {/* Header */}
+                    <View style={styles.calModalHeader}>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                            <View style={styles.calModalHeaderIcon}>
+                                <Ionicons name="calendar" size={16} color={COLORS.primary} />
+                            </View>
+                            <View>
+                                <Text style={styles.calModalTitle}>SELECT WORKOUT DATE</Text>
+                                <Text style={styles.calModalSubtitle}>
+                                    {getDisplayDateString(tempSelectedDate)}
+                                </Text>
+                            </View>
+                        </View>
+                        <TouchableOpacity style={styles.calModalCloseBtn} onPress={onClose} activeOpacity={0.7}>
+                            <Ionicons name="close" size={18} color={COLORS.text} />
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Month Navigator */}
+                    <View style={styles.calMonthNav}>
+                        <TouchableOpacity style={styles.calNavArrow} onPress={prevMonth} activeOpacity={0.7}>
+                            <Ionicons name="chevron-back" size={18} color={COLORS.text} />
+                        </TouchableOpacity>
+                        <View style={{ alignItems: "center" }}>
+                            <Text style={styles.calMonthTitle}>{monthName}</Text>
+                            <Text style={styles.calMonthSubtitle}>TRAINING ARCHIVE</Text>
+                        </View>
+                        <TouchableOpacity
+                            style={[styles.calNavArrow, !canGoNext && { opacity: 0.25 }]}
+                            onPress={nextMonth}
+                            disabled={!canGoNext}
+                            activeOpacity={0.7}
+                        >
+                            <Ionicons name="chevron-forward" size={18} color={canGoNext ? COLORS.text : COLORS.textMuted} />
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Weekday headers */}
+                    <View style={styles.calWeekdaysRow}>
+                        {daysOfWeek.map((dayLabel, idx) => (
+                            <Text key={idx} style={styles.calWeekdayText}>{dayLabel}</Text>
+                        ))}
+                    </View>
+
+                    {/* Calendar grid */}
+                    <View style={styles.calGrid}>
+                        {calendarCells.map((cell) => {
+                            if (!cell.isCurrentMonth) {
+                                return (
+                                    <View key={cell.key} style={styles.calCellDisabled}>
+                                        <Text style={styles.calCellTextDisabled}>{cell.dayNum}</Text>
+                                    </View>
+                                );
+                            }
+
+                            const isSelected = cell.dateStr === tempSelectedDate;
+                            const isFuture = cell.isFuture;
+
+                            return (
+                                <TouchableOpacity
+                                    key={cell.key}
+                                    style={[
+                                        styles.calCell,
+                                        cell.isToday && styles.calCellToday,
+                                        isSelected && styles.calCellSelected,
+                                        isFuture && styles.calCellFuture,
+                                    ]}
+                                    disabled={isFuture}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        setTempSelectedDate(cell.dateStr);
+                                    }}
+                                    activeOpacity={0.7}
+                                >
+                                    <Text style={[
+                                        styles.calCellText,
+                                        cell.isToday && styles.calCellTextToday,
+                                        isSelected && styles.calCellTextSelected,
+                                        isFuture && styles.calCellTextFuture,
+                                    ]}>
+                                        {cell.dayNum}
+                                    </Text>
+                                    {cell.isToday && !isSelected && <View style={styles.calTodayDot} />}
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </View>
+
+                    {/* Quick presets row */}
+                    <View style={styles.calPresetsRow}>
+                        <TouchableOpacity
+                            style={[styles.calPresetChip, tempSelectedDate === todayStr && styles.calPresetChipActive]}
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                setTempSelectedDate(todayStr);
+                                const [y, m] = todayStr.split("-").map(Number);
+                                setViewDate(new Date(y, m - 1, 1));
+                            }}
+                        >
+                            <Text style={[styles.calPresetText, tempSelectedDate === todayStr && styles.calPresetTextActive]}>
+                                TODAY
+                            </Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.calPresetChip, tempSelectedDate === yesterdayStr && styles.calPresetChipActive]}
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                setTempSelectedDate(yesterdayStr);
+                                const [y, m] = yesterdayStr.split("-").map(Number);
+                                setViewDate(new Date(y, m - 1, 1));
+                            }}
+                        >
+                            <Text style={[styles.calPresetText, tempSelectedDate === yesterdayStr && styles.calPresetTextActive]}>
+                                YESTERDAY
+                            </Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.calPresetChip, tempSelectedDate === twoDaysAgoStr && styles.calPresetChipActive]}
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                setTempSelectedDate(twoDaysAgoStr);
+                                const [y, m] = twoDaysAgoStr.split("-").map(Number);
+                                setViewDate(new Date(y, m - 1, 1));
+                            }}
+                        >
+                            <Text style={[styles.calPresetText, tempSelectedDate === twoDaysAgoStr && styles.calPresetTextActive]}>
+                                2 DAYS AGO
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Action Buttons */}
+                    <View style={styles.calActionsRow}>
+                        <TouchableOpacity style={styles.calCancelBtn} onPress={onClose} activeOpacity={0.7}>
+                            <Text style={styles.calCancelText}>CANCEL</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.calConfirmBtn}
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                onSelectDate(tempSelectedDate);
+                                onClose();
+                            }}
+                            activeOpacity={0.8}
+                        >
+                            <LinearGradient
+                                colors={[COLORS.primary, "#8B0000"]}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                                style={StyleSheet.absoluteFill}
+                            />
+                            <Ionicons name="checkmark" size={16} color="#FFF" style={{ marginRight: 4 }} />
+                            <Text style={styles.calConfirmText}>CONFIRM DATE</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </View>
+        </Modal>
+    );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 2. BEAUTIFUL CUSTOM CLOCK & TIME PICKER MODAL
+// ═══════════════════════════════════════════════════════════════════════════
+function ClockTimePickerModal({
+    visible,
+    durationMin,
+    onSelectDuration,
+    onClose,
+}) {
+    const [hours, setHours] = useState(Math.floor(durationMin / 60));
+    const [minutes, setMinutes] = useState(durationMin % 60);
+
+    useEffect(() => {
+        if (visible) {
+            setHours(Math.floor(durationMin / 60));
+            setMinutes(durationMin % 60);
+        }
+    }, [visible, durationMin]);
+
+    const totalMins = hours * 60 + minutes;
+    const estimatedCals = Math.round((totalMins * 60) * 0.11);
+
+    const adjustHours = (delta) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        setHours((prev) => Math.max(0, Math.min(6, prev + delta)));
+    };
+
+    const adjustMinutes = (delta) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        setMinutes((prev) => {
+            let next = prev + delta;
+            if (next < 0) {
+                if (hours > 0) {
+                    setHours((h) => h - 1);
+                    return 60 + next;
+                }
+                return 0;
+            }
+            if (next >= 60) {
+                setHours((h) => Math.min(6, h + 1));
+                return next - 60;
+            }
+            return next;
+        });
+    };
+
+    const setExactPreset = (totalM) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        setHours(Math.floor(totalM / 60));
+        setMinutes(totalM % 60);
+    };
+
+    // Calculate SVG Analog Clock Hands
+    const minuteAngle = (minutes / 60) * 360;
+    const hourAngle = ((hours % 12) / 12 + minutes / 720) * 360;
+
+    const clockRadius = 64;
+    const center = 72;
+
+    const getHandCoords = (deg, length) => {
+        const rad = (deg - 90) * (Math.PI / 180);
+        return {
+            x: center + length * Math.cos(rad),
+            y: center + length * Math.sin(rad),
+        };
+    };
+
+    const hourHand = getHandCoords(hourAngle, 34);
+    const minuteHand = getHandCoords(minuteAngle, 48);
+
+    return (
+        <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+            <View style={styles.pickerOverlay}>
+                <View style={styles.clockModalCard}>
+                    <LinearGradient
+                        colors={["#1A1A24", "#101015", "#0B0B0E"]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 0, y: 1 }}
+                        style={StyleSheet.absoluteFill}
+                    />
+
+                    {/* Header */}
+                    <View style={styles.calModalHeader}>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                            <View style={[styles.calModalHeaderIcon, { backgroundColor: "rgba(227, 30, 36, 0.15)", borderColor: "rgba(227, 30, 36, 0.4)" }]}>
+                                <Ionicons name="time" size={16} color={COLORS.primary} />
+                            </View>
+                            <View>
+                                <Text style={styles.calModalTitle}>SET WORKOUT DURATION</Text>
+                                <Text style={styles.calModalSubtitle}>CUSTOM CLOCK & TIMER PROTOCOL</Text>
+                            </View>
+                        </View>
+                        <TouchableOpacity style={styles.calModalCloseBtn} onPress={onClose} activeOpacity={0.7}>
+                            <Ionicons name="close" size={18} color={COLORS.text} />
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Digital + Analog Clock Center Lockup */}
+                    <View style={styles.clockCenterLockup}>
+                        {/* Analog Clock Face (SVG) */}
+                        <View style={styles.clockFaceWrap}>
+                            <Svg width={144} height={144} viewBox="0 0 144 144">
+                                <Defs>
+                                    <SvgGradient id="clockDialGrad" x1="0" y1="0" x2="1" y2="1">
+                                        <Stop offset="0" stopColor="#252532" stopOpacity="0.9" />
+                                        <Stop offset="1" stopColor="#0E0E14" stopOpacity="0.98" />
+                                    </SvgGradient>
+                                    <SvgGradient id="crimsonHandGrad" x1="0" y1="0" x2="1" y2="1">
+                                        <Stop offset="0" stopColor="#FF4D4D" />
+                                        <Stop offset="1" stopColor="#E31E24" />
+                                    </SvgGradient>
+                                </Defs>
+
+                                {/* Outer bezel */}
+                                <Circle cx={center} cy={center} r={clockRadius} fill="url(#clockDialGrad)" stroke="rgba(255, 255, 255, 0.14)" strokeWidth="1.8" />
+
+                                {/* Progress Arc / Glow Ring */}
+                                <Circle
+                                    cx={center}
+                                    cy={center}
+                                    r={clockRadius - 5}
+                                    fill="none"
+                                    stroke="rgba(227, 30, 36, 0.28)"
+                                    strokeWidth="2.5"
+                                />
+
+                                {/* 12 Hour Ticks */}
+                                {Array.from({ length: 12 }, (_, i) => {
+                                    const ang = (i * 30 - 90) * (Math.PI / 180);
+                                    const isCardinal = i % 3 === 0;
+                                    const r1 = clockRadius - (isCardinal ? 11 : 7);
+                                    const r2 = clockRadius - 3;
+                                    const x1 = center + r1 * Math.cos(ang);
+                                    const y1 = center + r1 * Math.sin(ang);
+                                    const x2 = center + r2 * Math.cos(ang);
+                                    const y2 = center + r2 * Math.sin(ang);
+                                    return (
+                                        <Line
+                                            key={i}
+                                            x1={x1}
+                                            y1={y1}
+                                            x2={x2}
+                                            y2={y2}
+                                            stroke={isCardinal ? "#FFFFFF" : "rgba(255, 255, 255, 0.35)"}
+                                            strokeWidth={isCardinal ? "2" : "1"}
+                                        />
+                                    );
+                                })}
+
+                                {/* Hour Hand */}
+                                <Line
+                                    x1={center}
+                                    y1={center}
+                                    x2={hourHand.x}
+                                    y2={hourHand.y}
+                                    stroke="#FFFFFF"
+                                    strokeWidth="3.5"
+                                    strokeLinecap="round"
+                                />
+
+                                {/* Minute Hand */}
+                                <Line
+                                    x1={center}
+                                    y1={center}
+                                    x2={minuteHand.x}
+                                    y2={minuteHand.y}
+                                    stroke="url(#crimsonHandGrad)"
+                                    strokeWidth="2.5"
+                                    strokeLinecap="round"
+                                />
+
+                                {/* Center Pivot Cap */}
+                                <Circle cx={center} cy={center} r={4.5} fill="#E31E24" />
+                                <Circle cx={center} cy={center} r={2} fill="#FFFFFF" />
+                            </Svg>
+                        </View>
+
+                        {/* Digital Dual Display */}
+                        <View style={styles.digitalReadoutColumn}>
+                            <View style={styles.digitalTimeBoxesRow}>
+                                <View style={styles.digitalTimeBox}>
+                                    <Text style={styles.digitalTimeNum}>{String(hours).padStart(2, "0")}</Text>
+                                    <Text style={styles.digitalTimeLabel}>HOURS</Text>
+                                </View>
+                                <Text style={styles.digitalColon}>:</Text>
+                                <View style={styles.digitalTimeBox}>
+                                    <Text style={[styles.digitalTimeNum, { color: COLORS.primary }]}>
+                                        {String(minutes).padStart(2, "0")}
+                                    </Text>
+                                    <Text style={[styles.digitalTimeLabel, { color: COLORS.primary }]}>MINUTES</Text>
+                                </View>
+                            </View>
+
+                            <View style={styles.digitalMetaRow}>
+                                <View style={styles.digitalMetaPill}>
+                                    <Text style={styles.digitalTotalMinutes}>
+                                        {totalMins > 0 ? `${totalMins} MIN TOTAL` : "0 MIN"}
+                                    </Text>
+                                </View>
+                                <Text style={styles.digitalCalories}>🔥 ~{estimatedCals} KCAL</Text>
+                            </View>
+                        </View>
+                    </View>
+
+                    {/* Dual Hour & Minute Stepper Adjusters */}
+                    <View style={styles.stepperSectionRow}>
+                        {/* Hours Stepper */}
+                        <View style={styles.stepperCard}>
+                            <Text style={styles.stepperCardTitle}>HOURS</Text>
+                            <View style={styles.stepperControlsRow}>
+                                <TouchableOpacity style={styles.stepperCircleBtn} onPress={() => adjustHours(-1)} activeOpacity={0.7}>
+                                    <Ionicons name="remove" size={16} color="#FFF" />
+                                </TouchableOpacity>
+                                <Text style={styles.stepperValText}>{hours}h</Text>
+                                <TouchableOpacity style={styles.stepperCircleBtn} onPress={() => adjustHours(1)} activeOpacity={0.7}>
+                                    <Ionicons name="add" size={16} color="#FFF" />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        {/* Minutes Stepper */}
+                        <View style={styles.stepperCard}>
+                            <Text style={styles.stepperCardTitle}>MINUTES</Text>
+                            <View style={styles.stepperControlsRow}>
+                                <TouchableOpacity style={styles.stepperCircleBtn} onPress={() => adjustMinutes(-5)} activeOpacity={0.7}>
+                                    <Text style={styles.stepperQuickDeltaText}>-5</Text>
+                                </TouchableOpacity>
+                                <Text style={[styles.stepperValText, { color: COLORS.primary }]}>{minutes}m</Text>
+                                <TouchableOpacity style={styles.stepperCircleBtn} onPress={() => adjustMinutes(5)} activeOpacity={0.7}>
+                                    <Text style={styles.stepperQuickDeltaText}>+5</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </View>
+
+                    {/* Quick Presets Grid */}
+                    <Text style={styles.clockPresetsTitle}>QUICK PRESETS</Text>
+                    <View style={styles.clockPresetsGrid}>
+                        {[20, 30, 45, 60, 75, 90, 105, 120].map((pm) => {
+                            const isSelected = totalMins === pm;
+                            const h = Math.floor(pm / 60);
+                            const m = pm % 60;
+                            const label = h > 0 ? (m > 0 ? `${h}h ${m}m` : `${h} HR`) : `${m} MIN`;
+                            return (
+                                <TouchableOpacity
+                                    key={pm}
+                                    style={[styles.clockPresetPill, isSelected && styles.clockPresetPillActive]}
+                                    onPress={() => setExactPreset(pm)}
+                                    activeOpacity={0.75}
+                                >
+                                    <Text style={[styles.clockPresetPillText, isSelected && styles.clockPresetPillTextActive]}>
+                                        {label}
+                                    </Text>
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </View>
+
+                    {/* Actions */}
+                    <View style={styles.calActionsRow}>
+                        <TouchableOpacity style={styles.calCancelBtn} onPress={onClose} activeOpacity={0.7}>
+                            <Text style={styles.calCancelText}>CANCEL</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.calConfirmBtn}
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                onSelectDuration(Math.max(5, totalMins));
+                                onClose();
+                            }}
+                            activeOpacity={0.8}
+                        >
+                            <LinearGradient
+                                colors={[COLORS.primary, "#8B0000"]}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                                style={StyleSheet.absoluteFill}
+                            />
+                            <Ionicons name="checkmark" size={16} color="#FFF" style={{ marginRight: 4 }} />
+                            <Text style={styles.calConfirmText}>SET DURATION</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </View>
+        </Modal>
+    );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MAIN MANUAL WORKOUT MODAL
+// ═══════════════════════════════════════════════════════════════════════════
 export default function ManualWorkoutModal({
     visible,
     onClose,
@@ -85,6 +671,7 @@ export default function ManualWorkoutModal({
     const [isSharing, setIsSharing] = useState(false);
     const [savedResult, setSavedResult] = useState(null); // When saved, shows success overlay
     const [showDatePicker, setShowDatePicker] = useState(false);
+    const [showTimePicker, setShowTimePicker] = useState(false);
     const [showAddExerciseModal, setShowAddExerciseModal] = useState(false);
     const [newExerciseInput, setNewExerciseInput] = useState("");
 
@@ -199,7 +786,7 @@ export default function ManualWorkoutModal({
     };
 
     const setSetRepsDirect = (exIdx, setIdx, text) => {
-        const val = parseInt(text, 10) || 1;
+        const val = parseInt(text, 10) || 0;
         setExercises((prev) => {
             const next = JSON.parse(JSON.stringify(prev));
             next[exIdx].logs[setIdx].reps = val;
@@ -208,19 +795,19 @@ export default function ManualWorkoutModal({
     };
 
     const addSetToExercise = (exIdx) => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         setExercises((prev) => {
             const next = JSON.parse(JSON.stringify(prev));
             const currentLogs = next[exIdx].logs || [];
             const lastLog = currentLogs[currentLogs.length - 1] || { weight: 40, reps: 10 };
-            currentLogs.push({
-                set: currentLogs.length + 1,
+            const newSetNum = currentLogs.length + 1;
+            next[exIdx].logs.push({
+                set: newSetNum,
                 weight: lastLog.weight,
                 reps: lastLog.reps,
                 completed: true,
             });
-            next[exIdx].sets = currentLogs.length;
-            next[exIdx].logs = currentLogs;
+            next[exIdx].sets = newSetNum;
             return next;
         });
     };
@@ -229,12 +816,12 @@ export default function ManualWorkoutModal({
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         setExercises((prev) => {
             const next = JSON.parse(JSON.stringify(prev));
-            if (next[exIdx].logs.length <= 1) return prev;
             next[exIdx].logs.splice(setIdx, 1);
-            // Re-index set numbers
-            next[exIdx].logs.forEach((l, idx) => {
-                l.set = idx + 1;
-            });
+            // Re-index sets
+            next[exIdx].logs = next[exIdx].logs.map((l, i) => ({
+                ...l,
+                set: i + 1,
+            }));
             next[exIdx].sets = next[exIdx].logs.length;
             return next;
         });
@@ -242,11 +829,7 @@ export default function ManualWorkoutModal({
 
     const removeExercise = (exIdx) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        setExercises((prev) => {
-            const next = [...prev];
-            next.splice(exIdx, 1);
-            return next;
-        });
+        setExercises((prev) => prev.filter((_, idx) => idx !== exIdx));
     };
 
     const handleAddNewExercise = () => {
@@ -465,7 +1048,10 @@ export default function ManualWorkoutModal({
                                         selectedDate !== twoDaysAgoStr &&
                                         styles.dateChipActive,
                                     ]}
-                                    onPress={() => setShowDatePicker(true)}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        setShowDatePicker(true);
+                                    }}
                                 >
                                     <Ionicons name="calendar" size={12} color={selectedDate !== todayStr && selectedDate !== yesterdayStr && selectedDate !== twoDaysAgoStr ? "#FFF" : COLORS.textMuted} style={{ marginRight: 4 }} />
                                     <Text style={[
@@ -475,7 +1061,7 @@ export default function ManualWorkoutModal({
                                         selectedDate !== twoDaysAgoStr &&
                                         styles.dateChipTextActive,
                                     ]}>
-                                        CUSTOM...
+                                        {selectedDate !== todayStr && selectedDate !== yesterdayStr && selectedDate !== twoDaysAgoStr ? selectedDate : "CUSTOM..."}
                                     </Text>
                                 </TouchableOpacity>
                             </View>
@@ -681,6 +1267,40 @@ export default function ManualWorkoutModal({
                                 <Text style={styles.volumeStatText}>🔥 ~{estimatedCalories} KCAL</Text>
                             </View>
 
+                            {/* Interactive Duration Banner / Clock Button */}
+                            <TouchableOpacity
+                                style={styles.durationClockBanner}
+                                onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    setShowTimePicker(true);
+                                }}
+                                activeOpacity={0.8}
+                            >
+                                <LinearGradient
+                                    colors={["rgba(227, 30, 36, 0.14)", "rgba(255, 255, 255, 0.02)"]}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 1 }}
+                                    style={StyleSheet.absoluteFill}
+                                />
+                                <View style={styles.durationClockBannerLeft}>
+                                    <View style={styles.durationClockIconWrap}>
+                                        <Ionicons name="time" size={18} color={COLORS.primary} />
+                                    </View>
+                                    <View>
+                                        <Text style={styles.durationClockTimeDisplay}>
+                                            {formatDuration(durationMin * 60).toUpperCase()}
+                                            <Text style={styles.durationClockTotalSub}> ({durationMin} MIN)</Text>
+                                        </Text>
+                                        <Text style={styles.durationClockSubtitle}>Tap to customize exact hours & minutes</Text>
+                                    </View>
+                                </View>
+                                <View style={styles.durationClockAdjustPill}>
+                                    <Ionicons name="options-outline" size={13} color="#FFF" style={{ marginRight: 3 }} />
+                                    <Text style={styles.durationClockAdjustText}>CUSTOM</Text>
+                                </View>
+                            </TouchableOpacity>
+
+                            {/* Quick Preset Chips Row */}
                             <View style={styles.durationChipsRow}>
                                 {[30, 45, 60, 75, 90, 120].map((mins) => (
                                     <TouchableOpacity
@@ -696,6 +1316,24 @@ export default function ManualWorkoutModal({
                                         </Text>
                                     </TouchableOpacity>
                                 ))}
+                                <TouchableOpacity
+                                    style={[
+                                        styles.durationChip,
+                                        ![30, 45, 60, 75, 90, 120].includes(durationMin) && styles.durationChipActive,
+                                    ]}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        setShowTimePicker(true);
+                                    }}
+                                >
+                                    <Ionicons name="time-outline" size={12} color={![30, 45, 60, 75, 90, 120].includes(durationMin) ? "#FFF" : COLORS.textMuted} style={{ marginRight: 4 }} />
+                                    <Text style={[
+                                        styles.durationChipText,
+                                        ![30, 45, 60, 75, 90, 120].includes(durationMin) && styles.durationChipTextActive,
+                                    ]}>
+                                        {![30, 45, 60, 75, 90, 120].includes(durationMin) ? `${durationMin} MIN` : "CUSTOM..."}
+                                    </Text>
+                                </TouchableOpacity>
                             </View>
 
                             {/* Session Notes */}
@@ -736,43 +1374,21 @@ export default function ManualWorkoutModal({
                     </ScrollView>
                 </View>
 
-                {/* ── Custom Date Selector Modal ── */}
-                {showDatePicker && (
-                    <Modal visible={showDatePicker} transparent animationType="fade">
-                        <View style={styles.pickerOverlay}>
-                            <View style={styles.pickerCard}>
-                                <Text style={styles.pickerTitle}>SELECT WORKOUT DATE</Text>
-                                <Text style={styles.pickerSubtitle}>Choose any past date in YYYY-MM-DD</Text>
+                {/* ── 1. Beautiful Custom Calendar Modal ── */}
+                <CalendarPickerModal
+                    visible={showDatePicker}
+                    selectedDate={selectedDate}
+                    onSelectDate={(d) => setSelectedDate(d)}
+                    onClose={() => setShowDatePicker(false)}
+                />
 
-                                <TextInput
-                                    style={styles.pickerInput}
-                                    value={selectedDate}
-                                    placeholder="YYYY-MM-DD"
-                                    placeholderTextColor={COLORS.textMuted}
-                                    onChangeText={setSelectedDate}
-                                />
-
-                                <View style={styles.pickerActions}>
-                                    <TouchableOpacity
-                                        style={styles.pickerCancelBtn}
-                                        onPress={() => setShowDatePicker(false)}
-                                    >
-                                        <Text style={styles.pickerCancelText}>CANCEL</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        style={styles.pickerConfirmBtn}
-                                        onPress={() => {
-                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                            setShowDatePicker(false);
-                                        }}
-                                    >
-                                        <Text style={styles.pickerConfirmText}>SET DATE</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                        </View>
-                    </Modal>
-                )}
+                {/* ── 2. Beautiful Custom Clock / Time Picker Modal ── */}
+                <ClockTimePickerModal
+                    visible={showTimePicker}
+                    durationMin={durationMin}
+                    onSelectDuration={(mins) => setDurationMin(mins)}
+                    onClose={() => setShowTimePicker(false)}
+                />
 
                 {/* ── Add Exercise Custom Modal ── */}
                 {showAddExerciseModal && (
@@ -828,158 +1444,161 @@ export default function ManualWorkoutModal({
                                 <View style={styles.successStatBox}>
                                     <Text style={styles.successStatLabel}>STREAK</Text>
                                     <Text style={[styles.successStatVal, { color: COLORS.primary }]}>
-                                        {savedResult.streak} <Text style={styles.successStatUnit}>DAYS</Text>
+                                        {savedResult.streak}D
                                     </Text>
                                 </View>
-                                <View style={[styles.successStatBox, styles.successStatDivider]}>
+                                <View style={styles.successStatBox}>
                                     <Text style={styles.successStatLabel}>TOTAL SESSIONS</Text>
-                                    <Text style={styles.successStatVal}>{savedResult.total}</Text>
+                                    <Text style={styles.successStatVal}>{savedResult.totalWorkouts}</Text>
                                 </View>
                                 <View style={styles.successStatBox}>
                                     <Text style={styles.successStatLabel}>XP GAINED</Text>
-                                    <Text style={[styles.successStatVal, { color: "#FFD700" }]}>+{savedResult.xpGained}</Text>
+                                    <Text style={[styles.successStatVal, { color: "#32D74B" }]}>
+                                        +{savedResult.xpEarned || 50}
+                                    </Text>
+                                </View>
+                                <View style={styles.successStatBox}>
+                                    <Text style={styles.successStatLabel}>VOLUME</Text>
+                                    <Text style={styles.successStatVal}>
+                                        {savedResult.totalVolume ? `${savedResult.totalVolume.toLocaleString()}kg` : "—"}
+                                    </Text>
                                 </View>
                             </View>
 
-                            {/* PRs Broken Badges */}
-                            {savedResult.prsBroken && savedResult.prsBroken.length > 0 && (
-                                <View style={styles.prBadgeBox}>
-                                    <Ionicons name="flash" size={14} color="#FFD700" style={{ marginRight: 6 }} />
-                                    <Text style={styles.prBadgeText}>
-                                        NEW PR ACHIEVED ON {savedResult.prsBroken[0].exerciseName.toUpperCase()} ({savedResult.prsBroken[0].weight} KG)!
+                            {/* PRs Broken Badge */}
+                            {(savedResult.newPRs || []).length > 0 && (
+                                <View style={styles.prsBrokenBadge}>
+                                    <Ionicons name="star" size={14} color="#FFD700" />
+                                    <Text style={styles.prsBrokenText}>
+                                        {savedResult.newPRs.length} NEW PERSONAL RECORD{savedResult.newPRs.length > 1 ? "S" : ""} ACHIEVED!
                                     </Text>
                                 </View>
                             )}
 
-                            {/* Share Action Button */}
-                            <TouchableOpacity
-                                style={styles.shareCardBtn}
-                                onPress={handleShareCard}
-                                disabled={isSharing}
-                                activeOpacity={0.8}
-                            >
-                                <LinearGradient
-                                    colors={[COLORS.primary, "#8B0000"]}
-                                    start={{ x: 0, y: 0 }}
-                                    end={{ x: 1, y: 0 }}
-                                    style={StyleSheet.absoluteFill}
-                                />
-                                <Ionicons name="share-social" size={16} color="#FFF" style={{ marginRight: 6 }} />
-                                <Text style={styles.shareCardBtnText}>
-                                    {isSharing ? "GENERATING CARD..." : "SHARE WORKOUT CARD"}
-                                </Text>
-                            </TouchableOpacity>
+                            {/* Actions */}
+                            <View style={styles.successActionsCol}>
+                                <TouchableOpacity
+                                    style={styles.shareCardActionBtn}
+                                    onPress={handleShareCard}
+                                    disabled={isSharing}
+                                    activeOpacity={0.8}
+                                >
+                                    <LinearGradient
+                                        colors={[COLORS.primary, "#8B0000"]}
+                                        start={{ x: 0, y: 0 }}
+                                        end={{ x: 1, y: 0 }}
+                                        style={StyleSheet.absoluteFill}
+                                    />
+                                    <Ionicons name="share-social" size={18} color="#FFF" style={{ marginRight: 8 }} />
+                                    <Text style={styles.shareCardActionText}>
+                                        {isSharing ? "GENERATING CARD..." : "SHARE WORKOUT CARD"}
+                                    </Text>
+                                </TouchableOpacity>
 
-                            {/* Done Button */}
-                            <TouchableOpacity
-                                style={styles.successDoneBtn}
-                                onPress={() => {
-                                    setSavedResult(null);
-                                    onClose();
-                                }}
-                                activeOpacity={0.8}
-                            >
-                                <Text style={styles.successDoneText}>DONE & VIEW IN HISTORY</Text>
-                            </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={styles.doneActionBtn}
+                                    onPress={() => {
+                                        setSavedResult(null);
+                                        onClose();
+                                    }}
+                                    activeOpacity={0.75}
+                                >
+                                    <Text style={styles.doneActionText}>DONE</Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
-                    </View>
-                )}
 
-                {/* ── Purpose-Built Branded Social Share Card (Off-Screen Captured ViewShot) ── */}
-                {savedResult && (
-                    <View style={styles.offscreenWrap} pointerEvents="none">
-                        <ViewShot ref={shareShotRef} options={{ format: "png", quality: 1 }}>
-                            <View style={styles.shareCard} collapsable={false}>
-                                <LinearGradient
-                                    colors={["#141418", "#0A0A0C", "#040406"]}
-                                    start={{ x: 0, y: 0 }}
-                                    end={{ x: 0.3, y: 1 }}
-                                    style={StyleSheet.absoluteFill}
-                                />
-                                <LinearGradient
-                                    colors={["rgba(255, 255, 255, 0.12)", "rgba(255, 255, 255, 0.02)", "transparent"]}
-                                    start={{ x: 0, y: 0 }}
-                                    end={{ x: 0, y: 1 }}
-                                    style={{ position: "absolute", top: 0, left: 0, right: 0, height: 100 }}
-                                />
+                        {/* Offscreen ViewShot for High-Res Workout Card */}
+                        <View style={{ position: "absolute", left: -9999, top: -9999 }} pointerEvents="none">
+                            <ViewShot
+                                ref={shareShotRef}
+                                options={{ format: "png", quality: 1.0, result: "tmpfile" }}
+                            >
+                                <View style={styles.shareCardContainer}>
+                                    <LinearGradient
+                                        colors={["#16161D", "#0C0C0F", "#050507"]}
+                                        start={{ x: 0, y: 0 }}
+                                        end={{ x: 0.3, y: 1 }}
+                                        style={StyleSheet.absoluteFill}
+                                    />
 
-                                {/* Card Header */}
-                                <View style={styles.shareCardHeader}>
-                                    <View style={styles.shareCardBadge}>
-                                        <View style={[styles.shareBadgeDot, { backgroundColor: getMuscleColor(savedResult?.target) }]} />
-                                        <Text style={[styles.shareCardBadgeText, { color: getMuscleColor(savedResult?.target) }]}>
-                                            SESSION COMPLETE
-                                        </Text>
-                                    </View>
-                                    <Text style={styles.shareCardDate}>
-                                        {getDisplayDateString(savedResult?.date)}
-                                    </Text>
-                                </View>
-
-                                {/* Workout Name */}
-                                <View style={styles.shareCardTitleWrap}>
-                                    <Text style={styles.shareCardWorkoutLabel}>LOGGED TARGET</Text>
-                                    <Text style={styles.shareCardWorkoutName} numberOfLines={2}>
-                                        {savedResult?.target || "Workout"}
-                                    </Text>
-                                </View>
-
-                                {/* Stats Grid */}
-                                <View style={styles.shareCardStatsGrid}>
-                                    <View style={styles.shareCardStatBox}>
-                                        <Text style={styles.shareCardStatLabel}>DURATION</Text>
-                                        <Text style={styles.shareCardStatValue}>{formatDuration((savedResult?.durationMin || 60) * 60)}</Text>
-                                    </View>
-                                    <View style={[styles.shareCardStatBox, styles.shareCardStatDivider]}>
-                                        <Text style={styles.shareCardStatLabel}>STREAK</Text>
-                                        <Text style={[styles.shareCardStatValue, { color: COLORS.primary }]}>
-                                            {savedResult?.streak} <Text style={styles.shareCardStatUnit}>DAYS</Text>
-                                        </Text>
-                                    </View>
-                                    <View style={styles.shareCardStatBox}>
-                                        <Text style={styles.shareCardStatLabel}>ENERGY</Text>
-                                        <Text style={styles.shareCardStatValue}>
-                                            {Math.round((savedResult?.durationMin || 60) * 60 * 0.11)}
-                                            <Text style={styles.shareCardStatUnit}> KCAL</Text>
-                                        </Text>
-                                    </View>
-                                </View>
-
-                                {/* Exercise Summary Rows */}
-                                {exercises && exercises.length > 0 && (
-                                    <View style={styles.shareCardPRWrap}>
-                                        <View style={styles.shareCardPRHeader}>
-                                            <Ionicons name="barbell-outline" size={13} color={COLORS.textSub} />
-                                            <Text style={styles.shareCardPRTitle}>WORKOUT BREAKDOWN</Text>
+                                    {/* Card Header */}
+                                    <View style={styles.shareCardHeader}>
+                                        <View>
+                                            <Text style={styles.shareCardAppName}>CONQUER ONE</Text>
+                                            <Text style={styles.shareCardTargetTitle}>
+                                                {(savedResult.target || "TRAINING SESSION").toUpperCase()}
+                                            </Text>
+                                            <Text style={styles.shareCardDateText}>
+                                                {getDisplayDateString(savedResult.date)}
+                                            </Text>
                                         </View>
-                                        {exercises.slice(0, 3).map((ex, i) => (
-                                            <View key={i} style={styles.shareCardPRRow}>
-                                                <Text style={styles.shareCardPRName} numberOfLines={1}>{ex.name}</Text>
-                                                <Text style={styles.shareCardPRVal}>
-                                                    {ex.sets || (ex.logs ? ex.logs.length : 3)} sets
+                                        <View style={styles.shareCardHeaderBadge}>
+                                            <Ionicons name="flame" size={16} color={COLORS.primary} />
+                                            <Text style={styles.shareCardStreakText}>{savedResult.streak}D</Text>
+                                        </View>
+                                    </View>
+
+                                    {/* Stats 3-Col Bar */}
+                                    <View style={styles.shareCardStatsBar}>
+                                        <View style={styles.shareCardStatCol}>
+                                            <Text style={styles.shareCardStatLabel}>DURATION</Text>
+                                            <Text style={styles.shareCardStatValue}>
+                                                {formatDuration((savedResult.durationMin || 60) * 60)}
+                                            </Text>
+                                        </View>
+                                        <View style={styles.shareCardStatCol}>
+                                            <Text style={styles.shareCardStatLabel}>VOLUME</Text>
+                                            <Text style={styles.shareCardStatValue}>
+                                                {savedResult.totalVolume ? `${savedResult.totalVolume.toLocaleString()}kg` : "—"}
+                                            </Text>
+                                        </View>
+                                        <View style={styles.shareCardStatCol}>
+                                            <Text style={styles.shareCardStatLabel}>BURN</Text>
+                                            <Text style={styles.shareCardStatValue}>
+                                                ~{Math.round((savedResult.durationMin || 60) * 60 * 0.11)} kcal
+                                            </Text>
+                                        </View>
+                                    </View>
+
+                                    {/* Exercises List */}
+                                    <View style={styles.shareCardExercisesList}>
+                                        {exercises.slice(0, 5).map((ex, idx) => (
+                                            <View key={idx} style={styles.shareCardExRow}>
+                                                <Text style={styles.shareCardExName} numberOfLines={1}>
+                                                    {ex.name}
+                                                </Text>
+                                                <Text style={styles.shareCardExSets}>
+                                                    {ex.sets} sets · {ex.logs?.[0]?.weight || 0}kg
                                                 </Text>
                                             </View>
                                         ))}
                                     </View>
-                                )}
 
-                                {/* Card Footer Brandmark */}
-                                <View style={styles.shareCardFooter}>
-                                    <View style={styles.shareCardFooterLeft}>
-                                        <Image
-                                            source={require("../../assets/logo_barbell.png")}
-                                            style={styles.shareCardBarbell}
-                                            resizeMode="contain"
-                                        />
-                                        <View style={{ flexDirection: "row", alignItems: "baseline" }}>
-                                            <Text style={styles.shareCardBrandText}>CONQUER </Text>
-                                            <Text style={[styles.shareCardBrandText, { color: COLORS.primary }]}>ONE</Text>
+                                    {/* Card Footer Brandmark */}
+                                    <View style={styles.shareCardFooter}>
+                                        <View style={styles.shareCardFooterLeft}>
+                                            <Image
+                                                source={require("../../assets/logo_barbell.png")}
+                                                style={styles.shareCardBarbell}
+                                                resizeMode="contain"
+                                            />
+                                            <View style={styles.shareCardBrandTextGroup}>
+                                                <Image
+                                                    source={require("../../assets/logo_text.png")}
+                                                    style={styles.shareCardLogoText}
+                                                    resizeMode="contain"
+                                                />
+                                                <Text style={styles.shareCardTagline}>ELITE PERFORMANCE PROTOCOL</Text>
+                                            </View>
+                                        </View>
+                                        <View style={styles.shareCardManualPill}>
+                                            <Text style={styles.shareCardManualPillText}>VERIFIED SESSION</Text>
                                         </View>
                                     </View>
-                                    <Text style={styles.shareCardTagline}>ELITE TRAINING SYSTEM</Text>
                                 </View>
-                            </View>
-                        </ViewShot>
+                            </ViewShot>
+                        </View>
                     </View>
                 )}
             </View>
@@ -1092,39 +1711,38 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     dateChip: {
-        paddingHorizontal: 12,
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 13,
         paddingVertical: 7,
         borderRadius: RADIUS.pill,
         backgroundColor: "rgba(255, 255, 255, 0.05)",
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.10)",
-        flexDirection: "row",
-        alignItems: "center",
     },
     dateChipActive: {
-        backgroundColor: "rgba(227, 30, 36, 0.22)",
+        backgroundColor: "rgba(227, 30, 36, 0.20)",
         borderColor: COLORS.primary,
     },
     dateChipText: {
-        fontSize: 10.5,
+        fontSize: 10,
         fontFamily: FAMILY.semibold,
         color: COLORS.textMuted,
         letterSpacing: 0.5,
     },
     dateChipTextActive: {
-        color: "#FFFFFF",
+        color: "#FFF",
         fontFamily: FAMILY.bold,
     },
     splitsScroll: {
-        flexDirection: "row",
-        marginBottom: 8,
+        marginHorizontal: -4,
     },
     splitPill: {
         flexDirection: "row",
         alignItems: "center",
         gap: 8,
-        paddingHorizontal: 14,
-        paddingVertical: 10,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
         borderRadius: 14,
         backgroundColor: "rgba(255, 255, 255, 0.04)",
         borderWidth: 1,
@@ -1132,34 +1750,34 @@ const styles = StyleSheet.create({
         marginRight: 8,
     },
     splitDayDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
+        width: 6,
+        height: 6,
+        borderRadius: 3,
     },
     splitDayLabel: {
-        fontSize: 8,
+        fontSize: 8.5,
         fontFamily: FAMILY.monoBold,
         color: COLORS.textMuted,
-        letterSpacing: 1,
+        letterSpacing: 0.8,
     },
     splitTargetLabel: {
-        fontSize: 11.5,
+        fontSize: 11,
         fontFamily: FAMILY.bold,
-        color: COLORS.textSub,
+        color: COLORS.text,
     },
     customTargetInputBox: {
-        marginTop: 6,
-        backgroundColor: "rgba(255, 255, 255, 0.05)",
-        borderRadius: 12,
+        marginTop: 10,
+    },
+    customTargetInput: {
+        backgroundColor: "rgba(0, 0, 0, 0.4)",
+        borderRadius: 10,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.12)",
         paddingHorizontal: 12,
-    },
-    customTargetInput: {
-        height: 40,
+        paddingVertical: 8,
         color: "#FFF",
         fontFamily: FAMILY.semibold,
-        fontSize: 13,
+        fontSize: 12,
     },
     volumeStatText: {
         fontSize: 9.5,
@@ -1168,7 +1786,7 @@ const styles = StyleSheet.create({
         letterSpacing: 0.5,
     },
     exerciseCard: {
-        backgroundColor: "rgba(0, 0, 0, 0.35)",
+        backgroundColor: "rgba(255, 255, 255, 0.02)",
         borderRadius: 14,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.06)",
@@ -1188,19 +1806,19 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     exerciseIndexBadge: {
-        width: 20,
-        height: 20,
-        borderRadius: 10,
+        width: 22,
+        height: 22,
+        borderRadius: 11,
         borderWidth: 1,
         alignItems: "center",
         justifyContent: "center",
     },
     exerciseIndexText: {
         fontSize: 10,
-        fontFamily: FAMILY.bold,
+        fontFamily: FAMILY.monoBold,
     },
     exerciseNameText: {
-        fontSize: 13,
+        fontSize: 12.5,
         fontFamily: FAMILY.bold,
         color: COLORS.text,
         flex: 1,
@@ -1213,23 +1831,28 @@ const styles = StyleSheet.create({
         alignItems: "center",
         paddingBottom: 6,
         borderBottomWidth: 1,
-        borderBottomColor: "rgba(255, 255, 255, 0.06)",
-        marginBottom: 6,
+        borderBottomColor: "rgba(255, 255, 255, 0.05)",
+        marginBottom: 8,
     },
     setTableColHeader: {
         fontSize: 8.5,
         fontFamily: FAMILY.monoBold,
         color: COLORS.textMuted,
-        letterSpacing: 0.8,
+        letterSpacing: 0.5,
     },
     setRow: {
         flexDirection: "row",
         alignItems: "center",
-        marginBottom: 6,
+        gap: 8,
+        marginBottom: 8,
     },
     setIndexBox: {
-        width: 45,
+        width: 32,
+        height: 32,
+        borderRadius: 8,
+        backgroundColor: "rgba(255, 255, 255, 0.05)",
         alignItems: "center",
+        justifyContent: "center",
     },
     setIndexNumber: {
         fontSize: 11,
@@ -1240,24 +1863,23 @@ const styles = StyleSheet.create({
         flex: 1,
         flexDirection: "row",
         alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "rgba(255, 255, 255, 0.04)",
+        backgroundColor: "rgba(0, 0, 0, 0.4)",
         borderRadius: 8,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.08)",
-        marginHorizontal: 4,
-        height: 32,
+        overflow: "hidden",
     },
     stepperBtn: {
         width: 28,
-        height: "100%",
+        height: 32,
         alignItems: "center",
         justifyContent: "center",
+        backgroundColor: "rgba(255, 255, 255, 0.06)",
     },
     stepperBtnText: {
-        fontSize: 15,
+        fontSize: 14,
         fontFamily: FAMILY.bold,
-        color: COLORS.textSub,
+        color: "#FFF",
     },
     stepperInput: {
         flex: 1,
@@ -1265,10 +1887,11 @@ const styles = StyleSheet.create({
         color: "#FFF",
         fontFamily: FAMILY.monoBold,
         fontSize: 12,
-        padding: 0,
+        paddingVertical: 4,
     },
     deleteSetBtn: {
-        width: 28,
+        width: 24,
+        height: 32,
         alignItems: "center",
         justifyContent: "center",
     },
@@ -1276,15 +1899,15 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
-        paddingVertical: 6,
-        marginTop: 4,
+        paddingVertical: 7,
         borderRadius: 8,
-        backgroundColor: "rgba(255, 255, 255, 0.03)",
+        backgroundColor: "rgba(227, 30, 36, 0.08)",
         borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.06)",
+        borderColor: "rgba(227, 30, 36, 0.25)",
+        marginTop: 4,
     },
     addSetText: {
-        fontSize: 9.5,
+        fontSize: 10,
         fontFamily: FAMILY.bold,
         color: COLORS.primary,
         letterSpacing: 0.8,
@@ -1293,9 +1916,9 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
-        paddingVertical: 12,
-        borderRadius: 14,
-        backgroundColor: "rgba(255, 255, 255, 0.05)",
+        paddingVertical: 10,
+        borderRadius: 12,
+        backgroundColor: "rgba(255, 255, 255, 0.06)",
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.12)",
         marginTop: 6,
@@ -1306,6 +1929,70 @@ const styles = StyleSheet.create({
         color: COLORS.text,
         letterSpacing: 0.8,
     },
+
+    // ── Duration Clock Banner ──
+    durationClockBanner: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: 12,
+        borderRadius: 14,
+        backgroundColor: "rgba(255, 255, 255, 0.03)",
+        borderWidth: 1,
+        borderColor: "rgba(227, 30, 36, 0.28)",
+        marginBottom: 12,
+        overflow: "hidden",
+    },
+    durationClockBannerLeft: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+        flex: 1,
+    },
+    durationClockIconWrap: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: "rgba(227, 30, 36, 0.15)",
+        borderWidth: 1,
+        borderColor: "rgba(227, 30, 36, 0.35)",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    durationClockTimeDisplay: {
+        fontSize: 14,
+        fontFamily: FAMILY.bold,
+        color: "#FFF",
+        letterSpacing: 0.5,
+    },
+    durationClockTotalSub: {
+        fontSize: 11,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.primary,
+    },
+    durationClockSubtitle: {
+        fontSize: 9,
+        fontFamily: FAMILY.regular,
+        color: COLORS.textMuted,
+        marginTop: 1,
+    },
+    durationClockAdjustPill: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: COLORS.primary,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: RADIUS.pill,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.2)",
+    },
+    durationClockAdjustText: {
+        fontSize: 9.5,
+        fontFamily: FAMILY.bold,
+        color: "#FFF",
+        letterSpacing: 0.8,
+    },
+
     durationChipsRow: {
         flexDirection: "row",
         flexWrap: "wrap",
@@ -1313,6 +2000,8 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     durationChip: {
+        flexDirection: "row",
+        alignItems: "center",
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: RADIUS.pill,
@@ -1371,12 +2060,14 @@ const styles = StyleSheet.create({
         color: "#FFFFFF",
         letterSpacing: 1.2,
     },
+
+    // ── Generic Overlays ──
     pickerOverlay: {
         flex: 1,
-        backgroundColor: "rgba(0,0,0,0.75)",
+        backgroundColor: "rgba(0,0,0,0.85)",
         alignItems: "center",
         justifyContent: "center",
-        padding: 24,
+        padding: 16,
     },
     pickerCard: {
         width: "100%",
@@ -1394,12 +2085,6 @@ const styles = StyleSheet.create({
         letterSpacing: 1,
         marginBottom: 4,
     },
-    pickerSubtitle: {
-        fontSize: 10,
-        fontFamily: FAMILY.regular,
-        color: COLORS.textSub,
-        marginBottom: 14,
-    },
     pickerInput: {
         backgroundColor: "rgba(0,0,0,0.5)",
         borderRadius: 10,
@@ -1407,9 +2092,10 @@ const styles = StyleSheet.create({
         borderColor: "rgba(255,255,255,0.14)",
         padding: 12,
         color: "#FFF",
-        fontFamily: FAMILY.monoBold,
-        fontSize: 14,
+        fontFamily: FAMILY.bold,
+        fontSize: 13,
         marginBottom: 16,
+        marginTop: 10,
     },
     pickerActions: {
         flexDirection: "row",
@@ -1436,108 +2122,508 @@ const styles = StyleSheet.create({
         fontFamily: FAMILY.bold,
         color: "#FFF",
     },
-    successOverlay: {
+
+    // ── Calendar Modal Card Styles ──
+    calendarModalCard: {
+        width: "100%",
+        maxWidth: 360,
+        backgroundColor: "#121218",
+        borderRadius: 24,
+        borderWidth: 1.2,
+        borderColor: "rgba(255, 255, 255, 0.16)",
+        padding: 18,
+        overflow: "hidden",
+    },
+    calModalHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingBottom: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: "rgba(255, 255, 255, 0.08)",
+        marginBottom: 12,
+    },
+    calModalHeaderIcon: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: "rgba(227, 30, 36, 0.15)",
+        borderWidth: 1,
+        borderColor: "rgba(227, 30, 36, 0.35)",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    calModalTitle: {
+        fontSize: 12,
+        fontFamily: FAMILY.bold,
+        color: "#FFF",
+        letterSpacing: 1,
+    },
+    calModalSubtitle: {
+        fontSize: 9.5,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.primary,
+        letterSpacing: 0.5,
+        marginTop: 1,
+    },
+    calModalCloseBtn: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: "rgba(255, 255, 255, 0.08)",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    calMonthNav: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: 6,
+        marginBottom: 12,
+    },
+    calNavArrow: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: "rgba(255, 255, 255, 0.06)",
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.10)",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    calMonthTitle: {
+        fontSize: 13,
+        fontFamily: FAMILY.bold,
+        color: "#FFFFFF",
+        letterSpacing: 1,
+    },
+    calMonthSubtitle: {
+        fontSize: 8,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textMuted,
+        letterSpacing: 0.8,
+        textAlign: "center",
+        marginTop: 1,
+    },
+    calWeekdaysRow: {
+        flexDirection: "row",
+        justifyContent: "space-around",
+        marginBottom: 6,
+        paddingHorizontal: 2,
+    },
+    calWeekdayText: {
+        width: 38,
+        textAlign: "center",
+        fontSize: 9,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textMuted,
+    },
+    calGrid: {
+        flexDirection: "row",
+        flexWrap: "wrap",
+        justifyContent: "space-around",
+        gap: 4,
+        marginBottom: 14,
+    },
+    calCell: {
+        width: 38,
+        height: 38,
+        borderRadius: 12,
+        backgroundColor: "rgba(255, 255, 255, 0.03)",
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.06)",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    calCellDisabled: {
+        width: 38,
+        height: 38,
+        alignItems: "center",
+        justifyContent: "center",
+        opacity: 0.15,
+    },
+    calCellTextDisabled: {
+        fontSize: 11,
+        fontFamily: FAMILY.mono,
+        color: COLORS.textMuted,
+    },
+    calCellToday: {
+        borderColor: "rgba(227, 30, 36, 0.5)",
+        backgroundColor: "rgba(227, 30, 36, 0.08)",
+    },
+    calCellSelected: {
+        backgroundColor: COLORS.primary,
+        borderColor: "#FF4D4D",
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.6,
+        shadowRadius: 6,
+        elevation: 4,
+    },
+    calCellFuture: {
+        opacity: 0.25,
+        backgroundColor: "transparent",
+    },
+    calCellText: {
+        fontSize: 12,
+        fontFamily: FAMILY.monoBold,
+        color: "#EDEAE3",
+    },
+    calCellTextToday: {
+        color: "#FFF",
+        fontFamily: FAMILY.monoBold,
+    },
+    calCellTextSelected: {
+        color: "#FFFFFF",
+        fontFamily: FAMILY.monoBold,
+        fontSize: 13,
+    },
+    calCellTextFuture: {
+        color: COLORS.textMuted,
+    },
+    calTodayDot: {
         position: "absolute",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
+        bottom: 4,
+        width: 4,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: COLORS.primary,
+    },
+    calPresetsRow: {
+        flexDirection: "row",
+        justifyContent: "center",
+        gap: 6,
+        paddingTop: 8,
+        borderTopWidth: 1,
+        borderTopColor: "rgba(255, 255, 255, 0.06)",
+        marginBottom: 12,
+    },
+    calPresetChip: {
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(255, 255, 255, 0.05)",
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+    },
+    calPresetChipActive: {
+        backgroundColor: "rgba(227, 30, 36, 0.2)",
+        borderColor: COLORS.primary,
+    },
+    calPresetText: {
+        fontSize: 9,
+        fontFamily: FAMILY.bold,
+        color: COLORS.textMuted,
+        letterSpacing: 0.5,
+    },
+    calPresetTextActive: {
+        color: "#FFF",
+    },
+    calActionsRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 10,
+    },
+    calCancelBtn: {
+        flex: 1,
+        height: 42,
+        borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(255, 255, 255, 0.06)",
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.1)",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    calCancelText: {
+        fontSize: 11,
+        fontFamily: FAMILY.bold,
+        color: COLORS.textMuted,
+        letterSpacing: 0.8,
+    },
+    calConfirmBtn: {
+        flex: 1.5,
+        height: 42,
+        borderRadius: RADIUS.pill,
+        alignItems: "center",
+        justifyContent: "center",
+        flexDirection: "row",
+        overflow: "hidden",
+    },
+    calConfirmText: {
+        fontSize: 11,
+        fontFamily: FAMILY.bold,
+        color: "#FFF",
+        letterSpacing: 1,
+    },
+
+    // ── Clock Modal Card Styles ──
+    clockModalCard: {
+        width: "100%",
+        maxWidth: 360,
+        backgroundColor: "#121218",
+        borderRadius: 24,
+        borderWidth: 1.2,
+        borderColor: "rgba(255, 255, 255, 0.16)",
+        padding: 18,
+        overflow: "hidden",
+    },
+    clockCenterLockup: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-around",
+        paddingVertical: 6,
+        marginBottom: 14,
+    },
+    clockFaceWrap: {
+        alignItems: "center",
+        justifyContent: "center",
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.35,
+        shadowRadius: 10,
+        elevation: 6,
+    },
+    digitalReadoutColumn: {
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    digitalTimeBoxesRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        marginBottom: 6,
+    },
+    digitalTimeBox: {
+        alignItems: "center",
+        justifyContent: "center",
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 12,
+        backgroundColor: "rgba(0, 0, 0, 0.55)",
+        borderWidth: 1.2,
+        borderColor: "rgba(255, 255, 255, 0.14)",
+        minWidth: 54,
+    },
+    digitalTimeNum: {
+        fontSize: 22,
+        fontFamily: FAMILY.bold,
+        color: "#FFFFFF",
+        letterSpacing: 1,
+    },
+    digitalTimeLabel: {
+        fontSize: 7.5,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textMuted,
+        letterSpacing: 0.8,
+        marginTop: 2,
+    },
+    digitalColon: {
+        fontSize: 22,
+        fontFamily: FAMILY.bold,
+        color: COLORS.primary,
+    },
+    digitalMetaRow: {
+        alignItems: "center",
+        gap: 3,
+    },
+    digitalMetaPill: {
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(227, 30, 36, 0.12)",
+        borderWidth: 1,
+        borderColor: "rgba(227, 30, 36, 0.3)",
+    },
+    digitalTotalMinutes: {
+        fontSize: 9.5,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.primary,
+        letterSpacing: 0.5,
+    },
+    digitalCalories: {
+        fontSize: 9.5,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textSub,
+    },
+    stepperSectionRow: {
+        flexDirection: "row",
+        gap: 10,
+        marginBottom: 14,
+    },
+    stepperCard: {
+        flex: 1,
+        backgroundColor: "rgba(255, 255, 255, 0.03)",
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+        padding: 10,
+        alignItems: "center",
+    },
+    stepperCardTitle: {
+        fontSize: 8.5,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textMuted,
+        letterSpacing: 1,
+        marginBottom: 8,
+    },
+    stepperControlsRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        width: "100%",
+        paddingHorizontal: 4,
+    },
+    stepperCircleBtn: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: "rgba(255, 255, 255, 0.08)",
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.14)",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    stepperQuickDeltaText: {
+        fontSize: 11,
+        fontFamily: FAMILY.bold,
+        color: "#FFF",
+    },
+    stepperValText: {
+        fontSize: 15,
+        fontFamily: FAMILY.bold,
+        color: "#FFF",
+    },
+    clockPresetsTitle: {
+        fontSize: 8.5,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textMuted,
+        letterSpacing: 1,
+        marginBottom: 8,
+    },
+    clockPresetsGrid: {
+        flexDirection: "row",
+        flexWrap: "wrap",
+        gap: 6,
+        marginBottom: 16,
+    },
+    clockPresetPill: {
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(255, 255, 255, 0.04)",
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+    },
+    clockPresetPillActive: {
+        backgroundColor: "rgba(227, 30, 36, 0.2)",
+        borderColor: COLORS.primary,
+    },
+    clockPresetPillText: {
+        fontSize: 9.5,
+        fontFamily: FAMILY.semibold,
+        color: COLORS.textMuted,
+    },
+    clockPresetPillTextActive: {
+        color: "#FFF",
+        fontFamily: FAMILY.bold,
+    },
+
+    // ── Success & Celebratory Overlay ──
+    successOverlay: {
+        ...StyleSheet.absoluteFillObject,
         alignItems: "center",
         justifyContent: "center",
         padding: 20,
+        zIndex: 999,
     },
     successCard: {
         width: "100%",
         maxWidth: 360,
-        backgroundColor: "#14141A",
+        backgroundColor: "#16161D",
         borderRadius: 24,
         borderWidth: 1.2,
-        borderColor: "rgba(255,255,255,0.18)",
+        borderColor: "rgba(255, 255, 255, 0.16)",
         padding: 24,
         alignItems: "center",
     },
     successIconCircle: {
-        width: 68,
-        height: 68,
-        borderRadius: 34,
+        width: 64,
+        height: 64,
+        borderRadius: 32,
         backgroundColor: "rgba(255, 215, 0, 0.12)",
         borderWidth: 1.5,
-        borderColor: "rgba(255, 215, 0, 0.4)",
+        borderColor: "rgba(255, 215, 0, 0.35)",
         alignItems: "center",
         justifyContent: "center",
-        marginBottom: 14,
+        marginBottom: 12,
     },
     successTitle: {
-        fontSize: 20,
+        fontSize: 18,
         fontFamily: FAMILY.bold,
         color: "#FFFFFF",
-        letterSpacing: 1,
-        marginBottom: 4,
+        letterSpacing: 1.2,
     },
     successSubtitle: {
-        fontSize: 11,
+        fontSize: 10,
         fontFamily: FAMILY.monoBold,
-        color: COLORS.textSub,
+        color: COLORS.primary,
         letterSpacing: 0.8,
-        marginBottom: 18,
+        marginTop: 2,
+        marginBottom: 16,
     },
     successGrid: {
-        flexDirection: "row",
-        backgroundColor: "rgba(255,255,255,0.04)",
-        borderRadius: 14,
-        borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.08)",
-        paddingVertical: 12,
-        marginBottom: 16,
         width: "100%",
+        flexDirection: "row",
+        flexWrap: "wrap",
+        gap: 8,
+        marginBottom: 14,
     },
     successStatBox: {
         flex: 1,
+        minWidth: "45%",
+        backgroundColor: "rgba(255, 255, 255, 0.04)",
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+        padding: 10,
         alignItems: "center",
-        justifyContent: "center",
-    },
-    successStatDivider: {
-        borderLeftWidth: 1,
-        borderRightWidth: 1,
-        borderColor: "rgba(255,255,255,0.08)",
     },
     successStatLabel: {
-        fontSize: 7.5,
-        fontFamily: FAMILY.bold,
+        fontSize: 8.5,
+        fontFamily: FAMILY.monoBold,
         color: COLORS.textMuted,
-        letterSpacing: 1,
-        marginBottom: 4,
+        letterSpacing: 0.8,
+        marginBottom: 3,
     },
     successStatVal: {
         fontSize: 16,
-        fontFamily: FAMILY.monoBold,
-        color: "#FFF",
+        fontFamily: FAMILY.bold,
+        color: "#FFFFFF",
     },
-    successStatUnit: {
-        fontSize: 9,
-        fontFamily: FAMILY.mono,
-        color: COLORS.textMuted,
-    },
-    prBadgeBox: {
+    prsBrokenBadge: {
         flexDirection: "row",
         alignItems: "center",
+        gap: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 7,
+        borderRadius: RADIUS.pill,
         backgroundColor: "rgba(255, 215, 0, 0.12)",
-        borderRadius: 10,
         borderWidth: 1,
         borderColor: "rgba(255, 215, 0, 0.3)",
-        paddingHorizontal: 12,
-        paddingVertical: 8,
         marginBottom: 16,
-        width: "100%",
     },
-    prBadgeText: {
+    prsBrokenText: {
         fontSize: 9.5,
         fontFamily: FAMILY.bold,
         color: "#FFD700",
-        flex: 1,
         letterSpacing: 0.5,
     },
-    shareCardBtn: {
+    successActionsCol: {
+        width: "100%",
+        gap: 10,
+    },
+    shareCardActionBtn: {
         width: "100%",
         height: 48,
         borderRadius: RADIUS.pill,
@@ -1545,192 +2631,176 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         flexDirection: "row",
         overflow: "hidden",
-        marginBottom: 10,
     },
-    shareCardBtnText: {
-        fontSize: 11.5,
+    shareCardActionText: {
+        fontSize: 12,
         fontFamily: FAMILY.bold,
-        color: "#FFF",
+        color: "#FFFFFF",
         letterSpacing: 1,
     },
-    successDoneBtn: {
+    doneActionBtn: {
         width: "100%",
-        height: 44,
+        height: 42,
         borderRadius: RADIUS.pill,
-        backgroundColor: "rgba(255, 255, 255, 0.08)",
-        alignItems: "center",
-        justifyContent: "center",
+        backgroundColor: "rgba(255, 255, 255, 0.06)",
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.12)",
+        alignItems: "center",
+        justifyContent: "center",
     },
-    successDoneText: {
+    doneActionText: {
         fontSize: 11,
         fontFamily: FAMILY.bold,
         color: COLORS.textSub,
         letterSpacing: 1,
     },
-    offscreenWrap: {
-        position: "absolute",
-        left: -9999,
-        top: -9999,
-        opacity: 0,
-    },
-    shareCard: {
+
+    // ── Share Card ViewShot Layout ──
+    shareCardContainer: {
         width: 360,
-        backgroundColor: "#0A0A0C",
+        backgroundColor: "#0F0F14",
         borderRadius: 22,
-        padding: 24,
-        borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.16)",
+        borderWidth: 1.5,
+        borderColor: "rgba(255, 255, 255, 0.18)",
+        padding: 20,
         overflow: "hidden",
     },
     shareCardHeader: {
         flexDirection: "row",
-        alignItems: "center",
+        alignItems: "flex-start",
         justifyContent: "space-between",
-        marginBottom: 16,
+        paddingBottom: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: "rgba(255, 255, 255, 0.08)",
+        marginBottom: 12,
     },
-    shareCardBadge: {
-        flexDirection: "row",
-        alignItems: "center",
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 6,
-        backgroundColor: "rgba(255, 255, 255, 0.06)",
-    },
-    shareBadgeDot: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
-        marginRight: 6,
-    },
-    shareCardBadgeText: {
-        fontSize: 9,
-        fontFamily: FAMILY.bold,
-        letterSpacing: 0.8,
-    },
-    shareCardDate: {
-        fontSize: 10,
+    shareCardAppName: {
+        fontSize: 8.5,
         fontFamily: FAMILY.monoBold,
-        color: COLORS.textMuted,
+        color: COLORS.primary,
+        letterSpacing: 1.5,
+        marginBottom: 2,
+    },
+    shareCardTargetTitle: {
+        fontSize: 17,
+        fontFamily: FAMILY.bold,
+        color: "#FFFFFF",
         letterSpacing: 0.5,
     },
-    shareCardTitleWrap: {
-        marginBottom: 18,
+    shareCardDateText: {
+        fontSize: 9.5,
+        fontFamily: FAMILY.mono,
+        color: COLORS.textSub,
+        marginTop: 2,
     },
-    shareCardWorkoutLabel: {
-        fontSize: 8.5,
-        fontFamily: FAMILY.bold,
-        color: COLORS.textMuted,
-        letterSpacing: 1.5,
-        marginBottom: 4,
+    shareCardHeaderBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(227, 30, 36, 0.15)",
+        borderWidth: 1,
+        borderColor: "rgba(227, 30, 36, 0.35)",
     },
-    shareCardWorkoutName: {
-        fontSize: 22,
+    shareCardStreakText: {
+        fontSize: 11,
         fontFamily: FAMILY.bold,
         color: "#FFF",
-        letterSpacing: 0.5,
     },
-    shareCardStatsGrid: {
+    shareCardStatsBar: {
         flexDirection: "row",
-        backgroundColor: "rgba(255, 255, 255, 0.03)",
-        borderRadius: 14,
+        backgroundColor: "rgba(255, 255, 255, 0.04)",
+        borderRadius: 12,
         borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.06)",
-        paddingVertical: 12,
-        marginBottom: 16,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        marginBottom: 12,
     },
-    shareCardStatBox: {
+    shareCardStatCol: {
         flex: 1,
         alignItems: "center",
-    },
-    shareCardStatDivider: {
-        borderLeftWidth: 1,
-        borderRightWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.06)",
     },
     shareCardStatLabel: {
-        fontSize: 8,
+        fontSize: 7.5,
         fontFamily: FAMILY.monoBold,
         color: COLORS.textMuted,
-        letterSpacing: 1,
-        marginBottom: 4,
+        letterSpacing: 0.8,
+        marginBottom: 2,
     },
     shareCardStatValue: {
-        fontSize: 15,
+        fontSize: 12,
         fontFamily: FAMILY.bold,
-        color: "#FFF",
+        color: "#FFFFFF",
     },
-    shareCardStatUnit: {
-        fontSize: 9,
-        fontFamily: FAMILY.mono,
-        color: COLORS.textMuted,
-    },
-    shareCardPRWrap: {
-        backgroundColor: "rgba(255, 255, 255, 0.02)",
-        borderRadius: 12,
-        padding: 12,
-        marginBottom: 18,
-        borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.04)",
-    },
-    shareCardPRHeader: {
-        flexDirection: "row",
-        alignItems: "center",
+    shareCardExercisesList: {
         gap: 6,
-        marginBottom: 8,
+        marginBottom: 14,
     },
-    shareCardPRTitle: {
-        fontSize: 8.5,
-        fontFamily: FAMILY.bold,
-        color: COLORS.textSub,
-        letterSpacing: 1,
-    },
-    shareCardPRRow: {
+    shareCardExRow: {
         flexDirection: "row",
-        justifyContent: "space-between",
         alignItems: "center",
-        paddingVertical: 3,
+        justifyContent: "space-between",
+        paddingVertical: 5,
+        paddingHorizontal: 8,
+        borderRadius: 8,
+        backgroundColor: "rgba(255, 255, 255, 0.02)",
     },
-    shareCardPRName: {
+    shareCardExName: {
         fontSize: 10.5,
         fontFamily: FAMILY.semibold,
-        color: COLORS.textSub,
+        color: "#EDEAE3",
         flex: 1,
     },
-    shareCardPRVal: {
-        fontSize: 10,
+    shareCardExSets: {
+        fontSize: 9.5,
         fontFamily: FAMILY.monoBold,
-        color: COLORS.textMuted,
+        color: COLORS.primary,
     },
     shareCardFooter: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        paddingTop: 12,
+        paddingTop: 10,
         borderTopWidth: 1,
-        borderTopColor: "rgba(255, 255, 255, 0.06)",
+        borderTopColor: "rgba(255, 255, 255, 0.08)",
     },
     shareCardFooterLeft: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 6,
+        gap: 8,
     },
     shareCardBarbell: {
-        width: 14,
-        height: 14,
-        tintColor: COLORS.primary,
+        width: 18,
+        height: 18,
     },
-    shareCardBrandText: {
-        fontSize: 10,
-        fontFamily: FAMILY.bold,
-        color: "#FFF",
-        letterSpacing: 1,
+    shareCardBrandTextGroup: {
+        justifyContent: "center",
+    },
+    shareCardLogoText: {
+        width: 60,
+        height: 10,
     },
     shareCardTagline: {
-        fontSize: 8,
+        fontSize: 6,
         fontFamily: FAMILY.monoBold,
         color: COLORS.textMuted,
-        letterSpacing: 0.8,
+        letterSpacing: 0.5,
+    },
+    shareCardManualPill: {
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(255, 255, 255, 0.06)",
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.12)",
+    },
+    shareCardManualPillText: {
+        fontSize: 7.5,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textSub,
+        letterSpacing: 0.5,
     },
 });
