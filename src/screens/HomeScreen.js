@@ -1808,6 +1808,15 @@ export default function HomeScreen({ navigation, route }) {
                     </View>
                 </View>
             </Modal>
+
+            {/* Manual Workout Log Modal */}
+            <ManualWorkoutModal
+                visible={manualModalVisible}
+                onClose={() => setManualModalVisible(false)}
+                onSaved={() => {
+                    loadStats(true);
+                }}
+            />
         </View>
     );
 }
@@ -2225,15 +2234,6 @@ function MomentsGallery({ streak, total, profile = null }) {
                     </View>
                 </ViewShot>
             </View>
-
-            {/* Manual Workout Log Modal */}
-            <ManualWorkoutModal
-                visible={manualModalVisible}
-                onClose={() => setManualModalVisible(false)}
-                onSaved={() => {
-                    loadStats(true);
-                }}
-            />
         </>
     );
 }
