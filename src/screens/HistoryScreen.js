@@ -176,7 +176,7 @@ function generateStructuredCSV(history, streak, total, totalHours) {
                 if (ex.loggedSets && ex.loggedSets.length > 0) {
                     const setsStr = ex.loggedSets
                         .filter(s => s.completed)
-                        .map(s => `${s.weightKg > 0 ? s.weightKg + "kg" : "BW"} × ${s.reps || 0}r`)
+                        .map(s => `${s.weightKg > 0 ? s.weightKg + "kg" : "BW"} × ${s.reps || 0} reps`)
                         .join(", ");
                     sLog = setsStr ? ` [${setsStr}]` : "";
                 }
@@ -257,7 +257,7 @@ function generateStructuredText(history, streak, total, totalHours) {
                 if (ex.loggedSets && ex.loggedSets.some(s => s.completed)) {
                     setDetails = " -> " + ex.loggedSets
                         .filter(s => s.completed)
-                        .map(s => `${s.weightKg > 0 ? s.weightKg + "kg" : "BW"} × ${s.reps}r`)
+                        .map(s => `${s.weightKg > 0 ? s.weightKg + "kg" : "BW"} × ${s.reps} reps`)
                         .join(", ");
                 }
                 text += `  • ${ex.name} (${ex.sets} sets)${setDetails}\n`;
