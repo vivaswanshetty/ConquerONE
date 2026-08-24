@@ -7,6 +7,10 @@ export const DEFAULT_SETTINGS = {
     soundEnabled: true,
     vibrationEnabled: true,
     countdownAudio: true,
+    workoutVoice: "default",      // voice identifier or "default"
+    workoutVoiceName: "Device Default", // display label
+    workoutVoicePitch: 1.0,      // 0.5 - 1.5
+    workoutVoiceRate: 0.95,      // 0.5 - 1.5
     extraRestSec: 0,        // 0 / 15 / 30 / 45 bonus seconds added to every rest phase
     activeTimeSec: null,    // null = use per-exercise default
     setLoggingEnabled: true, // show weight/reps log modal after each set

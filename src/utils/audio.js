@@ -1,20 +1,49 @@
 import * as Speech from "expo-speech";
 
-let _settings = { soundEnabled: true, countdownAudio: true };
-
-export const setAudioSettings = (settings) => {
-    _settings = settings;
+let _settings = {
+    soundEnabled: true,
+    countdownAudio: true,
+    workoutVoice: "default",
+    workoutVoicePitch: 1.0,
+    workoutVoiceRate: 0.95,
 };
 
-const say = (text, options = {}) => {
+export const setAudioSettings = (settings) => {
+    if (settings) {
+        _settings = { ..._settings, ...settings };
+    }
+};
+
+export const say = (text, options = {}) => {
     if (!_settings.soundEnabled) return;
     Speech.stop();
-    Speech.speak(text, {
+
+    const speechOpts = {
         language: "en-US",
-        pitch: 1.0,
-        rate: 0.95,
+        pitch: _settings.workoutVoicePitch ?? 1.0,
+        rate: _settings.workoutVoiceRate ?? 0.95,
         ...options,
-    });
+    };
+
+    if (_settings.workoutVoice && _settings.workoutVoice !== "default") {
+        speechOpts.voice = _settings.workoutVoice;
+    }
+
+    Speech.speak(text, speechOpts);
+};
+
+// Preview function to test voice in settings
+export const previewWorkoutVoice = (voiceId, pitch = 1.0, rate = 0.95) => {
+    Speech.stop();
+    const speechOpts = {
+        language: "en-US",
+        pitch: pitch,
+        rate: rate,
+    };
+    if (voiceId && voiceId !== "default") {
+        speechOpts.voice = voiceId;
+    }
+    Speech.speak("3, 2, 1. Go! Rest over. Time to conquer.", speechOpts);
 };
 
 // Countdown: "3… 2… 1"

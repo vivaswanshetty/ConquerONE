@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar, Platform, Animated, Modal, Share,
+    ActivityIndicator,
 } from "react-native";
+import * as Speech from "expo-speech";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
@@ -24,6 +25,7 @@ import {
 import UpdateScreen from "./UpdateScreen";
 import { useAuth } from "../context/AuthContext";
 import { useNotification } from "../context/NotificationContext";
+import { setAudioSettings, previewWorkoutVoice } from "../utils/audio";
 
 
 /* --- Legal Content --- */
@@ -94,6 +96,7 @@ export default function SettingsScreen({ navigation, route }) {
     const [showPicker, setShowPicker] = useState(false);
     const [isDownloadingUpdate, setIsDownloadingUpdate] = useState(false);
     const [legalModal, setLegalModal] = useState({ visible: false, title: "", content: "" });
+    const [showVoiceModal, setShowVoiceModal] = useState(false);
     const contentFade = useRef(new Animated.Value(0)).current;
     const headerFade = useRef(new Animated.Value(1)).current;
 
@@ -312,8 +315,38 @@ export default function SettingsScreen({ navigation, route }) {
                         sublabel="Exercise and rest audio cues"
                         icon="mic-outline"
                         value={settings.soundEnabled}
-                        onToggle={(v) => update("soundEnabled", v)}
+                        onToggle={(v) => {
+                            update("soundEnabled", v);
+                            setAudioSettings({ ...settings, soundEnabled: v });
+                        }}
                     />
+                    {settings.soundEnabled && (
+                        <>
+                            <Divider />
+                            <TouchableOpacity
+                                style={styles.voicePickerRow}
+                                onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    setShowVoiceModal(true);
+                                }}
+                                activeOpacity={0.75}
+                            >
+                                <View style={styles.voicePickerIconBox}>
+                                    <Ionicons name="volume-high" size={17} color={COLORS.primary} />
+                                </View>
+                                <View style={styles.voicePickerInfo}>
+                                    <Text style={styles.voicePickerLabel}>WORKOUT VOICE & PACE</Text>
+                                    <Text style={styles.voicePickerSub} numberOfLines={1}>
+                                        {settings.workoutVoiceName || "Device Default Voice"} · {settings.workoutVoiceRate ? `${settings.workoutVoiceRate}x` : "0.95x"}
+                                    </Text>
+                                </View>
+                                <View style={styles.voicePickerAction}>
+                                    <Text style={styles.voicePickerActionText}>CONFIGURE</Text>
+                                    <Ionicons name="chevron-forward" size={14} color={COLORS.textSub} />
+                                </View>
+                            </TouchableOpacity>
+                        </>
+                    )}
                 </View>
 
 
@@ -704,6 +737,29 @@ export default function SettingsScreen({ navigation, route }) {
                 content={legalModal.content}
                 onClose={() => setLegalModal({ ...legalModal, visible: false })}
             />
+
+            <WorkoutVoiceModal
+                visible={showVoiceModal}
+                currentVoice={settings.workoutVoice || "default"}
+                currentVoiceName={settings.workoutVoiceName || "Device Default"}
+                currentPitch={settings.workoutVoicePitch ?? 1.0}
+                currentRate={settings.workoutVoiceRate ?? 0.95}
+                onClose={() => setShowVoiceModal(false)}
+                onSave={async (voiceId, voiceName, pitch, rate) => {
+                    const next = {
+                        ...settings,
+                        workoutVoice: voiceId,
+                        workoutVoiceName: voiceName,
+                        workoutVoicePitch: pitch,
+                        workoutVoiceRate: rate,
+                    };
+                    setSettings(next);
+                    await saveSettings(next);
+                    setAudioSettings(next);
+                    setShowVoiceModal(false);
+                    flash();
+                }}
+            />
         </View>
     );
 }
@@ -937,4 +993,582 @@ const styles = StyleSheet.create({
     legalBody: { fontSize: 12.5, fontFamily: FAMILY.regular, color: COLORS.textSub, lineHeight: 19, marginBottom: 24 },
     modalCloseBtn: { height: 50, borderRadius: RADIUS.pill, backgroundColor: COLORS.primary, alignItems: "center", justifyContent: "center" },
     modalCloseText: { fontSize: 12, fontFamily: FAMILY.bold, color: "#FFFFFF", letterSpacing: 1 },
+
+    // Voice Picker Row
+    voicePickerRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 18,
+        paddingVertical: 14,
+        gap: 12,
+        backgroundColor: "rgba(255, 255, 255, 0.02)",
+    },
+    voicePickerIconBox: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: "rgba(227, 30, 36, 0.12)",
+        borderWidth: 1,
+        borderColor: "rgba(227, 30, 36, 0.3)",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    voicePickerInfo: { flex: 1 },
+    voicePickerLabel: {
+        fontSize: 12.5,
+        fontFamily: FAMILY.bold,
+        color: COLORS.text,
+        letterSpacing: 0.5,
+    },
+    voicePickerSub: {
+        fontSize: 11,
+        fontFamily: FAMILY.mono,
+        color: COLORS.textSub,
+        marginTop: 2,
+    },
+    voicePickerAction: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        backgroundColor: "rgba(255, 255, 255, 0.06)",
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: RADIUS.sm,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.1)",
+    },
+    voicePickerActionText: {
+        fontSize: 9.5,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textSub,
+        letterSpacing: 0.5,
+    },
+});
+
+/* ── Workout Voice & Audio Settings Modal ───────────────────────── */
+function WorkoutVoiceModal({
+    visible,
+    currentVoice,
+    currentVoiceName,
+    currentPitch,
+    currentRate,
+    onClose,
+    onSave,
+}) {
+    const [selectedVoice, setSelectedVoice] = useState(currentVoice || "default");
+    const [selectedVoiceName, setSelectedVoiceName] = useState(currentVoiceName || "Device Default");
+    const [pitch, setPitch] = useState(currentPitch ?? 1.0);
+    const [rate, setRate] = useState(currentRate ?? 0.95);
+    const [voices, setVoices] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [filterLang, setFilterLang] = useState("ALL");
+
+    useEffect(() => {
+        if (visible) {
+            setSelectedVoice(currentVoice || "default");
+            setSelectedVoiceName(currentVoiceName || "Device Default");
+            setPitch(currentPitch ?? 1.0);
+            setRate(currentRate ?? 0.95);
+            loadVoices();
+        }
+    }, [visible, currentVoice, currentVoiceName, currentPitch, currentRate]);
+
+    const loadVoices = async () => {
+        setIsLoading(true);
+        try {
+            // Warm up TTS
+            await new Promise((resolve) => {
+                Speech.speak(" ", {
+                    volume: 0,
+                    onDone: resolve,
+                    onError: resolve,
+                    onStopped: resolve,
+                });
+                setTimeout(resolve, 1500);
+            });
+
+            const avail = await Speech.getAvailableVoicesAsync();
+            const filtered = (avail || []).filter(v =>
+                v && v.language && (v.language.startsWith('en') || v.language.startsWith('eng'))
+            );
+
+            // Deduplicate
+            const seen = new Set();
+            const unique = [];
+            for (const v of filtered) {
+                if (!seen.has(v.identifier)) {
+                    seen.add(v.identifier);
+                    unique.push(v);
+                }
+            }
+
+            setVoices(unique);
+        } catch (e) {
+            console.warn("[WorkoutVoiceModal] Error loading voices", e);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleSelectVoice = (v) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        if (v === "default") {
+            setSelectedVoice("default");
+            setSelectedVoiceName("Device Default");
+        } else {
+            setSelectedVoice(v.identifier);
+            setSelectedVoiceName(v.name || v.identifier);
+        }
+    };
+
+    const handlePreviewSingle = (v) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        const voiceId = v === "default" ? null : v.identifier;
+        previewWorkoutVoice(voiceId, pitch, rate);
+    };
+
+    const handleMainPreview = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        previewWorkoutVoice(selectedVoice, pitch, rate);
+    };
+
+    const handleApply = () => {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        onSave(selectedVoice, selectedVoiceName, pitch, rate);
+    };
+
+    const displayedVoices = voices.filter(v => {
+        if (filterLang === "ALL") return true;
+        if (filterLang === "US") return v.language.toLowerCase().includes("us");
+        if (filterLang === "GB") return v.language.toLowerCase().includes("gb") || v.language.toLowerCase().includes("uk");
+        return !v.language.toLowerCase().includes("us") && !v.language.toLowerCase().includes("gb");
+    });
+
+    if (!visible) return null;
+
+    return (
+        <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+            <View style={vm.overlay}>
+                <TouchableOpacity style={StyleSheet.absoluteFill} onPress={onClose} activeOpacity={1} />
+                <View style={vm.sheet}>
+                    {/* macOS Liquid Glass Gradient */}
+                    <LinearGradient
+                        colors={['rgba(28, 28, 36, 0.98)', 'rgba(14, 14, 18, 0.99)', 'rgba(8, 8, 10, 1)']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 0.2, y: 1 }}
+                        style={StyleSheet.absoluteFill}
+                    />
+                    {/* Top Gloss Highlight */}
+                    <LinearGradient
+                        colors={['rgba(255, 255, 255, 0.16)', 'transparent']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 0, y: 1 }}
+                        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 80 }}
+                        pointerEvents="none"
+                    />
+
+                    {/* Handle */}
+                    <View style={vm.handle} />
+
+                    {/* Header */}
+                    <View style={vm.headerRow}>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                            <View style={vm.headerIconBox}>
+                                <Ionicons name="mic-circle" size={20} color={COLORS.primary} />
+                            </View>
+                            <View>
+                                <Text style={vm.title}>WORKOUT VOICE & AUDIO</Text>
+                                <Text style={vm.subtitle}>CUES, TIMERS & PROTOCOL CALLOUTS</Text>
+                            </View>
+                        </View>
+                        <TouchableOpacity style={vm.closeBtn} onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                            <Ionicons name="close" size={18} color={COLORS.text} />
+                        </TouchableOpacity>
+                    </View>
+
+                    <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 420 }} contentContainerStyle={{ paddingBottom: 20 }}>
+                        {/* ── 1. Voice Filter Row ── */}
+                        <View style={vm.filterRow}>
+                            {[
+                                { key: "ALL", label: "ALL VOICES" },
+                                { key: "US", label: "ENGLISH (US)" },
+                                { key: "GB", label: "ENGLISH (UK)" },
+                            ].map((tab) => (
+                                <TouchableOpacity
+                                    key={tab.key}
+                                    style={[vm.filterChip, filterLang === tab.key && vm.filterChipActive]}
+                                    onPress={() => setFilterLang(tab.key)}
+                                    activeOpacity={0.7}
+                                >
+                                    <Text style={[vm.filterChipText, filterLang === tab.key && vm.filterChipTextActive]}>
+                                        {tab.label}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+
+                        {/* ── 2. Voices List ── */}
+                        <View style={vm.voiceListCard}>
+                            {/* Device Default Voice Row */}
+                            <TouchableOpacity
+                                style={[vm.voiceRow, selectedVoice === "default" && vm.voiceRowSelected]}
+                                onPress={() => handleSelectVoice("default")}
+                                activeOpacity={0.75}
+                            >
+                                <View style={vm.radioCircle}>
+                                    {selectedVoice === "default" && <View style={vm.radioInner} />}
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={[vm.voiceName, selectedVoice === "default" && { color: "#FFFFFF" }]}>
+                                        Device Default Voice
+                                    </Text>
+                                    <Text style={vm.voiceMeta}>SYSTEM DEFAULT ENGINE</Text>
+                                </View>
+                                <TouchableOpacity
+                                    style={vm.previewVoiceSmallBtn}
+                                    onPress={() => handlePreviewSingle("default")}
+                                    hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                                >
+                                    <Ionicons name="volume-high-outline" size={15} color={COLORS.primary} />
+                                </TouchableOpacity>
+                            </TouchableOpacity>
+
+                            {isLoading ? (
+                                <View style={vm.loadingBox}>
+                                    <ActivityIndicator size="small" color={COLORS.primary} />
+                                    <Text style={vm.loadingText}>Fetching available speech voices...</Text>
+                                </View>
+                            ) : (
+                                displayedVoices.map((v) => {
+                                    const isSelected = selectedVoice === v.identifier;
+                                    return (
+                                        <TouchableOpacity
+                                            key={v.identifier}
+                                            style={[vm.voiceRow, isSelected && vm.voiceRowSelected]}
+                                            onPress={() => handleSelectVoice(v)}
+                                            activeOpacity={0.75}
+                                        >
+                                            <View style={vm.radioCircle}>
+                                                {isSelected && <View style={vm.radioInner} />}
+                                            </View>
+                                            <View style={{ flex: 1 }}>
+                                                <Text style={[vm.voiceName, isSelected && { color: "#FFFFFF" }]} numberOfLines={1}>
+                                                    {v.name || v.identifier}
+                                                </Text>
+                                                <Text style={vm.voiceMeta}>
+                                                    {(v.language || "EN").toUpperCase()} {v.quality ? `· ${v.quality.toUpperCase()}` : ""}
+                                                </Text>
+                                            </View>
+                                            <TouchableOpacity
+                                                style={vm.previewVoiceSmallBtn}
+                                                onPress={() => handlePreviewSingle(v)}
+                                                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                                            >
+                                                <Ionicons name="volume-high-outline" size={15} color={COLORS.primary} />
+                                            </TouchableOpacity>
+                                        </TouchableOpacity>
+                                    );
+                                })
+                            )}
+                        </View>
+
+                        {/* ── 3. Voice Pitch Selector ── */}
+                        <Text style={vm.sectionLabel}>VOICE TONE / PITCH</Text>
+                        <View style={vm.chipRow}>
+                            {[
+                                { label: "Deep", val: 0.85 },
+                                { label: "Balanced", val: 1.0 },
+                                { label: "Bright", val: 1.15 },
+                            ].map((p) => {
+                                const active = Math.abs(pitch - p.val) < 0.05;
+                                return (
+                                    <TouchableOpacity
+                                        key={p.label}
+                                        style={[vm.adjustChip, active && vm.adjustChipActive]}
+                                        onPress={() => setPitch(p.val)}
+                                        activeOpacity={0.75}
+                                    >
+                                        <Text style={[vm.adjustChipText, active && vm.adjustChipTextActive]}>
+                                            {p.label} ({p.val}x)
+                                        </Text>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
+
+                        {/* ── 4. Voice Speed Selector ── */}
+                        <Text style={vm.sectionLabel}>SPEECH PACE / SPEED</Text>
+                        <View style={vm.chipRow}>
+                            {[
+                                { label: "Steady", val: 0.85 },
+                                { label: "Standard", val: 0.95 },
+                                { label: "Energetic", val: 1.10 },
+                            ].map((r) => {
+                                const active = Math.abs(rate - r.val) < 0.05;
+                                return (
+                                    <TouchableOpacity
+                                        key={r.label}
+                                        style={[vm.adjustChip, active && vm.adjustChipActive]}
+                                        onPress={() => setRate(r.val)}
+                                        activeOpacity={0.75}
+                                    >
+                                        <Text style={[vm.adjustChipText, active && vm.adjustChipTextActive]}>
+                                            {r.label} ({r.val}x)
+                                        </Text>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
+
+                        {/* ── 5. Live Audio Test Banner ── */}
+                        <TouchableOpacity style={vm.previewBanner} onPress={handleMainPreview} activeOpacity={0.8}>
+                            <Ionicons name="volume-high" size={17} color={COLORS.primary} style={{ marginRight: 8 }} />
+                            <Text style={vm.previewBannerText}>TEST WORKOUT CUE ("3… 2… 1… GO!")</Text>
+                        </TouchableOpacity>
+                    </ScrollView>
+
+                    {/* Apply Button */}
+                    <TouchableOpacity style={vm.applyBtn} onPress={handleApply} activeOpacity={0.85}>
+                        <LinearGradient
+                            colors={[COLORS.primary, "#8B0000"]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                            style={StyleSheet.absoluteFill}
+                        />
+                        <Ionicons name="checkmark-circle" size={16} color="#FFF" style={{ marginRight: 6 }} />
+                        <Text style={vm.applyBtnText}>APPLY WORKOUT VOICE</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        </Modal>
+    );
+}
+
+const vm = StyleSheet.create({
+    overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.85)", justifyContent: "flex-end" },
+    sheet: {
+        backgroundColor: "#16161D",
+        borderTopLeftRadius: 32,
+        borderTopRightRadius: 32,
+        paddingHorizontal: 22,
+        paddingTop: 16,
+        paddingBottom: 36,
+        borderWidth: 1.2,
+        borderColor: "rgba(255, 255, 255, 0.16)",
+        borderBottomWidth: 0,
+        overflow: "hidden",
+    },
+    handle: {
+        width: 36,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: "rgba(255,255,255,0.2)",
+        alignSelf: "center",
+        marginBottom: 14,
+    },
+    headerRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingBottom: 14,
+        borderBottomWidth: 1,
+        borderBottomColor: "rgba(255, 255, 255, 0.08)",
+        marginBottom: 14,
+    },
+    headerIconBox: {
+        width: 34,
+        height: 34,
+        borderRadius: 17,
+        backgroundColor: "rgba(227, 30, 36, 0.15)",
+        borderWidth: 1,
+        borderColor: "rgba(227, 30, 36, 0.35)",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    title: {
+        fontSize: 12.5,
+        fontFamily: FAMILY.bold,
+        color: "#FFFFFF",
+        letterSpacing: 1,
+    },
+    subtitle: {
+        fontSize: 8.5,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textMuted,
+        letterSpacing: 0.8,
+        marginTop: 1,
+    },
+    closeBtn: {
+        width: 30,
+        height: 30,
+        borderRadius: 15,
+        backgroundColor: "rgba(255, 255, 255, 0.08)",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+
+    filterRow: {
+        flexDirection: "row",
+        gap: 6,
+        marginBottom: 12,
+    },
+    filterChip: {
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(255, 255, 255, 0.04)",
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+    },
+    filterChipActive: {
+        backgroundColor: "rgba(227, 30, 36, 0.15)",
+        borderColor: "rgba(227, 30, 36, 0.4)",
+    },
+    filterChipText: {
+        fontSize: 9,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textMuted,
+        letterSpacing: 0.5,
+    },
+    filterChipTextActive: {
+        color: "#FFFFFF",
+    },
+
+    voiceListCard: {
+        backgroundColor: "rgba(0, 0, 0, 0.35)",
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+        overflow: "hidden",
+        marginBottom: 16,
+    },
+    voiceRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 14,
+        paddingVertical: 11,
+        gap: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: "rgba(255, 255, 255, 0.05)",
+    },
+    voiceRowSelected: {
+        backgroundColor: "rgba(227, 30, 36, 0.09)",
+    },
+    radioCircle: {
+        width: 18,
+        height: 18,
+        borderRadius: 9,
+        borderWidth: 1.5,
+        borderColor: "rgba(255, 255, 255, 0.25)",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    radioInner: {
+        width: 9,
+        height: 9,
+        borderRadius: 4.5,
+        backgroundColor: COLORS.primary,
+    },
+    voiceName: {
+        fontSize: 13,
+        fontFamily: FAMILY.bold,
+        color: COLORS.textSub,
+    },
+    voiceMeta: {
+        fontSize: 9,
+        fontFamily: FAMILY.mono,
+        color: COLORS.textMuted,
+        marginTop: 2,
+    },
+    previewVoiceSmallBtn: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: "rgba(255, 255, 255, 0.06)",
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.1)",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+
+    loadingBox: {
+        padding: 20,
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+    },
+    loadingText: {
+        fontSize: 10,
+        fontFamily: FAMILY.mono,
+        color: COLORS.textMuted,
+    },
+
+    sectionLabel: {
+        fontSize: 9.5,
+        fontFamily: FAMILY.bold,
+        color: COLORS.textMuted,
+        letterSpacing: 1,
+        marginBottom: 8,
+    },
+    chipRow: {
+        flexDirection: "row",
+        gap: 8,
+        marginBottom: 16,
+    },
+    adjustChip: {
+        flex: 1,
+        paddingVertical: 9,
+        alignItems: "center",
+        borderRadius: 12,
+        backgroundColor: "rgba(255, 255, 255, 0.04)",
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+    },
+    adjustChipActive: {
+        backgroundColor: "rgba(227, 30, 36, 0.12)",
+        borderColor: "rgba(227, 30, 36, 0.4)",
+    },
+    adjustChipText: {
+        fontSize: 10.5,
+        fontFamily: FAMILY.mono,
+        color: COLORS.textSub,
+    },
+    adjustChipTextActive: {
+        color: "#FFFFFF",
+        fontFamily: FAMILY.monoBold,
+    },
+
+    previewBanner: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "rgba(227, 30, 36, 0.08)",
+        paddingVertical: 12,
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: "rgba(227, 30, 36, 0.25)",
+        marginTop: 4,
+    },
+    previewBannerText: {
+        fontSize: 10.5,
+        fontFamily: FAMILY.monoBold,
+        color: "#FFFFFF",
+        letterSpacing: 0.5,
+    },
+
+    applyBtn: {
+        height: 48,
+        borderRadius: RADIUS.pill,
+        alignItems: "center",
+        justifyContent: "center",
+        flexDirection: "row",
+        overflow: "hidden",
+        marginTop: 10,
+    },
+    applyBtnText: {
+        fontSize: 12,
+        fontFamily: FAMILY.bold,
+        color: "#FFFFFF",
+        letterSpacing: 1,
+    },
 });
