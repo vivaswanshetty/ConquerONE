@@ -294,16 +294,40 @@ export default function CustomWorkoutScreen({ navigation }) {
         });
     };
 
-    // ── Select a full preset pack ──
-    const applyPresetPack = (pack) => {
+    // ── Load into Builder & Switch to All Movements ──
+    const handleLoadIntoBuilder = (routineOrPreset) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         const next = new Set();
-        pack.exerciseNames.forEach((n) => {
+        routineOrPreset.exerciseNames.forEach((n) => {
             const match = ALL_EXERCISES.find(ex => ex.name.toLowerCase() === n.toLowerCase());
             if (match) next.add(match.name);
         });
         setSelected(next);
-        showFlash(`Loaded "${pack.title}" (${next.size} movements)`);
+        setActiveTab("ALL");
+        showFlash(`Loaded "${routineOrPreset.title}" (${next.size} movements) into builder`);
+    };
+
+    // ── Direct Launch Routine / Preset ──
+    const handleLaunchRoutine = (routineOrPreset) => {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        const exercises = ALL_EXERCISES.filter(ex => routineOrPreset.exerciseNames.includes(ex.name));
+        if (exercises.length === 0) {
+            showDialog({ title: "EMPTY ROUTINE", message: "No movements found for this routine." });
+            return;
+        }
+
+        const customDay = {
+            day: 0,
+            target: routineOrPreset.title.toUpperCase(),
+            dayName: routineOrPreset.title.toUpperCase(),
+            exercises: exercises,
+            headerImage: exercises[0]?.image || require("../../assets/workout_detail_bg.png"),
+            color: COLORS.primary,
+            gradient: [COLORS.primary, "#8B0000"],
+            emoji: "⚡",
+        };
+
+        navigation.replace("ActiveWorkout", { day: customDay });
     };
 
     // ── Save Routine ──
@@ -408,7 +432,7 @@ export default function CustomWorkoutScreen({ navigation }) {
         return Math.round(5.0 * 75 * (estimatedDuration / 60));
     }, [estimatedDuration]);
 
-    // ── Launch Active Workout ──
+    // ── Launch Active Workout from Builder ──
     const handleStartWorkout = () => {
         if (selected.size === 0) return;
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -486,7 +510,7 @@ export default function CustomWorkoutScreen({ navigation }) {
                     </View>
                 </View>
 
-                {/* Smart Curation Tabs (GHScrollView for native gesture support on Android & iOS) */}
+                {/* Smart Curation Tabs */}
                 <View style={styles.tabsSection}>
                     <GHScrollView
                         horizontal
@@ -530,7 +554,7 @@ export default function CustomWorkoutScreen({ navigation }) {
                     </GHScrollView>
                 </View>
 
-                {/* Muscle Filter Row (GHScrollView for smooth swipe gesture) */}
+                {/* Muscle Filter Row (When viewing exercise lists) */}
                 {activeTab !== "PRESETS" && activeTab !== "ROUTINES" && (
                     <View style={styles.muscleFilterSection}>
                         <GHScrollView
@@ -588,7 +612,8 @@ export default function CustomWorkoutScreen({ navigation }) {
                             <PresetPackCard
                                 key={pack.id}
                                 pack={pack}
-                                onApply={() => applyPresetPack(pack)}
+                                onStart={() => handleLaunchRoutine(pack)}
+                                onLoad={() => handleLoadIntoBuilder(pack)}
                             />
                         ))}
                     </View>
@@ -601,19 +626,6 @@ export default function CustomWorkoutScreen({ navigation }) {
                             <Text style={styles.sectionHeaderTitle}>MY SAVED ROUTINES</Text>
                             <Text style={styles.sectionHeaderCount}>{routines.length} ROUTINES</Text>
                         </View>
-
-                        {selected.size > 0 && (
-                            <TouchableOpacity
-                                style={styles.quickSaveRoutineBanner}
-                                onPress={() => setSaveModalVisible(true)}
-                                activeOpacity={0.8}
-                            >
-                                <Ionicons name="add-circle" size={18} color={COLORS.primary} style={{ marginRight: 8 }} />
-                                <Text style={styles.quickSaveRoutineText}>
-                                    SAVE CURRENT {selected.size} MOVEMENTS AS NEW ROUTINE
-                                </Text>
-                            </TouchableOpacity>
-                        )}
 
                         {routines.length === 0 ? (
                             <View style={styles.emptyCard}>
@@ -635,12 +647,8 @@ export default function CustomWorkoutScreen({ navigation }) {
                                 <RoutineCard
                                     key={r.id}
                                     routine={r}
-                                    onApply={() => {
-                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                        const next = new Set(r.exerciseNames);
-                                        setSelected(next);
-                                        showFlash(`Loaded routine "${r.title}" (${next.size} movements)`);
-                                    }}
+                                    onStart={() => handleLaunchRoutine(r)}
+                                    onLoad={() => handleLoadIntoBuilder(r)}
                                     onDelete={() => handleDeleteRoutine(r.id)}
                                 />
                             ))
@@ -692,7 +700,7 @@ export default function CustomWorkoutScreen({ navigation }) {
                 )}
             </ScrollView>
 
-            {/* ── 3. Bottom Floating Selection Dock ── */}
+            {/* ── 3. Bottom Floating Selection Dock (Active when picking movements in builder) ── */}
             {selected.size > 0 && (
                 <View style={[styles.bottomDock, { paddingBottom: Math.max(insets.bottom, 16) + 6 }]}>
                     <LinearGradient
@@ -918,7 +926,7 @@ function ExerciseSelectCard({
 }
 
 // ── Component: Preset Pack Card ──
-function PresetPackCard({ pack, onApply }) {
+function PresetPackCard({ pack, onStart, onLoad }) {
     return (
         <View style={styles.packCard}>
             <View style={styles.packHeaderRow}>
@@ -943,22 +951,29 @@ function PresetPackCard({ pack, onApply }) {
                 ))}
             </View>
 
-            <TouchableOpacity style={styles.packApplyBtn} onPress={onApply} activeOpacity={0.85}>
-                <LinearGradient
-                    colors={[COLORS.primary, "#8B0000"]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={StyleSheet.absoluteFill}
-                />
-                <Ionicons name="flash" size={13} color="#FFFFFF" style={{ marginRight: 6 }} />
-                <Text style={styles.packApplyBtnText}>LOAD PROTOCOL ({pack.exerciseNames.length} MOVEMENTS)</Text>
-            </TouchableOpacity>
+            <View style={styles.cardActionsRow}>
+                <TouchableOpacity style={styles.cardSecondaryBtn} onPress={onLoad} activeOpacity={0.8}>
+                    <Ionicons name="layers-outline" size={13} color={COLORS.textSub} style={{ marginRight: 5 }} />
+                    <Text style={styles.cardSecondaryBtnText}>LOAD IN BUILDER</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.cardPrimaryBtn} onPress={onStart} activeOpacity={0.85}>
+                    <LinearGradient
+                        colors={[COLORS.primary, "#8B0000"]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={StyleSheet.absoluteFill}
+                    />
+                    <Ionicons name="play" size={13} color="#FFFFFF" style={{ marginRight: 5 }} />
+                    <Text style={styles.cardPrimaryBtnText}>START WORKOUT</Text>
+                </TouchableOpacity>
+            </View>
         </View>
     );
 }
 
-// ── Component: Routine Card (Replaced Blueprint) ──
-function RoutineCard({ routine, onApply, onDelete }) {
+// ── Component: Routine Card (Saved Custom Routine) ──
+function RoutineCard({ routine, onStart, onLoad, onDelete }) {
     return (
         <View style={styles.packCard}>
             <View style={styles.packHeaderRow}>
@@ -971,7 +986,7 @@ function RoutineCard({ routine, onApply, onDelete }) {
             </View>
 
             <Text style={styles.packTitle}>{routine.title}</Text>
-            <Text style={styles.packSub}>{routine.exerciseCount || routine.exerciseNames.length} Custom Movements Configured</Text>
+            <Text style={styles.packSub}>{routine.exerciseCount || routine.exerciseNames.length} Movements Configured</Text>
 
             <View style={styles.packExercisesList}>
                 {routine.exerciseNames.map((name, i) => (
@@ -982,16 +997,23 @@ function RoutineCard({ routine, onApply, onDelete }) {
                 ))}
             </View>
 
-            <TouchableOpacity style={styles.packApplyBtn} onPress={onApply} activeOpacity={0.85}>
-                <LinearGradient
-                    colors={[COLORS.primary, "#8B0000"]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={StyleSheet.absoluteFill}
-                />
-                <Ionicons name="play" size={13} color="#FFFFFF" style={{ marginRight: 6 }} />
-                <Text style={styles.packApplyBtnText}>SELECT & LAUNCH ROUTINE</Text>
-            </TouchableOpacity>
+            <View style={styles.cardActionsRow}>
+                <TouchableOpacity style={styles.cardSecondaryBtn} onPress={onLoad} activeOpacity={0.8}>
+                    <Ionicons name="create-outline" size={13} color={COLORS.textSub} style={{ marginRight: 5 }} />
+                    <Text style={styles.cardSecondaryBtnText}>LOAD IN BUILDER</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.cardPrimaryBtn} onPress={onStart} activeOpacity={0.85}>
+                    <LinearGradient
+                        colors={[COLORS.primary, "#8B0000"]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={StyleSheet.absoluteFill}
+                    />
+                    <Ionicons name="play" size={13} color="#FFFFFF" style={{ marginRight: 5 }} />
+                    <Text style={styles.cardPrimaryBtnText}>START ROUTINE</Text>
+                </TouchableOpacity>
+            </View>
         </View>
     );
 }
@@ -1189,24 +1211,6 @@ const styles = StyleSheet.create({
         fontSize: 9,
         fontFamily: FAMILY.monoBold,
         color: COLORS.textMuted,
-    },
-
-    quickSaveRoutineBanner: {
-        flexDirection: "row",
-        alignItems: "center",
-        backgroundColor: "rgba(227, 30, 36, 0.1)",
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: "rgba(227, 30, 36, 0.3)",
-        marginBottom: 6,
-    },
-    quickSaveRoutineText: {
-        fontSize: 10,
-        fontFamily: FAMILY.bold,
-        color: "#FFFFFF",
-        letterSpacing: 0.5,
     },
 
     // Exercise Card
@@ -1411,7 +1415,29 @@ const styles = StyleSheet.create({
         fontFamily: FAMILY.medium,
         color: "#C5C2BB",
     },
-    packApplyBtn: {
+    cardActionsRow: {
+        flexDirection: "row",
+        gap: 8,
+    },
+    cardSecondaryBtn: {
+        flex: 1,
+        height: 40,
+        borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(255, 255, 255, 0.06)",
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.12)",
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    cardSecondaryBtnText: {
+        fontSize: 9.5,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textSub,
+        letterSpacing: 0.5,
+    },
+    cardPrimaryBtn: {
+        flex: 1.2,
         height: 40,
         borderRadius: RADIUS.pill,
         flexDirection: "row",
@@ -1419,7 +1445,7 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         overflow: "hidden",
     },
-    packApplyBtnText: {
+    cardPrimaryBtnText: {
         fontSize: 10.5,
         fontFamily: FAMILY.bold,
         color: "#FFFFFF",
