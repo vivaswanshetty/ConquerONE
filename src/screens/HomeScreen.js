@@ -22,6 +22,7 @@ import MaskedView from "@react-native-masked-view/masked-view";
 import * as Haptics from "expo-haptics";
 import Svg, { Circle, Path, Defs, LinearGradient as SvgGradient, Stop, Text as SvgText, Polygon, Line } from "react-native-svg";
 import WorkoutCalendar from "../components/WorkoutCalendar";
+import ManualWorkoutModal from "../components/ManualWorkoutModal";
 import SkeletonBlock from "../components/SkeletonBlock";
 import ViewShot from "react-native-view-shot";
 import * as Sharing from "expo-sharing";
@@ -496,6 +497,7 @@ export default function HomeScreen({ navigation, route }) {
     const [history, setHistory] = useState([]);
     const [streakAnalyticsVisible, setStreakAnalyticsVisible] = useState(false);
     const [quickMenuVisible, setQuickMenuVisible] = useState(false);
+    const [manualModalVisible, setManualModalVisible] = useState(false);
     const [activeSession, setActiveSession] = useState(null);
     const greetingAnim = useRef(new Animated.Value(0)).current;
     const navAnim = useRef(new Animated.Value(0)).current;
@@ -1540,6 +1542,25 @@ export default function HomeScreen({ navigation, route }) {
                                 onPress={() => {
                                     setQuickMenuVisible(false);
                                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    setManualModalVisible(true);
+                                }}
+                            >
+                                <View style={[styles.quickMenuIconWrap, { backgroundColor: "rgba(227, 30, 36, 0.14)", borderColor: "rgba(227, 30, 36, 0.3)" }]}>
+                                    <Ionicons name="create" size={20} color={COLORS.primary} />
+                                </View>
+                                <View style={styles.quickMenuItemBody}>
+                                    <Text style={styles.quickMenuItemTitle}>Manual Workout Log</Text>
+                                    <Text style={styles.quickMenuItemSub}>Backfill or log unrecorded workouts</Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={styles.quickMenuItem}
+                                activeOpacity={0.75}
+                                onPress={() => {
+                                    setQuickMenuVisible(false);
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                                     setStreakAnalyticsVisible(true);
                                 }}
                             >
@@ -2204,6 +2225,15 @@ function MomentsGallery({ streak, total, profile = null }) {
                     </View>
                 </ViewShot>
             </View>
+
+            {/* Manual Workout Log Modal */}
+            <ManualWorkoutModal
+                visible={manualModalVisible}
+                onClose={() => setManualModalVisible(false)}
+                onSaved={() => {
+                    loadStats(true);
+                }}
+            />
         </>
     );
 }

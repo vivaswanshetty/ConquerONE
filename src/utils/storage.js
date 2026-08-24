@@ -3,6 +3,7 @@ import { triggerAutoSync } from "./sync";
 import { auth } from "./firebase";
 import {
     fssaveWorkoutComplete,
+    fssaveManualWorkout,
     fsGetWorkoutHistory,
     fsGetStreak,
     fsGetTotalWorkouts,
@@ -173,6 +174,178 @@ export const saveWorkoutComplete = async (day, target, durationSec, exercises = 
         return localResult;
     } catch (e) {
         console.error("saveWorkoutComplete error", e);
+    }
+};
+
+/**
+ * Calculates the consecutive streak from a history array and optional freeze dates.
+ */
+export const calculateStreakFromHistory = (history = [], freezeDates = []) => {
+    if (!history || history.length === 0) return 0;
+
+    const dateSet = new Set();
+    history.forEach((h) => {
+        if (h.date) {
+            dateSet.add(h.date);
+        } else if (h.completedAt) {
+            const d = typeof h.completedAt === "object" && h.completedAt.seconds
+                ? new Date(h.completedAt.seconds * 1000)
+                : new Date(h.completedAt);
+            if (!isNaN(d.getTime())) {
+                dateSet.add(d.toISOString().split("T")[0]);
+            }
+        }
+    });
+
+    const sortedDates = Array.from(dateSet).sort();
+    if (sortedDates.length === 0) return 0;
+
+    const todayStr = new Date().toISOString().split("T")[0];
+    const latestDateStr = sortedDates[sortedDates.length - 1];
+
+    const today = new Date(todayStr);
+    const latest = new Date(latestDateStr);
+    const daysSinceLatest = Math.round((today.getTime() - latest.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (daysSinceLatest > 1 && !areAllInterveningDaysExcused(latestDateStr, todayStr, freezeDates)) {
+        return 0;
+    }
+
+    let streak = 1;
+    for (let i = sortedDates.length - 1; i > 0; i--) {
+        const curr = sortedDates[i];
+        const prev = sortedDates[i - 1];
+        const currDate = new Date(curr);
+        const prevDate = new Date(prev);
+        const diff = Math.round((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (diff === 0) {
+            // Same day, continue
+        } else if (diff === 1 || areAllInterveningDaysExcused(prev, curr, freezeDates)) {
+            streak += 1;
+        } else {
+            break;
+        }
+    }
+
+    return streak;
+};
+
+const saveManualWorkoutLocal = async ({
+    date,
+    day = 1,
+    target = "Workout",
+    durationSec = 3600,
+    exercises = [],
+    notes = "",
+    caloriesBurned = 0,
+}) => {
+    const workoutDateStr = date || new Date().toISOString().split("T")[0];
+    const isToday = workoutDateStr === new Date().toISOString().split("T")[0];
+    const completedAt = isToday
+        ? new Date().toISOString()
+        : new Date(`${workoutDateStr}T12:00:00.000Z`).toISOString();
+
+    const history = await readLocalHistory();
+    const newEntry = {
+        day,
+        target,
+        date: workoutDateStr,
+        durationSec,
+        completedAt,
+        exercises,
+        notes: notes || "",
+        caloriesBurned: caloriesBurned || Math.round((durationSec || 3600) * 0.11),
+        isManual: true,
+    };
+
+    // Merge and sort history descending by completedAt / date
+    const updatedHistory = [newEntry, ...history]
+        .sort((a, b) => new Date(b.completedAt || b.date) - new Date(a.completedAt || a.date))
+        .slice(0, 150);
+
+    await AsyncStorage.setItem(KEYS.HISTORY, JSON.stringify(updatedHistory));
+
+    // Get freezes
+    const lastFreeze = await AsyncStorage.getItem(KEYS.LAST_FREEZE_DATE);
+    const prevFreeze = await AsyncStorage.getItem(KEYS.PREVIOUS_FREEZE_DATE);
+    const freezeDates = [lastFreeze, prevFreeze].filter(Boolean);
+
+    // Calculate streak across entire history
+    const streak = calculateStreakFromHistory(updatedHistory, freezeDates);
+    await AsyncStorage.setItem(KEYS.STREAK, String(streak));
+
+    // Update last workout date if this workout is the latest
+    const lastDate = await AsyncStorage.getItem(KEYS.LAST_WORKOUT_DATE);
+    if (!lastDate || new Date(workoutDateStr) >= new Date(lastDate)) {
+        await AsyncStorage.setItem(KEYS.LAST_WORKOUT_DATE, workoutDateStr);
+    }
+
+    // Increment total workouts
+    const totalStr = await AsyncStorage.getItem(KEYS.TOTAL_WORKOUTS);
+    const total = totalStr ? parseInt(totalStr, 10) + 1 : 1;
+    await AsyncStorage.setItem(KEYS.TOTAL_WORKOUTS, String(total));
+
+    // XP calculation
+    let xpGained = 10;
+    if (streak >= 10) xpGained = 20;
+    else if (streak >= 5) xpGained = 15;
+    else if (streak >= 3) xpGained = 12;
+
+    const xpStr = await AsyncStorage.getItem(KEYS.XP);
+    const totalXP = (xpStr ? parseInt(xpStr, 10) : 0) + xpGained;
+    await AsyncStorage.setItem(KEYS.XP, String(totalXP));
+
+    // Record Streak
+    const recordStr = await AsyncStorage.getItem(KEYS.RECORD_STREAK);
+    let recordStreak = recordStr ? parseInt(recordStr, 10) : 0;
+    if (streak > recordStreak) {
+        recordStreak = streak;
+        await AsyncStorage.setItem(KEYS.RECORD_STREAK, String(recordStreak));
+    }
+
+    // PR Check for all logged exercises
+    const prsBroken = [];
+    if (Array.isArray(exercises)) {
+        for (const ex of exercises) {
+            const exName = ex.name || ex.exerciseName;
+            if (exName && Array.isArray(ex.logs)) {
+                for (const log of ex.logs) {
+                    const weight = parseFloat(log.weight) || 0;
+                    const reps = parseInt(log.reps, 10) || 0;
+                    if (weight > 0 && reps > 0) {
+                        try {
+                            const prRes = await tryUpdatePR(exName, weight, reps);
+                            if (prRes && prRes.isNewPR) {
+                                prsBroken.push({ exerciseName: exName, weight, reps });
+                            }
+                        } catch (e) {
+                            console.warn("PR check error for manual log:", e);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    triggerAutoSync();
+    return { streak, total, xpGained, totalXP, recordStreak, prsBroken, workout: newEntry };
+};
+
+export const saveManualWorkout = async (manualData) => {
+    try {
+        const localResult = await saveManualWorkoutLocal(manualData);
+
+        if (hasCloudSession()) {
+            fssaveManualWorkout(manualData).catch((e) => {
+                console.warn("[Storage] Cloud manual workout sync failed. Local save completed.", e?.message);
+            });
+        }
+
+        return localResult;
+    } catch (e) {
+        console.error("saveManualWorkout error", e);
+        throw e;
     }
 };
 

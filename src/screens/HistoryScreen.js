@@ -16,6 +16,7 @@ import { getWorkoutHistory, getStreak, getTotalWorkouts, formatDuration, getStre
 import { WORKOUT_PLAN } from "../data/workoutData";
 import * as Haptics from "expo-haptics";
 import WorkoutCalendar from "../components/WorkoutCalendar";
+import ManualWorkoutModal from "../components/ManualWorkoutModal";
 import SkeletonBlock from "../components/SkeletonBlock";
 
 const { width } = Dimensions.get("window");
@@ -819,6 +820,8 @@ export default function HistoryScreen({ navigation }) {
     const [sharingCard, setSharingCard] = useState(false);
     const [exportModalVisible, setExportModalVisible] = useState(false);
     const [exportingType, setExportingType] = useState(null);
+    const [manualModalVisible, setManualModalVisible] = useState(false);
+    const [manualModalInitialDate, setManualModalInitialDate] = useState(null);
     const shareShotRef = useRef(null);
 
     const [loading, setLoading] = useState(true);
@@ -1093,7 +1096,18 @@ export default function HistoryScreen({ navigation }) {
                     <Ionicons name="chevron-back" size={22} color={COLORS.text} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>HISTORY</Text>
-                <View style={styles.backBtnPlaceholder} />
+                <TouchableOpacity
+                    style={styles.headerLogBtn}
+                    onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setManualModalInitialDate(null);
+                        setManualModalVisible(true);
+                    }}
+                    activeOpacity={0.75}
+                >
+                    <Ionicons name="add" size={14} color="#FFF" style={{ marginRight: 2 }} />
+                    <Text style={styles.headerLogBtnText}>LOG</Text>
+                </TouchableOpacity>
             </View>
 
             {/* ── Segmented Tabs ── */}
@@ -1248,9 +1262,9 @@ export default function HistoryScreen({ navigation }) {
                                 </View>
 
                                 {/* ── Hall of Fame & Highlights Grid ── */}
-                                <SectionLabel text="HALL OF FAME & RECORDS" />
+                                <SectionLabel text="HALL OF FAME" />
                                 <View style={styles.hofGrid}>
-                                    {/* Max Calories Card */}
+                                    {/* 1. Heaviest Lift */}
                                     <View style={styles.hofCard}>
                                         <LinearGradient
                                             colors={["rgba(227, 30, 36, 0.08)", "transparent"]}
@@ -1258,64 +1272,64 @@ export default function HistoryScreen({ navigation }) {
                                             pointerEvents="none"
                                         />
                                         <View style={styles.hofTop}>
-                                            <View style={[styles.hofIconBox, { backgroundColor: "rgba(227, 30, 36, 0.12)", borderColor: "rgba(227, 30, 36, 0.3)" }]}>
-                                                <Ionicons name="flame" size={14} color={COLORS.primary} />
+                                            <View style={styles.hofIconBox}>
+                                                <Ionicons name="barbell" size={14} color={COLORS.primary} />
                                             </View>
-                                            <Text style={styles.hofTag}>MAX CALORIES</Text>
+                                            <Text style={styles.hofTag}>MAX WEIGHT</Text>
                                         </View>
-                                        <Text style={[styles.hofValue, { color: COLORS.primary }]}>
-                                            {hallOfFame.maxCalories ? `${hallOfFame.maxCalories.calories}` : "—"}
-                                            <Text style={styles.hofUnit}>{hallOfFame.maxCalories ? " KCAL" : ""}</Text>
+                                        <Text style={styles.hofValue}>
+                                            {hallOfFame.heaviestLift ? `${hallOfFame.heaviestLift.weightKg}` : "0"}
+                                            <Text style={styles.hofUnit}> KG</Text>
                                         </Text>
                                         <Text style={styles.hofSub} numberOfLines={1}>
-                                            {hallOfFame.maxCalories ? `${hallOfFame.maxCalories.target} · ${hallOfFame.maxCalories.date ? hallOfFame.maxCalories.date.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}` : "No workout logged"}
+                                            {hallOfFame.heaviestLift ? hallOfFame.heaviestLift.exerciseName : "No lifts logged"}
                                         </Text>
                                     </View>
 
-                                    {/* Heaviest Lift Card */}
+                                    {/* 2. Most Caloric Session */}
                                     <View style={styles.hofCard}>
                                         <LinearGradient
-                                            colors={["rgba(255, 215, 0, 0.08)", "transparent"]}
+                                            colors={["rgba(255, 69, 58, 0.08)", "transparent"]}
                                             style={StyleSheet.absoluteFillObject}
                                             pointerEvents="none"
                                         />
                                         <View style={styles.hofTop}>
-                                            <View style={[styles.hofIconBox, { backgroundColor: "rgba(255, 215, 0, 0.12)", borderColor: "rgba(255, 215, 0, 0.3)" }]}>
-                                                <Ionicons name="barbell" size={14} color="#FFD700" />
+                                            <View style={[styles.hofIconBox, { backgroundColor: "rgba(255, 69, 58, 0.12)", borderColor: "rgba(255, 69, 58, 0.3)" }]}>
+                                                <Ionicons name="flame" size={14} color="#FF453A" />
                                             </View>
-                                            <Text style={styles.hofTag}>HEAVIEST LIFT</Text>
+                                            <Text style={styles.hofTag}>RECORD BURN</Text>
                                         </View>
-                                        <Text style={[styles.hofValue, { color: "#FFD700" }]}>
-                                            {hallOfFame.heaviestLift ? `${hallOfFame.heaviestLift.weightKg}` : "—"}
-                                            <Text style={styles.hofUnit}>{hallOfFame.heaviestLift ? " KG" : ""}</Text>
+                                        <Text style={[styles.hofValue, { color: "#FF453A" }]}>
+                                            {hallOfFame.maxCalories ? `${hallOfFame.maxCalories.calories}` : "0"}
+                                            <Text style={styles.hofUnit}> KCAL</Text>
                                         </Text>
                                         <Text style={styles.hofSub} numberOfLines={1}>
-                                            {hallOfFame.heaviestLift ? `${hallOfFame.heaviestLift.exerciseName} · ${hallOfFame.heaviestLift.reps}r` : "No heavy lift logged"}
+                                            {hallOfFame.maxCalories ? hallOfFame.maxCalories.target : "No sessions"}
                                         </Text>
                                     </View>
 
-                                    {/* Longest Session Card */}
+                                    {/* 3. Longest Session */}
                                     <View style={styles.hofCard}>
                                         <LinearGradient
-                                            colors={["rgba(48, 176, 199, 0.08)", "transparent"]}
+                                            colors={["rgba(50, 215, 75, 0.08)", "transparent"]}
                                             style={StyleSheet.absoluteFillObject}
                                             pointerEvents="none"
                                         />
                                         <View style={styles.hofTop}>
-                                            <View style={[styles.hofIconBox, { backgroundColor: "rgba(48, 176, 199, 0.12)", borderColor: "rgba(48, 176, 199, 0.3)" }]}>
-                                                <Ionicons name="timer" size={14} color="#30B0C7" />
+                                            <View style={[styles.hofIconBox, { backgroundColor: "rgba(50, 215, 75, 0.12)", borderColor: "rgba(50, 215, 75, 0.3)" }]}>
+                                                <Ionicons name="timer" size={14} color="#32D74B" />
                                             </View>
-                                            <Text style={styles.hofTag}>LONGEST SESSION</Text>
+                                            <Text style={styles.hofTag}>ENDURANCE</Text>
                                         </View>
-                                        <Text style={[styles.hofValue, { color: "#30B0C7" }]}>
-                                            {hallOfFame.longestSession ? formatDuration(hallOfFame.longestSession.durationSec) : "—"}
+                                        <Text style={[styles.hofValue, { color: "#32D74B" }]}>
+                                            {hallOfFame.longestSession ? formatDuration(hallOfFame.longestSession.durationSec) : "0m"}
                                         </Text>
                                         <Text style={styles.hofSub} numberOfLines={1}>
-                                            {hallOfFame.longestSession ? `${hallOfFame.longestSession.target} · ${hallOfFame.longestSession.date ? hallOfFame.longestSession.date.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}` : "No session logged"}
+                                            {hallOfFame.longestSession ? hallOfFame.longestSession.target : "No sessions"}
                                         </Text>
                                     </View>
 
-                                    {/* All-Time PRs Card */}
+                                    {/* 4. Total PRs Broken */}
                                     <View style={styles.hofCard}>
                                         <LinearGradient
                                             colors={["rgba(255, 149, 0, 0.08)", "transparent"]}
@@ -1379,7 +1393,15 @@ export default function HistoryScreen({ navigation }) {
 
                                 {/* ── Monthly Progress Calendar ── */}
                                 <SectionLabel text="MONTHLY PROGRESS CALENDAR" />
-                                <WorkoutCalendar history={history} style={{ marginHorizontal: 20 }} />
+                                <WorkoutCalendar
+                                    history={history}
+                                    style={{ marginHorizontal: 20 }}
+                                    onLogWorkoutForDate={(dateKey) => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        setManualModalInitialDate(dateKey);
+                                        setManualModalVisible(true);
+                                    }}
+                                />
                             </View>
                         )}
 
@@ -1390,19 +1412,33 @@ export default function HistoryScreen({ navigation }) {
                             <View>
                                 <View style={styles.logsHeaderRow}>
                                     <SectionLabel text={`LOGGED SESSIONS (${history.length})`} />
-                                    {history.length > 0 && (
+                                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                                         <TouchableOpacity
-                                            style={styles.exportPillBtn}
+                                            style={styles.manualLogPillBtn}
                                             onPress={() => {
                                                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                                setExportModalVisible(true);
+                                                setManualModalInitialDate(null);
+                                                setManualModalVisible(true);
                                             }}
                                             activeOpacity={0.7}
                                         >
-                                            <Ionicons name="download-outline" size={13} color={COLORS.primary} />
-                                            <Text style={styles.exportPillText}>EXPORT LOGS</Text>
+                                            <Ionicons name="add" size={13} color="#FFF" style={{ marginRight: 2 }} />
+                                            <Text style={styles.manualLogPillText}>LOG</Text>
                                         </TouchableOpacity>
-                                    )}
+                                        {history.length > 0 && (
+                                            <TouchableOpacity
+                                                style={styles.exportPillBtn}
+                                                onPress={() => {
+                                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                                    setExportModalVisible(true);
+                                                }}
+                                                activeOpacity={0.7}
+                                            >
+                                                <Ionicons name="download-outline" size={13} color={COLORS.primary} />
+                                                <Text style={styles.exportPillText}>EXPORT</Text>
+                                            </TouchableOpacity>
+                                        )}
+                                    </View>
                                 </View>
 
                                 {history.length === 0 ? (
@@ -1412,6 +1448,18 @@ export default function HistoryScreen({ navigation }) {
                                         </View>
                                         <Text style={styles.emptyTitle}>NO SESSIONS LOGGED YET</Text>
                                         <Text style={styles.emptySub}>Your completed workouts will be recorded here with full set breakdown and timestamps.</Text>
+                                        <TouchableOpacity
+                                            style={styles.emptyLogBtn}
+                                            onPress={() => {
+                                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                                setManualModalInitialDate(null);
+                                                setManualModalVisible(true);
+                                            }}
+                                            activeOpacity={0.75}
+                                        >
+                                            <Ionicons name="add-circle" size={15} color="#FFF" style={{ marginRight: 6 }} />
+                                            <Text style={styles.emptyLogBtnText}>MANUALLY LOG WORKOUT</Text>
+                                        </TouchableOpacity>
                                     </View>
                                 ) : (
                                     Object.keys(groups).map((week) => (
@@ -1688,6 +1736,16 @@ export default function HistoryScreen({ navigation }) {
                     </View>
                 </ViewShot>
             </View>
+
+            {/* ── Manual Workout Logging Modal ── */}
+            <ManualWorkoutModal
+                visible={manualModalVisible}
+                onClose={() => setManualModalVisible(false)}
+                initialDate={manualModalInitialDate}
+                onSaved={() => {
+                    load();
+                }}
+            />
         </View>
     );
 }
@@ -1715,6 +1773,58 @@ const styles = StyleSheet.create({
         width: 36, height: 36,
     },
     headerTitle: { fontSize: 18, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 0.5 },
+    headerLogBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: COLORS.primary,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: RADIUS.pill,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.2)",
+    },
+    headerLogBtnText: {
+        fontSize: 10.5,
+        fontFamily: FAMILY.bold,
+        color: "#FFF",
+        letterSpacing: 1,
+    },
+    manualLogPillBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: RADIUS.pill,
+        backgroundColor: COLORS.primary,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.2)",
+    },
+    manualLogPillText: {
+        fontSize: 9.5,
+        fontFamily: FAMILY.bold,
+        color: "#FFFFFF",
+        letterSpacing: 0.8,
+    },
+    emptyLogBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: COLORS.primary,
+        paddingHorizontal: 16,
+        paddingVertical: 9,
+        borderRadius: RADIUS.pill,
+        marginTop: 14,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.2)",
+    },
+    emptyLogBtnText: {
+        fontSize: 11,
+        fontFamily: FAMILY.bold,
+        color: "#FFF",
+        letterSpacing: 0.8,
+    },
 
     /* Segmented Tab Bar */
     tabBarContainer: {

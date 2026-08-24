@@ -59,6 +59,57 @@ const areAllInterveningDaysExcused = (startDateStr, endDateStr, freezeDates = []
     return true;
 };
 
+export const calculateStreakFromHistory = (history = [], freezeDates = []) => {
+    if (!history || history.length === 0) return 0;
+
+    const dateSet = new Set();
+    history.forEach((h) => {
+        if (h.date) {
+            dateSet.add(h.date);
+        } else if (h.completedAt) {
+            const d = typeof h.completedAt === "object" && h.completedAt.seconds
+                ? new Date(h.completedAt.seconds * 1000)
+                : new Date(h.completedAt);
+            if (!isNaN(d.getTime())) {
+                dateSet.add(d.toISOString().split("T")[0]);
+            }
+        }
+    });
+
+    const sortedDates = Array.from(dateSet).sort();
+    if (sortedDates.length === 0) return 0;
+
+    const todayStr = new Date().toISOString().split("T")[0];
+    const latestDateStr = sortedDates[sortedDates.length - 1];
+
+    const today = new Date(todayStr);
+    const latest = new Date(latestDateStr);
+    const daysSinceLatest = Math.round((today.getTime() - latest.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (daysSinceLatest > 1 && !areAllInterveningDaysExcused(latestDateStr, todayStr, freezeDates)) {
+        return 0;
+    }
+
+    let streak = 1;
+    for (let i = sortedDates.length - 1; i > 0; i--) {
+        const curr = sortedDates[i];
+        const prev = sortedDates[i - 1];
+        const currDate = new Date(curr);
+        const prevDate = new Date(prev);
+        const diff = Math.round((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (diff === 0) {
+            // Same day, continue
+        } else if (diff === 1 || areAllInterveningDaysExcused(prev, curr, freezeDates)) {
+            streak += 1;
+        } else {
+            break;
+        }
+    }
+
+    return streak;
+};
+
 /**
  * Save a completed workout session and update streak + total count.
  * This is the Firestore equivalent of `saveWorkoutComplete` in storage.js.
@@ -134,6 +185,80 @@ export const fssaveWorkoutComplete = async (day, target, durationSec, exercises 
         return { streak, total: (data.totalWorkouts || 0) + 1 };
     } catch (e) {
         console.error("[Firestore] saveWorkoutComplete error", e);
+        throw e;
+    }
+};
+
+/**
+ * Save a manually logged past/today workout session and update streak + total count.
+ */
+export const fssaveManualWorkout = async ({
+    date,
+    day = 1,
+    target = "Workout",
+    durationSec = 3600,
+    exercises = [],
+    notes = "",
+    caloriesBurned = 0,
+}) => {
+    try {
+        const workoutDateStr = date || new Date().toISOString().split("T")[0];
+        const isToday = workoutDateStr === new Date().toISOString().split("T")[0];
+        const completedAt = isToday
+            ? new Date()
+            : new Date(`${workoutDateStr}T12:00:00.000Z`);
+
+        // 1. Add workout to history subcollection
+        await addDoc(subCol("history"), {
+            day,
+            target,
+            date: workoutDateStr,
+            durationSec,
+            exercises,
+            notes: notes || "",
+            caloriesBurned: caloriesBurned || Math.round((durationSec || 3600) * 0.11),
+            completedAt: isToday ? serverTimestamp() : completedAt,
+            isManual: true,
+        });
+
+        // 2. Fetch user doc and recent history to recalculate streak
+        const snap = await getDoc(userDoc());
+        const data = snap.exists() ? snap.data() : {};
+        const lastFreeze = data.lastFreezeDate || null;
+        const freezeDates = [lastFreeze].filter(Boolean);
+
+        const q = query(subCol("history"), orderBy("completedAt", "desc"), limit(100));
+        const histSnap = await getDocs(q);
+        const history = histSnap.docs.map((d) => d.data());
+
+        const streak = calculateStreakFromHistory(history, freezeDates);
+
+        let xpGained = 10;
+        if (streak >= 10) xpGained = 20;
+        else if (streak >= 5) xpGained = 15;
+        else if (streak >= 3) xpGained = 12;
+
+        let recordStreak = data.recordStreak || 0;
+        if (streak > recordStreak) {
+            recordStreak = streak;
+        }
+
+        const lastWorkoutDate = (data.lastWorkoutDate && new Date(data.lastWorkoutDate) > new Date(workoutDateStr))
+            ? data.lastWorkoutDate
+            : workoutDateStr;
+
+        // 3. Update user doc atomically
+        await setDoc(userDoc(), {
+            streak,
+            lastWorkoutDate,
+            totalWorkouts: increment(1),
+            xp: increment(xpGained),
+            recordStreak,
+        }, { merge: true });
+
+        return { streak, total: (data.totalWorkouts || 0) + 1 };
+    } catch (e) {
+        console.error("[Firestore] fssaveManualWorkout error", e);
         throw e;
     }
 };

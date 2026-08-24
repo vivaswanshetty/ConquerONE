@@ -39,7 +39,7 @@ function formatDateKey(date) {
     return `${y}-${m}-${d}`;
 }
 
-export default function WorkoutCalendar({ history = [], style }) {
+export default function WorkoutCalendar({ history = [], style, onLogWorkoutForDate = null }) {
     const today = useMemo(() => new Date(), []);
     const todayKey = useMemo(() => formatDateKey(today), [today]);
 
@@ -502,6 +502,16 @@ export default function WorkoutCalendar({ history = [], style }) {
                         <Ionicons name="moon-outline" size={20} color="#8E8E93" />
                         <Text style={[styles.emptyRestText, { color: "#8E8E93" }]}>SCHEDULED REST DAY</Text>
                         <Text style={styles.emptyRestSub}>Planned recovery day. Protein synthesis & muscle repair.</Text>
+                        {onLogWorkoutForDate && !selectedDateInfo.isFuture && (
+                            <TouchableOpacity
+                                style={[styles.calendarLogBtn, { backgroundColor: "rgba(255, 255, 255, 0.06)", borderColor: "rgba(255, 255, 255, 0.12)" }]}
+                                onPress={() => onLogWorkoutForDate(selectedDateKey)}
+                                activeOpacity={0.8}
+                            >
+                                <Ionicons name="add-circle-outline" size={14} color={COLORS.textSub} style={{ marginRight: 6 }} />
+                                <Text style={[styles.calendarLogBtnText, { color: COLORS.textSub }]}>LOG EXTRA WORKOUT</Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
                 ) : selectedDateInfo.isToday ? (
                     <View style={styles.emptyRestState}>
@@ -512,6 +522,16 @@ export default function WorkoutCalendar({ history = [], style }) {
                         <Text style={styles.emptyRestSub}>
                             Pending workout for today. Complete your session to build your streak!
                         </Text>
+                        {onLogWorkoutForDate && (
+                            <TouchableOpacity
+                                style={styles.calendarLogBtn}
+                                onPress={() => onLogWorkoutForDate(selectedDateKey)}
+                                activeOpacity={0.8}
+                            >
+                                <Ionicons name="add-circle" size={14} color="#FFF" style={{ marginRight: 6 }} />
+                                <Text style={styles.calendarLogBtnText}>MANUALLY LOG TODAY'S SESSION</Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
                 ) : selectedDateInfo.isFuture ? (
                     <View style={styles.emptyRestState}>
@@ -530,6 +550,16 @@ export default function WorkoutCalendar({ history = [], style }) {
                         <Text style={styles.emptyRestSub}>
                             Was scheduled for {selectedDateInfo.plan.target}. No session was recorded.
                         </Text>
+                        {onLogWorkoutForDate && (
+                            <TouchableOpacity
+                                style={styles.calendarLogBtn}
+                                onPress={() => onLogWorkoutForDate(selectedDateKey)}
+                                activeOpacity={0.8}
+                            >
+                                <Ionicons name="add-circle" size={14} color="#FFF" style={{ marginRight: 6 }} />
+                                <Text style={styles.calendarLogBtnText}>LOG WORKOUT FOR THIS DAY</Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
                 )}
             </View>
@@ -911,5 +941,23 @@ const styles = StyleSheet.create({
         fontFamily: FAMILY.regular,
         color: COLORS.textMuted,
         textAlign: "center",
+    },
+    calendarLogBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: COLORS.primary,
+        paddingHorizontal: 14,
+        paddingVertical: 7,
+        borderRadius: RADIUS.pill,
+        marginTop: 8,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.2)",
+    },
+    calendarLogBtnText: {
+        fontSize: 9.5,
+        fontFamily: FAMILY.bold,
+        color: "#FFF",
+        letterSpacing: 0.8,
     },
 });

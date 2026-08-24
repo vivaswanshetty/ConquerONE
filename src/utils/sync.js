@@ -4,6 +4,7 @@
 import { auth } from "./firebase";
 import {
     fssaveWorkoutComplete,
+    fssaveManualWorkout,
     fsGetWorkoutHistory,
     fsGetStreak,
     fsGetTotalWorkouts,
@@ -35,6 +36,7 @@ export const getLastSyncTime = async () => new Date().toISOString();
 // Re-export Firestore functions under legacy names for backward compat
 export {
     fssaveWorkoutComplete as saveWorkoutComplete,
+    fssaveManualWorkout as saveManualWorkout,
     fsGetWorkoutHistory as getWorkoutHistory,
     fsGetStreak as getStreak,
     fsGetTotalWorkouts as getTotalWorkouts,
