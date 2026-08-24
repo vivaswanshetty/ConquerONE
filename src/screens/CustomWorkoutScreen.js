@@ -15,7 +15,6 @@ import { getPRRecords } from "../utils/storage";
 import { fsSaveCustomWorkout, fsGetCustomWorkouts, fsDeleteCustomWorkout } from "../utils/firestore";
 import { useNotification } from "../context/NotificationContext";
 
-const { width } = Dimensions.get("window");
 const FAVORITES_KEY = "@custom_workout_favorites_v2";
 const ROUTINES_KEY = "@custom_workout_routines_v2";
 
@@ -403,54 +402,45 @@ export default function CustomWorkoutScreen({ navigation }) {
         <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#000" translucent />
 
-            {/* ── 1. Top Navigation Bar (Fixed) ── */}
-            <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-                <TouchableOpacity
-                    style={styles.backBtn}
-                    onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        navigation.goBack();
-                    }}
-                    activeOpacity={0.75}
-                >
-                    <Ionicons name="chevron-back" size={20} color="#FFFFFF" />
-                </TouchableOpacity>
+            {/* ── 1. Top Navigation & Control Deck (Fixed at top so vertical scrolling below is 100% unrestricted) ── */}
+            <View style={[styles.topControlDeck, { paddingTop: insets.top + 6 }]}>
+                {/* Header Bar */}
+                <View style={styles.header}>
+                    <TouchableOpacity
+                        style={styles.backBtn}
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            navigation.goBack();
+                        }}
+                        activeOpacity={0.75}
+                    >
+                        <Ionicons name="chevron-back" size={20} color="#FFFFFF" />
+                    </TouchableOpacity>
 
-                <View style={styles.headerCenter}>
-                    <Text style={styles.headerTitle}>CUSTOM WORKOUT</Text>
-                    <Text style={styles.headerSubtitle}>DYNAMIC ROUTINE BUILDER</Text>
+                    <View style={styles.headerCenter}>
+                        <Text style={styles.headerTitle}>CUSTOM WORKOUT</Text>
+                        <Text style={styles.headerSubtitle}>DYNAMIC ROUTINE BUILDER</Text>
+                    </View>
+
+                    <View style={[styles.countBadge, selected.size > 0 && styles.countBadgeActive]}>
+                        <Text style={[styles.countBadgeText, selected.size > 0 && styles.countBadgeTextActive]}>
+                            {selected.size} SELECTED
+                        </Text>
+                    </View>
                 </View>
 
-                <View style={[styles.countBadge, selected.size > 0 && styles.countBadgeActive]}>
-                    <Text style={[styles.countBadgeText, selected.size > 0 && styles.countBadgeTextActive]}>
-                        {selected.size} SELECTED
-                    </Text>
-                </View>
-            </View>
+                {/* Optional Status Banner */}
+                {statusBanner && (
+                    <View style={styles.statusBanner}>
+                        <Ionicons name="checkmark-circle" size={13} color="#30D158" style={{ marginRight: 6 }} />
+                        <Text style={styles.statusBannerText}>{statusBanner}</Text>
+                    </View>
+                )}
 
-            {/* ── Optional Status Banner ── */}
-            {statusBanner && (
-                <View style={styles.statusBanner}>
-                    <Ionicons name="checkmark-circle" size={14} color="#30D158" style={{ marginRight: 6 }} />
-                    <Text style={styles.statusBannerText}>{statusBanner}</Text>
-                </View>
-            )}
-
-            {/* ── 2. Unified Vertical ScrollView ── */}
-            <ScrollView
-                ref={scrollRef}
-                showsVerticalScrollIndicator={false}
-                overScrollMode="never"
-                style={{ flex: 1 }}
-                contentContainerStyle={{
-                    paddingTop: 8,
-                    paddingBottom: selected.size > 0 ? 170 : Math.max(insets.bottom, 20) + 30,
-                }}
-            >
-                {/* ── Search Bar ── */}
+                {/* Search Bar */}
                 <View style={styles.searchSection}>
                     <View style={styles.searchBox}>
-                        <Ionicons name="search-outline" size={17} color={COLORS.textMuted} />
+                        <Ionicons name="search-outline" size={16} color={COLORS.textMuted} />
                         <TextInput
                             style={styles.searchInput}
                             placeholder="Search movements, equipment, muscle..."
@@ -467,14 +457,13 @@ export default function CustomWorkoutScreen({ navigation }) {
                     </View>
                 </View>
 
-                {/* ── Smart Curation Tabs (High Visibility with MY ROUTINES prominently up front) ── */}
+                {/* Smart Curation Tabs */}
                 <View style={styles.tabsSection}>
                     <ScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
                         contentContainerStyle={styles.tabsContent}
                         overScrollMode="never"
-                        nestedScrollEnabled
                     >
                         {[
                             { key: "ALL", label: "ALL MOVEMENTS", icon: "grid-outline" },
@@ -497,9 +486,9 @@ export default function CustomWorkoutScreen({ navigation }) {
                                 >
                                     <Ionicons
                                         name={tab.icon}
-                                        size={13}
+                                        size={12}
                                         color={isActive ? "#FFFFFF" : COLORS.textMuted}
-                                        style={{ marginRight: 6 }}
+                                        style={{ marginRight: 5 }}
                                     />
                                     <Text style={[styles.tabChipText, isActive && styles.tabChipTextActive]}>
                                         {tab.label}
@@ -510,7 +499,7 @@ export default function CustomWorkoutScreen({ navigation }) {
                     </ScrollView>
                 </View>
 
-                {/* ── Muscle Filter Row (When viewing exercise lists) ── */}
+                {/* Muscle Filter Row (When viewing exercise lists) */}
                 {activeTab !== "PRESETS" && activeTab !== "ROUTINES" && (
                     <View style={styles.muscleFilterSection}>
                         <ScrollView
@@ -518,7 +507,6 @@ export default function CustomWorkoutScreen({ navigation }) {
                             showsHorizontalScrollIndicator={false}
                             contentContainerStyle={styles.muscleFilterContent}
                             overScrollMode="never"
-                            nestedScrollEnabled
                         >
                             {["ALL", "CHEST", "BACK", "LEGS", "SHOULDERS", "ARMS", "CORE"].map((m) => {
                                 const isSelected = muscleFilter === m;
@@ -541,123 +529,134 @@ export default function CustomWorkoutScreen({ navigation }) {
                         </ScrollView>
                     </View>
                 )}
+            </View>
 
-                {/* ── Main Content Container ── */}
-                <View style={{ paddingHorizontal: 20 }}>
-                    {/* ── Mode A: Express Preset Packs Tab ── */}
-                    {activeTab === "PRESETS" && (
-                        <View style={styles.sectionContainer}>
-                            <View style={styles.sectionHeaderRow}>
-                                <Text style={styles.sectionHeaderTitle}>EXPRESS PROTOCOL PRESETS</Text>
-                                <Text style={styles.sectionHeaderCount}>{CURATED_PRESET_PACKS.length} PRESETS</Text>
-                            </View>
-                            {CURATED_PRESET_PACKS.map((pack) => (
-                                <PresetPackCard
-                                    key={pack.id}
-                                    pack={pack}
-                                    onApply={() => applyPresetPack(pack)}
-                                />
-                            ))}
+            {/* ── 2. Dedicated Vertical ScrollView (100% unhindered smooth vertical scrolling) ── */}
+            <ScrollView
+                ref={scrollRef}
+                showsVerticalScrollIndicator={true}
+                keyboardShouldPersistTaps="handled"
+                overScrollMode="never"
+                style={{ flex: 1 }}
+                contentContainerStyle={{
+                    paddingHorizontal: 20,
+                    paddingTop: 12,
+                    paddingBottom: selected.size > 0 ? 170 : Math.max(insets.bottom, 20) + 30,
+                }}
+            >
+                {/* ── Mode A: Express Preset Packs Tab ── */}
+                {activeTab === "PRESETS" && (
+                    <View style={styles.sectionContainer}>
+                        <View style={styles.sectionHeaderRow}>
+                            <Text style={styles.sectionHeaderTitle}>EXPRESS PROTOCOL PRESETS</Text>
+                            <Text style={styles.sectionHeaderCount}>{CURATED_PRESET_PACKS.length} PRESETS</Text>
                         </View>
-                    )}
+                        {CURATED_PRESET_PACKS.map((pack) => (
+                            <PresetPackCard
+                                key={pack.id}
+                                pack={pack}
+                                onApply={() => applyPresetPack(pack)}
+                            />
+                        ))}
+                    </View>
+                )}
 
-                    {/* ── Mode B: Saved User Routines Tab ── */}
-                    {activeTab === "ROUTINES" && (
-                        <View style={styles.sectionContainer}>
-                            <View style={styles.sectionHeaderRow}>
-                                <Text style={styles.sectionHeaderTitle}>MY SAVED ROUTINES</Text>
-                                <Text style={styles.sectionHeaderCount}>{routines.length} ROUTINES</Text>
-                            </View>
+                {/* ── Mode B: Saved User Routines Tab ── */}
+                {activeTab === "ROUTINES" && (
+                    <View style={styles.sectionContainer}>
+                        <View style={styles.sectionHeaderRow}>
+                            <Text style={styles.sectionHeaderTitle}>MY SAVED ROUTINES</Text>
+                            <Text style={styles.sectionHeaderCount}>{routines.length} ROUTINES</Text>
+                        </View>
 
-                            {selected.size > 0 && (
+                        {selected.size > 0 && (
+                            <TouchableOpacity
+                                style={styles.quickSaveRoutineBanner}
+                                onPress={() => setSaveModalVisible(true)}
+                                activeOpacity={0.8}
+                            >
+                                <Ionicons name="add-circle" size={18} color={COLORS.primary} style={{ marginRight: 8 }} />
+                                <Text style={styles.quickSaveRoutineText}>
+                                    SAVE CURRENT {selected.size} MOVEMENTS AS NEW ROUTINE
+                                </Text>
+                            </TouchableOpacity>
+                        )}
+
+                        {routines.length === 0 ? (
+                            <View style={styles.emptyCard}>
+                                <Ionicons name="layers-outline" size={32} color={COLORS.textMuted} style={{ marginBottom: 12 }} />
+                                <Text style={styles.emptyTitle}>NO SAVED ROUTINES YET</Text>
+                                <Text style={styles.emptySub}>
+                                    Select any movements in "ALL MOVEMENTS" and tap "SAVE ROUTINE" to build your custom workout library.
+                                </Text>
                                 <TouchableOpacity
-                                    style={styles.quickSaveRoutineBanner}
-                                    onPress={() => setSaveModalVisible(true)}
+                                    style={styles.emptyActionBtn}
+                                    onPress={() => setActiveTab("ALL")}
                                     activeOpacity={0.8}
                                 >
-                                    <Ionicons name="add-circle" size={18} color={COLORS.primary} style={{ marginRight: 8 }} />
-                                    <Text style={styles.quickSaveRoutineText}>
-                                        SAVE CURRENT {selected.size} MOVEMENTS AS NEW ROUTINE
-                                    </Text>
+                                    <Text style={styles.emptyActionBtnText}>BROWSE ALL MOVEMENTS</Text>
                                 </TouchableOpacity>
-                            )}
-
-                            {routines.length === 0 ? (
-                                <View style={styles.emptyCard}>
-                                    <Ionicons name="layers-outline" size={32} color={COLORS.textMuted} style={{ marginBottom: 12 }} />
-                                    <Text style={styles.emptyTitle}>NO SAVED ROUTINES YET</Text>
-                                    <Text style={styles.emptySub}>
-                                        Select any movements in "ALL MOVEMENTS" and tap "SAVE ROUTINE" to build your custom workout library.
-                                    </Text>
-                                    <TouchableOpacity
-                                        style={styles.emptyActionBtn}
-                                        onPress={() => setActiveTab("ALL")}
-                                        activeOpacity={0.8}
-                                    >
-                                        <Text style={styles.emptyActionBtnText}>BROWSE ALL MOVEMENTS</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            ) : (
-                                routines.map((r) => (
-                                    <RoutineCard
-                                        key={r.id}
-                                        routine={r}
-                                        onApply={() => {
-                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                            const next = new Set(r.exerciseNames);
-                                            setSelected(next);
-                                            showFlash(`Loaded routine "${r.title}" (${next.size} movements)`);
-                                        }}
-                                        onDelete={() => handleDeleteRoutine(r.id)}
-                                    />
-                                ))
-                            )}
-                        </View>
-                    )}
-
-                    {/* ── Mode C: Standard Exercise Catalog List ── */}
-                    {activeTab !== "PRESETS" && activeTab !== "ROUTINES" && (
-                        <View style={styles.sectionContainer}>
-                            <View style={styles.sectionHeaderRow}>
-                                <Text style={styles.sectionHeaderTitle}>
-                                    {activeTab === "FAVORITES" ? "BOOKMARKED FAVORITES" : activeTab === "EFFECTIVE" ? "MAXIMUM ROI MOVEMENTS" : activeTab === "MAX_REPS" ? "HIGH VOLUME & PUMP MOVEMENTS" : "EXERCISE PROTOCOL CATALOG"}
-                                </Text>
-                                <Text style={styles.sectionHeaderCount}>{filteredExercises.length} MOVEMENTS</Text>
                             </View>
+                        ) : (
+                            routines.map((r) => (
+                                <RoutineCard
+                                    key={r.id}
+                                    routine={r}
+                                    onApply={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                        const next = new Set(r.exerciseNames);
+                                        setSelected(next);
+                                        showFlash(`Loaded routine "${r.title}" (${next.size} movements)`);
+                                    }}
+                                    onDelete={() => handleDeleteRoutine(r.id)}
+                                />
+                            ))
+                        )}
+                    </View>
+                )}
 
-                            {filteredExercises.length === 0 ? (
-                                <View style={styles.emptyCard}>
-                                    <Ionicons name="barbell-outline" size={32} color={COLORS.textMuted} style={{ marginBottom: 12 }} />
-                                    <Text style={styles.emptyTitle}>NO MOVEMENTS FOUND</Text>
-                                    <Text style={styles.emptySub}>Try adjusting your search query or filter categories.</Text>
-                                </View>
-                            ) : (
-                                filteredExercises.map((ex, index) => {
-                                    const isSelected = selected.has(ex.name);
-                                    const isFav = favorites.has(ex.name);
-                                    const pr = prRecords[ex.name];
-                                    const suggested = getSuggestedWeight(ex.name);
-                                    const muscleColor = getMuscleColor(ex.muscleGroup);
-
-                                    return (
-                                        <ExerciseSelectCard
-                                            key={ex.name}
-                                            ex={ex}
-                                            index={index}
-                                            isSelected={isSelected}
-                                            isFav={isFav}
-                                            pr={pr}
-                                            suggestedWeight={suggested}
-                                            muscleColor={muscleColor}
-                                            onToggleSelect={() => toggleSelect(ex.name)}
-                                            onToggleFavorite={() => toggleFavorite(ex.name)}
-                                        />
-                                    );
-                                })
-                            )}
+                {/* ── Mode C: Standard Exercise Catalog List ── */}
+                {activeTab !== "PRESETS" && activeTab !== "ROUTINES" && (
+                    <View style={styles.sectionContainer}>
+                        <View style={styles.sectionHeaderRow}>
+                            <Text style={styles.sectionHeaderTitle}>
+                                {activeTab === "FAVORITES" ? "BOOKMARKED FAVORITES" : activeTab === "EFFECTIVE" ? "MAXIMUM ROI MOVEMENTS" : activeTab === "MAX_REPS" ? "HIGH VOLUME & PUMP MOVEMENTS" : "EXERCISE PROTOCOL CATALOG"}
+                            </Text>
+                            <Text style={styles.sectionHeaderCount}>{filteredExercises.length} MOVEMENTS</Text>
                         </View>
-                    )}
-                </View>
+
+                        {filteredExercises.length === 0 ? (
+                            <View style={styles.emptyCard}>
+                                <Ionicons name="barbell-outline" size={32} color={COLORS.textMuted} style={{ marginBottom: 12 }} />
+                                <Text style={styles.emptyTitle}>NO MOVEMENTS FOUND</Text>
+                                <Text style={styles.emptySub}>Try adjusting your search query or filter categories.</Text>
+                            </View>
+                        ) : (
+                            filteredExercises.map((ex, index) => {
+                                const isSelected = selected.has(ex.name);
+                                const isFav = favorites.has(ex.name);
+                                const pr = prRecords[ex.name];
+                                const suggested = getSuggestedWeight(ex.name);
+                                const muscleColor = getMuscleColor(ex.muscleGroup);
+
+                                return (
+                                    <ExerciseSelectCard
+                                        key={ex.name}
+                                        ex={ex}
+                                        index={index}
+                                        isSelected={isSelected}
+                                        isFav={isFav}
+                                        pr={pr}
+                                        suggestedWeight={suggested}
+                                        muscleColor={muscleColor}
+                                        onToggleSelect={() => toggleSelect(ex.name)}
+                                        onToggleFavorite={() => toggleFavorite(ex.name)}
+                                    />
+                                );
+                            })
+                        )}
+                    </View>
+                )}
             </ScrollView>
 
             {/* ── 3. Bottom Floating Selection Dock ── */}
@@ -967,18 +966,26 @@ function RoutineCard({ routine, onApply, onDelete }) {
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: COLORS.bg },
 
+    // Top Fixed Control Deck
+    topControlDeck: {
+        backgroundColor: COLORS.bg,
+        borderBottomWidth: 1,
+        borderBottomColor: "rgba(255, 255, 255, 0.08)",
+        zIndex: 10,
+    },
+
     // Header
     header: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
         paddingHorizontal: 20,
-        paddingBottom: 10,
+        paddingBottom: 8,
     },
     backBtn: {
-        width: 38,
-        height: 38,
-        borderRadius: 19,
+        width: 36,
+        height: 36,
+        borderRadius: 18,
         backgroundColor: "rgba(255, 255, 255, 0.05)",
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.1)",
@@ -989,21 +996,21 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     headerTitle: {
-        fontSize: 16,
+        fontSize: 15,
         fontFamily: FAMILY.bold,
         color: "#FFFFFF",
         letterSpacing: 1,
     },
     headerSubtitle: {
-        fontSize: 8.5,
+        fontSize: 8,
         fontFamily: FAMILY.monoBold,
         color: COLORS.textMuted,
         letterSpacing: 1,
-        marginTop: 2,
+        marginTop: 1,
     },
     countBadge: {
-        paddingHorizontal: 10,
-        paddingVertical: 5,
+        paddingHorizontal: 9,
+        paddingVertical: 4,
         borderRadius: RADIUS.pill,
         backgroundColor: "rgba(255, 255, 255, 0.05)",
         borderWidth: 1,
@@ -1014,7 +1021,7 @@ const styles = StyleSheet.create({
         borderColor: "rgba(227, 30, 36, 0.4)",
     },
     countBadgeText: {
-        fontSize: 9,
+        fontSize: 8.5,
         fontFamily: FAMILY.monoBold,
         color: COLORS.textMuted,
         letterSpacing: 0.5,
@@ -1026,9 +1033,9 @@ const styles = StyleSheet.create({
     // Status Banner
     statusBanner: {
         marginHorizontal: 20,
-        marginBottom: 8,
-        paddingHorizontal: 14,
-        paddingVertical: 8,
+        marginBottom: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
         borderRadius: RADIUS.sm,
         backgroundColor: "rgba(48, 209, 88, 0.12)",
         borderWidth: 1,
@@ -1037,7 +1044,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     statusBannerText: {
-        fontSize: 11,
+        fontSize: 10,
         fontFamily: FAMILY.monoBold,
         color: "#30D158",
         letterSpacing: 0.5,
@@ -1046,39 +1053,40 @@ const styles = StyleSheet.create({
     // Search Section
     searchSection: {
         paddingHorizontal: 20,
-        marginBottom: 10,
+        marginBottom: 8,
     },
     searchBox: {
         flexDirection: "row",
         alignItems: "center",
         backgroundColor: "rgba(255, 255, 255, 0.04)",
-        borderRadius: 14,
-        paddingHorizontal: 14,
-        height: 44,
+        borderRadius: 12,
+        paddingHorizontal: 12,
+        height: 38,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.08)",
-        gap: 10,
+        gap: 8,
     },
     searchInput: {
         flex: 1,
-        fontSize: 12.5,
+        fontSize: 12,
         fontFamily: FAMILY.regular,
         color: "#FFFFFF",
+        paddingVertical: 0,
     },
 
     // Smart Curation Tabs
     tabsSection: {
-        marginBottom: 10,
+        marginBottom: 8,
     },
     tabsContent: {
         paddingHorizontal: 20,
-        gap: 8,
+        gap: 6,
     },
     tabChip: {
         flexDirection: "row",
         alignItems: "center",
-        paddingHorizontal: 14,
-        paddingVertical: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
         borderRadius: RADIUS.pill,
         backgroundColor: "rgba(255, 255, 255, 0.04)",
         borderWidth: 1,
@@ -1089,7 +1097,7 @@ const styles = StyleSheet.create({
         borderColor: "rgba(227, 30, 36, 0.45)",
     },
     tabChipText: {
-        fontSize: 10,
+        fontSize: 9.5,
         fontFamily: FAMILY.monoBold,
         color: COLORS.textMuted,
         letterSpacing: 0.5,
@@ -1100,15 +1108,15 @@ const styles = StyleSheet.create({
 
     // Muscle Filter
     muscleFilterSection: {
-        marginBottom: 14,
+        marginBottom: 8,
     },
     muscleFilterContent: {
         paddingHorizontal: 20,
-        gap: 6,
+        gap: 5,
     },
     muscleChip: {
-        paddingHorizontal: 10,
-        paddingVertical: 4,
+        paddingHorizontal: 9,
+        paddingVertical: 3.5,
         borderRadius: RADIUS.pill,
         backgroundColor: "rgba(255, 255, 255, 0.02)",
         borderWidth: 1,
@@ -1119,7 +1127,7 @@ const styles = StyleSheet.create({
         borderColor: "rgba(255, 255, 255, 0.25)",
     },
     muscleChipText: {
-        fontSize: 9,
+        fontSize: 8.5,
         fontFamily: FAMILY.monoBold,
         color: COLORS.textMuted,
         letterSpacing: 0.5,
@@ -1130,22 +1138,22 @@ const styles = StyleSheet.create({
 
     // Main Section
     sectionContainer: {
-        gap: 10,
+        gap: 8,
     },
     sectionHeaderRow: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        marginBottom: 6,
+        marginBottom: 4,
     },
     sectionHeaderTitle: {
-        fontSize: 11,
+        fontSize: 10.5,
         fontFamily: FAMILY.bold,
         color: COLORS.textSub,
         letterSpacing: 1.2,
     },
     sectionHeaderCount: {
-        fontSize: 9.5,
+        fontSize: 9,
         fontFamily: FAMILY.monoBold,
         color: COLORS.textMuted,
     },
@@ -1155,14 +1163,14 @@ const styles = StyleSheet.create({
         alignItems: "center",
         backgroundColor: "rgba(227, 30, 36, 0.1)",
         paddingHorizontal: 14,
-        paddingVertical: 12,
-        borderRadius: 14,
+        paddingVertical: 10,
+        borderRadius: 12,
         borderWidth: 1,
         borderColor: "rgba(227, 30, 36, 0.3)",
-        marginBottom: 8,
+        marginBottom: 6,
     },
     quickSaveRoutineText: {
-        fontSize: 10.5,
+        fontSize: 10,
         fontFamily: FAMILY.bold,
         color: "#FFFFFF",
         letterSpacing: 0.5,
@@ -1174,20 +1182,20 @@ const styles = StyleSheet.create({
         alignItems: "center",
         backgroundColor: "rgba(22, 22, 28, 0.8)",
         borderRadius: 16,
-        padding: 14,
+        padding: 13,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.08)",
         gap: 12,
-        marginBottom: 10,
+        marginBottom: 8,
     },
     exCardSelected: {
         borderColor: "rgba(227, 30, 36, 0.4)",
         backgroundColor: "rgba(227, 30, 36, 0.07)",
     },
     checkboxBox: {
-        width: 28,
-        height: 28,
-        borderRadius: 14,
+        width: 26,
+        height: 26,
+        borderRadius: 13,
         borderWidth: 1.5,
         borderColor: "rgba(255, 255, 255, 0.2)",
         alignItems: "center",
@@ -1195,7 +1203,7 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(255, 255, 255, 0.03)",
     },
     checkboxNum: {
-        fontSize: 10,
+        fontSize: 9.5,
         fontFamily: FAMILY.monoBold,
         color: COLORS.textMuted,
     },
@@ -1206,7 +1214,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         gap: 6,
-        marginBottom: 4,
+        marginBottom: 3,
     },
     muscleBadge: {
         paddingHorizontal: 6,
@@ -1248,16 +1256,16 @@ const styles = StyleSheet.create({
         letterSpacing: 0.5,
     },
     exCardName: {
-        fontSize: 14,
+        fontSize: 13.5,
         fontFamily: FAMILY.bold,
         color: COLORS.text,
         letterSpacing: -0.2,
     },
     exCardMetaRow: {
-        marginTop: 3,
+        marginTop: 2,
     },
     exCardMetaText: {
-        fontSize: 10.5,
+        fontSize: 10,
         fontFamily: FAMILY.regular,
         color: COLORS.textSub,
     },
@@ -1265,20 +1273,20 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         gap: 8,
-        marginTop: 6,
+        marginTop: 5,
     },
     prBadge: {
         flexDirection: "row",
         alignItems: "center",
         backgroundColor: "rgba(227, 30, 36, 0.1)",
-        paddingHorizontal: 7,
-        paddingVertical: 2.5,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
         borderRadius: RADIUS.xs,
         borderWidth: 0.5,
         borderColor: "rgba(227, 30, 36, 0.25)",
     },
     prBadgeText: {
-        fontSize: 9,
+        fontSize: 8.5,
         fontFamily: FAMILY.monoBold,
         color: "#FFFFFF",
     },
@@ -1286,14 +1294,14 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         backgroundColor: "rgba(255, 255, 255, 0.04)",
-        paddingHorizontal: 7,
-        paddingVertical: 2.5,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
         borderRadius: RADIUS.xs,
         borderWidth: 0.5,
         borderColor: "rgba(255, 255, 255, 0.08)",
     },
     suggestedBadgeText: {
-        fontSize: 9,
+        fontSize: 8.5,
         fontFamily: FAMILY.mono,
         color: COLORS.textSub,
     },
@@ -1304,28 +1312,28 @@ const styles = StyleSheet.create({
     // Preset & Routine Cards
     packCard: {
         backgroundColor: "rgba(22, 22, 28, 0.9)",
-        borderRadius: 18,
-        padding: 16,
+        borderRadius: 16,
+        padding: 15,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.09)",
-        marginBottom: 12,
+        marginBottom: 10,
     },
     packHeaderRow: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        marginBottom: 8,
+        marginBottom: 6,
     },
     packTagBadge: {
         paddingHorizontal: 8,
-        paddingVertical: 3,
+        paddingVertical: 2.5,
         borderRadius: RADIUS.pill,
         backgroundColor: "rgba(227, 30, 36, 0.12)",
         borderWidth: 1,
         borderColor: "rgba(227, 30, 36, 0.3)",
     },
     packTagBadgeText: {
-        fontSize: 8.5,
+        fontSize: 8,
         fontFamily: FAMILY.monoBold,
         color: COLORS.primary,
         letterSpacing: 0.8,
@@ -1335,29 +1343,29 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     packMetaBadgeText: {
-        fontSize: 9.5,
+        fontSize: 9,
         fontFamily: FAMILY.mono,
         color: COLORS.textSub,
     },
     packTitle: {
-        fontSize: 15,
+        fontSize: 14.5,
         fontFamily: FAMILY.bold,
         color: "#FFFFFF",
         letterSpacing: 0.3,
         marginBottom: 2,
     },
     packSub: {
-        fontSize: 11,
+        fontSize: 10.5,
         fontFamily: FAMILY.regular,
         color: COLORS.textSub,
-        marginBottom: 12,
+        marginBottom: 10,
     },
     packExercisesList: {
         backgroundColor: "rgba(0, 0, 0, 0.3)",
-        borderRadius: 12,
-        padding: 10,
-        gap: 6,
-        marginBottom: 14,
+        borderRadius: 10,
+        padding: 8,
+        gap: 5,
+        marginBottom: 12,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.05)",
     },
@@ -1366,12 +1374,12 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     packExText: {
-        fontSize: 11,
+        fontSize: 10.5,
         fontFamily: FAMILY.medium,
         color: "#C5C2BB",
     },
     packApplyBtn: {
-        height: 44,
+        height: 40,
         borderRadius: RADIUS.pill,
         flexDirection: "row",
         alignItems: "center",
@@ -1379,10 +1387,10 @@ const styles = StyleSheet.create({
         overflow: "hidden",
     },
     packApplyBtnText: {
-        fontSize: 11,
+        fontSize: 10.5,
         fontFamily: FAMILY.bold,
         color: "#FFFFFF",
-        letterSpacing: 1,
+        letterSpacing: 0.8,
     },
 
     // Empty State
@@ -1390,37 +1398,37 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         backgroundColor: "rgba(22, 22, 28, 0.5)",
-        borderRadius: 18,
-        padding: 32,
+        borderRadius: 16,
+        padding: 28,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.06)",
         marginTop: 10,
     },
     emptyTitle: {
-        fontSize: 13,
+        fontSize: 12.5,
         fontFamily: FAMILY.bold,
         color: COLORS.text,
         letterSpacing: 1,
         marginBottom: 4,
     },
     emptySub: {
-        fontSize: 11,
+        fontSize: 10.5,
         fontFamily: FAMILY.regular,
         color: COLORS.textMuted,
         textAlign: "center",
-        lineHeight: 16,
+        lineHeight: 15,
     },
     emptyActionBtn: {
-        marginTop: 16,
-        paddingHorizontal: 16,
-        paddingVertical: 8,
+        marginTop: 14,
+        paddingHorizontal: 14,
+        paddingVertical: 7,
         borderRadius: RADIUS.pill,
         backgroundColor: "rgba(255, 255, 255, 0.08)",
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.15)",
     },
     emptyActionBtnText: {
-        fontSize: 10,
+        fontSize: 9.5,
         fontFamily: FAMILY.monoBold,
         color: "#FFFFFF",
         letterSpacing: 0.5,
@@ -1433,7 +1441,7 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         paddingHorizontal: 20,
-        paddingTop: 12,
+        paddingTop: 10,
         borderTopWidth: 1.2,
         borderColor: "rgba(255, 255, 255, 0.14)",
         shadowColor: "#000",
@@ -1446,28 +1454,28 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         backgroundColor: "rgba(255, 255, 255, 0.04)",
-        borderRadius: 12,
-        paddingHorizontal: 12,
-        paddingVertical: 7,
-        marginBottom: 10,
+        borderRadius: 10,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        marginBottom: 8,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.08)",
     },
     dockStatItem: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 5,
+        gap: 4,
     },
     dockStatVal: {
-        fontSize: 10,
+        fontSize: 9.5,
         fontFamily: FAMILY.monoBold,
         color: "#FFFFFF",
     },
     dockDivider: {
         width: 1,
-        height: 14,
+        height: 12,
         backgroundColor: "rgba(255, 255, 255, 0.1)",
-        marginHorizontal: 10,
+        marginHorizontal: 8,
     },
     dockClearBtn: {
         marginLeft: "auto",
@@ -1475,7 +1483,7 @@ const styles = StyleSheet.create({
         paddingVertical: 2,
     },
     dockClearText: {
-        fontSize: 9,
+        fontSize: 8.5,
         fontFamily: FAMILY.monoBold,
         color: COLORS.primary,
         letterSpacing: 0.5,
@@ -1486,7 +1494,7 @@ const styles = StyleSheet.create({
     },
     dockSaveBtn: {
         flex: 1,
-        height: 48,
+        height: 46,
         borderRadius: RADIUS.pill,
         backgroundColor: "rgba(255, 255, 255, 0.06)",
         borderWidth: 1,
@@ -1494,17 +1502,17 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
-        gap: 6,
+        gap: 5,
     },
     dockSaveBtnText: {
-        fontSize: 11,
+        fontSize: 10.5,
         fontFamily: FAMILY.bold,
         color: "#FFFFFF",
         letterSpacing: 0.8,
     },
     dockStartBtn: {
         flex: 1.4,
-        height: 48,
+        height: 46,
         borderRadius: RADIUS.pill,
         flexDirection: "row",
         alignItems: "center",
@@ -1517,7 +1525,7 @@ const styles = StyleSheet.create({
         elevation: 6,
     },
     dockStartBtnText: {
-        fontSize: 12,
+        fontSize: 11.5,
         fontFamily: FAMILY.bold,
         color: "#FFFFFF",
         letterSpacing: 1,
@@ -1585,19 +1593,19 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     modalInput: {
-        height: 48,
+        height: 46,
         borderRadius: 14,
         backgroundColor: "rgba(255, 255, 255, 0.04)",
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.12)",
         paddingHorizontal: 16,
         color: "#FFFFFF",
-        fontSize: 13.5,
+        fontSize: 13,
         fontFamily: FAMILY.medium,
-        marginBottom: 20,
+        marginBottom: 18,
     },
     modalActionBtn: {
-        height: 48,
+        height: 46,
         borderRadius: RADIUS.pill,
         alignItems: "center",
         justifyContent: "center",
@@ -1605,7 +1613,7 @@ const styles = StyleSheet.create({
         overflow: "hidden",
     },
     modalActionBtnText: {
-        fontSize: 12,
+        fontSize: 11.5,
         fontFamily: FAMILY.bold,
         color: "#FFFFFF",
         letterSpacing: 1,
