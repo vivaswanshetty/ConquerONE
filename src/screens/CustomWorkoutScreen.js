@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
     View, Text, StyleSheet, StatusBar, TextInput, Modal,
     KeyboardAvoidingView, Platform, Dimensions, Animated,
-    ScrollView, TouchableOpacity, FlatList,
+    ScrollView, TouchableOpacity,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -29,6 +29,7 @@ const MOST_EFFECTIVE_NAMES = new Set([
     "Pull-ups",
     "Overhead Press",
     "Overhead Press (OHP)",
+    "Barbell Overhead Press (OHP)",
     "Barbell Rows",
     "Incline Dumbbell Press",
     "Romanian Deadlift",
@@ -41,21 +42,43 @@ const MOST_EFFECTIVE_NAMES = new Set([
 // ── Curated "High Volume / Max Reps / Burnout" Isolations ──
 const MAX_REPS_NAMES = new Set([
     "Cable Crossover — High to Low",
+    "Cable Fly — Low to High",
     "Lateral Raises",
+    "Dumbbell Lateral Raise",
     "Dumbbell Lateral Raises",
+    "Cable Lateral Raise",
+    "Cable Lateral Raises",
     "Tricep Rope Pushdown",
-    "Tricep Pushdown",
+    "Cable Tricep Pushdown — Rope",
     "Incline Dumbbell Curl",
     "Hammer Curls",
     "Leg Extensions",
     "Seated Leg Curls",
     "Standing Calf Raises",
     "Face Pulls",
+    "Hanging Leg Raise",
     "Hanging Leg Raises",
-    "Cable Lateral Raises",
+    "Cable Woodchoppers",
 ]);
 
-// ── Flattened Exercise Catalog with Unique Identifiers & Tags ──
+// ── Accurate Exercise Muscle Category Classifier ──
+function getExerciseMuscleGroup(ex) {
+    const pt = (ex.primaryTarget || "").toUpperCase();
+    const tag = (ex.tag || "").toUpperCase();
+    const name = (ex.name || "").toUpperCase();
+    const combined = `${name} ${pt} ${tag}`;
+
+    if (combined.includes("CHEST") || combined.includes("BENCH") || combined.includes("PECTORAL") || combined.includes("DIPS")) return "CHEST";
+    if (combined.includes("LAT") || combined.includes("BACK") || combined.includes("ROW") || combined.includes("PULL-UP") || combined.includes("DEADLIFT") || combined.includes("PULLDOWN")) return "BACK";
+    if (combined.includes("QUAD") || combined.includes("SQUAT") || combined.includes("HAMSTRING") || combined.includes("CALF") || combined.includes("CALVES") || combined.includes("LEG") || combined.includes("GLUTE") || combined.includes("RDL")) return "LEGS";
+    if (combined.includes("SHOULDER") || combined.includes("DELT") || combined.includes("OVERHEAD PRESS") || combined.includes("OHP") || combined.includes("LATERAL RAISE") || combined.includes("FACE PULL")) return "SHOULDERS";
+    if (combined.includes("BICEP") || combined.includes("TRICEP") || combined.includes("CURL") || combined.includes("PUSHDOWN") || combined.includes("SKULL CRUSHER") || combined.includes("FOREARM") || combined.includes("BRACHIALIS") || combined.includes("WRIST")) return "ARMS";
+    if (combined.includes("ABS") || combined.includes("ABDOMINAL") || combined.includes("CORE") || combined.includes("OBLIQUE") || combined.includes("PLANK") || combined.includes("CRUNCH") || combined.includes("LEG RAISE")) return "CORE";
+
+    return "CHEST";
+}
+
+// ── Flattened Exercise Catalog with Unique Identifiers & Accurate Targets ──
 const ALL_EXERCISES = (() => {
     const map = new Map();
     WORKOUT_PLAN.forEach((day) => {
@@ -63,6 +86,7 @@ const ALL_EXERCISES = (() => {
             if (!map.has(ex.name)) {
                 const isCompound = MOST_EFFECTIVE_NAMES.has(ex.name);
                 const isMaxReps = MAX_REPS_NAMES.has(ex.name);
+                const muscleGroup = getExerciseMuscleGroup(ex);
                 let tierTag = "HYPERTROPHY";
                 if (isCompound) tierTag = "COMPOUND KING";
                 else if (isMaxReps) tierTag = "MAX PUMP / REPS";
@@ -71,6 +95,7 @@ const ALL_EXERCISES = (() => {
                     ...ex,
                     dayTarget: day.target,
                     dayNum: day.day,
+                    muscleGroup,
                     isCompound,
                     isMaxReps,
                     tierTag,
@@ -90,7 +115,7 @@ const CURATED_PRESET_PACKS = [
         durationMin: 30,
         calories: 260,
         tag: "UPPER BODY",
-        exerciseNames: ["Barbell Bench Press", "Barbell Rows", "Overhead Press", "Incline Dumbbell Curl"],
+        exerciseNames: ["Barbell Bench Press", "Barbell Rows", "Barbell Overhead Press (OHP)", "Incline Dumbbell Curl"],
     },
     {
         id: "preset_lower_power",
@@ -108,7 +133,7 @@ const CURATED_PRESET_PACKS = [
         durationMin: 25,
         calories: 210,
         tag: "ARMS FOCUSED",
-        exerciseNames: ["Incline Dumbbell Curl", "Skull Crushers", "Hammer Curls", "Tricep Rope Pushdown"],
+        exerciseNames: ["Incline Dumbbell Curl", "Skull Crushers", "Hammer Curls", "Cable Tricep Pushdown — Rope"],
     },
     {
         id: "preset_push_powerhouse",
@@ -117,7 +142,7 @@ const CURATED_PRESET_PACKS = [
         durationMin: 45,
         calories: 390,
         tag: "PUSH FOCUS",
-        exerciseNames: ["Barbell Bench Press", "Incline Dumbbell Press", "Overhead Press", "Lateral Raises", "Dips"],
+        exerciseNames: ["Barbell Bench Press", "Incline Dumbbell Press", "Barbell Overhead Press (OHP)", "Dumbbell Lateral Raise", "Dips"],
     },
     {
         id: "preset_pull_hypertrophy",
@@ -249,16 +274,45 @@ export default function CustomWorkoutScreen({ navigation }) {
         });
     };
 
-    // ── Filtered Exercises Calculation ──
+    // ── Filtered Exercises Calculation with Precise Anatomy Search ──
     const filteredExercises = useMemo(() => {
         return ALL_EXERCISES.filter((ex) => {
-            // 1. Text Search Filter
+            // 1. Text Search Filter (Precise token matching)
             if (searchQuery.trim().length > 0) {
-                const q = searchQuery.toLowerCase();
-                const matchesName = ex.name.toLowerCase().includes(q);
-                const matchesTarget = ex.dayTarget.toLowerCase().includes(q);
-                const matchesEquip = ex.equipment?.toLowerCase().includes(q);
-                if (!matchesName && !matchesTarget && !matchesEquip) return false;
+                const query = searchQuery.trim().toLowerCase();
+                const tokens = query.split(/\s+/).filter(Boolean);
+
+                const name = ex.name.toLowerCase();
+                const primary = (ex.primaryTarget || "").toLowerCase();
+                const tag = (ex.tag || "").toLowerCase();
+                const equip = (ex.equipment || "").toLowerCase();
+                const muscle = ex.muscleGroup.toLowerCase();
+
+                const matchesAllTokens = tokens.every(tok => {
+                    // Precision for core / abs queries
+                    if (tok === "abs" || tok === "ab" || tok === "core" || tok === "abdominal") {
+                        return muscle === "core" ||
+                               primary.includes("ab") ||
+                               tag.includes("ab") ||
+                               name.includes("ab") ||
+                               name.includes("crunch") ||
+                               name.includes("leg raise") ||
+                               name.includes("plank") ||
+                               name.includes("woodchopper");
+                    }
+                    // Precision for shoulders / delts
+                    if (tok === "shoulder" || tok === "shoulders" || tok === "delt" || tok === "delts") {
+                        return muscle === "shoulders" || primary.includes("delt") || tag.includes("delt") || name.includes("press") || name.includes("raise");
+                    }
+                    // General search
+                    return name.includes(tok) ||
+                           primary.includes(tok) ||
+                           tag.includes(tok) ||
+                           equip.includes(tok) ||
+                           muscle.includes(tok);
+                });
+
+                if (!matchesAllTokens) return false;
             }
 
             // 2. Tab Filter
@@ -268,13 +322,7 @@ export default function CustomWorkoutScreen({ navigation }) {
 
             // 3. Muscle Group Filter
             if (muscleFilter !== "ALL") {
-                const target = ex.dayTarget.toUpperCase();
-                if (muscleFilter === "CHEST" && !target.includes("CHEST")) return false;
-                if (muscleFilter === "BACK" && !target.includes("BACK")) return false;
-                if (muscleFilter === "LEGS" && !target.includes("LEG") && !target.includes("QUAD") && !target.includes("CALF")) return false;
-                if (muscleFilter === "SHOULDERS" && !target.includes("SHOULDER")) return false;
-                if (muscleFilter === "ARMS" && !target.includes("BICEP") && !target.includes("TRICEP") && !target.includes("ARM")) return false;
-                if (muscleFilter === "CORE" && !target.includes("CORE") && !target.includes("ABS")) return false;
+                if (ex.muscleGroup !== muscleFilter) return false;
             }
 
             return true;
@@ -323,7 +371,7 @@ export default function CustomWorkoutScreen({ navigation }) {
         <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#000" translucent />
 
-            {/* ── 1. Top Navigation Bar ── */}
+            {/* ── 1. Top Navigation Bar (Fixed for smooth navigation) ── */}
             <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
                 <TouchableOpacity
                     style={styles.backBtn}
@@ -348,195 +396,209 @@ export default function CustomWorkoutScreen({ navigation }) {
                 </View>
             </View>
 
-            {/* ── 2. Real-Time Search Bar ── */}
-            <View style={styles.searchSection}>
-                <View style={styles.searchBox}>
-                    <Ionicons name="search-outline" size={17} color={COLORS.textMuted} />
-                    <TextInput
-                        style={styles.searchInput}
-                        placeholder="Search movements, equipment, muscle..."
-                        placeholderTextColor={COLORS.textMuted}
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                        autoCorrect={false}
-                    />
-                    {searchQuery.length > 0 && (
-                        <TouchableOpacity onPress={() => setSearchQuery("")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                            <Ionicons name="close-circle" size={16} color={COLORS.textSub} />
-                        </TouchableOpacity>
-                    )}
-                </View>
-            </View>
-
-            {/* ── 3. Smart Curation Tabs ── */}
-            <View style={styles.tabsSection}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsContent} overScrollMode="never">
-                    {[
-                        { key: "ALL", label: "ALL MOVEMENTS", icon: "grid-outline" },
-                        { key: "FAVORITES", label: `FAVORITES (${favorites.size})`, icon: "star" },
-                        { key: "EFFECTIVE", label: "⚡ MOST EFFECTIVE", icon: "flash-outline" },
-                        { key: "MAX_REPS", label: "🔥 MAX REPS / PUMP", icon: "flame-outline" },
-                        { key: "PRESETS", label: "⏱️ EXPRESS PRESETS", icon: "timer-outline" },
-                        { key: "BLUEPRINTS", label: `💾 MY BLUEPRINTS (${blueprints.length})`, icon: "layers-outline" },
-                    ].map((tab) => {
-                        const isActive = activeTab === tab.key;
-                        return (
-                            <TouchableOpacity
-                                key={tab.key}
-                                style={[styles.tabChip, isActive && styles.tabChipActive]}
-                                onPress={() => {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                    setActiveTab(tab.key);
-                                }}
-                                activeOpacity={0.75}
-                            >
-                                <Ionicons
-                                    name={tab.icon}
-                                    size={13}
-                                    color={isActive ? "#FFFFFF" : COLORS.textMuted}
-                                    style={{ marginRight: 6 }}
-                                />
-                                <Text style={[styles.tabChipText, isActive && styles.tabChipTextActive]}>
-                                    {tab.label}
-                                </Text>
+            {/* ── 2. Unified Vertical ScrollView (All headers, search, tabs, & lists scroll together) ── */}
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                overScrollMode="never"
+                style={{ flex: 1 }}
+                contentContainerStyle={{
+                    paddingTop: 8,
+                    paddingBottom: selected.size > 0 ? 170 : Math.max(insets.bottom, 20) + 30,
+                }}
+            >
+                {/* ── Search Bar ── */}
+                <View style={styles.searchSection}>
+                    <View style={styles.searchBox}>
+                        <Ionicons name="search-outline" size={17} color={COLORS.textMuted} />
+                        <TextInput
+                            style={styles.searchInput}
+                            placeholder="Search movements, equipment, muscle..."
+                            placeholderTextColor={COLORS.textMuted}
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                            autoCorrect={false}
+                        />
+                        {searchQuery.length > 0 && (
+                            <TouchableOpacity onPress={() => setSearchQuery("")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                                <Ionicons name="close-circle" size={16} color={COLORS.textSub} />
                             </TouchableOpacity>
-                        );
-                    })}
-                </ScrollView>
-            </View>
+                        )}
+                    </View>
+                </View>
 
-            {/* ── 4. Muscle Filter Row (When viewing exercise lists) ── */}
-            {activeTab !== "PRESETS" && activeTab !== "BLUEPRINTS" && (
-                <View style={styles.muscleFilterSection}>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.muscleFilterContent} overScrollMode="never">
-                        {["ALL", "CHEST", "BACK", "LEGS", "SHOULDERS", "ARMS", "CORE"].map((m) => {
-                            const isSelected = muscleFilter === m;
+                {/* ── Smart Curation Tabs ── */}
+                <View style={styles.tabsSection}>
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.tabsContent}
+                        overScrollMode="never"
+                        nestedScrollEnabled
+                    >
+                        {[
+                            { key: "ALL", label: "ALL MOVEMENTS", icon: "grid-outline" },
+                            { key: "FAVORITES", label: `FAVORITES (${favorites.size})`, icon: "star" },
+                            { key: "EFFECTIVE", label: "⚡ MOST EFFECTIVE", icon: "flash-outline" },
+                            { key: "MAX_REPS", label: "🔥 MAX REPS / PUMP", icon: "flame-outline" },
+                            { key: "PRESETS", label: "⏱️ EXPRESS PRESETS", icon: "timer-outline" },
+                            { key: "BLUEPRINTS", label: `💾 MY BLUEPRINTS (${blueprints.length})`, icon: "layers-outline" },
+                        ].map((tab) => {
+                            const isActive = activeTab === tab.key;
                             return (
                                 <TouchableOpacity
-                                    key={m}
-                                    style={[styles.muscleChip, isSelected && styles.muscleChipActive]}
+                                    key={tab.key}
+                                    style={[styles.tabChip, isActive && styles.tabChipActive]}
                                     onPress={() => {
                                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                        setMuscleFilter(m);
+                                        setActiveTab(tab.key);
                                     }}
                                     activeOpacity={0.75}
                                 >
-                                    <Text style={[styles.muscleChipText, isSelected && styles.muscleChipTextActive]}>
-                                        {m}
+                                    <Ionicons
+                                        name={tab.icon}
+                                        size={13}
+                                        color={isActive ? "#FFFFFF" : COLORS.textMuted}
+                                        style={{ marginRight: 6 }}
+                                    />
+                                    <Text style={[styles.tabChipText, isActive && styles.tabChipTextActive]}>
+                                        {tab.label}
                                     </Text>
                                 </TouchableOpacity>
                             );
                         })}
                     </ScrollView>
                 </View>
-            )}
 
-            {/* ── 5. Main Content Area ── */}
-            <ScrollView
-                showsVerticalScrollIndicator={false}
-                overScrollMode="never"
-                style={{ flex: 1 }}
-                contentContainerStyle={{
-                    paddingHorizontal: 20,
-                    paddingTop: 12,
-                    paddingBottom: selected.size > 0 ? 160 : Math.max(insets.bottom, 20) + 30,
-                }}
-            >
-                {/* ── Mode A: Express Preset Packs Tab ── */}
-                {activeTab === "PRESETS" && (
-                    <View style={styles.sectionContainer}>
-                        <View style={styles.sectionHeaderRow}>
-                            <Text style={styles.sectionHeaderTitle}>EXPRESS COMBAT PROTOCOLS</Text>
-                            <Text style={styles.sectionHeaderCount}>{CURATED_PRESET_PACKS.length} PROTOCOLS</Text>
-                        </View>
-                        {CURATED_PRESET_PACKS.map((pack) => (
-                            <PresetPackCard
-                                key={pack.id}
-                                pack={pack}
-                                onApply={() => applyPresetPack(pack)}
-                            />
-                        ))}
-                    </View>
-                )}
-
-                {/* ── Mode B: Saved User Blueprints Tab ── */}
-                {activeTab === "BLUEPRINTS" && (
-                    <View style={styles.sectionContainer}>
-                        <View style={styles.sectionHeaderRow}>
-                            <Text style={styles.sectionHeaderTitle}>MY SAVED BLUEPRINTS</Text>
-                            <Text style={styles.sectionHeaderCount}>{blueprints.length} SAVED</Text>
-                        </View>
-
-                        {blueprints.length === 0 ? (
-                            <View style={styles.emptyCard}>
-                                <Ionicons name="layers-outline" size={32} color={COLORS.textMuted} style={{ marginBottom: 12 }} />
-                                <Text style={styles.emptyTitle}>NO SAVED BLUEPRINTS YET</Text>
-                                <Text style={styles.emptySub}>
-                                    Select any exercises and tap "SAVE AS BLUEPRINT" to build your custom library.
-                                </Text>
-                            </View>
-                        ) : (
-                            blueprints.map((bp) => (
-                                <BlueprintCard
-                                    key={bp.id}
-                                    blueprint={bp}
-                                    onApply={() => {
-                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                        const next = new Set(bp.exerciseNames);
-                                        setSelected(next);
-                                    }}
-                                    onDelete={() => handleDeleteBlueprint(bp.id)}
-                                />
-                            ))
-                        )}
-                    </View>
-                )}
-
-                {/* ── Mode C: Standard Exercise Catalog List ── */}
+                {/* ── Muscle Filter Row (When viewing exercise lists) ── */}
                 {activeTab !== "PRESETS" && activeTab !== "BLUEPRINTS" && (
-                    <View style={styles.sectionContainer}>
-                        <View style={styles.sectionHeaderRow}>
-                            <Text style={styles.sectionHeaderTitle}>
-                                {activeTab === "FAVORITES" ? "BOOKMARKED FAVORITES" : activeTab === "EFFECTIVE" ? "MAXIMUM ROI MOVEMENTS" : activeTab === "MAX_REPS" ? "HIGH VOLUME & PUMP MOVEMENTS" : "EXERCISE PROTOCOL CATALOG"}
-                            </Text>
-                            <Text style={styles.sectionHeaderCount}>{filteredExercises.length} MOVEMENTS</Text>
-                        </View>
-
-                        {filteredExercises.length === 0 ? (
-                            <View style={styles.emptyCard}>
-                                <Ionicons name="barbell-outline" size={32} color={COLORS.textMuted} style={{ marginBottom: 12 }} />
-                                <Text style={styles.emptyTitle}>NO MOVEMENTS FOUND</Text>
-                                <Text style={styles.emptySub}>Try adjusting your search query or filter categories.</Text>
-                            </View>
-                        ) : (
-                            filteredExercises.map((ex, index) => {
-                                const isSelected = selected.has(ex.name);
-                                const isFav = favorites.has(ex.name);
-                                const pr = prRecords[ex.name];
-                                const suggested = getSuggestedWeight(ex.name);
-                                const muscleColor = getMuscleColor(ex.dayTarget);
-
+                    <View style={styles.muscleFilterSection}>
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.muscleFilterContent}
+                            overScrollMode="never"
+                            nestedScrollEnabled
+                        >
+                            {["ALL", "CHEST", "BACK", "LEGS", "SHOULDERS", "ARMS", "CORE"].map((m) => {
+                                const isSelected = muscleFilter === m;
                                 return (
-                                    <ExerciseSelectCard
-                                        key={ex.name}
-                                        ex={ex}
-                                        index={index}
-                                        isSelected={isSelected}
-                                        isFav={isFav}
-                                        pr={pr}
-                                        suggestedWeight={suggested}
-                                        muscleColor={muscleColor}
-                                        onToggleSelect={() => toggleSelect(ex.name)}
-                                        onToggleFavorite={() => toggleFavorite(ex.name)}
-                                    />
+                                    <TouchableOpacity
+                                        key={m}
+                                        style={[styles.muscleChip, isSelected && styles.muscleChipActive]}
+                                        onPress={() => {
+                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                            setMuscleFilter(m);
+                                        }}
+                                        activeOpacity={0.75}
+                                    >
+                                        <Text style={[styles.muscleChipText, isSelected && styles.muscleChipTextActive]}>
+                                            {m}
+                                        </Text>
+                                    </TouchableOpacity>
                                 );
-                            })
-                        )}
+                            })}
+                        </ScrollView>
                     </View>
                 )}
+
+                {/* ── Main Content Container ── */}
+                <View style={{ paddingHorizontal: 20 }}>
+                    {/* ── Mode A: Express Preset Packs Tab ── */}
+                    {activeTab === "PRESETS" && (
+                        <View style={styles.sectionContainer}>
+                            <View style={styles.sectionHeaderRow}>
+                                <Text style={styles.sectionHeaderTitle}>EXPRESS COMBAT PROTOCOLS</Text>
+                                <Text style={styles.sectionHeaderCount}>{CURATED_PRESET_PACKS.length} PROTOCOLS</Text>
+                            </View>
+                            {CURATED_PRESET_PACKS.map((pack) => (
+                                <PresetPackCard
+                                    key={pack.id}
+                                    pack={pack}
+                                    onApply={() => applyPresetPack(pack)}
+                                />
+                            ))}
+                        </View>
+                    )}
+
+                    {/* ── Mode B: Saved User Blueprints Tab ── */}
+                    {activeTab === "BLUEPRINTS" && (
+                        <View style={styles.sectionContainer}>
+                            <View style={styles.sectionHeaderRow}>
+                                <Text style={styles.sectionHeaderTitle}>MY SAVED BLUEPRINTS</Text>
+                                <Text style={styles.sectionHeaderCount}>{blueprints.length} SAVED</Text>
+                            </View>
+
+                            {blueprints.length === 0 ? (
+                                <View style={styles.emptyCard}>
+                                    <Ionicons name="layers-outline" size={32} color={COLORS.textMuted} style={{ marginBottom: 12 }} />
+                                    <Text style={styles.emptyTitle}>NO SAVED BLUEPRINTS YET</Text>
+                                    <Text style={styles.emptySub}>
+                                        Select any exercises and tap "SAVE AS BLUEPRINT" to build your custom library.
+                                    </Text>
+                                </View>
+                            ) : (
+                                blueprints.map((bp) => (
+                                    <BlueprintCard
+                                        key={bp.id}
+                                        blueprint={bp}
+                                        onApply={() => {
+                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                            const next = new Set(bp.exerciseNames);
+                                            setSelected(next);
+                                        }}
+                                        onDelete={() => handleDeleteBlueprint(bp.id)}
+                                    />
+                                ))
+                            )}
+                        </View>
+                    )}
+
+                    {/* ── Mode C: Standard Exercise Catalog List ── */}
+                    {activeTab !== "PRESETS" && activeTab !== "BLUEPRINTS" && (
+                        <View style={styles.sectionContainer}>
+                            <View style={styles.sectionHeaderRow}>
+                                <Text style={styles.sectionHeaderTitle}>
+                                    {activeTab === "FAVORITES" ? "BOOKMARKED FAVORITES" : activeTab === "EFFECTIVE" ? "MAXIMUM ROI MOVEMENTS" : activeTab === "MAX_REPS" ? "HIGH VOLUME & PUMP MOVEMENTS" : "EXERCISE PROTOCOL CATALOG"}
+                                </Text>
+                                <Text style={styles.sectionHeaderCount}>{filteredExercises.length} MOVEMENTS</Text>
+                            </View>
+
+                            {filteredExercises.length === 0 ? (
+                                <View style={styles.emptyCard}>
+                                    <Ionicons name="barbell-outline" size={32} color={COLORS.textMuted} style={{ marginBottom: 12 }} />
+                                    <Text style={styles.emptyTitle}>NO MOVEMENTS FOUND</Text>
+                                    <Text style={styles.emptySub}>Try adjusting your search query or filter categories.</Text>
+                                </View>
+                            ) : (
+                                filteredExercises.map((ex, index) => {
+                                    const isSelected = selected.has(ex.name);
+                                    const isFav = favorites.has(ex.name);
+                                    const pr = prRecords[ex.name];
+                                    const suggested = getSuggestedWeight(ex.name);
+                                    const muscleColor = getMuscleColor(ex.muscleGroup);
+
+                                    return (
+                                        <ExerciseSelectCard
+                                            key={ex.name}
+                                            ex={ex}
+                                            index={index}
+                                            isSelected={isSelected}
+                                            isFav={isFav}
+                                            pr={pr}
+                                            suggestedWeight={suggested}
+                                            muscleColor={muscleColor}
+                                            onToggleSelect={() => toggleSelect(ex.name)}
+                                            onToggleFavorite={() => toggleFavorite(ex.name)}
+                                        />
+                                    );
+                                })
+                            )}
+                        </View>
+                    )}
+                </View>
             </ScrollView>
 
-            {/* ── 6. Bottom Floating Selection Dock ── */}
+            {/* ── 3. Bottom Floating Selection Dock ── */}
             {selected.size > 0 && (
                 <View style={[styles.bottomDock, { paddingBottom: Math.max(insets.bottom, 16) + 6 }]}>
                     <LinearGradient
@@ -602,7 +664,7 @@ export default function CustomWorkoutScreen({ navigation }) {
                 </View>
             )}
 
-            {/* ── 7. Save Custom Blueprint Modal ── */}
+            {/* ── 4. Save Custom Blueprint Modal ── */}
             <Modal visible={saveModalVisible} transparent animationType="fade" onRequestClose={() => setSaveModalVisible(false)}>
                 <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
                     <View style={styles.modalOverlay}>
@@ -692,7 +754,7 @@ function ExerciseSelectCard({
                 <View style={styles.exCardTopRow}>
                     <View style={[styles.muscleBadge, { backgroundColor: `${muscleColor}1A`, borderColor: `${muscleColor}4D` }]}>
                         <Text style={[styles.muscleBadgeText, { color: muscleColor }]}>
-                            {ex.dayTarget.toUpperCase()}
+                            {(ex.primaryTarget || ex.muscleGroup).toUpperCase()}
                         </Text>
                     </View>
                     {ex.isCompound && (
@@ -841,7 +903,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "space-between",
         paddingHorizontal: 20,
-        paddingBottom: 14,
+        paddingBottom: 10,
     },
     backBtn: {
         width: 38,
@@ -916,7 +978,7 @@ const styles = StyleSheet.create({
 
     // Smart Curation Tabs
     tabsSection: {
-        marginBottom: 8,
+        marginBottom: 10,
     },
     tabsContent: {
         paddingHorizontal: 20,
@@ -948,7 +1010,7 @@ const styles = StyleSheet.create({
 
     // Muscle Filter
     muscleFilterSection: {
-        marginBottom: 8,
+        marginBottom: 14,
     },
     muscleFilterContent: {
         paddingHorizontal: 20,
@@ -1008,6 +1070,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.08)",
         gap: 12,
+        marginBottom: 10,
     },
     exCardSelected: {
         borderColor: "rgba(227, 30, 36, 0.4)",
