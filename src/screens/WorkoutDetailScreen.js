@@ -271,7 +271,7 @@ function ExerciseRow({ ex, index, total, expanded, onPress, onEdit, dayTarget, m
                     </View>
                     <View style={styles.exRowControls}>
                         <TouchableOpacity style={styles.editBtnSmall} onPress={onEdit} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                            <Ionicons name="pencil" size={12} color={COLORS.textSub} />
+                            <Ionicons name="options-outline" size={13} color={COLORS.textSub} />
                         </TouchableOpacity>
                         <Ionicons name={expanded ? "chevron-up" : "chevron-down"} size={16} color={COLORS.textSub} />
                     </View>
@@ -412,7 +412,7 @@ function EditExerciseModal({ visible, ex, onSave, onClose, muscleColor }) {
                     <View style={styles.modalHeader}>
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                             <View style={[styles.modalHeaderIcon, { backgroundColor: "rgba(227, 30, 36, 0.15)", borderColor: "rgba(227, 30, 36, 0.35)" }]}>
-                                <Ionicons name="create" size={15} color={COLORS.primary} />
+                                <Ionicons name="options" size={15} color={COLORS.primary} />
                             </View>
                             <View>
                                 <Text style={styles.modalTitle}>CUSTOMIZE TARGETS</Text>
