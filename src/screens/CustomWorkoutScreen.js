@@ -4,6 +4,7 @@ import {
     KeyboardAvoidingView, Platform, Dimensions, Animated,
     ScrollView, TouchableOpacity,
 } from "react-native";
+import { ScrollView as GHScrollView } from "react-native-gesture-handler";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
@@ -153,6 +154,67 @@ const CURATED_PRESET_PACKS = [
         exerciseNames: ["Deadlift", "Pull-ups", "Barbell Rows", "Incline Dumbbell Curl", "Face Pulls"],
     },
 ];
+
+// ── Anatomically Precise Search Matcher (Prevents "Cable" matching "Ab") ──
+function matchesSearchQuery(ex, query) {
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+
+    const name = ex.name.toLowerCase();
+    const primary = (ex.primaryTarget || "").toLowerCase();
+    const tag = (ex.tag || "").toLowerCase();
+    const equip = (ex.equipment || "").toLowerCase();
+    const muscle = (ex.muscleGroup || "").toLowerCase();
+
+    // Tokenize search query
+    const tokens = q.split(/\s+/).filter(Boolean);
+
+    return tokens.every((token) => {
+        // Specific handling for "ab" or "abs" or "core"
+        if (token === "abs" || token === "ab" || token === "core" || token === "abdominal" || token === "abdominals") {
+            if (muscle === "core") return true;
+            const wordRegex = /\b(abs?|core|abdominal|oblique|obliques|crunch|plank|leg raise|woodchopper)\b/i;
+            return wordRegex.test(name) || wordRegex.test(primary) || wordRegex.test(tag);
+        }
+
+        // Specific handling for "chest"
+        if (token === "chest" || token === "pec" || token === "pecs") {
+            if (muscle === "chest") return true;
+            return name.includes("chest") || name.includes("bench") || primary.includes("chest") || tag.includes("chest");
+        }
+
+        // Specific handling for "back" / "lat"
+        if (token === "back" || token === "lat" || token === "lats") {
+            if (muscle === "back") return true;
+            return name.includes("back") || name.includes("lat") || name.includes("row") || name.includes("pull") || primary.includes("back") || primary.includes("lat");
+        }
+
+        // Specific handling for "leg" / "legs" / "quad"
+        if (token === "leg" || token === "legs" || token === "quad" || token === "quads" || token === "calf" || token === "calves") {
+            if (muscle === "legs") return true;
+            return name.includes("leg") || name.includes("squat") || name.includes("calf") || primary.includes("leg") || primary.includes("quad") || primary.includes("hamstring");
+        }
+
+        // Specific handling for "shoulder" / "delt"
+        if (token === "shoulder" || token === "shoulders" || token === "delt" || token === "delts") {
+            if (muscle === "shoulders") return true;
+            return name.includes("shoulder") || name.includes("overhead") || name.includes("lateral") || name.includes("delt") || primary.includes("delt") || primary.includes("shoulder");
+        }
+
+        // Specific handling for "arm" / "arms" / "bicep" / "tricep"
+        if (token === "arm" || token === "arms" || token === "bicep" || token === "biceps" || token === "tricep" || token === "triceps") {
+            if (muscle === "arms") return true;
+            return name.includes(token) || primary.includes(token) || tag.includes(token);
+        }
+
+        // Standard token search across name, primaryTarget, tag, equipment, muscle
+        return name.includes(token) ||
+               primary.includes(token) ||
+               tag.includes(token) ||
+               equip.includes(token) ||
+               muscle.includes(token);
+    });
+}
 
 export default function CustomWorkoutScreen({ navigation }) {
     const insets = useSafeAreaInsets();
@@ -310,40 +372,7 @@ export default function CustomWorkoutScreen({ navigation }) {
         return ALL_EXERCISES.filter((ex) => {
             // 1. Text Search Filter (Precise token matching)
             if (searchQuery.trim().length > 0) {
-                const query = searchQuery.trim().toLowerCase();
-                const tokens = query.split(/\s+/).filter(Boolean);
-
-                const name = ex.name.toLowerCase();
-                const primary = (ex.primaryTarget || "").toLowerCase();
-                const tag = (ex.tag || "").toLowerCase();
-                const equip = (ex.equipment || "").toLowerCase();
-                const muscle = ex.muscleGroup.toLowerCase();
-
-                const matchesAllTokens = tokens.every(tok => {
-                    // Precision for core / abs queries
-                    if (tok === "abs" || tok === "ab" || tok === "core" || tok === "abdominal") {
-                        return muscle === "core" ||
-                               primary.includes("ab") ||
-                               tag.includes("ab") ||
-                               name.includes("ab") ||
-                               name.includes("crunch") ||
-                               name.includes("leg raise") ||
-                               name.includes("plank") ||
-                               name.includes("woodchopper");
-                    }
-                    // Precision for shoulders / delts
-                    if (tok === "shoulder" || tok === "shoulders" || tok === "delt" || tok === "delts") {
-                        return muscle === "shoulders" || primary.includes("delt") || tag.includes("delt") || name.includes("press") || name.includes("raise");
-                    }
-                    // General search
-                    return name.includes(tok) ||
-                           primary.includes(tok) ||
-                           tag.includes(tok) ||
-                           equip.includes(tok) ||
-                           muscle.includes(tok);
-                });
-
-                if (!matchesAllTokens) return false;
+                if (!matchesSearchQuery(ex, searchQuery)) return false;
             }
 
             // 2. Tab Filter
@@ -402,7 +431,7 @@ export default function CustomWorkoutScreen({ navigation }) {
         <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#000" translucent />
 
-            {/* ── 1. Top Navigation & Control Deck (Fixed at top so vertical scrolling below is 100% unrestricted) ── */}
+            {/* ── 1. Top Navigation & Control Deck ── */}
             <View style={[styles.topControlDeck, { paddingTop: insets.top + 6 }]}>
                 {/* Header Bar */}
                 <View style={styles.header}>
@@ -457,13 +486,15 @@ export default function CustomWorkoutScreen({ navigation }) {
                     </View>
                 </View>
 
-                {/* Smart Curation Tabs */}
+                {/* Smart Curation Tabs (GHScrollView for native gesture support on Android & iOS) */}
                 <View style={styles.tabsSection}>
-                    <ScrollView
+                    <GHScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={styles.tabsContent}
+                        keyboardShouldPersistTaps="handled"
+                        nestedScrollEnabled
                         overScrollMode="never"
+                        contentContainerStyle={styles.tabsContent}
                     >
                         {[
                             { key: "ALL", label: "ALL MOVEMENTS", icon: "grid-outline" },
@@ -496,17 +527,19 @@ export default function CustomWorkoutScreen({ navigation }) {
                                 </TouchableOpacity>
                             );
                         })}
-                    </ScrollView>
+                    </GHScrollView>
                 </View>
 
-                {/* Muscle Filter Row (When viewing exercise lists) */}
+                {/* Muscle Filter Row (GHScrollView for smooth swipe gesture) */}
                 {activeTab !== "PRESETS" && activeTab !== "ROUTINES" && (
                     <View style={styles.muscleFilterSection}>
-                        <ScrollView
+                        <GHScrollView
                             horizontal
                             showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={styles.muscleFilterContent}
+                            keyboardShouldPersistTaps="handled"
+                            nestedScrollEnabled
                             overScrollMode="never"
+                            contentContainerStyle={styles.muscleFilterContent}
                         >
                             {["ALL", "CHEST", "BACK", "LEGS", "SHOULDERS", "ARMS", "CORE"].map((m) => {
                                 const isSelected = muscleFilter === m;
@@ -526,12 +559,12 @@ export default function CustomWorkoutScreen({ navigation }) {
                                     </TouchableOpacity>
                                 );
                             })}
-                        </ScrollView>
+                        </GHScrollView>
                     </View>
                 )}
             </View>
 
-            {/* ── 2. Dedicated Vertical ScrollView (100% unhindered smooth vertical scrolling) ── */}
+            {/* ── 2. Dedicated Vertical ScrollView ── */}
             <ScrollView
                 ref={scrollRef}
                 showsVerticalScrollIndicator={true}
