@@ -909,11 +909,11 @@ export default function HomeScreen({ navigation, route }) {
 
                                         <View style={styles.heroContent}>
                                             <View>
-                                                <View style={styles.heroBadge}>
+                                                <View style={[styles.heroBadge, { width: total === 0 ? 156 : 136 }]}>
                                                     <Svg
-                                                        width={total === 0 ? 176 : 164}
+                                                        width={total === 0 ? 156 : 136}
                                                         height={26}
-                                                        viewBox={`0 0 ${total === 0 ? 176 : 164} 26`}
+                                                        viewBox={`0 0 ${total === 0 ? 156 : 136} 26`}
                                                         style={StyleSheet.absoluteFillObject}
                                                     >
                                                         <Defs>
@@ -922,7 +922,7 @@ export default function HomeScreen({ navigation, route }) {
                                                                 <Stop offset="100%" stopColor="#3C1A0C" stopOpacity="0.95" />
                                                             </SvgGradient>
                                                         </Defs>
-                                                        <Polygon points={`0,0 ${total === 0 ? 164 : 152},0 ${total === 0 ? 176 : 164},26 0,26`} fill="url(#heroBadgeGrad)" stroke="rgba(255, 100, 40, 0.4)" strokeWidth={1} />
+                                                        <Polygon points={`0,0 ${total === 0 ? 144 : 124},0 ${total === 0 ? 156 : 136},26 0,26`} fill="url(#heroBadgeGrad)" stroke="rgba(255, 100, 40, 0.4)" strokeWidth={1} />
                                                     </Svg>
                                                     <View style={styles.heroBadgeContent}>
                                                         <View style={styles.heroBadgeDot} />
@@ -2541,7 +2541,6 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     heroBadge: {
-        width: 164,
         height: 26,
         alignSelf: "flex-start",
         marginBottom: 8,
