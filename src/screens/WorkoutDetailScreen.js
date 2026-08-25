@@ -12,6 +12,7 @@ import * as Haptics from "expo-haptics";
 import { COLORS, FONTS, SPACING, RADIUS, FAMILY, getMuscleColor } from "../utils/theme";
 import { saveExerciseConfig, getWorkoutOverrides } from "../utils/workoutConfig";
 import { getSuggestedWeight } from "../data/workoutData";
+import { getWorkoutHistoryLocal } from "../utils/storage";
 
 function totalTime(day) {
     let s = 0;
@@ -35,6 +36,7 @@ export default function WorkoutDetailScreen({ navigation, route }) {
     const [expanded, setExpanded] = useState(null);
     const [day, setDay] = useState(initialDay);
     const [editExercise, setEditExercise] = useState(null);
+    const [isCompletedToday, setIsCompletedToday] = useState(false);
 
     useFocusEffect(
         useCallback(() => {
@@ -49,6 +51,19 @@ export default function WorkoutDetailScreen({ navigation, route }) {
             return override ? { ...ex, ...override } : ex;
         });
         setDay({ ...initialDay, exercises: enhancedExercises });
+
+        try {
+            const hist = await getWorkoutHistoryLocal();
+            const todayStr = new Date().toISOString().split("T")[0];
+            const done = hist.some(item => {
+                const dStr = item.date || (item.completedAt ? item.completedAt.split("T")[0] : null);
+                return dStr === todayStr && (
+                    item.day === initialDay.day ||
+                    (item.target && initialDay.target && item.target.toUpperCase() === initialDay.target.toUpperCase())
+                );
+            });
+            setIsCompletedToday(done);
+        } catch { }
     };
 
     const handleSaveEdit = async (config) => {
@@ -97,7 +112,7 @@ export default function WorkoutDetailScreen({ navigation, route }) {
                         <View style={styles.heroText}>
                             <View style={styles.heroBadgeRow}>
                                 <View style={[styles.heroDayBadge, { borderColor: `${muscleColor}4D`, backgroundColor: `${muscleColor}1A` }]}>
-                                    <View style={[styles.heroDayDot, { backgroundColor: muscleColor }]} />
+                                    <View style={[styles.heroDayDot, { backgroundColor: isCompletedToday ? "#30D158" : muscleColor }]} />
                                     <Text style={[styles.heroDayBadgeText, { color: muscleColor }]}>
                                         DAY 0{day.day} PROTOCOL
                                     </Text>
@@ -105,6 +120,12 @@ export default function WorkoutDetailScreen({ navigation, route }) {
                                 <View style={styles.heroSplitBadge}>
                                     <Text style={styles.heroSplitBadgeText}>6-DAY SPLIT</Text>
                                 </View>
+                                {isCompletedToday && (
+                                    <View style={[styles.heroSplitBadge, { borderColor: "rgba(48, 209, 88, 0.4)", backgroundColor: "rgba(48, 209, 88, 0.12)" }]}>
+                                        <Ionicons name="checkmark-circle" size={10} color="#30D158" style={{ marginRight: 4 }} />
+                                        <Text style={[styles.heroSplitBadgeText, { color: "#30D158" }]}>COMPLETED TODAY</Text>
+                                    </View>
+                                )}
                             </View>
 
                             <Text style={styles.heroTitle} numberOfLines={2} adjustsFontSizeToFit>
@@ -112,7 +133,9 @@ export default function WorkoutDetailScreen({ navigation, route }) {
                             </Text>
 
                             <Text style={styles.heroSub}>
-                                Complete session blueprint • {day.exercises.length} structured movements
+                                {isCompletedToday
+                                    ? `Session finished today • Tap below to hit again`
+                                    : `Complete session blueprint • ${day.exercises.length} structured movements`}
                             </Text>
                         </View>
                     </ImageBackground>
@@ -156,7 +179,7 @@ export default function WorkoutDetailScreen({ navigation, route }) {
                     activeOpacity={0.85}
                 >
                     <LinearGradient
-                        colors={[COLORS.primary, "#8B0000"]}
+                        colors={isCompletedToday ? ["#FF9500", "#C85A00", "#8B0000"] : [COLORS.primary, "#8B0000"]}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
                         style={StyleSheet.absoluteFill}
@@ -169,8 +192,8 @@ export default function WorkoutDetailScreen({ navigation, route }) {
                         style={styles.ctaGloss}
                         pointerEvents="none"
                     />
-                    <Ionicons name="play" size={15} color="#FFFFFF" style={{ marginRight: 8 }} />
-                    <Text style={styles.ctaText}>START WORKOUT</Text>
+                    <Ionicons name={isCompletedToday ? "flame" : "play"} size={16} color="#FFFFFF" style={{ marginRight: 8 }} />
+                    <Text style={styles.ctaText}>{isCompletedToday ? "HIT AGAIN" : "START WORKOUT"}</Text>
                 </TouchableOpacity>
 
                 {/* ── 4. Exercise Protocol List ── */}

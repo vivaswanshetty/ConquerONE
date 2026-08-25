@@ -907,72 +907,86 @@ export default function HomeScreen({ navigation, route }) {
                                             {todayWorkout.day < 10 ? `0${todayWorkout.day}` : todayWorkout.day}
                                         </Text>
 
-                                        <View style={styles.heroContent}>
-                                            <View>
-                                                <View style={[styles.heroBadge, { width: total === 0 ? 156 : 136 }]}>
-                                                    <Svg
-                                                        width={total === 0 ? 156 : 136}
-                                                        height={26}
-                                                        viewBox={`0 0 ${total === 0 ? 156 : 136} 26`}
-                                                        style={StyleSheet.absoluteFillObject}
-                                                    >
-                                                        <Defs>
-                                                            <SvgGradient id="heroBadgeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                                                                <Stop offset="0%" stopColor="#280A0A" stopOpacity="0.95" />
-                                                                <Stop offset="100%" stopColor="#3C1A0C" stopOpacity="0.95" />
-                                                            </SvgGradient>
-                                                        </Defs>
-                                                        <Polygon points={`0,0 ${total === 0 ? 144 : 124},0 ${total === 0 ? 156 : 136},26 0,26`} fill="url(#heroBadgeGrad)" stroke="rgba(255, 100, 40, 0.4)" strokeWidth={1} />
-                                                    </Svg>
-                                                    <View style={styles.heroBadgeContent}>
-                                                        <View style={styles.heroBadgeDot} />
-                                                        <Text style={styles.heroBadgeText}>
-                                                            {total === 0 ? "START HERE · DAY 01" : `TODAY · DAY 0${todayWorkout.day}`}
+                                        {(() => {
+                                            const todayStr = new Date().toISOString().split("T")[0];
+                                            const isTodayFinished = total > 0 && history.some(item => {
+                                                const itemDate = item.date || (item.completedAt ? item.completedAt.split("T")[0] : null);
+                                                return itemDate === todayStr;
+                                            });
+
+                                            const heroBadgeWidth = total === 0 ? 156 : (isTodayFinished ? 148 : 136);
+                                            const heroBadgeTopRight = total === 0 ? 144 : (isTodayFinished ? 136 : 124);
+                                            const heroCtaWidth = total === 0 ? 180 : (isTodayFinished ? 112 : 128);
+
+                                            return (
+                                                <View style={styles.heroContent}>
+                                                    <View>
+                                                        <View style={[styles.heroBadge, { width: heroBadgeWidth }]}>
+                                                            <Svg
+                                                                width={heroBadgeWidth}
+                                                                height={26}
+                                                                viewBox={`0 0 ${heroBadgeWidth} 26`}
+                                                                style={StyleSheet.absoluteFillObject}
+                                                            >
+                                                                <Defs>
+                                                                    <SvgGradient id="heroBadgeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                                        <Stop offset="0%" stopColor="#280A0A" stopOpacity="0.95" />
+                                                                        <Stop offset="100%" stopColor="#3C1A0C" stopOpacity="0.95" />
+                                                                    </SvgGradient>
+                                                                </Defs>
+                                                                <Polygon points={`0,0 ${heroBadgeTopRight},0 ${heroBadgeWidth},26 0,26`} fill="url(#heroBadgeGrad)" stroke={isTodayFinished ? "rgba(48, 209, 88, 0.45)" : "rgba(255, 100, 40, 0.4)"} strokeWidth={1} />
+                                                            </Svg>
+                                                            <View style={styles.heroBadgeContent}>
+                                                                <View style={[styles.heroBadgeDot, isTodayFinished && { backgroundColor: "#30D158" }]} />
+                                                                <Text style={styles.heroBadgeText}>
+                                                                    {total === 0 ? "START HERE · DAY 01" : (isTodayFinished ? `HIT TODAY · DAY 0${todayWorkout.day}` : `TODAY · DAY 0${todayWorkout.day}`)}
+                                                                </Text>
+                                                            </View>
+                                                        </View>
+                                                        <Text style={styles.heroTitle} numberOfLines={1} adjustsFontSizeToFit>
+                                                            {total === 0 ? "READY WHEN YOU ARE" : (todayWorkout.dayName ? todayWorkout.dayName.toUpperCase() : (todayWorkout.target.toUpperCase().includes("DAY") ? todayWorkout.target.toUpperCase() : `${todayWorkout.target.toUpperCase()} (HEAVY)`))}
+                                                        </Text>
+                                                        <Text style={styles.heroSub}>
+                                                            {total === 0 ? `Your 6-day split begins with ${todayWorkout.target.toLowerCase()}` : (isTodayFinished ? "Session completed today · Ready to hit again" : "6-day split · pull & push combined")}
                                                         </Text>
                                                     </View>
-                                                </View>
-                                                <Text style={styles.heroTitle} numberOfLines={1} adjustsFontSizeToFit>
-                                                    {total === 0 ? "READY WHEN YOU ARE" : (todayWorkout.dayName ? todayWorkout.dayName.toUpperCase() : (todayWorkout.target.toUpperCase().includes("DAY") ? todayWorkout.target.toUpperCase() : `${todayWorkout.target.toUpperCase()} (HEAVY)`))}
-                                                </Text>
-                                                <Text style={styles.heroSub}>
-                                                    {total === 0 ? `Your 6-day split begins with ${todayWorkout.target.toLowerCase()}` : "6-day split · pull & push combined"}
-                                                </Text>
-                                            </View>
 
-                                            <View style={styles.heroMetaRow}>
-                                                <View style={{ flexDirection: "row", gap: 20 }}>
-                                                    <View style={styles.heroMeta}>
-                                                        <Text style={styles.heroMetaLabel}>VOLUME</Text>
-                                                        <Text style={styles.heroMetaValue}>{todayWorkout.exercises.length} EX</Text>
-                                                    </View>
-                                                    <View style={styles.heroMeta}>
-                                                        <Text style={styles.heroMetaLabel}>DURATION</Text>
-                                                        <Text style={styles.heroMetaValue}>{totalTime(todayWorkout)} MIN</Text>
+                                                    <View style={styles.heroMetaRow}>
+                                                        <View style={{ flexDirection: "row", gap: 20 }}>
+                                                            <View style={styles.heroMeta}>
+                                                                <Text style={styles.heroMetaLabel}>VOLUME</Text>
+                                                                <Text style={styles.heroMetaValue}>{todayWorkout.exercises.length} EX</Text>
+                                                            </View>
+                                                            <View style={styles.heroMeta}>
+                                                                <Text style={styles.heroMetaLabel}>DURATION</Text>
+                                                                <Text style={styles.heroMetaValue}>{totalTime(todayWorkout)} MIN</Text>
+                                                            </View>
+                                                        </View>
+
+                                                        <TouchableOpacity
+                                                            style={styles.heroCta}
+                                                            activeOpacity={0.85}
+                                                            onPress={() => {
+                                                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                                                navigation.navigate("WorkoutDetail", { day: todayWorkout });
+                                                            }}
+                                                        >
+                                                            <Svg
+                                                                width={heroCtaWidth}
+                                                                height={42}
+                                                                viewBox={`0 0 ${heroCtaWidth} 42`}
+                                                                style={StyleSheet.absoluteFillObject}
+                                                            >
+                                                                <Polygon points={`10,0 ${heroCtaWidth},0 ${heroCtaWidth},42 0,42`} fill={isTodayFinished ? "#FF9500" : COLORS.primary} />
+                                                            </Svg>
+                                                            <Text style={styles.heroCtaText}>
+                                                                {total === 0 ? "Start your first session ›" : (isTodayFinished ? "Hit again ›" : "Start session ›")}
+                                                            </Text>
+                                                        </TouchableOpacity>
                                                     </View>
                                                 </View>
-
-                                                <TouchableOpacity
-                                                    style={styles.heroCta}
-                                                    activeOpacity={0.85}
-                                                    onPress={() => {
-                                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                                        navigation.navigate("WorkoutDetail", { day: todayWorkout });
-                                                    }}
-                                                >
-                                                    <Svg
-                                                        width={total === 0 ? 180 : 128}
-                                                        height={42}
-                                                        viewBox={`0 0 ${total === 0 ? 180 : 128} 42`}
-                                                        style={StyleSheet.absoluteFillObject}
-                                                    >
-                                                        <Polygon points={`10,0 ${total === 0 ? 180 : 128},0 ${total === 0 ? 180 : 128},42 0,42`} fill={COLORS.primary} />
-                                                    </Svg>
-                                                    <Text style={styles.heroCtaText}>
-                                                        {total === 0 ? "Start your first session ›" : "Start session ›"}
-                                                    </Text>
-                                                </TouchableOpacity>
-                                            </View>
-                                        </View>
+                                            );
+                                        })()}
                                     </ImageBackground>
                                 </TouchableOpacity>
                             ) : (
