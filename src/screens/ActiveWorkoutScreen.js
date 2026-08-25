@@ -64,11 +64,11 @@ function buildPhases(queue, extraRest = 0) {
     queue.forEach((ex, exIdx) => {
         const isReps = ex.type === "reps" || (ex.type !== "timer" && ex.name.toLowerCase() !== "plank");
         for (let set = 1; set <= ex.sets; set++) {
-            let targetRepRange = ex.repRange || "12-15";
+            let targetRepRange = (ex.repRange || "12-15").replace(/\s*each/gi, "").trim();
             if (targetRepRange.includes("·")) {
                 const parts = targetRepRange.split("·");
                 if (parts[set - 1]) {
-                    targetRepRange = parts[set - 1];
+                    targetRepRange = parts[set - 1].trim();
                 }
             }
             phases.push({
@@ -1447,7 +1447,9 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                             <View style={styles.timerInner}>
                                 {currentPhase.isReps ? (
                                     <>
-                                        <Text style={[styles.timerNum, { color: COLORS.text }]}>{currentPhase.repRange}</Text>
+                                        <Text style={[styles.timerNum, { color: COLORS.text }]} numberOfLines={1} adjustsFontSizeToFit>
+                                            {String(currentPhase.repRange || "").replace(/\s*each/gi, "").trim()}
+                                        </Text>
                                         <Text style={styles.timerUnit}>TARGET REPS</Text>
                                     </>
                                 ) : (

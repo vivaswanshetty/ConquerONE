@@ -914,8 +914,8 @@ export default function HomeScreen({ navigation, route }) {
                                                 return itemDate === todayStr;
                                             });
 
-                                            const heroBadgeWidth = total === 0 ? 156 : (isTodayFinished ? 148 : 136);
-                                            const heroBadgeTopRight = total === 0 ? 144 : (isTodayFinished ? 136 : 124);
+                                            const heroBadgeWidth = total === 0 ? 156 : (isTodayFinished ? 168 : 136);
+                                            const heroBadgeTopRight = total === 0 ? 144 : (isTodayFinished ? 156 : 124);
                                             const heroCtaWidth = total === 0 ? 180 : (isTodayFinished ? 112 : 128);
 
                                             return (
@@ -1526,7 +1526,7 @@ export default function HomeScreen({ navigation, route }) {
                                 </View>
                                 <View style={styles.quickMenuItemBody}>
                                     <Text style={styles.quickMenuItemTitle}>AI Coach</Text>
-                                    <Text style={styles.quickMenuItemSub}>Fitness advice, form checks & intel</Text>
+                                    <Text style={styles.quickMenuItemSub}>Fitness advice, form checks & more</Text>
                                 </View>
                                 <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />
                             </TouchableOpacity>
