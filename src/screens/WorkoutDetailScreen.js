@@ -32,7 +32,7 @@ const estimateCalories = (durationMin) => {
 export default function WorkoutDetailScreen({ navigation, route }) {
     const { day: initialDay } = route.params;
     const insets = useSafeAreaInsets();
-    const [expanded, setExpanded] = useState(0); // Default first exercise expanded for immediate value
+    const [expanded, setExpanded] = useState(null);
     const [day, setDay] = useState(initialDay);
     const [editExercise, setEditExercise] = useState(null);
 
