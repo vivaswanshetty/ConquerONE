@@ -916,7 +916,7 @@ export default function HomeScreen({ navigation, route }) {
 
                                             const heroBadgeWidth = total === 0 ? 156 : (isTodayFinished ? 168 : 136);
                                             const heroBadgeTopRight = total === 0 ? 144 : (isTodayFinished ? 156 : 124);
-                                            const heroCtaWidth = total === 0 ? 180 : (isTodayFinished ? 112 : 128);
+                                            const heroCtaWidth = total === 0 ? 180 : (isTodayFinished ? 120 : 128);
 
                                             return (
                                                 <View style={styles.heroContent}>
@@ -964,7 +964,7 @@ export default function HomeScreen({ navigation, route }) {
                                                         </View>
 
                                                         <TouchableOpacity
-                                                            style={styles.heroCta}
+                                                            style={[styles.heroCta, { width: heroCtaWidth }]}
                                                             activeOpacity={0.85}
                                                             onPress={() => {
                                                                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -2615,11 +2615,10 @@ const styles = StyleSheet.create({
         letterSpacing: 0.5,
     },
     heroCta: {
-        width: 128,
         height: 42,
         justifyContent: "center",
         alignItems: "center",
-        paddingLeft: 6,
+        paddingLeft: 5,
     },
     heroCtaText: {
         fontSize: 12.5,
