@@ -752,18 +752,61 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
             setPhases(p);
             let isRestored = false;
 
-            if (savedSession && (savedSession.day?.day === targetDay.day || route.params?.resume)) {
+            const isSameWorkout = savedSession && (
+                route.params?.resume ||
+                (savedSession.day?.day != null && savedSession.day?.day === targetDay.day) ||
+                (savedSession.day?.target && savedSession.day?.target === targetDay.target) ||
+                (savedSession.day?.name && savedSession.day?.name === targetDay.name) ||
+                (savedSession.day?.id && savedSession.day?.id === targetDay.id)
+            );
+
+            if (isSameWorkout) {
                 const now = Date.now();
                 const calcElapsed = Math.floor((now - (savedSession.workoutStart || now)) / 1000);
 
                 workoutStartRef.current = savedSession.workoutStart || now;
                 phaseStartTimeRef.current = savedSession.phaseStartTime || now;
-                setLoggedExercises(savedSession.loggedExercises || []);
+
+                if (savedSession.loggedExercises && savedSession.loggedExercises.length > 0) {
+                    const mergedLogged = q.map((ex, exIdx) => {
+                        const savedEx = savedSession.loggedExercises.find(
+                            (se, sIdx) => (se.name === ex.name && se.side === ex.side) || sIdx === exIdx
+                        );
+                        if (savedEx && Array.isArray(savedEx.loggedSets)) {
+                            return {
+                                ...ex,
+                                ...savedEx,
+                                loggedSets: savedEx.loggedSets,
+                            };
+                        }
+                        return {
+                            name: ex.name,
+                            side: ex.side,
+                            sets: ex.sets,
+                            loggedSets: Array.from({ length: ex.sets }, (_, i) => ({
+                                set: i + 1,
+                                weightKg: 0,
+                                reps: 0,
+                                completed: false
+                            }))
+                        };
+                    });
+                    setLoggedExercises(mergedLogged);
+                    loggedExercisesRef.current = mergedLogged;
+                } else {
+                    setLoggedExercises(savedSession.loggedExercises || []);
+                    loggedExercisesRef.current = savedSession.loggedExercises || [];
+                }
+
                 setNewPRsFound(savedSession.newPRsFound || []);
-                setPhaseIdx(savedSession.phaseIdx || 0);
+                newPRsFoundRef.current = savedSession.newPRsFound || [];
+
+                const restoredPhaseIdx = Math.min(savedSession.phaseIdx || 0, p.length - 1);
+                setPhaseIdx(restoredPhaseIdx);
+                phaseIdxRef.current = restoredPhaseIdx;
                 setElapsedSec(calcElapsed > 0 ? calcElapsed : 0);
 
-                const activePh = p[savedSession.phaseIdx || 0];
+                const activePh = p[restoredPhaseIdx];
                 const phDuration = activePh?.duration || 45;
                 const timeInPhase = Math.floor((now - (savedSession.phaseStartTime || now)) / 1000);
                 const remaining = Math.max(0, phDuration - timeInPhase);
@@ -773,7 +816,13 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
 
                 if (savedSession.running && !savedSession.paused) {
                     setRunning(true);
+                    runningRef.current = true;
                     setPaused(false);
+                    pausedRef.current = false;
+                    startElapsedTimer();
+                    if (!(activePh?.type === "active" && activePh?.isReps)) {
+                        startInterval(remaining, p, restoredPhaseIdx);
+                    }
                 }
                 isRestored = true;
             }
@@ -791,6 +840,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                     }))
                 }));
                 setLoggedExercises(initialLogged);
+                loggedExercisesRef.current = initialLogged;
                 setTimeLeft(p[0]?.duration ?? 45);
                 phaseTimeRef.current = p[0]?.duration ?? 45;
                 workoutStartRef.current = Date.now();
@@ -866,6 +916,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                         }
                     }
                 } else if (next.match(/inactive|background/)) {
+                    if (!isHydrated) return;
                     const currentPhases = phasesRef.current;
                     const currentPhaseIdx = phaseIdxRef.current;
                     const isRunning = runningRef.current;
@@ -913,10 +964,11 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
         return () => {
             subscription.remove();
         };
-    }, []);
+    }, [isHydrated]);
 
     // Auto-save active workout session state to AsyncStorage on any progression change
     useEffect(() => {
+        if (!isHydrated) return; // Prevent overwriting active session on initial mount before hydration
         if (phases.length > 0 && activeDayRef.current) {
             const curPh = phases[phaseIdx];
             saveActiveWorkoutSession({
@@ -931,7 +983,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                 paused,
             });
         }
-    }, [phaseIdx, loggedExercises, newPRsFound, running, paused, activeDay]);
+    }, [isHydrated, phaseIdx, loggedExercises, newPRsFound, running, paused, activeDay]);
 
     const currentPhase = phases[phaseIdx];
     const isWork = currentPhase?.type === "active";
@@ -1046,6 +1098,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
             }
         }
         setPhaseIdx(next);
+        phaseIdxRef.current = next;
         setTimeLeft(nextPhase.duration);
         phaseTimeRef.current = nextPhase.duration;
         if (nextPhase.type !== "active" && autoStartRef.current) {
@@ -1221,6 +1274,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
         clearInterval(intervalRef.current);
         fadeTransition();
         setPhaseIdx(idx);
+        phaseIdxRef.current = idx;
         setTimeLeft(phases[idx].duration);
         phaseTimeRef.current = phases[idx].duration;
         setJumpModal(false);
@@ -1236,19 +1290,36 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
         setPRModal(prev => ({ ...prev, visible: false }));
         if (!exerciseName) return;
 
-        setLoggedExercises(prev => {
-            const next = [...prev];
-            if (next[exIdx]) {
-                const updatedSets = next[exIdx].loggedSets.map(s => {
+        const currentLogged = loggedExercisesRef.current || [];
+        const next = currentLogged.map((exItem, idx) => {
+            if (idx === exIdx) {
+                const updatedSets = exItem.loggedSets.map(s => {
                     if (s.set === setNum) {
                         return { ...s, weightKg, reps, completed: true };
                     }
                     return s;
                 });
-                next[exIdx] = { ...next[exIdx], loggedSets: updatedSets };
+                return { ...exItem, loggedSets: updatedSets };
             }
-            return next;
+            return exItem;
         });
+
+        setLoggedExercises(next);
+        loggedExercisesRef.current = next;
+
+        if (activeDayRef.current && phasesRef.current.length > 0) {
+            saveActiveWorkoutSession({
+                day: activeDayRef.current,
+                phaseIdx: phaseIdxRef.current,
+                workoutStart: workoutStartRef.current,
+                phaseStartTime: phaseStartTimeRef.current,
+                phaseDuration: phasesRef.current[phaseIdxRef.current]?.duration || 45,
+                loggedExercises: next,
+                newPRsFound: newPRsFoundRef.current,
+                running: runningRef.current,
+                paused: pausedRef.current,
+            });
+        }
 
         if (weightKg > 0 || reps > 0) {
             const result = await tryUpdatePR(exerciseName, weightKg, reps);
@@ -1267,19 +1338,36 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
         const { exIdx, setNum } = prModal;
         setPRModal(prev => ({ ...prev, visible: false }));
 
-        setLoggedExercises(prev => {
-            const next = [...prev];
-            if (next[exIdx]) {
-                const updatedSets = next[exIdx].loggedSets.map(s => {
+        const currentLogged = loggedExercisesRef.current || [];
+        const next = currentLogged.map((exItem, idx) => {
+            if (idx === exIdx) {
+                const updatedSets = exItem.loggedSets.map(s => {
                     if (s.set === setNum) {
                         return { ...s, weightKg: 0, reps: 0, completed: true };
                     }
                     return s;
                 });
-                next[exIdx] = { ...next[exIdx], loggedSets: updatedSets };
+                return { ...exItem, loggedSets: updatedSets };
             }
-            return next;
+            return exItem;
         });
+
+        setLoggedExercises(next);
+        loggedExercisesRef.current = next;
+
+        if (activeDayRef.current && phasesRef.current.length > 0) {
+            saveActiveWorkoutSession({
+                day: activeDayRef.current,
+                phaseIdx: phaseIdxRef.current,
+                workoutStart: workoutStartRef.current,
+                phaseStartTime: phaseStartTimeRef.current,
+                phaseDuration: phasesRef.current[phaseIdxRef.current]?.duration || 45,
+                loggedExercises: next,
+                newPRsFound: newPRsFoundRef.current,
+                running: runningRef.current,
+                paused: pausedRef.current,
+            });
+        }
     };
 
     if (!currentPhase || phases.length === 0) {
