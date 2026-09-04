@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity, StyleSheet,
     StatusBar, Image, ActivityIndicator, Animated,
-    Modal, TextInput, KeyboardAvoidingView, Platform, DeviceEventEmitter, InteractionManager
+    Modal, TextInput, KeyboardAvoidingView, Platform, DeviceEventEmitter, InteractionManager,
+    Linking
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
@@ -19,7 +20,7 @@ import { getStreak, getTotalWorkouts, getStreakLocal, getTotalWorkoutsLocal } fr
 import { COLORS, SPACING, FAMILY, APP_VERSION, RADIUS } from "../utils/theme";
 import { uploadImage } from "../utils/cloudStorage";
 import { scheduleBirthdayWishes } from "../utils/notifications";
-import { requestHealthPermissions, getDailyStats, isHealthConnected, disconnectHealth } from "../utils/health";
+import { requestHealthPermissions, getDailyStats, isHealthConnected, disconnectHealth, openHealthConnectPlayStore } from "../utils/health";
 import { getRankData } from "./RankScreen";
 
 const GENDER_OPTIONS = ["Male", "Female", "Other", "Prefer not to say"];
@@ -415,7 +416,7 @@ export default function ProfileScreen({ navigation }) {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         if (healthStatus === "active") {
             showDialog({
-                title: "Disconnect Google Fit?",
+                title: "Disconnect Health Connect?",
                 message: "This will stop syncing your workouts and health metrics with Health Connect.",
                 confirmText: "Disconnect",
                 cancelText: "Cancel",
@@ -426,7 +427,7 @@ export default function ProfileScreen({ navigation }) {
                     const revoked = await disconnectHealth();
                     if (revoked) {
                         setHealthStatus("inactive");
-                        showToast("Google Fit disconnected", "success");
+                        showToast("Health Connect disconnected", "success");
                     }
                     setSyncing(false);
                 }
@@ -434,22 +435,45 @@ export default function ProfileScreen({ navigation }) {
             return;
         }
 
+        if (Platform.OS !== 'android') {
+            showToast("Health Connect is only available on Android", "info");
+            return;
+        }
+
         setSyncing(true);
-        DeviceEventEmitter.emit('showNetworkBanner');
-
         try {
-            const hasCnx = await fetch("https://www.google.com", { method: "HEAD", mode: "no-cors" });
-            if (!hasCnx) throw new Error("Offline");
-
-            const success = await requestHealthPermissions();
-            if (success) {
+            const res = await requestHealthPermissions();
+            if (res.success) {
                 setHealthStatus("active");
                 const stats = await getDailyStats();
                 console.log("Health Stats:", stats);
-                showToast("Google Fit sync connected", "success");
+                showToast("Health Connect synced successfully", "success");
+            } else if (res.reason === 'needs_update') {
+                showDialog({
+                    title: "Health Connect Update Required",
+                    message: "Health Connect needs an update to sync with ConquerONE. Would you like to open Google Play Store?",
+                    confirmText: "Update",
+                    cancelText: "Cancel",
+                    singleButton: false,
+                    onConfirm: () => openHealthConnectPlayStore()
+                });
+            } else if (res.reason === 'unavailable') {
+                showDialog({
+                    title: "Health Connect Required",
+                    message: "Health Connect is not installed on your device. Would you like to install it from Google Play Store?",
+                    confirmText: "Install",
+                    cancelText: "Cancel",
+                    singleButton: false,
+                    onConfirm: () => openHealthConnectPlayStore()
+                });
+            } else if (res.reason === 'denied') {
+                showToast("Health Connect permissions were not granted", "error");
+            } else {
+                showToast("Could not connect to Health Connect. Check settings.", "error");
             }
         } catch (e) {
-            showToast("Sync failed. Check permissions & connection.", "error");
+            console.error("Health connect error:", e);
+            showToast("Failed to connect. Check app settings.", "error");
         } finally {
             setSyncing(false);
         }
@@ -771,7 +795,7 @@ export default function ProfileScreen({ navigation }) {
                                 )}
                             </View>
                             <Text style={styles.serviceSub} numberOfLines={1}>
-                                {healthStatus === "active" ? "Linked to Google Fit" : "Sync steps, activity & calories"}
+                                {healthStatus === "active" ? "Linked to Health Connect" : "Sync steps, activity & calories"}
                             </Text>
                         </View>
                         <TouchableOpacity

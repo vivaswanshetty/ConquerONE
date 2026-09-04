@@ -62,26 +62,10 @@
           }
         }
       ],
-      [
-        "react-native-health-connect",
-        {
-          "healthPermissionRead": [
-            "ActiveCaloriesBurned",
-            "BasalMetabolicRate",
-            "Distance",
-            "HeartRate",
-            "Steps",
-            "TotalCaloriesBurned"
-          ],
-          "healthPermissionWrite": [
-            "ActiveCaloriesBurned",
-            "TotalCaloriesBurned"
-          ]
-        }
-      ],
       "@react-native-google-signin/google-signin",
       "expo-apple-authentication",
       "./plugins/withTTSQueries",
+      "./plugins/withHealthConnect",
       [
         "react-native-android-widget",
         {
