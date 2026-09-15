@@ -22,14 +22,19 @@ export default function ProgramStatusCard({
     const freq = summary.weeklyTrainingFrequency ?? 0;
     const progRatio = summary.progressionRatio ?? 100;
 
-    let adherenceColor = "#00C853";
-    if (adherence < 60) adherenceColor = "#FF5E3A";
-    else if (adherence < 80) adherenceColor = "#FF9500";
+    let adherenceColor = "#30D158";
+    if (adherence < 60) adherenceColor = "#FF453A";
+    else if (adherence < 80) adherenceColor = "#FF9F0A";
+
+    const completedSess = summary.completedSessions28d || 0;
+    const plannedSess = summary.totalPlannedSessions28d || 24;
+    const workingSets = summary.completedWorkingSets || 0;
+    const progressingMvmts = summary.progressingMovementsCount || 0;
 
     return (
         <View style={styles.card}>
             <LinearGradient
-                colors={isDeload ? ["rgba(255, 149, 0, 0.08)", "rgba(18, 18, 20, 0.95)"] : ["rgba(227, 30, 36, 0.08)", "rgba(18, 18, 20, 0.95)"]}
+                colors={isDeload ? ["rgba(255, 159, 10, 0.08)", "rgba(16, 16, 18, 0.98)"] : ["rgba(227, 30, 36, 0.08)", "rgba(16, 16, 18, 0.98)"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
                 style={StyleSheet.absoluteFill}
@@ -41,11 +46,11 @@ export default function ProgramStatusCard({
                     <View style={styles.labelRow}>
                         <Ionicons
                             name={isDeload ? "refresh-circle" : "shield-checkmark"}
-                            size={14}
-                            color={isDeload ? "#FF9500" : COLORS.primary}
+                            size={13}
+                            color={isDeload ? "#FF9F0A" : COLORS.primary}
                             style={{ marginRight: 5 }}
                         />
-                        <Text style={[styles.programLabel, isDeload && { color: "#FF9500" }]}>
+                        <Text style={[styles.programLabel, isDeload && { color: "#FF9F0A" }]}>
                             {isDeload ? "ACTIVE DELOAD PROTOCOL" : "ACTIVE PROGRAM"}
                         </Text>
                     </View>
@@ -61,8 +66,8 @@ export default function ProgramStatusCard({
                         }}
                         activeOpacity={0.7}
                     >
-                        <Text style={[styles.versionText, isDeload && { color: "#FF9500" }]}>v{progVersion}</Text>
-                        <Ionicons name="chevron-forward" size={10} color={isDeload ? "#FF9500" : COLORS.primary} style={{ marginLeft: 3 }} />
+                        <Text style={[styles.versionText, isDeload && { color: "#FF9F0A" }]}>v{progVersion}</Text>
+                        <Ionicons name="chevron-forward" size={10} color={isDeload ? "#FF9F0A" : COLORS.primary} style={{ marginLeft: 2 }} />
                     </TouchableOpacity>
                 )}
             </View>
@@ -71,38 +76,38 @@ export default function ProgramStatusCard({
             <View style={styles.metricsGrid}>
                 {/* 1. Adherence */}
                 <View style={styles.metricCell}>
-                    <Text style={styles.metricLabel}>28D ADHERENCE</Text>
-                    <Text style={[styles.metricValue, { color: adherenceColor }]}>
+                    <Text style={styles.metricLabel} numberOfLines={1}>28D ADH</Text>
+                    <Text style={[styles.metricValue, { color: adherenceColor }]} numberOfLines={1}>
                         {adherence}%
                     </Text>
-                    <Text style={styles.metricSub}>{summary.completedSessions28d || 0}/{summary.totalPlannedSessions28d || 24} sessions</Text>
+                    <Text style={styles.metricSub} numberOfLines={1}>{completedSess}/{plannedSess} sess</Text>
                 </View>
 
                 <View style={styles.divider} />
 
                 {/* 2. Set Completion */}
                 <View style={styles.metricCell}>
-                    <Text style={styles.metricLabel}>SET COMPLETION</Text>
-                    <Text style={styles.metricValue}>{setRatio}%</Text>
-                    <Text style={styles.metricSub}>{summary.completedWorkingSets || 0} working sets</Text>
+                    <Text style={styles.metricLabel} numberOfLines={1}>SETS COMPL</Text>
+                    <Text style={styles.metricValue} numberOfLines={1}>{setRatio}%</Text>
+                    <Text style={styles.metricSub} numberOfLines={1}>{workingSets} sets</Text>
                 </View>
 
                 <View style={styles.divider} />
 
                 {/* 3. Progression Rate */}
                 <View style={styles.metricCell}>
-                    <Text style={styles.metricLabel}>PROGRESS RATE</Text>
-                    <Text style={[styles.metricValue, { color: "#00C853" }]}>{progRatio}%</Text>
-                    <Text style={styles.metricSub}>{summary.progressingMovementsCount || 0} movements</Text>
+                    <Text style={styles.metricLabel} numberOfLines={1}>PROGRESS</Text>
+                    <Text style={[styles.metricValue, { color: "#30D158" }]} numberOfLines={1}>{progRatio}%</Text>
+                    <Text style={styles.metricSub} numberOfLines={1}>{progressingMvmts} mvmts</Text>
                 </View>
 
                 <View style={styles.divider} />
 
                 {/* 4. Frequency */}
                 <View style={styles.metricCell}>
-                    <Text style={styles.metricLabel}>FREQUENCY</Text>
-                    <Text style={styles.metricValue}>{freq}</Text>
-                    <Text style={styles.metricSub}>sessions / wk</Text>
+                    <Text style={styles.metricLabel} numberOfLines={1}>FREQUENCY</Text>
+                    <Text style={styles.metricValue} numberOfLines={1}>{freq}</Text>
+                    <Text style={styles.metricSub} numberOfLines={1}>sess / wk</Text>
                 </View>
             </View>
         </View>
@@ -111,7 +116,7 @@ export default function ProgramStatusCard({
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: "rgba(18, 18, 20, 0.95)",
+        backgroundColor: "#141416",
         borderRadius: RADIUS.lg,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.08)",
@@ -123,7 +128,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        marginBottom: SPACING.base,
+        marginBottom: SPACING.sm + 4,
     },
     titleBox: {
         flex: 1,
@@ -135,14 +140,14 @@ const styles = StyleSheet.create({
         marginBottom: 3,
     },
     programLabel: {
-        fontSize: 10,
+        fontSize: 9.5,
         fontFamily: FAMILY.monoBold,
         color: COLORS.primary,
-        letterSpacing: 1,
+        letterSpacing: 1.1,
     },
     programTitle: {
-        fontSize: 18,
-        fontFamily: FAMILY.display,
+        fontSize: 17,
+        fontFamily: FAMILY.chakraBold,
         color: "#FFFFFF",
         letterSpacing: 0.5,
     },
@@ -151,55 +156,62 @@ const styles = StyleSheet.create({
         alignItems: "center",
         paddingHorizontal: 8,
         paddingVertical: 4,
-        borderRadius: 8,
+        borderRadius: 6,
         backgroundColor: "rgba(227, 30, 36, 0.12)",
         borderWidth: 1,
-        borderColor: "rgba(227, 30, 36, 0.3)",
+        borderColor: "rgba(227, 30, 36, 0.35)",
     },
     versionBadgeDeload: {
-        backgroundColor: "rgba(255, 149, 0, 0.12)",
-        borderColor: "rgba(255, 149, 0, 0.3)",
+        backgroundColor: "rgba(255, 159, 10, 0.12)",
+        borderColor: "rgba(255, 159, 10, 0.35)",
     },
     versionText: {
-        fontSize: 11,
+        fontSize: 10.5,
         fontFamily: FAMILY.monoBold,
         color: COLORS.primary,
+        letterSpacing: 0.4,
     },
     metricsGrid: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "rgba(255, 255, 255, 0.02)",
+        backgroundColor: "rgba(255, 255, 255, 0.025)",
         borderRadius: RADIUS.md,
         paddingVertical: 10,
-        paddingHorizontal: 6,
+        paddingHorizontal: 4,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.05)",
     },
     metricCell: {
         flex: 1,
         alignItems: "center",
+        justifyContent: "center",
+        paddingHorizontal: 2,
     },
     divider: {
         width: 1,
         height: 28,
-        backgroundColor: "rgba(255, 255, 255, 0.06)",
+        backgroundColor: "rgba(255, 255, 255, 0.07)",
     },
     metricLabel: {
         fontSize: 8,
         fontFamily: FAMILY.monoBold,
         color: COLORS.textMuted,
-        letterSpacing: 0.5,
+        letterSpacing: 0.6,
         marginBottom: 3,
+        textAlign: "center",
     },
     metricValue: {
-        fontSize: 15,
+        fontSize: 16,
         fontFamily: FAMILY.monoBold,
         color: "#FFFFFF",
         marginBottom: 2,
+        textAlign: "center",
+        fontVariant: ["tabular-nums"],
     },
     metricSub: {
-        fontSize: 8,
+        fontSize: 8.5,
         fontFamily: FAMILY.mono,
-        color: "rgba(255, 255, 255, 0.4)",
+        color: "rgba(255, 255, 255, 0.45)",
+        textAlign: "center",
     },
 });

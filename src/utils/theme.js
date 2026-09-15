@@ -12,6 +12,10 @@ export const COLORS = {
     bgSurface: "#1E1E20",
     bgMuted: "#26262A",
 
+    // Aliases for component consistency
+    card: "#151516",
+    cardBorder: "#1E1E20",
+
     // ── Structural lines (1px Hairline, No Glow) ──────────────
     border: "#1E1E20",
     borderMid: "#28282C",
@@ -20,6 +24,7 @@ export const COLORS = {
     // ── Text hierarchy ────────────────────────────────────────
     text: "#FFFFFF",
     textSub: "#8A8A8E",
+    textSecondary: "#8A8A8E",
     textMuted: "#55555A",
 
     // ── Accent (Restrained Deep Crimson — CTAs & Live State only) ─
@@ -93,6 +98,7 @@ export const FAMILY = {
     // ── Display Typeface for Screen Titles & Hero Numbers (Bebas Neue) ──
     header: "BebasNeue_400Regular",
     display: "BebasNeue_400Regular",
+    bebas: "BebasNeue_400Regular",
     urbanist: "BebasNeue_400Regular",
     urbanistBold: "BebasNeue_400Regular",
     urbanistBlack: "BebasNeue_400Regular",
@@ -104,12 +110,19 @@ export const FAMILY = {
     semibold: "ChakraPetch_600SemiBold",
     bold: "ChakraPetch_700Bold",
     black: "ChakraPetch_700Bold",
+    chakra: "ChakraPetch_500Medium",
+    chakraBold: "ChakraPetch_700Bold",
     accent: "ChakraPetch_600SemiBold",
     accent2: "LeagueSpartan_700Bold",
+
+    // ── Clean Sans / Body (Inter) ──
+    sans: "Inter_500Medium",
+    body: "Inter_400Regular",
 
     // ── Precision Instrument Monospace for Numbers, Reps, Weights, Timers, Sets, Kcal, Streak ──
     mono: "JetBrainsMono_600SemiBold",
     monoRegular: "JetBrainsMono_400Regular",
+    monoMedium: "JetBrainsMono_600SemiBold",
     monoBold: "JetBrainsMono_700Bold",
 
     // ── Fallbacks for secondary screens ──

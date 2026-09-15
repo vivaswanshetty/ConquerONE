@@ -1,12 +1,11 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, FAMILY, SPACING, RADIUS } from "../utils/theme";
 
 export default function WeeklyRecapCard({
     recap,
-    onPressDetails,
 }) {
     if (!recap) return null;
 
@@ -14,7 +13,6 @@ export default function WeeklyRecapCard({
         adherence = {},
         volume = {},
         performance = {},
-        recovery = {},
         takeaways = [],
         nextWeekFocus = "",
     } = recap;
@@ -22,7 +20,7 @@ export default function WeeklyRecapCard({
     return (
         <View style={styles.container}>
             <LinearGradient
-                colors={["#16161C", "#111115"]}
+                colors={["#161619", "#111114"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.cardGradient}
@@ -30,7 +28,7 @@ export default function WeeklyRecapCard({
                 {/* Header */}
                 <View style={styles.headerRow}>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
-                        <Ionicons name="calendar" size={14} color={COLORS.primary} />
+                        <Ionicons name="calendar" size={13} color={COLORS.primary} />
                         <Text style={styles.headerTitle}>7-DAY ATHLETE RECAP</Text>
                     </View>
                     <View style={styles.adherencePill}>
@@ -54,7 +52,7 @@ export default function WeeklyRecapCard({
                     </View>
                     <View style={styles.metricCell}>
                         <Text style={styles.metricLabel}>NEW PRS</Text>
-                        <Text style={[styles.metricValue, { color: (performance.newPRCount > 0) ? "#10B981" : "#FFFFFF" }]}>
+                        <Text style={[styles.metricValue, { color: (performance.newPRCount > 0) ? "#30D158" : "#FFFFFF" }]}>
                             {performance.newPRCount || 0}
                         </Text>
                     </View>
@@ -65,7 +63,7 @@ export default function WeeklyRecapCard({
                     <View style={styles.takeawaysList}>
                         {takeaways.slice(0, 2).map((item, idx) => (
                             <View key={idx} style={styles.takeawayItem}>
-                                <Ionicons name="chevron-forward" size={12} color={COLORS.primary} style={{ marginTop: 2 }} />
+                                <Ionicons name="chevron-forward" size={12} color={COLORS.primary} style={{ marginTop: 3 }} />
                                 <Text style={styles.takeawayText} numberOfLines={2}>{item}</Text>
                             </View>
                         ))}
@@ -75,9 +73,9 @@ export default function WeeklyRecapCard({
                 {/* Next Week Focus */}
                 {nextWeekFocus ? (
                     <View style={styles.focusBox}>
-                        <Ionicons name="flag-outline" size={13} color="#F59E0B" />
+                        <Ionicons name="flag-outline" size={13} color="#FF9F0A" />
                         <Text style={styles.focusText} numberOfLines={2}>
-                            <Text style={{ fontFamily: FAMILY.bold, color: "#F59E0B" }}>Focus: </Text>
+                            <Text style={{ fontFamily: FAMILY.chakraBold, color: "#FF9F0A" }}>Focus: </Text>
                             {nextWeekFocus}
                         </Text>
                     </View>
@@ -106,21 +104,24 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     headerTitle: {
-        fontSize: 11.5,
-        fontFamily: FAMILY.bold,
+        fontSize: 12,
+        fontFamily: FAMILY.chakraBold,
         color: "#FFFFFF",
         letterSpacing: 0.8,
     },
     adherencePill: {
-        backgroundColor: "rgba(255, 255, 255, 0.06)",
+        backgroundColor: "rgba(255, 255, 255, 0.05)",
         paddingHorizontal: 8,
-        paddingVertical: 3,
-        borderRadius: 8,
+        paddingVertical: 3.5,
+        borderRadius: 6,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.08)",
     },
     adherencePillText: {
-        fontSize: 10,
-        fontFamily: FAMILY.semibold,
+        fontSize: 9.5,
+        fontFamily: FAMILY.monoBold,
         color: COLORS.textSub,
+        letterSpacing: 0.4,
     },
     metricsRow: {
         flexDirection: "row",
@@ -129,23 +130,28 @@ const styles = StyleSheet.create({
     },
     metricCell: {
         flex: 1,
-        backgroundColor: "rgba(255, 255, 255, 0.03)",
-        padding: 10,
+        backgroundColor: "rgba(255, 255, 255, 0.025)",
+        paddingVertical: 10,
+        paddingHorizontal: 8,
         borderRadius: RADIUS.sm,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.05)",
+        alignItems: "center",
     },
     metricLabel: {
-        fontSize: 9,
-        fontFamily: FAMILY.bold,
+        fontSize: 8.5,
+        fontFamily: FAMILY.monoBold,
         color: COLORS.textMuted,
-        letterSpacing: 0.5,
-        marginBottom: 3,
+        letterSpacing: 0.6,
+        marginBottom: 4,
+        textAlign: "center",
     },
     metricValue: {
-        fontSize: 14,
-        fontFamily: FAMILY.bold,
+        fontSize: 15.5,
+        fontFamily: FAMILY.monoBold,
         color: "#FFFFFF",
+        fontVariant: ["tabular-nums"],
+        textAlign: "center",
     },
     takeawaysList: {
         gap: 6,
@@ -160,24 +166,24 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 12,
         fontFamily: FAMILY.regular,
-        color: "#D1D5DB",
-        lineHeight: 16,
+        color: "#D1D1D6",
+        lineHeight: 17,
     },
     focusBox: {
         flexDirection: "row",
         alignItems: "center",
         gap: 6,
-        backgroundColor: "rgba(245, 158, 11, 0.08)",
+        backgroundColor: "rgba(255, 159, 10, 0.08)",
         padding: 10,
         borderRadius: RADIUS.sm,
         borderWidth: 1,
-        borderColor: "rgba(245, 158, 11, 0.2)",
+        borderColor: "rgba(255, 159, 10, 0.22)",
     },
     focusText: {
         flex: 1,
-        fontSize: 11.5,
+        fontSize: 12,
         fontFamily: FAMILY.regular,
-        color: "#E5E7EB",
-        lineHeight: 16,
+        color: "#E0E0E6",
+        lineHeight: 17,
     },
 });

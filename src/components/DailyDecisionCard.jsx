@@ -30,51 +30,51 @@ export default function DailyDecisionCard({
         switch (dec) {
             case "READY_TO_PROGRESS":
                 return {
-                    badgeBg: "rgba(16, 185, 129, 0.15)",
-                    badgeBorder: "#10B981",
-                    badgeColor: "#10B981",
+                    badgeBg: "rgba(48, 209, 88, 0.14)",
+                    badgeBorder: "rgba(48, 209, 88, 0.35)",
+                    badgeColor: "#30D158",
                     icon: "flash",
-                    ctaBg: ["#10B981", "#059669"],
+                    ctaBg: ["#30D158", "#249E43"],
                 };
             case "TRAIN_WITH_CAUTION":
                 return {
-                    badgeBg: "rgba(245, 158, 11, 0.15)",
-                    badgeBorder: "#F59E0B",
-                    badgeColor: "#F59E0B",
+                    badgeBg: "rgba(255, 159, 10, 0.14)",
+                    badgeBorder: "rgba(255, 159, 10, 0.35)",
+                    badgeColor: "#FF9F0A",
                     icon: "warning",
-                    ctaBg: ["#D97706", "#B45309"],
+                    ctaBg: ["#FF9F0A", "#D97706"],
                 };
             case "DELOAD_REVIEW":
                 return {
                     badgeBg: "rgba(139, 92, 246, 0.15)",
-                    badgeBorder: "#8B5CF6",
+                    badgeBorder: "rgba(139, 92, 246, 0.4)",
                     badgeColor: "#A78BFA",
                     icon: "refresh-circle",
                     ctaBg: ["#7C3AED", "#6D28D9"],
                 };
             case "MISSED_WORKOUT":
                 return {
-                    badgeBg: "rgba(239, 68, 68, 0.15)",
-                    badgeBorder: "#EF4444",
-                    badgeColor: "#EF4444",
+                    badgeBg: "rgba(255, 69, 58, 0.15)",
+                    badgeBorder: "rgba(255, 69, 58, 0.4)",
+                    badgeColor: "#FF453A",
                     icon: "calendar",
-                    ctaBg: ["#DC2626", "#B91C1C"],
+                    ctaBg: ["#E31E24", "#B91C1C"],
                 };
             case "PROGRAM_REVIEW":
                 return {
-                    badgeBg: "rgba(245, 158, 11, 0.15)",
-                    badgeBorder: "#F59E0B",
-                    badgeColor: "#F59E0B",
+                    badgeBg: "rgba(255, 159, 10, 0.14)",
+                    badgeBorder: "rgba(255, 159, 10, 0.35)",
+                    badgeColor: "#FF9F0A",
                     icon: "git-branch",
-                    ctaBg: ["#D97706", "#B45309"],
+                    ctaBg: ["#FF9F0A", "#D97706"],
                 };
             case "RECOVERY_FOCUS":
                 return {
-                    badgeBg: "rgba(59, 130, 246, 0.15)",
-                    badgeBorder: "#3B82F6",
-                    badgeColor: "#60A5FA",
+                    badgeBg: "rgba(48, 176, 199, 0.15)",
+                    badgeBorder: "rgba(48, 176, 199, 0.35)",
+                    badgeColor: "#30B0C7",
                     icon: "bed",
-                    ctaBg: ["#2563EB", "#1D4ED8"],
+                    ctaBg: ["#30B0C7", "#1E8094"],
                 };
             case "REST_DAY":
                 return {
@@ -95,8 +95,8 @@ export default function DailyDecisionCard({
             case "TRAIN":
             default:
                 return {
-                    badgeBg: "rgba(225, 29, 72, 0.15)",
-                    badgeBorder: COLORS.primary,
+                    badgeBg: "rgba(227, 30, 36, 0.14)",
+                    badgeBorder: "rgba(227, 30, 36, 0.35)",
                     badgeColor: COLORS.primary,
                     icon: "flame",
                     ctaBg: [COLORS.primary, "#BE123C"],
@@ -106,11 +106,12 @@ export default function DailyDecisionCard({
 
     const theme = getDecisionTheme(decision);
     const readinessScore = supportingMetrics?.readinessScore;
+    const hasReadiness = typeof readinessScore === "number" && !isNaN(readinessScore);
 
     return (
         <View style={styles.cardContainer}>
             <LinearGradient
-                colors={["#16161C", "#0F0F13"]}
+                colors={["#161619", "#0F0F12"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.cardGradient}
@@ -118,13 +119,13 @@ export default function DailyDecisionCard({
                 {/* Header: Decision Badge & Readiness Pill */}
                 <View style={styles.topRow}>
                     <View style={[styles.decisionBadge, { backgroundColor: theme.badgeBg, borderColor: theme.badgeBorder }]}>
-                        <Ionicons name={theme.icon} size={12} color={theme.badgeColor} style={{ marginRight: 5 }} />
+                        <Ionicons name={theme.icon} size={11} color={theme.badgeColor} style={{ marginRight: 5 }} />
                         <Text style={[styles.decisionBadgeText, { color: theme.badgeColor }]}>
                             {decision.replace(/_/g, " ")}
                         </Text>
                     </View>
 
-                    {readinessScore !== null ? (
+                    {hasReadiness ? (
                         <TouchableOpacity
                             style={styles.readinessPill}
                             activeOpacity={0.7}
@@ -133,7 +134,7 @@ export default function DailyDecisionCard({
                                 if (onOpenReadiness) onOpenReadiness();
                             }}
                         >
-                            <Ionicons name="pulse" size={11} color="#10B981" />
+                            <Ionicons name="pulse" size={11} color="#30D158" />
                             <Text style={styles.readinessText}>Readiness: {readinessScore}/100</Text>
                         </TouchableOpacity>
                     ) : (
@@ -159,8 +160,8 @@ export default function DailyDecisionCard({
                 {primeTarget && (
                     <View style={styles.primeTargetBox}>
                         <View style={styles.primeTargetHeader}>
-                            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                                <Ionicons name="trending-up" size={13} color="#10B981" />
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+                                <Ionicons name="trending-up" size={12} color="#30D158" />
                                 <Text style={styles.primeTargetTag}>TODAY'S PRIME TARGET</Text>
                             </View>
                             {primeTarget.actionLabel && (
@@ -236,31 +237,32 @@ const styles = StyleSheet.create({
     decisionBadge: {
         flexDirection: "row",
         alignItems: "center",
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 12,
+        paddingHorizontal: 9,
+        paddingVertical: 3.5,
+        borderRadius: 6,
         borderWidth: 1,
     },
     decisionBadgeText: {
-        fontSize: 10,
-        fontFamily: FAMILY.bold,
+        fontSize: 9.5,
+        fontFamily: FAMILY.monoBold,
         letterSpacing: 0.8,
     },
     readinessPill: {
         flexDirection: "row",
         alignItems: "center",
         gap: 5,
-        backgroundColor: "rgba(16, 185, 129, 0.1)",
+        backgroundColor: "rgba(48, 209, 88, 0.1)",
         paddingHorizontal: 9,
-        paddingVertical: 4,
-        borderRadius: 10,
+        paddingVertical: 3.5,
+        borderRadius: 6,
         borderWidth: 1,
-        borderColor: "rgba(16, 185, 129, 0.25)",
+        borderColor: "rgba(48, 209, 88, 0.25)",
     },
     readinessText: {
-        fontSize: 11,
-        fontFamily: FAMILY.medium,
-        color: "#10B981",
+        fontSize: 10.5,
+        fontFamily: FAMILY.monoBold,
+        color: "#30D158",
+        letterSpacing: 0.3,
     },
     readinessPillEmpty: {
         flexDirection: "row",
@@ -268,17 +270,17 @@ const styles = StyleSheet.create({
         gap: 4,
         backgroundColor: "rgba(255, 255, 255, 0.05)",
         paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 10,
+        paddingVertical: 3.5,
+        borderRadius: 6,
     },
     readinessTextEmpty: {
-        fontSize: 11,
-        fontFamily: FAMILY.regular,
+        fontSize: 10.5,
+        fontFamily: FAMILY.medium,
         color: COLORS.textSub,
     },
     headlineText: {
         fontSize: 18,
-        fontFamily: FAMILY.bold,
+        fontFamily: FAMILY.chakraBold,
         color: "#FFFFFF",
         letterSpacing: 0.5,
         marginBottom: 4,
@@ -305,21 +307,21 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     primeTargetTag: {
-        fontSize: 10,
-        fontFamily: FAMILY.bold,
-        color: "#10B981",
+        fontSize: 9.5,
+        fontFamily: FAMILY.monoBold,
+        color: "#30D158",
         letterSpacing: 0.6,
     },
     primeTargetAction: {
-        fontSize: 10.5,
-        fontFamily: FAMILY.semibold,
+        fontSize: 10,
+        fontFamily: FAMILY.monoBold,
         color: "#D1D5DB",
     },
     primeTargetTitle: {
-        fontSize: 14,
-        fontFamily: FAMILY.bold,
+        fontSize: 14.5,
+        fontFamily: FAMILY.chakraBold,
         color: "#FFFFFF",
-        marginBottom: 2,
+        marginBottom: 3,
     },
     primeTargetReason: {
         fontSize: 11.5,
@@ -337,7 +339,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         gap: 5,
         backgroundColor: "rgba(255, 255, 255, 0.06)",
-        paddingHorizontal: 12,
+        paddingHorizontal: 14,
         paddingVertical: 10,
         borderRadius: RADIUS.md,
         borderWidth: 1,
@@ -359,8 +361,8 @@ const styles = StyleSheet.create({
         justifyContent: "center",
     },
     ctaButtonText: {
-        fontSize: 12.5,
-        fontFamily: FAMILY.bold,
+        fontSize: 12,
+        fontFamily: FAMILY.chakraBold,
         color: "#FFFFFF",
         letterSpacing: 0.8,
     },

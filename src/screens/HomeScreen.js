@@ -1324,7 +1324,7 @@ export default function HomeScreen({ navigation, route }) {
                         )}
 
                         {/* ── Today's Targets Preview (if workout scheduled) ── */}
-                        {todayWorkout && todayWorkoutTargets && (todayWorkoutTargets.exercises || todayWorkoutTargets.exerciseTargets) && ((todayWorkoutTargets.exercises || todayWorkoutTargets.exerciseTargets).length > 0) && (
+                        {todayWorkout && (todayWorkoutTargets?.exercises?.length > 0 || todayWorkoutTargets?.exerciseTargets?.length > 0) && (
                             <View style={{ marginHorizontal: SPACING.base, marginTop: 12 }}>
                                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
                                     <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
@@ -1342,8 +1342,8 @@ export default function HomeScreen({ navigation, route }) {
                                         </Text>
                                     </TouchableOpacity>
                                 </View>
-                                {(todayWorkoutTargets.exercises || todayWorkoutTargets.exerciseTargets).slice(0, 2).map((tgt, i) => (
-                                    <ExerciseTargetCard key={tgt.name || tgt.exerciseName || i} targetInfo={tgt.progression || tgt} compact={false} />
+                                {(todayWorkoutTargets?.exercises || todayWorkoutTargets?.exerciseTargets || []).slice(0, 2).map((tgt, i) => (
+                                    <ExerciseTargetCard key={tgt?.name || tgt?.exerciseName || i} targetInfo={tgt?.progression || tgt} compact={false} />
                                 ))}
                             </View>
                         )}

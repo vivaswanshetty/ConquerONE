@@ -10,6 +10,7 @@ export default function AdaptiveRecommendationCard({
     onAccept = null,
     onDismiss = null,
     onReview = null,
+    onReviewExercises = null,
 }) {
     if (!recommendation) return null;
 
@@ -17,19 +18,20 @@ export default function AdaptiveRecommendationCard({
         id,
         status = "CURRENT_PROGRAM",
         label = "Adaptive Optimization",
-        color = COLORS.primary,
+        color = "#FF9F0A",
         observation = "",
         recommendation: recText = "",
         actionType = "NONE",
-        confidenceScore = 90,
+        confidenceScore = 80,
     } = recommendation;
 
     const isHighPriority = status === "REDUCE_TRAINING_STRESS" || status === "REVIEW_PROGRAM";
+    const handleReview = onReview || onReviewExercises;
 
     return (
-        <View style={[styles.card, { borderColor: `${color}4D` }]}>
+        <View style={[styles.card, { borderColor: `${color}40` }]}>
             <LinearGradient
-                colors={[`${color}12`, "rgba(18, 18, 20, 0.98)"]}
+                colors={[`${color}12`, "rgba(16, 16, 18, 0.98)"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
                 style={StyleSheet.absoluteFill}
@@ -38,12 +40,12 @@ export default function AdaptiveRecommendationCard({
             {/* Top Bar */}
             <View style={styles.topBar}>
                 <View style={styles.badgeRow}>
-                    <View style={[styles.badge, { backgroundColor: `${color}26`, borderColor: `${color}4D` }]}>
+                    <View style={[styles.badge, { backgroundColor: `${color}20`, borderColor: `${color}50` }]}>
                         <Ionicons
                             name={isHighPriority ? "alert-circle" : "sparkles"}
                             size={12}
                             color={color}
-                            style={{ marginRight: 4 }}
+                            style={{ marginRight: 5 }}
                         />
                         <Text style={[styles.badgeText, { color }]}>{label.toUpperCase()}</Text>
                     </View>
@@ -88,17 +90,17 @@ export default function AdaptiveRecommendationCard({
                         }}
                         activeOpacity={0.85}
                     >
-                        <Ionicons name="checkmark" size={14} color="#FFFFFF" style={{ marginRight: 4 }} />
+                        <Ionicons name="checkmark" size={14} color="#FFFFFF" style={{ marginRight: 5 }} />
                         <Text style={styles.acceptBtnText}>ACCEPT ADAPTATION</Text>
                     </TouchableOpacity>
                 )}
 
-                {onReview && (
+                {handleReview && (
                     <TouchableOpacity
                         style={[styles.actionBtn, styles.reviewBtn]}
                         onPress={() => {
                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                            onReview(recommendation);
+                            handleReview(recommendation);
                         }}
                         activeOpacity={0.7}
                     >
@@ -112,9 +114,9 @@ export default function AdaptiveRecommendationCard({
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: "rgba(18, 18, 20, 0.95)",
+        backgroundColor: "#141416",
         borderRadius: RADIUS.lg,
-        borderWidth: 1.2,
+        borderWidth: 1,
         padding: SPACING.base,
         marginBottom: SPACING.md,
         overflow: "hidden",
@@ -123,7 +125,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        marginBottom: SPACING.sm,
+        marginBottom: SPACING.sm + 2,
     },
     badgeRow: {
         flexDirection: "row",
@@ -134,17 +136,17 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         paddingHorizontal: 8,
-        paddingVertical: 3,
+        paddingVertical: 3.5,
         borderRadius: 6,
         borderWidth: 1,
     },
     badgeText: {
-        fontSize: 9.5,
+        fontSize: 10,
         fontFamily: FAMILY.monoBold,
-        letterSpacing: 0.5,
+        letterSpacing: 0.6,
     },
     confidenceText: {
-        fontSize: 9,
+        fontSize: 9.5,
         fontFamily: FAMILY.mono,
         color: COLORS.textMuted,
         letterSpacing: 0.5,
@@ -153,31 +155,31 @@ const styles = StyleSheet.create({
         padding: 4,
     },
     observationText: {
-        fontSize: 12.5,
-        fontFamily: FAMILY.sans,
-        color: "rgba(255, 255, 255, 0.85)",
-        lineHeight: 18,
-        marginBottom: SPACING.sm,
+        fontSize: 13,
+        fontFamily: FAMILY.regular,
+        color: "#E0E0E6",
+        lineHeight: 18.5,
+        marginBottom: SPACING.sm + 2,
     },
     recBox: {
         backgroundColor: "rgba(255, 255, 255, 0.03)",
         borderLeftWidth: 3,
         borderRadius: 6,
-        padding: 10,
+        padding: 11,
         marginBottom: SPACING.base,
     },
     recTitle: {
-        fontSize: 9,
+        fontSize: 9.5,
         fontFamily: FAMILY.monoBold,
         color: COLORS.textMuted,
         letterSpacing: 0.8,
-        marginBottom: 3,
+        marginBottom: 4,
     },
     recText: {
-        fontSize: 12,
-        fontFamily: FAMILY.mono,
+        fontSize: 12.5,
+        fontFamily: FAMILY.regular,
         color: "#FFFFFF",
-        lineHeight: 17,
+        lineHeight: 18,
     },
     actionsRow: {
         flexDirection: "row",
@@ -185,8 +187,8 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     actionBtn: {
-        paddingVertical: 9,
-        paddingHorizontal: 14,
+        paddingVertical: 10,
+        paddingHorizontal: 16,
         borderRadius: RADIUS.md,
         alignItems: "center",
         justifyContent: "center",
@@ -196,20 +198,21 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     acceptBtnText: {
-        fontSize: 11,
-        fontFamily: FAMILY.monoBold,
+        fontSize: 11.5,
+        fontFamily: FAMILY.chakraBold,
         color: "#FFFFFF",
-        letterSpacing: 0.5,
+        letterSpacing: 0.8,
     },
     reviewBtn: {
         backgroundColor: "rgba(255, 255, 255, 0.06)",
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.12)",
-        paddingHorizontal: 16,
+        paddingHorizontal: 18,
     },
     reviewBtnText: {
-        fontSize: 11,
-        fontFamily: FAMILY.monoBold,
-        color: COLORS.textSecondary,
+        fontSize: 11.5,
+        fontFamily: FAMILY.chakraBold,
+        color: "#D1D1D6",
+        letterSpacing: 0.8,
     },
 });
