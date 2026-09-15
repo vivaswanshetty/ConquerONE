@@ -2190,7 +2190,7 @@ export const getProgramPerformanceSummary = (
     const now = new Date();
     const cutoff28d = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000);
 
-    const recentHistory = (history || []).filter((h) => {
+    const recentHistory = (Array.isArray(history) ? history : []).filter((h) => {
         if (!h) return false;
         const d = new Date(h.date || h.completedAt);
         return !isNaN(d.getTime()) && d >= cutoff28d;
@@ -2373,7 +2373,7 @@ export const getWeeklyTrainingDistribution = (
         actualMuscleFrequency[group] = 0;
     });
 
-    const weekWorkouts = (history || []).filter((h) => {
+    const weekWorkouts = (Array.isArray(history) ? history : []).filter((h) => {
         if (!h) return false;
         const d = new Date(h.date || h.completedAt);
         return !isNaN(d.getTime()) && d >= weekStart && d < weekEnd;
@@ -2806,7 +2806,7 @@ export const getMissedWorkoutAdvisory = (
     monday.setDate(now.getDate() - currentDay);
     monday.setHours(0, 0, 0, 0);
 
-    const weekWorkouts = (history || []).filter((h) => {
+    const weekWorkouts = (Array.isArray(history) ? history : []).filter((h) => {
         if (!h) return false;
         const d = new Date(h.date || h.completedAt);
         return !isNaN(d.getTime()) && d >= monday && d <= now;

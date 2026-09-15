@@ -14,7 +14,8 @@ import { COLORS, FONTS, SPACING, RADIUS, FAMILY } from "../utils/theme";
 import {
     getBodyStats, saveBodyStat, getPRRecords, getWorkoutHistory,
     getStreak, getLatestUserBodyweight, getDailyReadiness,
-    getActiveProgram, getProgramVersions, saveActiveProgram, resetToDefaultProgram
+    getActiveProgram, getProgramVersions, saveActiveProgram, resetToDefaultProgram,
+    createDefaultProgramVersion
 } from "../utils/storage";
 import { getSettings, displayWeight } from "../utils/settings";
 import {
@@ -367,8 +368,8 @@ export default function ProgressScreen({ navigation }) {
     const [settings, setSettings] = useState({ weightUnit: "kg" });
 
     // ── Phase 4 Adaptive System State ──
-    const [activeProgram, setActiveProgram] = useState(null);
-    const [programVersions, setProgramVersions] = useState([]);
+    const [activeProgram, setActiveProgram] = useState(createDefaultProgramVersion);
+    const [programVersions, setProgramVersions] = useState(() => [createDefaultProgramVersion()]);
     const [deloadProposalModalVisible, setDeloadProposalModalVisible] = useState(false);
     const [proposedDeloadPlan, setProposedDeloadPlan] = useState(null);
 
@@ -400,15 +401,15 @@ export default function ProgressScreen({ navigation }) {
             getActiveProgram(),
             getProgramVersions(),
         ]);
-        setBodyStats(stats || []);
-        setPRRecords(prs || {});
-        setHistory(hist || []);
+        setBodyStats(Array.isArray(stats) ? stats : []);
+        setPRRecords(prs && typeof prs === "object" ? prs : {});
+        setHistory(Array.isArray(hist) ? hist : []);
         setStreak(strk || 0);
         setUserBodyweight(bw);
         setSettings(s || { weightUnit: "kg" });
-        setReadinessHistory(readHist || []);
-        setActiveProgram(prog);
-        setProgramVersions(vers || []);
+        setReadinessHistory(Array.isArray(readHist) ? readHist : []);
+        setActiveProgram(prog || createDefaultProgramVersion());
+        setProgramVersions(Array.isArray(vers) && vers.length > 0 ? vers : [createDefaultProgramVersion()]);
 
         if (stats && stats.length > 0) {
             const latest = stats[0];

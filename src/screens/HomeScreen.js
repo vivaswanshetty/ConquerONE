@@ -21,6 +21,7 @@ import {
     getDailyReadiness, saveDailyReadiness, getTodayReadiness,
     getActiveProgram, saveActiveProgram, getProgramVersions,
     dismissAdaptiveRecommendation, getDismissedRecommendations,
+    createDefaultProgramVersion,
 } from "../utils/storage";
 import {
     getRolling7DayAverageBodyweight,
@@ -541,8 +542,8 @@ export default function HomeScreen({ navigation, route }) {
     const [activeSession, setActiveSession] = useState(null);
 
     // ── Phase 4 Adaptive Programming State ──
-    const [activeProgram, setActiveProgram] = useState(null);
-    const [programVersions, setProgramVersions] = useState([]);
+    const [activeProgram, setActiveProgram] = useState(createDefaultProgramVersion);
+    const [programVersions, setProgramVersions] = useState(() => [createDefaultProgramVersion()]);
     const [dismissedAlerts, setDismissedAlerts] = useState([]);
     const [missedWorkoutModalVisible, setMissedWorkoutModalVisible] = useState(false);
     const [deloadProposalModalVisible, setDeloadProposalModalVisible] = useState(false);
@@ -811,26 +812,26 @@ export default function HomeScreen({ navigation, route }) {
                 getDismissedRecommendations(),
             ]);
 
-            setStreak(cachedStreak);
-            setTotal(cachedTotal);
-            setXP(cachedXP);
-            setRecordStreak(cachedRecord);
-            setHistory(cachedHistory);
-            setBodyStats(cachedStats || []);
-            setPRRecords(cachedPRs || {});
+            setStreak(cachedStreak || 0);
+            setTotal(cachedTotal || 0);
+            setXP(cachedXP || 0);
+            setRecordStreak(cachedRecord || 0);
+            setHistory(Array.isArray(cachedHistory) ? cachedHistory : []);
+            setBodyStats(Array.isArray(cachedStats) ? cachedStats : []);
+            setPRRecords(cachedPRs && typeof cachedPRs === "object" ? cachedPRs : {});
             setLatestBodyweight(cachedBW);
-            setReadinessHistory(cachedReadiness || []);
+            setReadinessHistory(Array.isArray(cachedReadiness) ? cachedReadiness : []);
             setTodayReadiness(cachedTodayReadiness);
             setLastFreezeDate(cachedFreeze);
             setPreviousFreezeDate(cachedPrevFreeze);
             setIsFrozen(cachedFreeze === new Date().toISOString().split("T")[0]);
-            setActiveProgram(cachedActiveProgram);
-            setProgramVersions(cachedVersions || []);
-            setDismissedAlerts(cachedDismissed || []);
+            setActiveProgram(cachedActiveProgram || createDefaultProgramVersion());
+            setProgramVersions(Array.isArray(cachedVersions) && cachedVersions.length > 0 ? cachedVersions : [createDefaultProgramVersion()]);
+            setDismissedAlerts(Array.isArray(cachedDismissed) ? cachedDismissed : []);
 
-            const { completedDays: localComp, freezeDays: localFrz, completedTargets: localTargets } = getWeekStats(cachedHistory, cachedFreeze);
-            setCompletedDays(localComp);
-            setFreezeDays(localFrz);
+            const { completedDays: localComp, freezeDays: localFrz, completedTargets: localTargets } = getWeekStats(Array.isArray(cachedHistory) ? cachedHistory : [], cachedFreeze);
+            setCompletedDays(localComp || []);
+            setFreezeDays(localFrz || []);
             setCompletedTargets(localTargets || {});
 
             finishInitialLoading();
@@ -878,26 +879,26 @@ export default function HomeScreen({ navigation, route }) {
                     getProgramVersions(),
                     getDismissedRecommendations(),
                 ]);
-                setStreak(nextStreak);
-                setTotal(nextTotal);
+                setStreak(nextStreak || 0);
+                setTotal(nextTotal || 0);
                 setIsFrozen(lastFreeze === new Date().toISOString().split("T")[0]);
                 setLastFreezeDate(lastFreeze);
                 setPreviousFreezeDate(nextPrevFreeze);
-                setXP(nextXP);
-                setRecordStreak(nextRecord);
-                setHistory(nextHistory);
-                setBodyStats(nextStats || []);
-                setPRRecords(nextPRs || {});
+                setXP(nextXP || 0);
+                setRecordStreak(nextRecord || 0);
+                setHistory(Array.isArray(nextHistory) ? nextHistory : []);
+                setBodyStats(Array.isArray(nextStats) ? nextStats : []);
+                setPRRecords(nextPRs && typeof nextPRs === "object" ? nextPRs : {});
                 setLatestBodyweight(nextBW);
-                setReadinessHistory(nextReadiness || []);
+                setReadinessHistory(Array.isArray(nextReadiness) ? nextReadiness : []);
                 setTodayReadiness(nextTodayReadiness);
-                setActiveProgram(nextActiveProgram);
-                setProgramVersions(nextVersions || []);
-                setDismissedAlerts(nextDismissed || []);
+                setActiveProgram(nextActiveProgram || createDefaultProgramVersion());
+                setProgramVersions(Array.isArray(nextVersions) && nextVersions.length > 0 ? nextVersions : [createDefaultProgramVersion()]);
+                setDismissedAlerts(Array.isArray(nextDismissed) ? nextDismissed : []);
 
-                const { completedDays: syncComp, freezeDays: syncFrz, completedTargets: syncTargets } = getWeekStats(nextHistory, lastFreeze);
-                setCompletedDays(syncComp);
-                setFreezeDays(syncFrz);
+                const { completedDays: syncComp, freezeDays: syncFrz, completedTargets: syncTargets } = getWeekStats(Array.isArray(nextHistory) ? nextHistory : [], lastFreeze);
+                setCompletedDays(syncComp || []);
+                setFreezeDays(syncFrz || []);
                 setCompletedTargets(syncTargets || {});
 
                 finishInitialLoading();
@@ -1351,16 +1352,16 @@ export default function HomeScreen({ navigation, route }) {
                         {/* ── 1. Performance Snapshot Card ── */}
                         <View style={styles.snapshotCard}>
                             <LinearGradient
-                                colors={["#161618", "#111113"]}
+                                colors={["#161619", "#101012"]}
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 1 }}
                                 style={StyleSheet.absoluteFillObject}
                                 pointerEvents="none"
                             />
-                            <View style={styles.snapshotHeaderRow}>
+                            <View style={styles.snapshotHeader}>
                                 <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                                    <Ionicons name="pulse-outline" size={13} color={COLORS.primary} />
-                                    <Text style={styles.snapshotSectionTitle}>PERFORMANCE SNAPSHOT</Text>
+                                    <Ionicons name="pulse" size={13} color={COLORS.primary} />
+                                    <Text style={styles.snapshotTitle}>PERFORMANCE SNAPSHOT</Text>
                                 </View>
                                 <Text style={styles.snapshotDateText}>{currentDateFormatted}</Text>
                             </View>
@@ -1376,11 +1377,11 @@ export default function HomeScreen({ navigation, route }) {
                                         navigation.navigate("Progress", { initialTab: 1 });
                                     }}
                                 >
-                                    <Text style={styles.snapshotCellLabel}>BODYWEIGHT</Text>
-                                    <Text style={styles.snapshotCellValue}>
+                                    <Text style={styles.snapshotCellLabel} numberOfLines={1}>BODYWEIGHT</Text>
+                                    <Text style={styles.snapshotCellValue} numberOfLines={1}>
                                         {rollingBW.latestWeight ? `${rollingBW.latestWeight} kg` : "—"}
                                     </Text>
-                                    <Text style={styles.snapshotCellSub}>
+                                    <Text style={styles.snapshotCellSub} numberOfLines={1}>
                                         {rollingBW.rolling7DayAvg ? `${rollingBW.rolling7DayAvg} kg 7d` : "Log weight"}
                                     </Text>
                                 </TouchableOpacity>
@@ -1397,13 +1398,29 @@ export default function HomeScreen({ navigation, route }) {
                                     }}
                                 >
                                     <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
-                                        <Ionicons name="battery-charging-outline" size={11} color={todayReadinessScore ? todayReadinessScore.color : COLORS.primary} />
-                                        <Text style={styles.snapshotCellLabel}>READINESS</Text>
+                                        <Ionicons
+                                            name="pulse"
+                                            size={10}
+                                            color={todayReadinessScore ? (todayReadinessScore.color || "#30D158") : COLORS.textMuted}
+                                        />
+                                        <Text style={styles.snapshotCellLabel} numberOfLines={1}>READINESS</Text>
                                     </View>
-                                    <Text style={[styles.snapshotCellValue, { color: todayReadinessScore ? todayReadinessScore.color : COLORS.primary }]}>
-                                        {todayReadinessScore ? `${todayReadinessScore.score}%` : "CHECK IN"}
+                                    <Text
+                                        style={[
+                                            styles.snapshotCellValue,
+                                            { color: todayReadinessScore ? (todayReadinessScore.color || "#30D158") : "#FFFFFF" }
+                                        ]}
+                                        numberOfLines={1}
+                                    >
+                                        {todayReadinessScore ? `${todayReadinessScore.score}%` : "—"}
                                     </Text>
-                                    <Text style={styles.snapshotCellSub}>
+                                    <Text
+                                        style={[
+                                            styles.snapshotCellSub,
+                                            !todayReadinessScore && { color: COLORS.primary, fontFamily: FAMILY.monoBold }
+                                        ]}
+                                        numberOfLines={1}
+                                    >
                                         {todayReadinessScore ? todayReadinessScore.tier : "Tap to rate"}
                                     </Text>
                                 </TouchableOpacity>
@@ -1420,13 +1437,13 @@ export default function HomeScreen({ navigation, route }) {
                                     }}
                                 >
                                     <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
-                                        <Ionicons name="flame" size={11} color="#FF9500" />
-                                        <Text style={styles.snapshotCellLabel}>STREAK</Text>
+                                        <Ionicons name="flame" size={10} color="#FF9F0A" />
+                                        <Text style={styles.snapshotCellLabel} numberOfLines={1}>STREAK</Text>
                                     </View>
-                                    <Text style={[styles.snapshotCellValue, { color: "#FF9500" }]}>
+                                    <Text style={[styles.snapshotCellValue, { color: "#FF9F0A" }]} numberOfLines={1}>
                                         {streak}D
                                     </Text>
-                                    <Text style={styles.snapshotCellSub}>
+                                    <Text style={styles.snapshotCellSub} numberOfLines={1}>
                                         {recordStreak > 0 ? `Best: ${recordStreak}D` : "Daily"}
                                     </Text>
                                 </TouchableOpacity>
@@ -1442,11 +1459,11 @@ export default function HomeScreen({ navigation, route }) {
                                         navigation.navigate("Progress");
                                     }}
                                 >
-                                    <Text style={styles.snapshotCellLabel}>THIS WEEK</Text>
-                                    <Text style={styles.snapshotCellValue}>
+                                    <Text style={styles.snapshotCellLabel} numberOfLines={1}>THIS WEEK</Text>
+                                    <Text style={styles.snapshotCellValue} numberOfLines={1}>
                                         {completedDays.length}/6
                                     </Text>
-                                    <Text style={styles.snapshotCellSub}>
+                                    <Text style={styles.snapshotCellSub} numberOfLines={1}>
                                         {weeklySummary.adherenceRate}% adh
                                     </Text>
                                 </TouchableOpacity>
@@ -3190,75 +3207,82 @@ const styles = StyleSheet.create({
         marginTop: 14,
         borderRadius: RADIUS.lg,
         borderWidth: 1,
-        borderColor: COLORS.border,
-        backgroundColor: COLORS.bgCard,
-        padding: 16,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+        backgroundColor: "#141416",
+        padding: 14,
         overflow: "hidden",
     },
     snapshotHeader: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        marginBottom: 14,
+        marginBottom: 12,
     },
     snapshotTitle: {
-        fontSize: 10.5,
-        fontFamily: FAMILY.monoBold,
-        color: COLORS.textSub,
-        letterSpacing: 1.2,
+        fontSize: 11,
+        fontFamily: FAMILY.chakraBold,
+        color: "#FFFFFF",
+        letterSpacing: 1,
     },
     snapshotDateText: {
         fontSize: 9.5,
         fontFamily: FAMILY.mono,
-        color: COLORS.textMuted,
+        color: COLORS.textSub,
         textTransform: "uppercase",
     },
     snapshotGrid: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        paddingVertical: 4,
+        backgroundColor: "rgba(255, 255, 255, 0.025)",
+        borderRadius: RADIUS.md,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.05)",
+        paddingVertical: 10,
+        paddingHorizontal: 4,
     },
     snapshotCell: {
         flex: 1,
         alignItems: "center",
         justifyContent: "center",
+        paddingHorizontal: 2,
     },
     snapshotCellLabel: {
-        fontSize: 8.5,
+        fontSize: 8,
         fontFamily: FAMILY.monoBold,
         color: COLORS.textMuted,
-        letterSpacing: 1,
-        marginBottom: 4,
+        letterSpacing: 0.7,
+        marginBottom: 3,
+        textAlign: "center",
     },
     snapshotCellValue: {
-        fontSize: 17,
+        fontSize: 16,
         fontFamily: FAMILY.monoBold,
-        color: COLORS.text,
-        letterSpacing: 0.3,
+        color: "#FFFFFF",
+        fontVariant: ["tabular-nums"],
+        letterSpacing: 0.2,
+        marginBottom: 2,
+        textAlign: "center",
     },
     snapshotCellSub: {
-        fontSize: 9,
-        fontFamily: FAMILY.regular,
-        color: COLORS.textSub,
-        marginTop: 3,
+        fontSize: 8.5,
+        fontFamily: FAMILY.mono,
+        color: "rgba(255, 255, 255, 0.45)",
+        textAlign: "center",
     },
     snapshotDividerVert: {
         width: 1,
-        height: 36,
-        backgroundColor: "rgba(255, 255, 255, 0.08)",
+        height: 26,
+        backgroundColor: "rgba(255, 255, 255, 0.07)",
     },
     snapshotFooterRow: {
-        marginTop: 14,
-        paddingTop: 10,
-        borderTopWidth: 1,
-        borderTopColor: "rgba(255, 255, 255, 0.05)",
+        marginTop: 10,
     },
     snapshotFooterBadge: {
         flexDirection: "row",
         alignItems: "center",
         gap: 6,
-        backgroundColor: "rgba(255, 215, 0, 0.08)",
+        backgroundColor: "rgba(255, 215, 0, 0.06)",
         paddingHorizontal: 10,
         paddingVertical: 5,
         borderRadius: RADIUS.sm,

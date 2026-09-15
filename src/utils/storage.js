@@ -45,8 +45,14 @@ export const KEYS = {
 const hasCloudSession = () => !!auth.currentUser;
 
 const readLocalHistory = async () => {
-    const data = await AsyncStorage.getItem(KEYS.HISTORY);
-    return data ? JSON.parse(data) : [];
+    try {
+        const data = await AsyncStorage.getItem(KEYS.HISTORY);
+        if (!data) return [];
+        const parsed = JSON.parse(data);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch {
+        return [];
+    }
 };
 
 const readLocalStreak = async () => {
