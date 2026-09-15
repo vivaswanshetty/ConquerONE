@@ -328,7 +328,7 @@ function CategorizedPRCard({ record, weightUnit = "kg" }) {
 }
 
 /* ── TABS ─────────────────────────────────────────────────────── */
-const TABS = ["Performance", "Predictive Intel", "Body Stats"];
+const TABS = ["Performance", "Predictive", "Body Stats"];
 const STAT_FIELDS = [
     { key: "weightKg", label: "Body Weight", unit: "kg", color: COLORS.accent },
     { key: "chest", label: "Chest", unit: "cm", color: "rgba(237, 234, 227, 0.4)" },
@@ -799,11 +799,11 @@ export default function ProgressScreen({ navigation, route }) {
                             </View>
                         )}
 
-                        {/* ── 1. Athlete Intelligence Insights ── */}
+                        {/* ── 1. Athlete Insights ── */}
                         <View style={styles.sectionHeader}>
                             <View style={styles.sectionTitleGroup}>
-                                <Ionicons name="sparkles" size={14} color={COLORS.primary} />
-                                <Text style={styles.sectionLabel}>ATHLETE INTELLIGENCE</Text>
+                                <Ionicons name="stats-chart" size={14} color={COLORS.primary} />
+                                <Text style={styles.sectionLabel}>ATHLETE INSIGHTS</Text>
                             </View>
                         </View>
 
@@ -1257,7 +1257,7 @@ export default function ProgressScreen({ navigation, route }) {
                     </ScrollView>
                 ) : tab === 1 ? (
                     /* ══════════════════════════════════════════════════════════ */
-                    /* PREDICTIVE INTEL TAB (PHASE 5)                             */
+                    /* PREDICTIVE TAB (PHASE 5)                                   */
                     /* ══════════════════════════════════════════════════════════ */
                     <ScrollView showsVerticalScrollIndicator={false} overScrollMode="never" contentContainerStyle={styles.scrollContent}>
                         {/* ── 1. Performance Trajectory & Velocity Deck ── */}
