@@ -86,19 +86,6 @@ export default function AdaptiveRecommendationCard({
                     </View>
                     <Text style={styles.confidenceText}>{confidenceScore}% CONFIDENCE</Text>
                 </View>
-
-                {onDismiss && (
-                    <TouchableOpacity
-                        onPress={() => {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                            onDismiss(id || "rec_default");
-                        }}
-                        style={styles.closeBtn}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    >
-                        <Ionicons name="close" size={16} color={COLORS.textMuted} />
-                    </TouchableOpacity>
-                )}
             </View>
 
             {/* Observation */}
@@ -182,9 +169,6 @@ const styles = StyleSheet.create({
         fontFamily: FAMILY.mono,
         color: COLORS.textMuted,
         letterSpacing: 0.5,
-    },
-    closeBtn: {
-        padding: 4,
     },
     observationText: {
         fontSize: 12.5,
