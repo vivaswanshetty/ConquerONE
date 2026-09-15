@@ -672,6 +672,12 @@ export default function HomeScreen({ navigation, route }) {
             await dismissAdaptiveRecommendation(rec.id);
             setDismissedAlerts(prev => [...prev, rec.id]);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        } else if (rec.status === "REVIEW_PROGRAM") {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            navigation.navigate("Progress", { initialTab: 1 });
+        } else if (rec.status === "REVIEW_EXERCISE" && rec.exerciseName) {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            navigation.navigate("Progress", { initialTab: 1, selectedExercise: rec.exerciseName });
         }
     };
 
@@ -1114,7 +1120,7 @@ export default function HomeScreen({ navigation, route }) {
                     </View>
                 ) : (
                     <Animated.View style={{ opacity: contentFadeAnim }}>
-                        {/* ── Phase 6 Athlete Command Center Hero Decision Card ── */}
+                        {/* ── 1. Phase 6 Athlete Command Center Hero Decision Card ── */}
                         {dailyAthleteCommand && (
                             <DailyDecisionCard
                                 command={dailyAthleteCommand}
@@ -1124,7 +1130,7 @@ export default function HomeScreen({ navigation, route }) {
                                     } else if (todayWorkout) {
                                         navigation.navigate("WorkoutDetail", { day: todayWorkout });
                                     } else {
-                                        navigation.navigate("Progress");
+                                        navigation.navigate("RestDay");
                                     }
                                 }}
                                 onOpenWhy={() => setWhyModalVisible(true)}
@@ -1133,7 +1139,7 @@ export default function HomeScreen({ navigation, route }) {
                             />
                         )}
 
-                        {/* ── Today's Workout Hero Card (Focal Point) ── */}
+                        {/* ── 2. Today's Workout Hero Card (Primary Action) ── */}
                         <Animated.View
                             style={{
                                 opacity: heroAnim,
@@ -1255,29 +1261,115 @@ export default function HomeScreen({ navigation, route }) {
                             )}
                         </Animated.View>
 
-                        {/* ── 2. Active Program Status (Chapter 2) ── */}
+                        {/* ── 3. Quick Actions Grid (Instant Navigation Hub) ── */}
+                        <View style={styles.quickActionsContainer}>
+                            <View style={styles.quickActionRow}>
+                                <TouchableOpacity
+                                    style={styles.quickActionCard}
+                                    activeOpacity={0.8}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        if (todayWorkout) {
+                                            navigation.navigate("WorkoutDetail", { day: todayWorkout });
+                                        } else {
+                                            navigation.navigate("RestDay");
+                                        }
+                                    }}
+                                >
+                                    <View style={[styles.quickActionIconBox, { backgroundColor: "rgba(227, 30, 36, 0.12)" }]}>
+                                        <Ionicons name="barbell" size={15} color={COLORS.primary} />
+                                    </View>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={styles.quickActionTitle}>Today's Split</Text>
+                                        <Text style={styles.quickActionSub}>Start session</Text>
+                                    </View>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={styles.quickActionCard}
+                                    activeOpacity={0.8}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        navigation.navigate("Progress", { initialTab: 0 });
+                                    }}
+                                >
+                                    <View style={[styles.quickActionIconBox, { backgroundColor: "rgba(56, 189, 248, 0.12)" }]}>
+                                        <Ionicons name="trending-up" size={15} color="#38BDF8" />
+                                    </View>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={styles.quickActionTitle}>Progress</Text>
+                                        <Text style={styles.quickActionSub}>Curves & 1RM</Text>
+                                    </View>
+                                </TouchableOpacity>
+                            </View>
+
+                            <View style={styles.quickActionRow}>
+                                <TouchableOpacity
+                                    style={styles.quickActionCard}
+                                    activeOpacity={0.8}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        navigation.navigate("History");
+                                    }}
+                                >
+                                    <View style={[styles.quickActionIconBox, { backgroundColor: "rgba(255, 149, 0, 0.12)" }]}>
+                                        <Ionicons name="time" size={15} color="#FF9500" />
+                                    </View>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={styles.quickActionTitle}>History</Text>
+                                        <Text style={styles.quickActionSub}>Logs & export</Text>
+                                    </View>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={styles.quickActionCard}
+                                    activeOpacity={0.8}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        navigation.navigate("Progress", { initialTab: 2 });
+                                    }}
+                                >
+                                    <View style={[styles.quickActionIconBox, { backgroundColor: "rgba(48, 209, 88, 0.12)" }]}>
+                                        <Ionicons name="body" size={15} color="#30D158" />
+                                    </View>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={styles.quickActionTitle}>Physique</Text>
+                                        <Text style={styles.quickActionSub}>Log metrics</Text>
+                                    </View>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        {/* ── 4. Active Program Status (Chapter 2) ── */}
                         {activeProgram && programPerformanceSummary && (
-                            <View style={{ marginTop: 28, marginBottom: 4 }}>
+                            <View style={{ marginTop: 24, marginBottom: 4 }}>
                                 <ProgramStatusCard
                                     summary={programPerformanceSummary}
                                     activeProgram={activeProgram}
-                                    onPressVersion={() => navigation.navigate("Progress")}
-                                    onPressReview={() => navigation.navigate("Progress")}
+                                    onPressVersion={() => navigation.navigate("Progress", { initialTab: 0 })}
+                                    onPressReview={() => navigation.navigate("Progress", { initialTab: 0 })}
                                 />
                             </View>
                         )}
 
-                        {/* ── 3. Attention & Advisories (Chapter 3 — only rendered when active) ── */}
+                        {/* ── 5. Attention & Advisories (Chapter 3 — only rendered when active) ── */}
                         {((adaptiveRecommendation && adaptiveRecommendation.status !== "CURRENT_PROGRAM") ||
                           missedWorkoutAdvisory?.hasMissedWorkout ||
                           athleteAlerts.length > 0) && (
-                            <View style={{ marginTop: 24, gap: 12 }}>
+                            <View style={{ marginTop: 20, gap: 12 }}>
                                 {adaptiveRecommendation && adaptiveRecommendation.status !== "CURRENT_PROGRAM" && (
                                     <AdaptiveRecommendationCard
                                         recommendation={adaptiveRecommendation}
                                         onAccept={handleAcceptAdaptiveRec}
                                         onDismiss={handleDismissAdaptiveRec}
-                                        onReview={() => navigation.navigate("Progress")}
+                                        onReview={(rec) => {
+                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                            if (rec?.status === "REVIEW_PROGRAM" || !rec?.exerciseName) {
+                                                navigation.navigate("Progress", { initialTab: 1 });
+                                            } else {
+                                                navigation.navigate("Progress", { initialTab: 0, selectedExercise: rec.exerciseName });
+                                            }
+                                        }}
                                     />
                                 )}
 
@@ -1309,10 +1401,14 @@ export default function HomeScreen({ navigation, route }) {
                                         alert={alert}
                                         onPress={() => {
                                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                            if (alert.type === "progression" || alert.type === "warning") {
-                                                navigation.navigate("Progress");
+                                            if (alert.type === "progression") {
+                                                navigation.navigate("Progress", { initialTab: 0, selectedExercise: alert.exerciseName });
+                                            } else if (alert.type === "warning" || alert.id?.includes("stall") || alert.id?.includes("plateau")) {
+                                                navigation.navigate("Progress", { initialTab: 1, selectedExercise: alert.exerciseName });
                                             } else if (alert.id === "deload_review") {
                                                 setReadinessModalVisible(true);
+                                            } else {
+                                                navigation.navigate("Progress", { initialTab: 0 });
                                             }
                                         }}
                                     />
@@ -1320,17 +1416,17 @@ export default function HomeScreen({ navigation, route }) {
                             </View>
                         )}
 
-                        {/* ── 4. Week in Review (Chapter 4) ── */}
-                        <View style={{ marginTop: 32 }}>
+                        {/* ── 6. Week in Review (Chapter 4) ── */}
+                        <View style={{ marginTop: 24 }}>
                             {weeklyAthleteRecap && (
                                 <WeeklyRecapCard
                                     recap={weeklyAthleteRecap}
-                                    onPressDetails={() => navigation.navigate("Progress")}
+                                    onPressDetails={() => navigation.navigate("Progress", { initialTab: 0 })}
                                 />
                             )}
                         </View>
 
-                        {/* ── 5. Consistency Grid ── */}
+                        {/* ── 7. Consistency Grid ── */}
                         <View style={{ marginTop: 20 }}>
                             <TouchableOpacity
                                 style={styles.consistencyCard}
@@ -1415,85 +1511,6 @@ export default function HomeScreen({ navigation, route }) {
                                 })}
                             </View>
                         </TouchableOpacity>
-                        </View>
-
-                        {/* ── 4. Quick Actions Grid ── */}
-                        <View style={styles.quickActionsContainer}>
-                            <View style={styles.quickActionRow}>
-                                <TouchableOpacity
-                                    style={styles.quickActionCard}
-                                    activeOpacity={0.8}
-                                    onPress={() => {
-                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                        if (todayWorkout) {
-                                            navigation.navigate("WorkoutDetail", { day: todayWorkout });
-                                        } else {
-                                            navigation.navigate("RestDay");
-                                        }
-                                    }}
-                                >
-                                    <View style={[styles.quickActionIconBox, { backgroundColor: "rgba(227, 30, 36, 0.12)" }]}>
-                                        <Ionicons name="barbell" size={15} color={COLORS.primary} />
-                                    </View>
-                                    <View style={{ flex: 1 }}>
-                                        <Text style={styles.quickActionTitle}>Today's Split</Text>
-                                        <Text style={styles.quickActionSub}>Start session</Text>
-                                    </View>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity
-                                    style={styles.quickActionCard}
-                                    activeOpacity={0.8}
-                                    onPress={() => {
-                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                        navigation.navigate("Progress");
-                                    }}
-                                >
-                                    <View style={[styles.quickActionIconBox, { backgroundColor: "rgba(56, 189, 248, 0.12)" }]}>
-                                        <Ionicons name="trending-up" size={15} color="#38BDF8" />
-                                    </View>
-                                    <View style={{ flex: 1 }}>
-                                        <Text style={styles.quickActionTitle}>Progress</Text>
-                                        <Text style={styles.quickActionSub}>Curves & 1RM</Text>
-                                    </View>
-                                </TouchableOpacity>
-                            </View>
-
-                            <View style={styles.quickActionRow}>
-                                <TouchableOpacity
-                                    style={styles.quickActionCard}
-                                    activeOpacity={0.8}
-                                    onPress={() => {
-                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                        navigation.navigate("History");
-                                    }}
-                                >
-                                    <View style={[styles.quickActionIconBox, { backgroundColor: "rgba(255, 149, 0, 0.12)" }]}>
-                                        <Ionicons name="time" size={15} color="#FF9500" />
-                                    </View>
-                                    <View style={{ flex: 1 }}>
-                                        <Text style={styles.quickActionTitle}>History</Text>
-                                        <Text style={styles.quickActionSub}>Logs & export</Text>
-                                    </View>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity
-                                    style={styles.quickActionCard}
-                                    activeOpacity={0.8}
-                                    onPress={() => {
-                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                        navigation.navigate("Progress", { initialTab: 1 });
-                                    }}
-                                >
-                                    <View style={[styles.quickActionIconBox, { backgroundColor: "rgba(48, 209, 88, 0.12)" }]}>
-                                        <Ionicons name="body" size={15} color="#30D158" />
-                                    </View>
-                                    <View style={{ flex: 1 }}>
-                                        <Text style={styles.quickActionTitle}>Physique</Text>
-                                        <Text style={styles.quickActionSub}>Log metrics</Text>
-                                    </View>
-                                </TouchableOpacity>
-                            </View>
                         </View>
                     </Animated.View>
                 )}
@@ -1779,11 +1796,30 @@ export default function HomeScreen({ navigation, route }) {
                                 onPress={() => {
                                     setQuickMenuVisible(false);
                                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                    navigation.navigate("History");
+                                    navigation.navigate("Progress", { initialTab: 0 });
                                 }}
                             >
                                 <View style={[styles.quickMenuIconWrap, { backgroundColor: "rgba(56, 189, 248, 0.14)", borderColor: "rgba(56, 189, 248, 0.3)" }]}>
-                                    <Ionicons name="time" size={20} color="#38BDF8" />
+                                    <Ionicons name="trending-up" size={20} color="#38BDF8" />
+                                </View>
+                                <View style={styles.quickMenuItemBody}>
+                                    <Text style={styles.quickMenuItemTitle}>Analytics & Progress</Text>
+                                    <Text style={styles.quickMenuItemSub}>1RM curves, trajectories & physique</Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={styles.quickMenuItem}
+                                activeOpacity={0.75}
+                                onPress={() => {
+                                    setQuickMenuVisible(false);
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    navigation.navigate("History");
+                                }}
+                            >
+                                <View style={[styles.quickMenuIconWrap, { backgroundColor: "rgba(255, 149, 0, 0.14)", borderColor: "rgba(255, 149, 0, 0.3)" }]}>
+                                    <Ionicons name="time" size={20} color="#FF9500" />
                                 </View>
                                 <View style={styles.quickMenuItemBody}>
                                     <Text style={styles.quickMenuItemTitle}>History</Text>

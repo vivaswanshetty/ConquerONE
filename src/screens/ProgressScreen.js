@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity, StyleSheet,
     TextInput, StatusBar, Dimensions, Animated, KeyboardAvoidingView, Platform,
@@ -351,13 +351,37 @@ const PR_CATEGORIES = [
 ];
 
 /* ── MAIN COMPONENT ────────────────────────────────────────────── */
-export default function ProgressScreen({ navigation }) {
+export default function ProgressScreen({ navigation, route }) {
     const insets = useSafeAreaInsets();
     const { showDialog } = useNotification();
-    const [tab, setTab] = useState(0); // Default to Performance tab
+    const [tab, setTab] = useState(0); // 0 = Performance, 1 = Predictive Intel, 2 = Body Stats / Physique
     const [weekOffset, setWeekOffset] = useState(0); // 0 = This Week, 1 = Last Week
     const [selectedExercise, setSelectedExercise] = useState("Barbell Bench Press");
     const [prFilter, setPRFilter] = useState("all");
+
+    useEffect(() => {
+        if (route?.params?.initialTab !== undefined) {
+            const raw = route.params.initialTab;
+            if (typeof raw === "number") {
+                setTab(Math.min(2, Math.max(0, raw)));
+            } else if (typeof raw === "string") {
+                const lower = raw.toLowerCase();
+                if (lower.includes("stat") || lower.includes("physique") || lower.includes("body")) {
+                    setTab(2);
+                } else if (lower.includes("predict") || lower.includes("intel") || lower.includes("stall")) {
+                    setTab(1);
+                } else {
+                    setTab(0);
+                }
+            }
+        }
+        if (route?.params?.selectedExercise) {
+            setSelectedExercise(route.params.selectedExercise);
+        }
+        if (route?.params?.prFilter) {
+            setPRFilter(route.params.prFilter);
+        }
+    }, [route?.params]);
 
     const [bodyStats, setBodyStats] = useState([]);
     const [prRecords, setPRRecords] = useState({});
