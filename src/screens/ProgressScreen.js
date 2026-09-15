@@ -1267,7 +1267,7 @@ export default function ProgressScreen({ navigation }) {
                         </View>
 
                         {/* ── 2. Upcoming Performance Milestones ── */}
-                        <View style={[styles.sectionHeaderRow, { marginTop: 12 }]}>
+                        <View style={[styles.sectionHeaderRow, { marginTop: 28 }]}>
                             <View style={styles.sectionTitleGroup}>
                                 <Ionicons name="flag-outline" size={15} color={COLORS.primary} />
                                 <Text style={styles.sectionLabel}>UPCOMING MILESTONES</Text>
@@ -1292,7 +1292,7 @@ export default function ProgressScreen({ navigation }) {
                         </View>
 
                         {/* ── 3. Movement Friction & Plateau Risk ── */}
-                        <View style={[styles.sectionHeaderRow, { marginTop: 16 }]}>
+                        <View style={[styles.sectionHeaderRow, { marginTop: 28 }]}>
                             <View style={styles.sectionTitleGroup}>
                                 <Ionicons name="shield-alert-outline" size={15} color={COLORS.primary} />
                                 <Text style={styles.sectionLabel}>MOVEMENT FRICTION & PLATEAU RADAR</Text>
@@ -1330,7 +1330,7 @@ export default function ProgressScreen({ navigation }) {
                         </View>
 
                         {/* ── 4. Muscle Group Performance Response Matrix ── */}
-                        <View style={[styles.sectionHeaderRow, { marginTop: 18 }]}>
+                        <View style={[styles.sectionHeaderRow, { marginTop: 28 }]}>
                             <View style={styles.sectionTitleGroup}>
                                 <Ionicons name="grid-outline" size={15} color={COLORS.primary} />
                                 <Text style={styles.sectionLabel}>MUSCLE GROUP PERFORMANCE RESPONSE</Text>
@@ -1345,7 +1345,7 @@ export default function ProgressScreen({ navigation }) {
                         </View>
 
                         {/* ── 5. Bodyweight & Strength Vector ── */}
-                        <View style={[styles.sectionHeaderRow, { marginTop: 12 }]}>
+                        <View style={[styles.sectionHeaderRow, { marginTop: 28 }]}>
                             <View style={styles.sectionTitleGroup}>
                                 <Ionicons name="swap-horizontal-outline" size={15} color={COLORS.primary} />
                                 <Text style={styles.sectionLabel}>BODYWEIGHT & STRENGTH CORRELATION</Text>
