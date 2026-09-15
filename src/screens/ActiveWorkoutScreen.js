@@ -13,11 +13,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { COLORS, FONTS, SPACING, RADIUS, FAMILY } from "../utils/theme";
-import { saveWorkoutComplete, formatDuration, tryUpdatePR, getPRRecords, getWorkoutHistory, saveActiveWorkoutSession, getActiveWorkoutSession, clearActiveWorkoutSession } from "../utils/storage";
+import { saveWorkoutComplete, formatDuration, tryUpdatePR, getPRRecords, getWorkoutHistory, saveActiveWorkoutSession, getActiveWorkoutSession, clearActiveWorkoutSession, getLatestUserBodyweight, getActiveProgram } from "../utils/storage";
+import { getWorkoutDayTargets, evaluateCompletedSetFeedback } from "../utils/analytics";
 import { syncAndroidWidget } from "../utils/widgetSync";
 import { scheduleRestNotification, cancelNotification } from "../utils/notifications";
 import { getSettings, estimateCalories, displayWeight } from "../utils/settings";
-import { getSuggestedWeight } from "../data/workoutData";
+import { getSuggestedWeight, getExerciseLoadCategory, getExerciseMuscleGroup, isBodyweightMovement } from "../data/workoutData";
 
 import {
     setAudioSettings, announceWorkStart, announceSetDone,
@@ -194,27 +195,97 @@ function RingTimer({ progress, isWork, size, stroke, timeLeft, isRunning = false
 }
 
 /* ── PR Logging Modal ─────────────────────────────────────── */
-function PRModal({ visible, exerciseName, onClose, onSave, weightUnit = "kg", initialWeight = "", initialReps = "" }) {
+function PRModal({ visible, exerciseName, onClose, onSave, onSkip, weightUnit = "kg", initialWeight = "", initialReps = "", userBodyweight = null, targetInfo = null }) {
     const [weight, setWeight] = useState("");
     const [reps, setReps] = useState("");
+    const [bwMode, setBwMode] = useState("bodyweight"); // "bodyweight" | "weighted" | "assisted"
     const scaleAnim = useRef(new Animated.Value(0.92)).current;
+
+    const exCategory = useMemo(() => getExerciseLoadCategory(exerciseName), [exerciseName]);
+    const isBW = useMemo(() => exCategory === "bodyweight" || isBodyweightMovement(exerciseName), [exCategory, exerciseName]);
+    const isTimed = useMemo(() => exCategory === "timed", [exCategory]);
 
     useEffect(() => {
         if (visible) {
             setWeight(initialWeight !== undefined && initialWeight !== null ? String(initialWeight) : "");
             setReps(initialReps !== undefined && initialReps !== null ? String(initialReps) : "");
+            if (isBW) {
+                if (initialWeight !== "" && Number(initialWeight) > 0) {
+                    setBwMode("weighted");
+                } else {
+                    setBwMode("bodyweight");
+                }
+            }
             Animated.spring(scaleAnim, { toValue: 1, tension: 80, friction: 9, useNativeDriver: true }).start();
         } else {
             scaleAnim.setValue(0.92);
         }
-    }, [visible, initialWeight, initialReps]);
+    }, [visible, initialWeight, initialReps, isBW]);
 
     const handleSave = () => {
         const w = parseFloat(weight) || 0;
-        const r = parseInt(reps) || 0;
-        onSave(w, r);
-        setWeight(""); setReps("");
+        const r = parseInt(reps, 10) || 0;
+        
+        let loadType = "free_weight";
+        let totalSystemLoadKg = null;
+        let effectiveLoadKg = null;
+
+        if (isTimed) {
+            loadType = "timed";
+            totalSystemLoadKg = w > 0 ? w : (userBodyweight || null);
+        } else if (isBW) {
+            if (bwMode === "weighted") {
+                loadType = "weighted_bodyweight";
+                totalSystemLoadKg = typeof userBodyweight === "number" ? userBodyweight + w : null;
+            } else if (bwMode === "assisted") {
+                loadType = "assisted_bodyweight";
+                effectiveLoadKg = typeof userBodyweight === "number" ? Math.max(0, userBodyweight - w) : null;
+            } else {
+                loadType = "bodyweight";
+                totalSystemLoadKg = typeof userBodyweight === "number" ? userBodyweight : null;
+            }
+        } else if (exCategory === "machine") {
+            loadType = "machine";
+            totalSystemLoadKg = w;
+        } else {
+            loadType = "free_weight";
+            totalSystemLoadKg = w;
+        }
+
+        const payload = {
+            exerciseName,
+            loadType,
+            weightKg: w,
+            reps: r,
+            bodyweightKg: typeof userBodyweight === "number" ? userBodyweight : null,
+            totalSystemLoadKg,
+            effectiveLoadKg,
+            durationSec: isTimed ? (r > 0 ? r : (w > 0 ? w : 30)) : null,
+            completed: true,
+            skipped: false,
+        };
+
+        onSave(payload);
+        setWeight("");
+        setReps("");
     };
+
+    const handleSkip = () => {
+        if (onSkip) {
+            onSkip({
+                exerciseName,
+                loadType: isBW ? "bodyweight" : exCategory,
+                weightKg: 0,
+                reps: 0,
+                completed: false,
+                skipped: true,
+            });
+        } else {
+            onClose();
+        }
+    };
+
+    const numWeight = parseFloat(weight) || 0;
 
     return (
         <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -233,20 +304,41 @@ function PRModal({ visible, exerciseName, onClose, onSave, weightUnit = "kg", in
                             <LinearGradient
                                 colors={['rgba(255, 255, 255, 0.16)', 'rgba(255, 255, 255, 0.02)', 'transparent']}
                                 start={{ x: 0, y: 0 }}
-                                end={{ x: 0, y: 1 }}
+                                end={{ x: 0.2, y: 1 }}
                                 style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 90 }}
                                 pointerEvents="none"
                             />
 
                             <View style={pm.handle} />
+                            
                             <View style={pm.headerRow}>
                                 <View style={pm.trophyBadge}>
-                                    <Ionicons name="clipboard" size={20} color={COLORS.textSub} />
+                                    <Ionicons name={isBW ? "body-outline" : isTimed ? "timer-outline" : "barbell-outline"} size={20} color={COLORS.textSub} />
                                 </View>
                                 <View style={{ flex: 1 }}>
-                                    <Text style={pm.title}>LOG YOUR SET</Text>
+                                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                                        <Text style={pm.title}>LOG PERFORMANCE</Text>
+                                        <View style={[pm.categoryBadge, { backgroundColor: isBW ? "rgba(0, 122, 255, 0.15)" : isTimed ? "rgba(255, 149, 0, 0.15)" : "rgba(227, 30, 36, 0.15)" }]}>
+                                            <Text style={[pm.categoryBadgeText, { color: isBW ? "#007AFF" : isTimed ? "#FF9500" : COLORS.primary }]}>
+                                                {isBW ? "BODYWEIGHT" : isTimed ? "TIMED" : exCategory === "machine" ? "MACHINE" : "FREE WEIGHT"}
+                                            </Text>
+                                        </View>
+                                    </View>
                                     <Text style={pm.subtitle} numberOfLines={1}>{exerciseName.toUpperCase()}</Text>
-                                    {initialWeight !== "" && Number(initialWeight) > 0 ? (
+                                    
+                                    {targetInfo ? (
+                                        <View style={pm.targetCardMini}>
+                                            <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+                                                <Ionicons name="trending-up" size={11} color={targetInfo.badgeColor || COLORS.primary} />
+                                                <Text style={[pm.targetCardBadge, { color: targetInfo.badgeColor || COLORS.primary }]}>
+                                                    {targetInfo.badgeText || "TARGET"}
+                                                </Text>
+                                            </View>
+                                            <Text style={pm.targetCardDesc} numberOfLines={1}>
+                                                {targetInfo.targetSetSummary || targetInfo.reason || ""}
+                                            </Text>
+                                        </View>
+                                    ) : initialWeight !== "" && Number(initialWeight) > 0 ? (
                                         <Text style={pm.targetText}>
                                             TARGET OVERLOAD: {initialWeight} {weightUnit.toUpperCase()} × {initialReps} REPS
                                         </Text>
@@ -258,33 +350,130 @@ function PRModal({ visible, exerciseName, onClose, onSave, weightUnit = "kg", in
                                 </View>
                             </View>
 
-                            <View style={pm.row}>
-                                <View style={pm.inputGroup}>
-                                    <Text style={pm.inputLabel}>WEIGHT ({weightUnit.toUpperCase()})</Text>
-                                    <View style={pm.inputBox}>
-                                        <TextInput
-                                            style={pm.input}
-                                            value={weight}
-                                            onChangeText={setWeight}
-                                            keyboardType="decimal-pad"
-                                            placeholder="0"
-                                            placeholderTextColor={COLORS.textMuted}
-                                            returnKeyType="next"
-                                        />
-                                    </View>
+                            {/* 3-Way Toggle for Bodyweight movements */}
+                            {isBW && (
+                                <View style={pm.bwToggleContainer}>
+                                    <TouchableOpacity
+                                        style={[pm.bwToggleBtn, bwMode === "bodyweight" && pm.bwToggleBtnActive]}
+                                        onPress={() => {
+                                            Haptics.selectionAsync();
+                                            setBwMode("bodyweight");
+                                            setWeight("0");
+                                        }}
+                                        activeOpacity={0.8}
+                                    >
+                                        <Text style={[pm.bwToggleText, bwMode === "bodyweight" && pm.bwToggleTextActive]}>
+                                            Bodyweight
+                                        </Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[pm.bwToggleBtn, bwMode === "weighted" && pm.bwToggleBtnActive]}
+                                        onPress={() => {
+                                            Haptics.selectionAsync();
+                                            setBwMode("weighted");
+                                            if (weight === "0") setWeight("");
+                                        }}
+                                        activeOpacity={0.8}
+                                    >
+                                        <Text style={[pm.bwToggleText, bwMode === "weighted" && pm.bwToggleTextActive]}>
+                                            + Weighted
+                                        </Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[pm.bwToggleBtn, bwMode === "assisted" && pm.bwToggleBtnActive]}
+                                        onPress={() => {
+                                            Haptics.selectionAsync();
+                                            setBwMode("assisted");
+                                            if (weight === "0") setWeight("");
+                                        }}
+                                        activeOpacity={0.8}
+                                    >
+                                        <Text style={[pm.bwToggleText, bwMode === "assisted" && pm.bwToggleTextActive]}>
+                                            - Assisted
+                                        </Text>
+                                    </TouchableOpacity>
                                 </View>
+                            )}
+
+                            {/* Live System / Effective Load banner for bodyweight movements */}
+                            {isBW && (
+                                <View style={pm.systemLoadBanner}>
+                                    <Ionicons name="information-circle-outline" size={14} color={COLORS.textSub} />
+                                    {bwMode === "bodyweight" ? (
+                                        <Text style={pm.systemLoadText}>
+                                            {typeof userBodyweight === "number" ? `Bodyweight: ${userBodyweight} kg` : "Bodyweight not recorded"}
+                                        </Text>
+                                    ) : bwMode === "weighted" ? (
+                                        <Text style={pm.systemLoadText}>
+                                            {typeof userBodyweight === "number" 
+                                                ? `BW: ${userBodyweight} kg + ${numWeight} kg = Total Load: ${userBodyweight + numWeight} kg`
+                                                : `Added: +${numWeight} kg (Total: +${numWeight} kg + BW)`}
+                                        </Text>
+                                    ) : (
+                                        <Text style={pm.systemLoadText}>
+                                            {typeof userBodyweight === "number"
+                                                ? `BW: ${userBodyweight} kg - ${numWeight} kg = Eff Load: ${Math.max(0, userBodyweight - numWeight)} kg`
+                                                : `Assistance: -${numWeight} kg (BW not recorded)`}
+                                        </Text>
+                                    )}
+                                </View>
+                            )}
+
+                            {/* Inputs Row */}
+                            <View style={pm.row}>
+                                {(!isBW || bwMode !== "bodyweight") && !isTimed && (
+                                    <View style={pm.inputGroup}>
+                                        <Text style={pm.inputLabel}>
+                                            {isBW && bwMode === "weighted" ? "ADDED WEIGHT (KG)" : isBW && bwMode === "assisted" ? "ASSISTANCE (KG)" : exCategory === "machine" ? `STACK (${weightUnit.toUpperCase()})` : `WEIGHT (${weightUnit.toUpperCase()})`}
+                                        </Text>
+                                        <View style={pm.inputBox}>
+                                            <TextInput
+                                                style={pm.input}
+                                                value={weight}
+                                                onChangeText={setWeight}
+                                                keyboardType="decimal-pad"
+                                                placeholder="0"
+                                                placeholderTextColor={COLORS.textMuted}
+                                                returnKeyType="next"
+                                            />
+                                        </View>
+                                    </View>
+                                )}
+
                                 <View style={pm.inputGroup}>
-                                    <Text style={pm.inputLabel}>REPETITIONS</Text>
+                                    <Text style={pm.inputLabel}>{isTimed ? "DURATION (SECONDS)" : "REPETITIONS"}</Text>
                                     <View style={pm.inputBox}>
+                                        {isTimed && (
+                                            <TouchableOpacity 
+                                                style={pm.quickStepBtn}
+                                                onPress={() => {
+                                                    const cur = parseInt(reps, 10) || 30;
+                                                    setReps(String(Math.max(5, cur - 5)));
+                                                }}
+                                            >
+                                                <Text style={pm.quickStepText}>-5s</Text>
+                                            </TouchableOpacity>
+                                        )}
                                         <TextInput
                                             style={pm.input}
                                             value={reps}
                                             onChangeText={setReps}
                                             keyboardType="number-pad"
-                                            placeholder="0"
+                                            placeholder={isTimed ? "30" : "0"}
                                             placeholderTextColor={COLORS.textMuted}
                                             returnKeyType="done"
                                         />
+                                        {isTimed && (
+                                            <TouchableOpacity 
+                                                style={pm.quickStepBtn}
+                                                onPress={() => {
+                                                    const cur = parseInt(reps, 10) || 30;
+                                                    setReps(String(cur + 5));
+                                                }}
+                                            >
+                                                <Text style={pm.quickStepText}>+5s</Text>
+                                            </TouchableOpacity>
+                                        )}
                                     </View>
                                 </View>
                             </View>
@@ -292,7 +481,7 @@ function PRModal({ visible, exerciseName, onClose, onSave, weightUnit = "kg", in
                             <TouchableOpacity style={[pm.saveBtn, { backgroundColor: COLORS.primary }]} onPress={handleSave} activeOpacity={0.85}>
                                 <Text style={pm.saveBtnText}>SAVE PERFORMANCE</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity style={pm.skipBtn} onPress={onClose} activeOpacity={0.7}>
+                            <TouchableOpacity style={pm.skipBtn} onPress={handleSkip} activeOpacity={0.7}>
                                 <Text style={pm.skipText}>SKIP SET LOGGING</Text>
                             </TouchableOpacity>
                         </Animated.View>
@@ -322,11 +511,11 @@ const pm = StyleSheet.create({
     },
     handle: {
         width: 40, height: 4, borderRadius: 2,
-        backgroundColor: "rgba(255,255,255,0.2)", marginBottom: 32,
+        backgroundColor: "rgba(255,255,255,0.2)", marginBottom: 24,
     },
     headerRow: {
         flexDirection: "row", alignItems: "center", gap: 16,
-        width: "100%", marginBottom: 32,
+        width: "100%", marginBottom: 20,
     },
     trophyBadge: {
         width: 48, height: 48, borderRadius: RADIUS.pill,
@@ -334,29 +523,113 @@ const pm = StyleSheet.create({
         alignItems: "center", justifyContent: "center",
     },
     title: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 1.5 },
+    categoryBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: RADIUS.sm },
+    categoryBadgeText: { fontSize: 9, fontFamily: FAMILY.monoBold, letterSpacing: 0.5 },
     subtitle: { fontSize: 18, fontFamily: FAMILY.medium, color: COLORS.textSub, marginTop: 4 },
     targetText: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.primary, marginTop: 6, letterSpacing: 0.5 },
     suggestedText: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.accent, marginTop: 6, letterSpacing: 0.5 },
-    row: { flexDirection: "row", gap: 16, width: "100%", marginBottom: 32 },
+    targetCardMini: {
+        backgroundColor: "rgba(255, 255, 255, 0.04)",
+        borderRadius: 6,
+        paddingHorizontal: 8,
+        paddingVertical: 5,
+        marginTop: 6,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+    },
+    targetCardBadge: {
+        fontSize: 9.5,
+        fontFamily: FAMILY.chakraBold,
+        letterSpacing: 0.5,
+        textTransform: "uppercase",
+    },
+    targetCardDesc: {
+        fontSize: 10.5,
+        fontFamily: FAMILY.mono,
+        color: "#D0D0D8",
+        marginTop: 2,
+    },
+    
+    bwToggleContainer: {
+        flexDirection: "row",
+        backgroundColor: "rgba(255,255,255,0.04)",
+        borderRadius: RADIUS.pill,
+        padding: 4,
+        marginBottom: 16,
+        width: "100%",
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.08)",
+    },
+    bwToggleBtn: {
+        flex: 1,
+        paddingVertical: 8,
+        alignItems: "center",
+        borderRadius: RADIUS.pill,
+    },
+    bwToggleBtnActive: {
+        backgroundColor: COLORS.primary,
+    },
+    bwToggleText: {
+        fontSize: 11,
+        fontFamily: FAMILY.medium,
+        color: COLORS.textMuted,
+    },
+    bwToggleTextActive: {
+        color: "#FFFFFF",
+        fontFamily: FAMILY.bold,
+    },
+
+    systemLoadBanner: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        backgroundColor: "rgba(255,255,255,0.03)",
+        borderRadius: RADIUS.sm,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        marginBottom: 20,
+        width: "100%",
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.06)",
+    },
+    systemLoadText: {
+        fontSize: 11,
+        fontFamily: FAMILY.mono,
+        color: COLORS.textSub,
+    },
+
+    row: { flexDirection: "row", gap: 16, width: "100%", marginBottom: 28 },
     inputGroup: { flex: 1 },
     inputLabel: {
         fontSize: 9, fontFamily: FAMILY.medium,
-        color: COLORS.textMuted, letterSpacing: 2, marginBottom: 12,
+        color: COLORS.textMuted, letterSpacing: 1.5, marginBottom: 10,
     },
     inputBox: {
         flexDirection: "row", alignItems: "center",
         backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 18,
-        paddingHorizontal: 16, paddingVertical: 12,
+        paddingHorizontal: 12, paddingVertical: 10,
         borderWidth: 1.2, borderColor: "rgba(255,255,255,0.08)",
+        justifyContent: "center",
     },
     input: {
-        flex: 1, fontSize: 32, fontFamily: FAMILY.monoBold,
+        flex: 1, fontSize: 28, fontFamily: FAMILY.monoBold,
         color: COLORS.text, textAlign: "center", padding: 0,
+    },
+    quickStepBtn: {
+        paddingHorizontal: 8,
+        paddingVertical: 6,
+        backgroundColor: "rgba(255,255,255,0.06)",
+        borderRadius: RADIUS.sm,
+    },
+    quickStepText: {
+        fontSize: 11,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textSub,
     },
     saveBtn: {
         width: "100%", backgroundColor: COLORS.primary,
         height: 52, borderRadius: RADIUS.pill,
-        alignItems: "center", justifyContent: "center", marginBottom: 16,
+        alignItems: "center", justifyContent: "center", marginBottom: 12,
         shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 6 },
         shadowOpacity: 0.35, shadowRadius: 15,
         elevation: 5,
@@ -637,6 +910,19 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
     const [prModal, setPRModal] = useState({ visible: false, exerciseName: "", exIdx: 0, setNum: 0, initialWeight: "", initialReps: "" });
     const [prToast, setPRToast] = useState({ visible: false, exerciseName: "", weightKg: 0, reps: 0 });
     const [newPRsFound, setNewPRsFound] = useState([]);
+    const [userBodyweight, setUserBodyweight] = useState(null);
+    const [feedbackToast, setFeedbackToast] = useState(null);
+    const [activeProgram, setActiveProgram] = useState(null);
+
+    useEffect(() => {
+        getActiveProgram().then(p => setActiveProgram(p)).catch(() => {});
+    }, []);
+
+    const workoutDayTargets = useMemo(() => {
+        if (!activeDay || !activeDay.exercises) return null;
+        return getWorkoutDayTargets(activeDay, history, userBodyweight);
+    }, [activeDay, history, userBodyweight]);
+
     const [loggedExercises, setLoggedExercises] = useState(() => {
         if (initialQueue.length > 0) {
             return initialQueue.map((ex) => ({
@@ -733,6 +1019,13 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                 setHistory(hist);
             } catch (e) {
                 console.warn("[ActiveWorkout] Failed to load workout history", e);
+            }
+
+            try {
+                const bw = await getLatestUserBodyweight();
+                setUserBodyweight(bw);
+            } catch (e) {
+                console.warn("[ActiveWorkout] Failed to load latest bodyweight", e);
             }
 
             // Attempt to restore an active saved session if available
@@ -1285,17 +1578,44 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
         }
     };
 
-    const handlePRSave = async (weightKg, reps) => {
+    const handlePRSave = async (payloadOrWeight, repsArg) => {
         const { exerciseName, exIdx, setNum } = prModal;
         setPRModal(prev => ({ ...prev, visible: false }));
         if (!exerciseName) return;
+
+        let payload = {};
+        if (payloadOrWeight && typeof payloadOrWeight === "object") {
+            payload = payloadOrWeight;
+        } else {
+            payload = {
+                exerciseName,
+                weightKg: parseFloat(payloadOrWeight) || 0,
+                reps: parseInt(repsArg, 10) || 0,
+                loadType: isBodyweightMovement(exerciseName) ? "bodyweight" : "free_weight",
+                completed: true,
+                skipped: false,
+            };
+        }
+
+        const { loadType, weightKg, reps, bodyweightKg, totalSystemLoadKg, effectiveLoadKg, durationSec } = payload;
 
         const currentLogged = loggedExercisesRef.current || [];
         const next = currentLogged.map((exItem, idx) => {
             if (idx === exIdx) {
                 const updatedSets = exItem.loggedSets.map(s => {
                     if (s.set === setNum) {
-                        return { ...s, weightKg, reps, completed: true };
+                        return {
+                            ...s,
+                            loadType: loadType || s.loadType || "free_weight",
+                            weightKg: weightKg ?? s.weightKg ?? 0,
+                            reps: reps ?? s.reps ?? 0,
+                            bodyweightKg: bodyweightKg !== undefined ? bodyweightKg : s.bodyweightKg,
+                            totalSystemLoadKg: totalSystemLoadKg !== undefined ? totalSystemLoadKg : s.totalSystemLoadKg,
+                            effectiveLoadKg: effectiveLoadKg !== undefined ? effectiveLoadKg : s.effectiveLoadKg,
+                            durationSec: durationSec !== undefined ? durationSec : s.durationSec,
+                            completed: true,
+                            skipped: false,
+                        };
                     }
                     return s;
                 });
@@ -1321,21 +1641,37 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
             });
         }
 
-        if (weightKg > 0 || reps > 0) {
-            const result = await tryUpdatePR(exerciseName, weightKg, reps);
+        if ((weightKg && weightKg > 0) || (reps && reps > 0) || (durationSec && durationSec > 0)) {
+            const result = await tryUpdatePR(exerciseName, weightKg, reps, {
+                loadType,
+                bodyweightKg,
+                totalSystemLoadKg,
+                effectiveLoadKg,
+                durationSec,
+            });
             if (result.isNewPR) {
                 hapticNotify();
-                setNewPRsFound(prev => [...prev, { name: exerciseName, weightKg, reps }]);
+                setNewPRsFound(prev => [...prev, { name: exerciseName, weightKg, reps, loadType }]);
                 showPRToast(exerciseName, weightKg, reps);
                 if (prRecordsRef.current) {
-                    prRecordsRef.current[exerciseName] = { weightKg, reps };
+                    prRecordsRef.current[exerciseName] = { weightKg, reps, loadType, totalSystemLoadKg };
                 }
             }
         }
+
+        // Evaluate instantaneous micro-feedback vs target
+        const currentTarget = workoutDayTargets?.exercises?.find(t => t.name === exerciseName)?.progression || workoutDayTargets?.exerciseTargets?.find(t => t.exerciseName === exerciseName);
+        const microFeedback = evaluateCompletedSetFeedback(payload, currentTarget, null);
+        if (microFeedback) {
+            setFeedbackToast({ text: microFeedback, id: Date.now() });
+            setTimeout(() => {
+                setFeedbackToast(null);
+            }, 3500);
+        }
     };
 
-    const handlePRSkip = () => {
-        const { exIdx, setNum } = prModal;
+    const handlePRSkip = (skipPayload) => {
+        const { exerciseName, exIdx, setNum } = prModal;
         setPRModal(prev => ({ ...prev, visible: false }));
 
         const currentLogged = loggedExercisesRef.current || [];
@@ -1343,7 +1679,14 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
             if (idx === exIdx) {
                 const updatedSets = exItem.loggedSets.map(s => {
                     if (s.set === setNum) {
-                        return { ...s, weightKg: 0, reps: 0, completed: true };
+                        return {
+                            ...s,
+                            loadType: skipPayload?.loadType || s.loadType || "free_weight",
+                            weightKg: 0,
+                            reps: 0,
+                            completed: false,
+                            skipped: true,
+                        };
                     }
                     return s;
                 });
@@ -1407,6 +1750,19 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
         <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#000" translucent />
 
+            {/* Real-time Target Feedback Toast */}
+            {feedbackToast && (
+                <View style={styles.feedbackToastContainer} pointerEvents="none">
+                    <LinearGradient
+                        colors={["#1C1C20", "#121215"]}
+                        style={styles.feedbackToastGradient}
+                    >
+                        <Ionicons name="sparkles" size={13} color="#00C853" />
+                        <Text style={styles.feedbackToastText}>{feedbackToast.text}</Text>
+                    </LinearGradient>
+                </View>
+            )}
+
             {/* PR Toast */}
             <PRToast
                 visible={prToast.visible}
@@ -1420,11 +1776,14 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
             <PRModal
                 visible={prModal.visible}
                 exerciseName={prModal.exerciseName}
-                onClose={handlePRSkip}
+                onClose={() => setPRModal(prev => ({ ...prev, visible: false }))}
                 onSave={handlePRSave}
+                onSkip={handlePRSkip}
                 weightUnit={settings.weightUnit}
                 initialWeight={prModal.initialWeight}
                 initialReps={prModal.initialReps}
+                userBodyweight={userBodyweight}
+                targetInfo={workoutDayTargets?.exercises?.find(t => t.name === prModal.exerciseName)?.progression || workoutDayTargets?.exerciseTargets?.find(t => t.exerciseName === prModal.exerciseName)}
             />
 
             {/* Top bar */}
@@ -1434,7 +1793,9 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                 </TouchableOpacity>
                 <View style={styles.topCenter}>
                     <Text style={styles.topTitle}>{activeDay?.target || "Workout"}</Text>
-                    <Text style={styles.topSub}>{pct}% Complete</Text>
+                    <Text style={styles.topSub}>
+                        {activeProgram?.isTemporaryDeload ? `DELOAD v${activeProgram?.version || "1.0.0"}` : `v${activeProgram?.version || "1.0.0"}`} • {pct}% Complete
+                    </Text>
                 </View>
                 {/* Calorie counter */}
                 {settings.showCalories ? (
@@ -1624,16 +1985,28 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                                     <Text style={styles.recentLogsLabel}>Recent Logs ({recentLogs.date})</Text>
                                 </View>
                                 <View style={styles.recentLogsSets}>
-                                    {recentLogs.loggedSets.map((s, i) => (
-                                        <View key={i} style={styles.recentSetRow}>
-                                            <View style={styles.recentSetBadge}>
-                                                <Text style={styles.recentSetBadgeText}>S{s.set}</Text>
+                                    {recentLogs.loggedSets.map((s, i) => {
+                                        let setText = `${s.weightKg > 0 ? displayWeight(s.weightKg, settings.weightUnit) : "—"} × ${s.reps} reps`;
+                                        if (s.loadType === "timed") {
+                                            setText = `${s.durationSec || s.reps || 0}s`;
+                                        } else if (s.loadType === "bodyweight") {
+                                            setText = typeof s.bodyweightKg === "number" && s.bodyweightKg > 0
+                                                ? `BW (${displayWeight(s.bodyweightKg, settings.weightUnit)}) × ${s.reps}`
+                                                : `BW × ${s.reps}`;
+                                        } else if (s.loadType === "weighted_bodyweight") {
+                                            setText = `BW +${displayWeight(s.weightKg, settings.weightUnit)} × ${s.reps}`;
+                                        } else if (s.loadType === "assisted_bodyweight") {
+                                            setText = `Assisted -${displayWeight(s.weightKg, settings.weightUnit)} × ${s.reps}`;
+                                        }
+                                        return (
+                                            <View key={i} style={styles.recentSetRow}>
+                                                <View style={styles.recentSetBadge}>
+                                                    <Text style={styles.recentSetBadgeText}>S{s.set}</Text>
+                                                </View>
+                                                <Text style={styles.recentSetText}>{setText}</Text>
                                             </View>
-                                            <Text style={styles.recentSetText}>
-                                                {s.weightKg > 0 ? displayWeight(s.weightKg, settings.weightUnit) : "—"} × {s.reps} reps
-                                            </Text>
-                                        </View>
-                                    ))}
+                                        );
+                                    })}
                                 </View>
                             </View>
                         ) : null}
@@ -1731,6 +2104,37 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: COLORS.bg },
     scroll: { paddingBottom: 100 },
+
+    feedbackToastContainer: {
+        position: "absolute",
+        top: 110,
+        left: 20,
+        right: 20,
+        alignItems: "center",
+        zIndex: 9999,
+    },
+    feedbackToastGradient: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: RADIUS.pill,
+        borderWidth: 1,
+        borderColor: "rgba(0, 200, 83, 0.5)",
+        backgroundColor: "#16161A",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.5,
+        shadowRadius: 10,
+        elevation: 10,
+    },
+    feedbackToastText: {
+        fontFamily: FAMILY.monoBold,
+        fontSize: 12,
+        color: "#FFFFFF",
+        letterSpacing: 0.5,
+    },
 
     topBar: {
         flexDirection: "row", alignItems: "center", justifyContent: "space-between",

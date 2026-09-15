@@ -3,7 +3,15 @@
  * Ultra-resilient with automatic model fallback, caching, and graceful degradation.
  */
 
+import {
+    getDailyAthleteCommand,
+    getWeeklyAthleteRecap,
+    getAthletePredictiveSummary,
+    getTrainingLoadTrend,
+} from "./analytics";
+
 const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
+
 
 // Cache the last model that worked so we try it first next time
 let _lastWorkingModel = null;
@@ -18,7 +26,7 @@ const ALL_MODELS = [
     "gemini-flash-lite-latest",
 ];
 
-export async function getGeminiCoachResponse(userMessage, chatHistory = []) {
+export async function getGeminiCoachResponse(userMessage, chatHistory = [], athleteContext = null) {
     // Build smart model order: last working model first, then the rest
     let models = [...ALL_MODELS];
     if (_lastWorkingModel) {
@@ -28,7 +36,7 @@ export async function getGeminiCoachResponse(userMessage, chatHistory = []) {
     let lastError = null;
     for (const model of models) {
         try {
-            const result = await callGeminiAPI(model, userMessage, chatHistory);
+            const result = await callGeminiAPI(model, userMessage, chatHistory, athleteContext);
             _lastWorkingModel = model; // Remember what worked
             return result;
         } catch (error) {
@@ -78,14 +86,127 @@ function getOfflineResponse(userMessage) {
     return responses[Math.floor(Math.random() * responses.length)];
 }
 
-async function callGeminiAPI(modelName, message, history) {
+/**
+ * Builds a compact, deterministic factual context payload for the Gemini AI Coach.
+ * Pre-computes all analytical metrics using Phase 1-6 engines before sending to LLM.
+ * 
+ * @param {Object} params
+ * @returns {Object} Structured factual payload
+ */
+export function buildAICoachingContext({
+    workouts = [],
+    readinessLogs = [],
+    activeProgram = null,
+    programVersions = [],
+    bodyStats = [],
+    prRecords = {},
+    missedWorkoutState = null,
+    targetDate = new Date(),
+    latestBodyweight = null,
+} = {}) {
+    const dailyCommand = getDailyAthleteCommand({
+        workouts,
+        readinessLogs,
+        activeProgram,
+        programVersions,
+        bodyStats,
+        prRecords,
+        missedWorkoutState,
+        targetDate,
+        latestBodyweight,
+    });
+
+    const weeklyRecap = getWeeklyAthleteRecap({
+        workouts,
+        readinessLogs,
+        bodyStats,
+        prRecords,
+        activeProgram,
+        targetDate,
+        latestBodyweight,
+    });
+
+    const predictiveSummary = getAthletePredictiveSummary(
+        activeProgram,
+        workouts,
+        bodyStats,
+        readinessLogs,
+        prRecords,
+        latestBodyweight
+    );
+
+    return {
+        athlete: {
+            totalWorkoutsLogged: dailyCommand.supportingMetrics.totalWorkouts,
+            activeProgramName: activeProgram?.name || activeProgram?.title || "Conquer ONE 6-Day Split",
+            activeProgramVersion: activeProgram?.versionNumber || "1.0",
+            isDeloadActive: !!(activeProgram?.isDeloadActive || activeProgram?.type === "TEMPORARY_DELOAD"),
+        },
+        todayCommand: {
+            decision: dailyCommand.decision,
+            headline: dailyCommand.headline,
+            subtext: dailyCommand.subtext,
+            recommendedAction: dailyCommand.action,
+            reasons: dailyCommand.reasons,
+        },
+        todayPrimeTarget: dailyCommand.primeTarget ? {
+            exercise: dailyCommand.primeTarget.exerciseName,
+            targetWeightKg: dailyCommand.primeTarget.targetWeight,
+            targetRepRange: dailyCommand.primeTarget.targetRepRange,
+            actionLabel: dailyCommand.primeTarget.actionLabel,
+            reason: dailyCommand.primeTarget.reason,
+        } : null,
+        recoveryAndLoad: {
+            readinessScore: dailyCommand.supportingMetrics.readinessScore,
+            acwr: dailyCommand.supportingMetrics.acwr,
+            fatigueStatus: dailyCommand.supportingMetrics.fatigueStatus,
+            acuteLoad: dailyCommand.supportingMetrics.acuteLoad,
+            chronicLoad: dailyCommand.supportingMetrics.chronicLoad,
+        },
+        topProgressingMovements: (predictiveSummary?.topProgressingMovements || []).slice(0, 3).map(m => ({
+            exercise: m.exerciseName,
+            weeklyVelocity: m.slopePerWeek,
+            unit: m.unit,
+            trajectory: m.trajectory,
+        })),
+        stallsAndPlateauRisks: (predictiveSummary?.plateauRiskMovements || []).slice(0, 3).map(r => ({
+            exercise: r.exerciseName,
+            stagnantSessions: r.stagnantSessions,
+            riskLevel: r.riskLevel,
+        })),
+        upcomingMilestones: (predictiveSummary?.upcomingMilestones || []).slice(0, 3).map(ms => ({
+            exercise: ms.exerciseName,
+            targetMilestone: ms.nextMilestone,
+            projectedWeeks: ms.projectedWeeks,
+            unit: ms.unit,
+        })),
+        weeklyRecap: {
+            sessionsCompleted: weeklyRecap.adherence.sessionsCompleted,
+            adherenceRatePct: weeklyRecap.adherence.adherenceRate,
+            externalTonnageKg: weeklyRecap.volume.externalTonnageKg,
+            newPRCount: weeklyRecap.performance.newPRCount,
+            nextWeekFocus: weeklyRecap.nextWeekFocus,
+        },
+    };
+}
+
+async function callGeminiAPI(modelName, message, history, athleteContext = null) {
     if (!apiKey || apiKey === "YOUR_API_KEY_HERE") {
         throw new Error("API key not configured. Set EXPO_PUBLIC_GEMINI_API_KEY in your .env file.");
     }
 
     const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
-    const systemPrompt = "You are the 'CONQUER ONE' fitness coach. You are encouraging, direct, and use simple but powerful words. Avoid overly scientific or mechanical jargon. Speak like a real human coach who is motivating and clear. Keep your advice practical, athletic, and friendly. Limit response to 100 words.";
+    let contextSnippet = "";
+    if (athleteContext && typeof athleteContext === "object") {
+        try {
+            contextSnippet = `\nATHLETE VERIFIED ANALYTICS CONTEXT (STRICT TRUTH):\n${JSON.stringify(athleteContext, null, 2)}\nUse ONLY this real data to answer. If data for an exercise or metric is absent, state that no data is logged yet. Never invent statistics, PRs, or medical diagnoses.`;
+        } catch {
+            // ignore JSON serialization failure
+        }
+    }
+
+    const systemPrompt = `You are the 'CONQUER ONE' elite athletic coach. You are encouraging, direct, and use simple but powerful words. Ground your advice in the athlete's real telemetry provided in the context. Keep your advice practical, athletic, and concise. Limit response to 120 words.${contextSnippet}`;
 
     let contents = [
         { role: "user", parts: [{ text: `Act as my coach with these rules: ${systemPrompt}. Now respond to my next message.` }] },
@@ -141,3 +262,5 @@ async function callGeminiAPI(modelName, message, history) {
 
     throw new Error("EMPTY_RESPONSE");
 }
+
+

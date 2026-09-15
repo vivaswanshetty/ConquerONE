@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity, StyleSheet,
     Image, StatusBar, ImageBackground, Modal, TextInput,
@@ -12,7 +12,10 @@ import * as Haptics from "expo-haptics";
 import { COLORS, FONTS, SPACING, RADIUS, FAMILY, getMuscleColor } from "../utils/theme";
 import { saveExerciseConfig, getWorkoutOverrides } from "../utils/workoutConfig";
 import { getSuggestedWeight } from "../data/workoutData";
-import { getWorkoutHistoryLocal } from "../utils/storage";
+import { getWorkoutHistoryLocal, getLatestUserBodyweight, getActiveProgram } from "../utils/storage";
+import { getWorkoutDayTargets, getExerciseReviewStatus } from "../utils/analytics";
+import ExerciseDetailModal from "../components/ExerciseDetailModal";
+import ExerciseTargetCard from "../components/ExerciseTargetCard";
 
 function totalTime(day) {
     let s = 0;
@@ -36,6 +39,9 @@ export default function WorkoutDetailScreen({ navigation, route }) {
     const [expanded, setExpanded] = useState(null);
     const [day, setDay] = useState(initialDay);
     const [editExercise, setEditExercise] = useState(null);
+    const [selectedDetailExercise, setSelectedDetailExercise] = useState(null);
+    const [history, setHistory] = useState([]);
+    const [latestBodyweight, setLatestBodyweight] = useState(null);
     const [isCompletedToday, setIsCompletedToday] = useState(false);
 
     useFocusEffect(
@@ -45,17 +51,32 @@ export default function WorkoutDetailScreen({ navigation, route }) {
     );
 
     const loadOverrides = async () => {
+        let baseDay = initialDay;
+        try {
+            const activeProg = await getActiveProgram();
+            if (activeProg && activeProg.days) {
+                const match = activeProg.days.find(d => d.day === initialDay.day);
+                if (match && match.exercises && match.exercises.length > 0) {
+                    baseDay = { ...initialDay, exercises: match.exercises, target: match.target || initialDay.target };
+                }
+            }
+        } catch { }
+
         const overrides = await getWorkoutOverrides();
-        const enhancedExercises = initialDay.exercises.map(ex => {
+        const enhancedExercises = baseDay.exercises.map(ex => {
             const override = overrides[ex.name];
             return override ? { ...ex, ...override } : ex;
         });
-        setDay({ ...initialDay, exercises: enhancedExercises });
+        setDay({ ...baseDay, exercises: enhancedExercises });
 
         try {
             const hist = await getWorkoutHistoryLocal();
+            const bw = await getLatestUserBodyweight();
+            setHistory(hist || []);
+            setLatestBodyweight(bw);
+
             const todayStr = new Date().toISOString().split("T")[0];
-            const done = hist.some(item => {
+            const done = (hist || []).some(item => {
                 const dStr = item.date || (item.completedAt ? item.completedAt.split("T")[0] : null);
                 return dStr === todayStr && (
                     item.day === initialDay.day ||
@@ -65,6 +86,29 @@ export default function WorkoutDetailScreen({ navigation, route }) {
             setIsCompletedToday(done);
         } catch { }
     };
+
+    const workoutTargets = useMemo(() => {
+        if (!day || !day.exercises) return {};
+        const res = getWorkoutDayTargets(day, history, latestBodyweight);
+        const targetMap = {};
+        const list = res?.exercises || res?.exerciseTargets || [];
+        list.forEach(t => {
+            const exName = t.name || t.exerciseName;
+            if (exName) {
+                targetMap[exName] = t.progression || t;
+            }
+        });
+        return targetMap;
+    }, [day, history, latestBodyweight]);
+
+    const reviewStatuses = useMemo(() => {
+        if (!day || !day.exercises || !history) return {};
+        const statusMap = {};
+        day.exercises.forEach(ex => {
+            statusMap[ex.name] = getExerciseReviewStatus(ex.name, history);
+        });
+        return statusMap;
+    }, [day, history]);
 
     const handleSaveEdit = async (config) => {
         if (!editExercise) return;
@@ -141,18 +185,18 @@ export default function WorkoutDetailScreen({ navigation, route }) {
                     </ImageBackground>
                 </View>
 
-                {/* ── 2. Protocol Meta Strip ── */}
+                {/* ── 2. Meta Strip ── */}
                 <View style={styles.metaStrip}>
+                    <MetaItem
+                        icon="time-outline"
+                        val={`${duration} MIN`}
+                        label="DURATION"
+                    />
+                    <View style={styles.metaDivider} />
                     <MetaItem
                         icon="barbell-outline"
                         val={`${day.exercises.length}`}
                         label="EXERCISES"
-                    />
-                    <View style={styles.metaDivider} />
-                    <MetaItem
-                        icon="time-outline"
-                        val={`${duration}m`}
-                        label="EST. TIME"
                     />
                     <View style={styles.metaDivider} />
                     <MetaItem
@@ -223,8 +267,14 @@ export default function WorkoutDetailScreen({ navigation, route }) {
                                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                                 setEditExercise(ex);
                             }}
+                            onInspect={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                setSelectedDetailExercise(ex.name);
+                            }}
                             dayTarget={day.target}
                             muscleColor={muscleColor}
+                            targetInfo={workoutTargets[ex.name]}
+                            reviewStatus={reviewStatuses[ex.name]}
                         />
                     ))}
                 </View>
@@ -237,6 +287,15 @@ export default function WorkoutDetailScreen({ navigation, route }) {
                 onClose={() => setEditExercise(null)}
                 onSave={handleSaveEdit}
                 muscleColor={muscleColor}
+            />
+
+            {/* ── Exercise Detail Progression Modal ── */}
+            <ExerciseDetailModal
+                visible={!!selectedDetailExercise}
+                exerciseName={selectedDetailExercise}
+                onClose={() => setSelectedDetailExercise(null)}
+                history={history}
+                userBodyweight={latestBodyweight}
             />
         </View>
     );
@@ -258,7 +317,7 @@ function MetaItem({ icon, val, label, accentColor }) {
     );
 }
 
-function ExerciseRow({ ex, index, total, expanded, onPress, onEdit, dayTarget, muscleColor }) {
+function ExerciseRow({ ex, index, total, expanded, onPress, onEdit, onInspect, dayTarget, muscleColor, targetInfo, reviewStatus }) {
     const isReps = ex.type === "reps" || (ex.type !== "timer" && ex.name.toLowerCase() !== "plank");
     const numLabel = String(index + 1).padStart(2, '0');
     const suggestedWeight = getSuggestedWeight(ex.name);
@@ -293,6 +352,9 @@ function ExerciseRow({ ex, index, total, expanded, onPress, onEdit, dayTarget, m
                         </Text>
                     </View>
                     <View style={styles.exRowControls}>
+                        <TouchableOpacity style={styles.editBtnSmall} onPress={onInspect} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                            <Ionicons name="stats-chart-outline" size={13} color={COLORS.primary} />
+                        </TouchableOpacity>
                         <TouchableOpacity style={styles.editBtnSmall} onPress={onEdit} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                             <Ionicons name="options-outline" size={13} color={COLORS.textSub} />
                         </TouchableOpacity>
@@ -304,6 +366,45 @@ function ExerciseRow({ ex, index, total, expanded, onPress, onEdit, dayTarget, m
             {/* ── Expanded Content Details ── */}
             {expanded && (
                 <View style={styles.exExpanded}>
+                    {/* Target & Progression Intelligence Card */}
+                    {targetInfo && (
+                        <ExerciseTargetCard targetInfo={targetInfo} compact={false} />
+                    )}
+
+                    {/* Phase 4 Movement Review Alert */}
+                    {reviewStatus && reviewStatus.status === "REVIEW_EXERCISE" && (
+                        <View style={styles.reviewBanner}>
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                                <Ionicons name="refresh-circle" size={15} color="#FF5E3A" />
+                                <Text style={styles.reviewBannerTitle}>MOVEMENT REVIEW RECOMMENDED</Text>
+                            </View>
+                            <Text style={styles.reviewBannerText}>
+                                Performance has plateaued for {reviewStatus.stagnantSessionsCount} consecutive sessions. The adaptive system suggests considering a variation:
+                            </Text>
+                            {reviewStatus.suggestedAlternatives && reviewStatus.suggestedAlternatives.length > 0 && (
+                                <View style={styles.altBox}>
+                                    <Text style={styles.altLabel}>ALTERNATIVE MOVEMENTS</Text>
+                                    {reviewStatus.suggestedAlternatives.map((alt, idx) => (
+                                        <Text key={idx} style={styles.altItem}>• {alt}</Text>
+                                    ))}
+                                </View>
+                            )}
+                        </View>
+                    )}
+
+                    {/* Phase 3/4 Plateau Detected Banner */}
+                    {reviewStatus && reviewStatus.status === "STALLING" && (
+                        <View style={[styles.reviewBanner, { borderColor: "rgba(255, 149, 0, 0.3)", backgroundColor: "rgba(255, 149, 0, 0.08)" }]}>
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 3 }}>
+                                <Ionicons name="alert-circle" size={14} color="#FF9500" />
+                                <Text style={[styles.reviewBannerTitle, { color: "#FF9500" }]}>PLATEAU DETECTED (3 SESSIONS)</Text>
+                            </View>
+                            <Text style={styles.reviewBannerText}>
+                                Working load has stayed stagnant for 3 sessions. Target +1 rep or a micro-load (+1kg) next session.
+                            </Text>
+                        </View>
+                    )}
+
                     {ex.image ? (
                         <View style={styles.exImgBox}>
                             <Image source={{ uri: ex.image }} style={styles.exImg} resizeMode="cover" />
@@ -370,6 +471,16 @@ function ExerciseRow({ ex, index, total, expanded, onPress, onEdit, dayTarget, m
                             ))}
                         </View>
                     )}
+
+                    {/* View History & Trends Button */}
+                    <TouchableOpacity
+                        style={[styles.customizeCardBtn, { marginBottom: 8, borderColor: "rgba(227, 30, 36, 0.3)", backgroundColor: "rgba(227, 30, 36, 0.08)" }]}
+                        onPress={onInspect}
+                        activeOpacity={0.75}
+                    >
+                        <Ionicons name="stats-chart-outline" size={14} color={COLORS.primary} style={{ marginRight: 6 }} />
+                        <Text style={[styles.customizeCardBtnText, { color: "#FFFFFF", fontFamily: FAMILY.bold }]}>View Progression & 1RM History</Text>
+                    </TouchableOpacity>
 
                     {/* Quick Customize Action Footer */}
                     <TouchableOpacity style={styles.customizeCardBtn} onPress={onEdit} activeOpacity={0.75}>
@@ -1148,5 +1259,46 @@ const styles = StyleSheet.create({
         fontFamily: FAMILY.bold,
         color: "#FFFFFF",
         letterSpacing: 1,
+    },
+
+    // Movement Review & Stall Banners
+    reviewBanner: {
+        backgroundColor: "rgba(255, 94, 58, 0.08)",
+        borderRadius: RADIUS.md,
+        borderWidth: 1,
+        borderColor: "rgba(255, 94, 58, 0.3)",
+        padding: 12,
+        marginBottom: 12,
+    },
+    reviewBannerTitle: {
+        fontSize: 10,
+        fontFamily: FAMILY.monoBold,
+        color: "#FF5E3A",
+        letterSpacing: 0.5,
+    },
+    reviewBannerText: {
+        fontSize: 11,
+        fontFamily: FAMILY.sans,
+        color: "rgba(255, 255, 255, 0.8)",
+        lineHeight: 16,
+    },
+    altBox: {
+        marginTop: 8,
+        paddingTop: 8,
+        borderTopWidth: 1,
+        borderTopColor: "rgba(255, 255, 255, 0.08)",
+    },
+    altLabel: {
+        fontSize: 8.5,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textMuted,
+        letterSpacing: 0.8,
+        marginBottom: 4,
+    },
+    altItem: {
+        fontSize: 11,
+        fontFamily: FAMILY.mono,
+        color: "#38BDF8",
+        lineHeight: 16,
     },
 });

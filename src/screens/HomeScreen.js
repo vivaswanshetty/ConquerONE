@@ -16,19 +16,52 @@ import {
     getStreakLocal, getTotalWorkoutsLocal, applyStreakFreeze,
     getXP, getXPLocal, getRecordStreak, getRecordStreakLocal,
     getWorkoutHistory, getWorkoutHistoryLocal, getPreviousFreezeDate,
-    getActiveWorkoutSession, clearActiveWorkoutSession
+    getActiveWorkoutSession, clearActiveWorkoutSession,
+    getBodyStats, getPRRecords, getLatestUserBodyweight,
+    getDailyReadiness, saveDailyReadiness, getTodayReadiness,
+    getActiveProgram, saveActiveProgram, getProgramVersions,
+    dismissAdaptiveRecommendation, getDismissedRecommendations,
 } from "../utils/storage";
+import {
+    getRolling7DayAverageBodyweight,
+    getRecentImprovements,
+    getWeeklyTrainingSummary,
+    getAthleteAlerts,
+    getWorkoutDayTargets,
+    getReadinessScore,
+    getProgramPerformanceSummary,
+    getWeeklyTrainingDistribution,
+    getWeeklyProgramRecommendation,
+    getMissedWorkoutAdvisory,
+    getProposedDeloadPlan,
+    getVolumeRecommendation,
+    getDailyAthleteCommand,
+    getWeeklyAthleteRecap,
+    getAthleteAchievements,
+    getAthleteTimelineEvents,
+} from "../utils/analytics";
 import MaskedView from "@react-native-masked-view/masked-view";
 import * as Haptics from "expo-haptics";
 import Svg, { Circle, Path, Defs, LinearGradient as SvgGradient, Stop, Text as SvgText, Polygon, Line } from "react-native-svg";
 import WorkoutCalendar from "../components/WorkoutCalendar";
 import ManualWorkoutModal from "../components/ManualWorkoutModal";
+import ExerciseDetailModal from "../components/ExerciseDetailModal";
+import ReadinessModal from "../components/ReadinessModal";
+import AthleteAlertCard from "../components/AthleteAlertCard";
+import ExerciseTargetCard from "../components/ExerciseTargetCard";
+import ProgramStatusCard from "../components/ProgramStatusCard";
+import AdaptiveRecommendationCard from "../components/AdaptiveRecommendationCard";
+import MissedWorkoutModal from "../components/MissedWorkoutModal";
+import DeloadProposalModal from "../components/DeloadProposalModal";
+import ProgramVersionBadge from "../components/ProgramVersionBadge";
 import SkeletonBlock from "../components/SkeletonBlock";
+import DailyDecisionCard from "../components/DailyDecisionCard";
+import WhyRecommendationModal from "../components/WhyRecommendationModal";
+import WeeklyRecapCard from "../components/WeeklyRecapCard";
 import ViewShot from "react-native-view-shot";
 import * as Sharing from "expo-sharing";
 import { getRankData, RANKS } from "./RankScreen";
 import { syncAndroidWidget } from "../utils/widgetSync";
-
 
 // Auth
 import { useAuth } from "../context/AuthContext";
@@ -495,10 +528,29 @@ export default function HomeScreen({ navigation, route }) {
     const [completedTargets, setCompletedTargets] = useState({});
     const [freezeDays, setFreezeDays] = useState([]);
     const [history, setHistory] = useState([]);
+    const [bodyStats, setBodyStats] = useState([]);
+    const [prRecords, setPRRecords] = useState({});
+    const [latestBodyweight, setLatestBodyweight] = useState(null);
+    const [readinessHistory, setReadinessHistory] = useState([]);
+    const [todayReadiness, setTodayReadiness] = useState(null);
+    const [readinessModalVisible, setReadinessModalVisible] = useState(false);
+    const [selectedDetailExercise, setSelectedDetailExercise] = useState(null);
     const [streakAnalyticsVisible, setStreakAnalyticsVisible] = useState(false);
     const [quickMenuVisible, setQuickMenuVisible] = useState(false);
     const [manualModalVisible, setManualModalVisible] = useState(false);
     const [activeSession, setActiveSession] = useState(null);
+
+    // ── Phase 4 Adaptive Programming State ──
+    const [activeProgram, setActiveProgram] = useState(null);
+    const [programVersions, setProgramVersions] = useState([]);
+    const [dismissedAlerts, setDismissedAlerts] = useState([]);
+    const [missedWorkoutModalVisible, setMissedWorkoutModalVisible] = useState(false);
+    const [deloadProposalModalVisible, setDeloadProposalModalVisible] = useState(false);
+    const [proposedDeloadPlan, setProposedDeloadPlan] = useState(null);
+
+    // ── Phase 6 Command Center State ──
+    const [whyModalVisible, setWhyModalVisible] = useState(false);
+
     const greetingAnim = useRef(new Animated.Value(0)).current;
     const navAnim = useRef(new Animated.Value(0)).current;
     const heroAnim = useRef(new Animated.Value(0)).current;
@@ -510,6 +562,149 @@ export default function HomeScreen({ navigation, route }) {
     const sparkAnims = useRef([4, 6, 3, 8, 5, 9, 7].map(() => new Animated.Value(0))).current;
 
     const displayName = profile?.fullName?.split(" ")[0] || user?.displayName?.split(" ")[0] || "ATHLETE";
+
+    // ── Phase 2 & 3 Centralized & Memoized Athlete Intelligence ──
+    const rollingBW = useMemo(() => {
+        return getRolling7DayAverageBodyweight(bodyStats);
+    }, [bodyStats]);
+
+    const recentImprovements = useMemo(() => {
+        return getRecentImprovements(history, prRecords, latestBodyweight, 3);
+    }, [history, prRecords, latestBodyweight]);
+
+    const weeklySummary = useMemo(() => {
+        return getWeeklyTrainingSummary(history, streak, 0, latestBodyweight);
+    }, [history, streak, latestBodyweight]);
+
+    const athleteAlerts = useMemo(() => {
+        return getAthleteAlerts(history, bodyStats, readinessHistory, prRecords, latestBodyweight);
+    }, [history, bodyStats, readinessHistory, prRecords, latestBodyweight]);
+
+    // ── Phase 4 Adaptive System Memoizations ──
+    const programPerformanceSummary = useMemo(() => {
+        return getProgramPerformanceSummary(activeProgram, history);
+    }, [activeProgram, history]);
+
+    const missedWorkoutAdvisory = useMemo(() => {
+        return getMissedWorkoutAdvisory(activeProgram, history);
+    }, [activeProgram, history]);
+
+    const adaptiveRecommendation = useMemo(() => {
+        return getWeeklyProgramRecommendation(activeProgram, history, readinessHistory, bodyStats, dismissedAlerts);
+    }, [activeProgram, history, readinessHistory, bodyStats, dismissedAlerts]);
+
+    // ── Phase 6 Athlete Command Center Memoizations ──
+    const dailyAthleteCommand = useMemo(() => {
+        return getDailyAthleteCommand({
+            workouts: history,
+            readinessLogs: readinessHistory,
+            activeProgram,
+            programVersions,
+            bodyStats,
+            prRecords,
+            missedWorkoutState: missedWorkoutAdvisory?.hasMissedWorkout ? missedWorkoutAdvisory : null,
+            targetDate: new Date(),
+            latestBodyweight,
+        });
+    }, [history, readinessHistory, activeProgram, programVersions, bodyStats, prRecords, missedWorkoutAdvisory, latestBodyweight]);
+
+    const weeklyAthleteRecap = useMemo(() => {
+        return getWeeklyAthleteRecap({
+            workouts: history,
+            readinessLogs: readinessHistory,
+            bodyStats,
+            prRecords,
+            activeProgram,
+            targetDate: new Date(),
+            latestBodyweight,
+        });
+    }, [history, readinessHistory, bodyStats, prRecords, activeProgram, latestBodyweight]);
+
+    const todayWorkoutTargets = useMemo(() => {
+        const programDays = activeProgram?.days || WORKOUT_PLAN;
+        const d = todayDay <= 6 ? programDays[todayDay - 1] : null;
+        if (!d || d.isRest) return null;
+        return getWorkoutDayTargets(d, history, latestBodyweight);
+    }, [todayDay, activeProgram, history, latestBodyweight]);
+
+    const todayReadinessScore = useMemo(() => {
+        return todayReadiness ? getReadinessScore(todayReadiness) : null;
+    }, [todayReadiness]);
+
+    const currentDateFormatted = useMemo(() => {
+        const d = new Date();
+        return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }).toUpperCase();
+    }, []);
+
+    // ── Phase 4 Action Handlers ──
+    const handleAcceptAdaptiveRec = async (rec) => {
+        if (!rec) return;
+        if (rec.status === "REDUCE_TRAINING_STRESS") {
+            const plan = getProposedDeloadPlan(activeProgram, 7, rec.observation || "Adaptive deload protocol");
+            setProposedDeloadPlan(plan);
+            setDeloadProposalModalVisible(true);
+        } else if (rec.status === "MINOR_ADJUSTMENT" && rec.actionType === "VOLUME_ADJUSTMENT" && rec.exerciseName) {
+            if (!activeProgram || !activeProgram.days) return;
+            const delta = rec.recommendedAdjustment === "INCREASE_SLIGHTLY" ? 1 : rec.recommendedAdjustment === "REDUCE_SLIGHTLY" ? -1 : 0;
+            if (delta === 0) return;
+
+            const updatedDays = activeProgram.days.map(d => ({
+                ...d,
+                exercises: d.exercises ? d.exercises.map(ex => {
+                    if (ex.name.toLowerCase() === rec.exerciseName.toLowerCase()) {
+                        const newSets = Math.max(1, (ex.sets || 3) + delta);
+                        return { ...ex, sets: newSets };
+                    }
+                    return ex;
+                }) : []
+            }));
+
+            const changeDesc = `Adjusted ${rec.exerciseName} volume to ${delta > 0 ? "+1" : "-1"} working sets based on recovery signals.`;
+            const updated = await saveActiveProgram({
+                ...activeProgram,
+                days: updatedDays,
+            }, changeDesc);
+
+            setActiveProgram(updated);
+            const vers = await getProgramVersions();
+            setProgramVersions(vers);
+            await dismissAdaptiveRecommendation(rec.id);
+            setDismissedAlerts(prev => [...prev, rec.id]);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+    };
+
+    const handleDismissAdaptiveRec = async (recId) => {
+        if (!recId) return;
+        await dismissAdaptiveRecommendation(recId);
+        setDismissedAlerts(prev => [...prev, recId]);
+    };
+
+    const handleAcceptDeload = async (plan) => {
+        setDeloadProposalModalVisible(false);
+        const updated = await saveActiveProgram(plan, "Activated 7-day structured deload protocol");
+        setActiveProgram(updated);
+        const vers = await getProgramVersions();
+        setProgramVersions(vers);
+        if (adaptiveRecommendation?.id) {
+            await dismissAdaptiveRecommendation(adaptiveRecommendation.id);
+            setDismissedAlerts(prev => [...prev, adaptiveRecommendation.id]);
+        }
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    };
+
+    const handleSelectMissedOption = (opt) => {
+        setMissedWorkoutModalVisible(false);
+        if (opt.id === "MAKEUP_MISSED_SESSION" && missedWorkoutAdvisory?.missedDay) {
+            const programDays = activeProgram?.days || WORKOUT_PLAN;
+            const missedDayObj = programDays.find(d => d.day === missedWorkoutAdvisory.missedDay) || { day: missedWorkoutAdvisory.missedDay, target: missedWorkoutAdvisory.missedTarget, exercises: [] };
+            navigation.navigate("WorkoutDetail", { day: missedDayObj });
+        } else if (opt.id === "RESUME_NEXT_SCHEDULED") {
+            if (todayWorkout) {
+                navigation.navigate("WorkoutDetail", { day: todayWorkout });
+            }
+        }
+    };
 
     const [initialLoading, setInitialLoading] = useState(true);
     const contentFadeAnim = useRef(new Animated.Value(0)).current;
@@ -592,22 +787,46 @@ export default function HomeScreen({ navigation, route }) {
     const loadStats = async (forceCloudSync = false) => {
         // 1. Immediate local cache load
         try {
-            const cachedStreak = await getStreakLocal();
-            const cachedTotal = await getTotalWorkoutsLocal();
-            const cachedXP = await getXPLocal();
-            const cachedRecord = await getRecordStreakLocal();
-            const cachedHistory = await getWorkoutHistoryLocal();
-            const cachedFreeze = await getLastFreezeDate();
-            const cachedPrevFreeze = await getPreviousFreezeDate();
+            const [
+                cachedStreak, cachedTotal, cachedXP, cachedRecord,
+                cachedHistory, cachedFreeze, cachedPrevFreeze,
+                cachedStats, cachedPRs, cachedBW, cachedReadiness,
+                cachedTodayReadiness, cachedActiveProgram, cachedVersions,
+                cachedDismissed
+            ] = await Promise.all([
+                getStreakLocal(),
+                getTotalWorkoutsLocal(),
+                getXPLocal(),
+                getRecordStreakLocal(),
+                getWorkoutHistoryLocal(),
+                getLastFreezeDate(),
+                getPreviousFreezeDate(),
+                getBodyStats(),
+                getPRRecords(),
+                getLatestUserBodyweight(),
+                getDailyReadiness(30),
+                getTodayReadiness(),
+                getActiveProgram(),
+                getProgramVersions(),
+                getDismissedRecommendations(),
+            ]);
 
             setStreak(cachedStreak);
             setTotal(cachedTotal);
             setXP(cachedXP);
             setRecordStreak(cachedRecord);
             setHistory(cachedHistory);
+            setBodyStats(cachedStats || []);
+            setPRRecords(cachedPRs || {});
+            setLatestBodyweight(cachedBW);
+            setReadinessHistory(cachedReadiness || []);
+            setTodayReadiness(cachedTodayReadiness);
             setLastFreezeDate(cachedFreeze);
             setPreviousFreezeDate(cachedPrevFreeze);
             setIsFrozen(cachedFreeze === new Date().toISOString().split("T")[0]);
+            setActiveProgram(cachedActiveProgram);
+            setProgramVersions(cachedVersions || []);
+            setDismissedAlerts(cachedDismissed || []);
 
             const { completedDays: localComp, freezeDays: localFrz, completedTargets: localTargets } = getWeekStats(cachedHistory, cachedFreeze);
             setCompletedDays(localComp);
@@ -636,7 +855,13 @@ export default function HomeScreen({ navigation, route }) {
         // 3. Background cloud sync (only on app boot or explicit actions)
         if (forceCloudSync) {
             try {
-                const [nextStreak, nextTotal, lastFreeze, nextXP, nextRecord, nextHistory, nextPrevFreeze] = await Promise.all([
+                const [
+                    nextStreak, nextTotal, lastFreeze, nextXP,
+                    nextRecord, nextHistory, nextPrevFreeze,
+                    nextStats, nextPRs, nextBW, nextReadiness,
+                    nextTodayReadiness, nextActiveProgram, nextVersions,
+                    nextDismissed
+                ] = await Promise.all([
                     getStreak(),
                     getTotalWorkouts(),
                     getLastFreezeDate(),
@@ -644,6 +869,14 @@ export default function HomeScreen({ navigation, route }) {
                     getRecordStreak(),
                     getWorkoutHistory(),
                     getPreviousFreezeDate(),
+                    getBodyStats(),
+                    getPRRecords(),
+                    getLatestUserBodyweight(),
+                    getDailyReadiness(30),
+                    getTodayReadiness(),
+                    getActiveProgram(),
+                    getProgramVersions(),
+                    getDismissedRecommendations(),
                 ]);
                 setStreak(nextStreak);
                 setTotal(nextTotal);
@@ -653,6 +886,14 @@ export default function HomeScreen({ navigation, route }) {
                 setXP(nextXP);
                 setRecordStreak(nextRecord);
                 setHistory(nextHistory);
+                setBodyStats(nextStats || []);
+                setPRRecords(nextPRs || {});
+                setLatestBodyweight(nextBW);
+                setReadinessHistory(nextReadiness || []);
+                setTodayReadiness(nextTodayReadiness);
+                setActiveProgram(nextActiveProgram);
+                setProgramVersions(nextVersions || []);
+                setDismissedAlerts(nextDismissed || []);
 
                 const { completedDays: syncComp, freezeDays: syncFrz, completedTargets: syncTargets } = getWeekStats(nextHistory, lastFreeze);
                 setCompletedDays(syncComp);
@@ -872,6 +1113,25 @@ export default function HomeScreen({ navigation, route }) {
                     </View>
                 ) : (
                     <Animated.View style={{ opacity: contentFadeAnim }}>
+                        {/* ── Phase 6 Athlete Command Center Hero Decision Card ── */}
+                        {dailyAthleteCommand && (
+                            <DailyDecisionCard
+                                command={dailyAthleteCommand}
+                                onStartWorkout={() => {
+                                    if (activeSession && activeSession.day) {
+                                        navigation.navigate("ActiveWorkout", { day: activeSession.day, resume: true });
+                                    } else if (todayWorkout) {
+                                        navigation.navigate("WorkoutDetail", { day: todayWorkout });
+                                    } else {
+                                        navigation.navigate("Progress");
+                                    }
+                                }}
+                                onOpenWhy={() => setWhyModalVisible(true)}
+                                onOpenReadiness={() => setReadinessModalVisible(true)}
+                                activeSession={activeSession}
+                            />
+                        )}
+
                         {/* ── Today's Workout Hero Card (Focal Point) ── */}
                         <Animated.View
                             style={{
@@ -994,162 +1254,280 @@ export default function HomeScreen({ navigation, route }) {
                             )}
                         </Animated.View>
 
-                        {/* ── Unified Dashboard Card ── */}
-                        {(() => {
-                            const currentRank = getRankData(total);
-                            const nextRank = currentRank.index < RANKS.length - 1 ? RANKS[currentRank.index + 1] : null;
-                            const progressInRank = nextRank
-                                ? Math.min((total - currentRank.min) / (nextRank.min - currentRank.min), 1)
-                                : 1;
-                            const progressPercent = total === 0 ? 0 : Math.round(progressInRank * 100);
-                            const radius = 36;
-                            const strokeWidth = 4.5;
-                            const circumference = 2 * Math.PI * radius; // ~226.19
-                            const strokeDashoffset = total === 0 ? circumference : (circumference - (circumference * progressInRank));
-                            const categoryColor = total === 0 ? "rgba(255,255,255,0.08)" : (todayWorkout?.target ? getMuscleColor(todayWorkout.target) : COLORS.primary);
+                        {/* ── Phase 4 Adaptive Program Status ── */}
+                        {activeProgram && programPerformanceSummary && (
+                            <View style={{ marginHorizontal: SPACING.base, marginTop: 12 }}>
+                                <ProgramStatusCard
+                                    summary={programPerformanceSummary}
+                                    activeProgram={activeProgram}
+                                    onPressVersion={() => navigation.navigate("Progress")}
+                                    onPressReview={() => navigation.navigate("Progress")}
+                                />
+                            </View>
+                        )}
 
-                            return (
-                                <View style={[styles.dashboardCard, { borderColor: `${categoryColor}4D` }]}>
-                                    {/* Subtle Matte Linear Gradient */}
-                                    <LinearGradient
-                                        colors={[COLORS.bgCard, COLORS.bgRaised]}
-                                        start={{ x: 0, y: 0 }}
-                                        end={{ x: 1, y: 1 }}
-                                        style={StyleSheet.absoluteFillObject}
-                                        pointerEvents="none"
-                                    />
+                        {/* ── Phase 4 Adaptive Optimization Recommendation Card ── */}
+                        {adaptiveRecommendation && adaptiveRecommendation.status !== "CURRENT_PROGRAM" && (
+                            <View style={{ marginHorizontal: SPACING.base, marginTop: 4 }}>
+                                <AdaptiveRecommendationCard
+                                    recommendation={adaptiveRecommendation}
+                                    onAccept={handleAcceptAdaptiveRec}
+                                    onDismiss={handleDismissAdaptiveRec}
+                                    onReview={() => navigation.navigate("Progress")}
+                                />
+                            </View>
+                        )}
 
-                                    {/* Left: SVG Rank Progress Ring */}
-                                    <TouchableOpacity
-                                        style={styles.dashboardRingWrapper}
-                                        activeOpacity={0.8}
+                        {/* ── Phase 4 Missed Workout Advisory Banner ── */}
+                        {missedWorkoutAdvisory?.hasMissedWorkout && (
+                            <View style={{ marginHorizontal: SPACING.base, marginTop: 4 }}>
+                                <TouchableOpacity
+                                    style={styles.missedAdvisoryBanner}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        setMissedWorkoutModalVisible(true);
+                                    }}
+                                    activeOpacity={0.8}
+                                >
+                                    <View style={styles.missedIconBox}>
+                                        <Ionicons name="calendar-outline" size={14} color="#FF9500" />
+                                    </View>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={styles.missedBannerTitle}>MISSED SESSION DETECTED</Text>
+                                        <Text style={styles.missedBannerSub}>
+                                            Day 0{missedWorkoutAdvisory.missedDay} ({missedWorkoutAdvisory.missedTarget}) • Tap for recovery options
+                                        </Text>
+                                    </View>
+                                    <Ionicons name="chevron-forward" size={14} color="rgba(255, 255, 255, 0.4)" />
+                                </TouchableOpacity>
+                            </View>
+                        )}
+
+                        {/* ── 0. Athlete Training Intelligence Alerts ── */}
+                        {athleteAlerts.length > 0 && (
+                            <View style={{ marginHorizontal: SPACING.base, marginTop: 12 }}>
+                                {athleteAlerts.map((alert, idx) => (
+                                    <AthleteAlertCard
+                                        key={alert.id || idx}
+                                        alert={alert}
                                         onPress={() => {
                                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                            navigation.navigate("Rank");
+                                            if (alert.type === "progression" || alert.type === "warning") {
+                                                navigation.navigate("Progress");
+                                            } else if (alert.id === "deload_review") {
+                                                setReadinessModalVisible(true);
+                                            }
+                                        }}
+                                    />
+                                ))}
+                            </View>
+                        )}
+
+                        {/* ── Today's Targets Preview (if workout scheduled) ── */}
+                        {todayWorkout && todayWorkoutTargets && (todayWorkoutTargets.exercises || todayWorkoutTargets.exerciseTargets) && ((todayWorkoutTargets.exercises || todayWorkoutTargets.exerciseTargets).length > 0) && (
+                            <View style={{ marginHorizontal: SPACING.base, marginTop: 12 }}>
+                                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                                    <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+                                        <Ionicons name="sparkles" size={12} color={COLORS.primary} />
+                                        <Text style={{ fontFamily: FAMILY.chakraBold, fontSize: 11, color: "#E0E0E6", letterSpacing: 0.8 }}>
+                                            TODAY'S TARGETS
+                                        </Text>
+                                    </View>
+                                    <TouchableOpacity
+                                        onPress={() => navigation.navigate("WorkoutDetail", { day: todayWorkout })}
+                                        activeOpacity={0.7}
+                                    >
+                                        <Text style={{ fontFamily: FAMILY.monoBold, fontSize: 10, color: COLORS.primary }}>
+                                            FULL PROTOCOL ›
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
+                                {(todayWorkoutTargets.exercises || todayWorkoutTargets.exerciseTargets).slice(0, 2).map((tgt, i) => (
+                                    <ExerciseTargetCard key={tgt.name || tgt.exerciseName || i} targetInfo={tgt.progression || tgt} compact={false} />
+                                ))}
+                            </View>
+                        )}
+
+                        {/* ── 1. Performance Snapshot Card ── */}
+                        <View style={styles.snapshotCard}>
+                            <LinearGradient
+                                colors={["#161618", "#111113"]}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                                style={StyleSheet.absoluteFillObject}
+                                pointerEvents="none"
+                            />
+                            <View style={styles.snapshotHeaderRow}>
+                                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                                    <Ionicons name="pulse-outline" size={13} color={COLORS.primary} />
+                                    <Text style={styles.snapshotSectionTitle}>PERFORMANCE SNAPSHOT</Text>
+                                </View>
+                                <Text style={styles.snapshotDateText}>{currentDateFormatted}</Text>
+                            </View>
+
+                            {/* Snapshot 4-Column Metrics Row */}
+                            <View style={styles.snapshotGrid}>
+                                {/* Cell 1: Bodyweight */}
+                                <TouchableOpacity
+                                    style={styles.snapshotCell}
+                                    activeOpacity={0.8}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        navigation.navigate("Progress", { initialTab: 1 });
+                                    }}
+                                >
+                                    <Text style={styles.snapshotCellLabel}>BODYWEIGHT</Text>
+                                    <Text style={styles.snapshotCellValue}>
+                                        {rollingBW.latestWeight ? `${rollingBW.latestWeight} kg` : "—"}
+                                    </Text>
+                                    <Text style={styles.snapshotCellSub}>
+                                        {rollingBW.rolling7DayAvg ? `${rollingBW.rolling7DayAvg} kg 7d` : "Log weight"}
+                                    </Text>
+                                </TouchableOpacity>
+
+                                <View style={styles.snapshotDividerVert} />
+
+                                {/* Cell 2: Readiness */}
+                                <TouchableOpacity
+                                    style={styles.snapshotCell}
+                                    activeOpacity={0.8}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        setReadinessModalVisible(true);
+                                    }}
+                                >
+                                    <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+                                        <Ionicons name="battery-charging-outline" size={11} color={todayReadinessScore ? todayReadinessScore.color : COLORS.primary} />
+                                        <Text style={styles.snapshotCellLabel}>READINESS</Text>
+                                    </View>
+                                    <Text style={[styles.snapshotCellValue, { color: todayReadinessScore ? todayReadinessScore.color : COLORS.primary }]}>
+                                        {todayReadinessScore ? `${todayReadinessScore.score}%` : "CHECK IN"}
+                                    </Text>
+                                    <Text style={styles.snapshotCellSub}>
+                                        {todayReadinessScore ? todayReadinessScore.tier : "Tap to rate"}
+                                    </Text>
+                                </TouchableOpacity>
+
+                                <View style={styles.snapshotDividerVert} />
+
+                                {/* Cell 3: Streak */}
+                                <TouchableOpacity
+                                    style={styles.snapshotCell}
+                                    activeOpacity={0.8}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        setStreakAnalyticsVisible(true);
+                                    }}
+                                >
+                                    <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+                                        <Ionicons name="flame" size={11} color="#FF9500" />
+                                        <Text style={styles.snapshotCellLabel}>STREAK</Text>
+                                    </View>
+                                    <Text style={[styles.snapshotCellValue, { color: "#FF9500" }]}>
+                                        {streak}D
+                                    </Text>
+                                    <Text style={styles.snapshotCellSub}>
+                                        {recordStreak > 0 ? `Best: ${recordStreak}D` : "Daily"}
+                                    </Text>
+                                </TouchableOpacity>
+
+                                <View style={styles.snapshotDividerVert} />
+
+                                {/* Cell 4: This Week */}
+                                <TouchableOpacity
+                                    style={styles.snapshotCell}
+                                    activeOpacity={0.8}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        navigation.navigate("Progress");
+                                    }}
+                                >
+                                    <Text style={styles.snapshotCellLabel}>THIS WEEK</Text>
+                                    <Text style={styles.snapshotCellValue}>
+                                        {completedDays.length}/6
+                                    </Text>
+                                    <Text style={styles.snapshotCellSub}>
+                                        {weeklySummary.adherenceRate}% adh
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            {/* Snapshot Footer: Recent PR or Athlete Status */}
+                            <View style={styles.snapshotFooterRow}>
+                                <View style={styles.snapshotFooterBadge}>
+                                    <Ionicons name="trophy" size={11} color="#FFD700" />
+                                    <Text style={styles.snapshotFooterBadgeText} numberOfLines={1}>
+                                        {recentImprovements.length > 0
+                                            ? `PR: ${recentImprovements[0].exerciseName.toUpperCase()} · ${recentImprovements[0].deltaText}`
+                                            : `RANK: ${getRankData(total).title.toUpperCase()} · ${total} SESSIONS`}
+                                    </Text>
+                                </View>
+                            </View>
+                        </View>
+
+                        {/* ── 2. Recent Progress Section ── */}
+                        <View style={[styles.sectionHeaderRow, { marginTop: 18, marginBottom: 8 }]}>
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                                <Ionicons name="trending-up" size={13} color={COLORS.primary} />
+                                <Text style={styles.sectionLabel}>RECENT PROGRESS</Text>
+                            </View>
+                            <TouchableOpacity
+                                onPress={() => navigation.navigate("Progress")}
+                                activeOpacity={0.7}
+                            >
+                                <Text style={styles.sectionLink}>VIEW ALL ›</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <View style={styles.recentProgCard}>
+                            <LinearGradient
+                                colors={[COLORS.bgCard, COLORS.bgRaised]}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                                style={StyleSheet.absoluteFillObject}
+                                pointerEvents="none"
+                            />
+                            {recentImprovements.length > 0 ? (
+                                recentImprovements.map((imp, idx) => (
+                                    <TouchableOpacity
+                                        key={`${imp.exerciseName}_${idx}`}
+                                        style={[styles.recentProgRow, idx < recentImprovements.length - 1 && styles.recentProgRowBorder]}
+                                        activeOpacity={0.75}
+                                        onPress={() => {
+                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                            setSelectedDetailExercise(imp.exerciseName);
                                         }}
                                     >
-                                        <Svg width={86} height={86} style={{ transform: [{ rotate: "-90deg" }] }}>
-                                            <Circle
-                                                cx={43}
-                                                cy={43}
-                                                r={radius}
-                                                stroke="rgba(255,255,255,0.06)"
-                                                strokeWidth={strokeWidth}
-                                                fill="none"
-                                            />
-                                            <Circle
-                                                cx={43}
-                                                cy={43}
-                                                r={radius}
-                                                stroke={total === 0 ? "rgba(255,255,255,0.06)" : (currentRank.color || COLORS.primary)}
-                                                strokeWidth={strokeWidth}
-                                                fill="none"
-                                                strokeDasharray={circumference}
-                                                strokeDashoffset={strokeDashoffset}
-                                                strokeLinecap="round"
-                                            />
-                                        </Svg>
-                                        <View style={styles.dashboardRingTextContainer} pointerEvents="none">
-                                            <Text style={[styles.dashboardRingPercent, total === 0 && { color: COLORS.textMuted }]}>
-                                                {total === 0 ? "0%" : `${progressPercent}%`}
-                                            </Text>
-                                            <Text style={styles.dashboardRingLabel}>PROGRESS</Text>
+                                        <View style={styles.recentProgLeft}>
+                                            <View style={[styles.recentProgDot, { backgroundColor: getMuscleColor(imp.muscleGroup) }]} />
+                                            <View style={{ flex: 1 }}>
+                                                <Text style={styles.recentProgExName} numberOfLines={1}>{imp.exerciseName.toUpperCase()}</Text>
+                                                <Text style={styles.recentProgDetail}>{imp.prevText} → <Text style={{ color: COLORS.text, fontFamily: FAMILY.bold }}>{imp.currentText}</Text></Text>
+                                            </View>
+                                        </View>
+                                        <View style={styles.recentProgDeltaBadge}>
+                                            <Text style={styles.recentProgDeltaText}>{imp.deltaText}</Text>
                                         </View>
                                     </TouchableOpacity>
-
-                                    {/* Right: 3 Stats Cells */}
-                                    <View style={styles.dashboardStatsRow}>
-                                        {/* Streak Cell */}
-                                        <TouchableOpacity
-                                            style={styles.dashboardStatCell}
-                                            activeOpacity={0.8}
-                                            onPress={() => {
-                                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                                setStreakAnalyticsVisible(true);
-                                            }}
-                                        >
-                                            <Ionicons
-                                                name="flame"
-                                                size={14}
-                                                color={total === 0 ? COLORS.textMuted : "#FF9500"}
-                                                style={{ marginBottom: 3 }}
-                                            />
-                                            <Text style={styles.dashboardStatLabel}>STREAK</Text>
-                                            <Text
-                                                style={[
-                                                    styles.dashboardStatValue,
-                                                    { color: total === 0 ? COLORS.textMuted : "#FF9500" }
-                                                ]}
-                                                numberOfLines={1}
-                                            >
-                                                {total === 0 ? "0D" : `${streak}D`}
-                                            </Text>
-                                        </TouchableOpacity>
-
-                                        {/* Diagonal Divider */}
-                                        <Svg width={10} height={38} style={{ marginHorizontal: 2 }}>
-                                            <Line x1="7" y1="0" x2="3" y2="38" stroke="rgba(255,255,255,0.08)" strokeWidth={1} strokeLinecap="round" />
-                                        </Svg>
-
-                                        {/* Sessions Cell */}
-                                        <View style={styles.dashboardStatCell}>
-                                            <Ionicons
-                                                name="checkmark-done"
-                                                size={14}
-                                                color={total === 0 ? COLORS.textMuted : COLORS.textSub}
-                                                style={{ marginBottom: 3 }}
-                                            />
-                                            <Text style={styles.dashboardStatLabel}>SESSIONS</Text>
-                                            <Text
-                                                style={[
-                                                    styles.dashboardStatValue,
-                                                    { color: total === 0 ? COLORS.textMuted : "#FFFFFF" }
-                                                ]}
-                                                numberOfLines={1}
-                                            >
-                                                {total}
-                                            </Text>
-                                        </View>
-
-                                        {/* Diagonal Divider */}
-                                        <Svg width={10} height={38} style={{ marginHorizontal: 2 }}>
-                                            <Line x1="7" y1="0" x2="3" y2="38" stroke="rgba(255,255,255,0.08)" strokeWidth={1} strokeLinecap="round" />
-                                        </Svg>
-
-                                        {/* Rank Cell */}
-                                        <TouchableOpacity
-                                            style={styles.dashboardStatCell}
-                                            activeOpacity={0.8}
-                                            onPress={() => {
-                                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                                navigation.navigate("Rank");
-                                            }}
-                                        >
-                                            <Ionicons
-                                                name={currentRank.icon}
-                                                size={14}
-                                                color={total === 0 ? COLORS.textMuted : currentRank.color}
-                                                style={{ marginBottom: 3 }}
-                                            />
-                                            <Text style={styles.dashboardStatLabel}>RANK</Text>
-                                            <Text
-                                                style={[
-                                                    styles.dashboardStatValue,
-                                                    styles.dashboardRankValue,
-                                                    { color: total === 0 ? COLORS.textMuted : currentRank.color }
-                                                ]}
-                                                numberOfLines={1}
-                                                adjustsFontSizeToFit
-                                            >
-                                                {currentRank.title}
-                                            </Text>
-                                        </TouchableOpacity>
-                                    </View>
+                                ))
+                            ) : (
+                                <View style={styles.emptyRecentProg}>
+                                    <Ionicons name="stats-chart-outline" size={18} color={COLORS.textMuted} style={{ marginBottom: 4 }} />
+                                    <Text style={styles.emptyRecentProgTitle}>Building Performance Baseline</Text>
+                                    <Text style={styles.emptyRecentProgSub}>Complete consecutive workouts to reveal verified like-for-like strength gains.</Text>
                                 </View>
-                            );
-                        })()}
+                            )}
+                        </View>
 
-                        {/* ── 7-Day Consistency Grid Card ── */}
+                        {/* ── Phase 6 7-Day Athlete Recap Card ── */}
+                        {weeklyAthleteRecap && (
+                            <WeeklyRecapCard
+                                recap={weeklyAthleteRecap}
+                                onPressDetails={() => navigation.navigate("Progress")}
+                            />
+                        )}
+
+                        {/* ── 3. Weekly Overview (Compact) ── */}
                         <TouchableOpacity
                             style={styles.consistencyCard}
                             activeOpacity={0.88}
@@ -1167,13 +1545,13 @@ export default function HomeScreen({ navigation, route }) {
                             />
                             <View style={styles.consistencyHeader}>
                                 <View>
-                                    <Text style={styles.consistencyTitle}>THIS WEEK</Text>
-                                    <Text style={styles.consistencySubtitle}>Colored by muscle group</Text>
+                                    <Text style={styles.consistencyTitle}>WEEKLY OVERVIEW</Text>
+                                    <Text style={styles.consistencySubtitle}>{weeklySummary.totalWorkingSets} working sets · {Math.round(weeklySummary.totalDurationSec / 60)}m training</Text>
                                 </View>
                                 <View style={styles.consistencyBadge}>
                                     <Text style={styles.consistencyBadgeText}>
                                         <Text style={{ fontFamily: FAMILY.monoBold, color: total === 0 ? COLORS.textMuted : COLORS.text }}>
-                                            {total === 0 ? 0 : completedDays.length}
+                                            {completedDays.length}
                                         </Text>/6 SESSIONS
                                     </Text>
                                 </View>
@@ -1232,27 +1610,86 @@ export default function HomeScreen({ navigation, route }) {
                                     );
                                 })}
                             </View>
-
-                            {/* Legend Row */}
-                            <View style={styles.consistencyLegendRow}>
-                                <View style={styles.legendItem}>
-                                    <View style={[styles.legendDot, { backgroundColor: "#E31E24" }]} />
-                                    <Text style={styles.legendText}>Chest/triceps</Text>
-                                </View>
-                                <View style={styles.legendItem}>
-                                    <View style={[styles.legendDot, { backgroundColor: "#FF9500" }]} />
-                                    <Text style={styles.legendText}>Back/biceps</Text>
-                                </View>
-                                <View style={styles.legendItem}>
-                                    <View style={[styles.legendDot, { backgroundColor: "#30B0C7" }]} />
-                                    <Text style={styles.legendText}>Shoulders/core</Text>
-                                </View>
-                                <View style={styles.legendItem}>
-                                    <View style={[styles.legendDot, { backgroundColor: "#D1D1D1" }]} />
-                                    <Text style={styles.legendText}>Legs</Text>
-                                </View>
-                            </View>
                         </TouchableOpacity>
+
+                        {/* ── 4. Quick Actions Grid ── */}
+                        <View style={styles.quickActionsContainer}>
+                            <View style={styles.quickActionRow}>
+                                <TouchableOpacity
+                                    style={styles.quickActionCard}
+                                    activeOpacity={0.8}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        if (todayWorkout) {
+                                            navigation.navigate("WorkoutDetail", { day: todayWorkout });
+                                        } else {
+                                            navigation.navigate("RestDay");
+                                        }
+                                    }}
+                                >
+                                    <View style={[styles.quickActionIconBox, { backgroundColor: "rgba(227, 30, 36, 0.12)" }]}>
+                                        <Ionicons name="barbell" size={15} color={COLORS.primary} />
+                                    </View>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={styles.quickActionTitle}>Today's Split</Text>
+                                        <Text style={styles.quickActionSub}>Start session</Text>
+                                    </View>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={styles.quickActionCard}
+                                    activeOpacity={0.8}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        navigation.navigate("Progress");
+                                    }}
+                                >
+                                    <View style={[styles.quickActionIconBox, { backgroundColor: "rgba(56, 189, 248, 0.12)" }]}>
+                                        <Ionicons name="trending-up" size={15} color="#38BDF8" />
+                                    </View>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={styles.quickActionTitle}>Progress</Text>
+                                        <Text style={styles.quickActionSub}>Curves & 1RM</Text>
+                                    </View>
+                                </TouchableOpacity>
+                            </View>
+
+                            <View style={styles.quickActionRow}>
+                                <TouchableOpacity
+                                    style={styles.quickActionCard}
+                                    activeOpacity={0.8}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        navigation.navigate("History");
+                                    }}
+                                >
+                                    <View style={[styles.quickActionIconBox, { backgroundColor: "rgba(255, 149, 0, 0.12)" }]}>
+                                        <Ionicons name="time" size={15} color="#FF9500" />
+                                    </View>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={styles.quickActionTitle}>History</Text>
+                                        <Text style={styles.quickActionSub}>Logs & export</Text>
+                                    </View>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={styles.quickActionCard}
+                                    activeOpacity={0.8}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        navigation.navigate("Progress", { initialTab: 1 });
+                                    }}
+                                >
+                                    <View style={[styles.quickActionIconBox, { backgroundColor: "rgba(48, 209, 88, 0.12)" }]}>
+                                        <Ionicons name="body" size={15} color="#30D158" />
+                                    </View>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={styles.quickActionTitle}>Physique</Text>
+                                        <Text style={styles.quickActionSub}>Log metrics</Text>
+                                    </View>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
                     </Animated.View>
                 )}
 
@@ -1830,6 +2267,48 @@ export default function HomeScreen({ navigation, route }) {
                 onSaved={() => {
                     loadStats(true);
                 }}
+            />
+
+            {/* Exercise Detail Progression Modal */}
+            <ExerciseDetailModal
+                visible={!!selectedDetailExercise}
+                exerciseName={selectedDetailExercise}
+                onClose={() => setSelectedDetailExercise(null)}
+                history={history}
+                userBodyweight={latestBodyweight}
+            />
+
+            {/* Daily Readiness Check-In Modal */}
+            <ReadinessModal
+                visible={readinessModalVisible}
+                onClose={() => setReadinessModalVisible(false)}
+                onSaved={(saved) => {
+                    setTodayReadiness(saved);
+                    loadStats(false);
+                }}
+            />
+
+            {/* Missed Workout Recovery Strategy Modal */}
+            <MissedWorkoutModal
+                visible={missedWorkoutModalVisible}
+                advisory={missedWorkoutAdvisory}
+                onSelectOption={handleSelectMissedOption}
+                onClose={() => setMissedWorkoutModalVisible(false)}
+            />
+
+            {/* Structured Deload Protocol Proposal Modal */}
+            <DeloadProposalModal
+                visible={deloadProposalModalVisible}
+                deloadPlan={proposedDeloadPlan}
+                onAccept={handleAcceptDeload}
+                onClose={() => setDeloadProposalModalVisible(false)}
+            />
+
+            {/* Phase 6 Deterministic Decision Explainability Modal */}
+            <WhyRecommendationModal
+                visible={whyModalVisible}
+                command={dailyAthleteCommand}
+                onClose={() => setWhyModalVisible(false)}
             />
         </View>
     );
@@ -2703,6 +3182,228 @@ const styles = StyleSheet.create({
         width: 1,
         height: 32,
         backgroundColor: COLORS.border,
+    },
+
+    // ── ATHLETE PERFORMANCE SNAPSHOT CARD ──
+    snapshotCard: {
+        marginHorizontal: SPACING.base,
+        marginTop: 14,
+        borderRadius: RADIUS.lg,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        backgroundColor: COLORS.bgCard,
+        padding: 16,
+        overflow: "hidden",
+    },
+    snapshotHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 14,
+    },
+    snapshotTitle: {
+        fontSize: 10.5,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textSub,
+        letterSpacing: 1.2,
+    },
+    snapshotDateText: {
+        fontSize: 9.5,
+        fontFamily: FAMILY.mono,
+        color: COLORS.textMuted,
+        textTransform: "uppercase",
+    },
+    snapshotGrid: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingVertical: 4,
+    },
+    snapshotCell: {
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    snapshotCellLabel: {
+        fontSize: 8.5,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textMuted,
+        letterSpacing: 1,
+        marginBottom: 4,
+    },
+    snapshotCellValue: {
+        fontSize: 17,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.text,
+        letterSpacing: 0.3,
+    },
+    snapshotCellSub: {
+        fontSize: 9,
+        fontFamily: FAMILY.regular,
+        color: COLORS.textSub,
+        marginTop: 3,
+    },
+    snapshotDividerVert: {
+        width: 1,
+        height: 36,
+        backgroundColor: "rgba(255, 255, 255, 0.08)",
+    },
+    snapshotFooterRow: {
+        marginTop: 14,
+        paddingTop: 10,
+        borderTopWidth: 1,
+        borderTopColor: "rgba(255, 255, 255, 0.05)",
+    },
+    snapshotFooterBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        backgroundColor: "rgba(255, 215, 0, 0.08)",
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: RADIUS.sm,
+        borderWidth: 1,
+        borderColor: "rgba(255, 215, 0, 0.18)",
+    },
+    snapshotFooterBadgeText: {
+        fontSize: 9.5,
+        fontFamily: FAMILY.monoBold,
+        color: "#EDEAE3",
+        letterSpacing: 0.5,
+        flex: 1,
+    },
+
+    // ── RECENT PROGRESS CARD ──
+    recentProgCard: {
+        marginHorizontal: SPACING.base,
+        borderRadius: RADIUS.lg,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        backgroundColor: COLORS.bgCard,
+        overflow: "hidden",
+    },
+    recentProgRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: 16,
+        paddingVertical: 13,
+    },
+    recentProgRowBorder: {
+        borderBottomWidth: 1,
+        borderBottomColor: "rgba(255, 255, 255, 0.04)",
+    },
+    recentProgLeft: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+        flex: 1,
+        marginRight: 10,
+    },
+    recentProgDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+    },
+    recentProgExName: {
+        fontSize: 12,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.text,
+        letterSpacing: 0.5,
+    },
+    recentProgDetail: {
+        fontSize: 10.5,
+        fontFamily: FAMILY.regular,
+        color: COLORS.textSub,
+        marginTop: 2,
+    },
+    recentProgDeltaBadge: {
+        backgroundColor: "rgba(0, 200, 83, 0.12)",
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: RADIUS.pill,
+        borderWidth: 1,
+        borderColor: "rgba(0, 200, 83, 0.25)",
+    },
+    recentProgDeltaText: {
+        fontSize: 9.5,
+        fontFamily: FAMILY.monoBold,
+        color: "#00C853",
+        letterSpacing: 0.3,
+    },
+    emptyRecentProg: {
+        paddingVertical: 20,
+        paddingHorizontal: 16,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    emptyRecentProgTitle: {
+        fontSize: 12,
+        fontFamily: FAMILY.bold,
+        color: COLORS.textSub,
+        marginTop: 2,
+    },
+    emptyRecentProgSub: {
+        fontSize: 10,
+        fontFamily: FAMILY.regular,
+        color: COLORS.textMuted,
+        textAlign: "center",
+        marginTop: 2,
+        lineHeight: 14,
+    },
+
+    // ── QUICK ACTIONS 2X2 GRID ──
+    quickActionsContainer: {
+        marginHorizontal: SPACING.base,
+        marginTop: 12,
+        gap: 8,
+    },
+    quickActionRow: {
+        flexDirection: "row",
+        gap: 8,
+    },
+    quickActionCard: {
+        flex: 1,
+        backgroundColor: COLORS.bgCard,
+        borderRadius: RADIUS.md,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        padding: 12,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+    },
+    quickActionIconBox: {
+        width: 32,
+        height: 32,
+        borderRadius: RADIUS.sm,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    quickActionTitle: {
+        fontSize: 12,
+        fontFamily: FAMILY.bold,
+        color: COLORS.text,
+    },
+    quickActionSub: {
+        fontSize: 9.5,
+        fontFamily: FAMILY.regular,
+        color: COLORS.textMuted,
+        marginTop: 1,
+    },
+
+    // ── SECTION HEADERS & LINKS ──
+    sectionHeaderRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingHorizontal: SPACING.base,
+    },
+    sectionLink: {
+        fontSize: 10,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.primary,
+        letterSpacing: 0.8,
     },
 
     // 7-Day Consistency Card
@@ -3691,5 +4392,38 @@ const styles = StyleSheet.create({
         width: 26, height: 26, borderRadius: RADIUS.pill,
         backgroundColor: "rgba(237, 234, 227, 0.05)", borderWidth: 1, borderColor: COLORS.border,
         alignItems: "center", justifyContent: "center",
+    },
+
+    // Missed Workout Advisory Banner
+    missedAdvisoryBanner: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "rgba(255, 149, 0, 0.08)",
+        borderRadius: RADIUS.md,
+        borderWidth: 1,
+        borderColor: "rgba(255, 149, 0, 0.3)",
+        padding: 12,
+        marginBottom: 8,
+    },
+    missedIconBox: {
+        width: 30,
+        height: 30,
+        borderRadius: 15,
+        backgroundColor: "rgba(255, 149, 0, 0.15)",
+        alignItems: "center",
+        justifyContent: "center",
+        marginRight: 10,
+    },
+    missedBannerTitle: {
+        fontSize: 10.5,
+        fontFamily: FAMILY.monoBold,
+        color: "#FF9500",
+        letterSpacing: 0.5,
+        marginBottom: 2,
+    },
+    missedBannerSub: {
+        fontSize: 10.5,
+        fontFamily: FAMILY.sans,
+        color: "rgba(255, 255, 255, 0.75)",
     },
 });

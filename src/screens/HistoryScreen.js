@@ -177,7 +177,13 @@ function generateStructuredCSV(history, streak, total, totalHours) {
                 if (ex.loggedSets && ex.loggedSets.length > 0) {
                     const setsStr = ex.loggedSets
                         .filter(s => s.completed)
-                        .map(s => `${s.weightKg > 0 ? s.weightKg + "kg" : "BW"} × ${s.reps || 0} reps`)
+                        .map(s => {
+                            if (s.loadType === "timed") return `${s.durationSec || s.reps || 0}s`;
+                            if (s.loadType === "bodyweight") return `BW × ${s.reps || 0}`;
+                            if (s.loadType === "weighted_bodyweight") return `BW +${s.weightKg}kg × ${s.reps || 0}`;
+                            if (s.loadType === "assisted_bodyweight") return `Assisted -${s.weightKg}kg × ${s.reps || 0}`;
+                            return `${s.weightKg > 0 ? s.weightKg + "kg" : "BW"} × ${s.reps || 0} reps`;
+                        })
                         .join(", ");
                     sLog = setsStr ? ` [${setsStr}]` : "";
                 }
@@ -233,7 +239,13 @@ function generateStructuredExcel(history, streak, total, totalHours) {
                 if (ex.loggedSets && ex.loggedSets.length > 0) {
                     const setsStr = ex.loggedSets
                         .filter(s => s.completed)
-                        .map(s => `${s.weightKg > 0 ? s.weightKg + "kg" : "BW"} × ${s.reps || 0} reps`)
+                        .map(s => {
+                            if (s.loadType === "timed") return `${s.durationSec || s.reps || 0}s`;
+                            if (s.loadType === "bodyweight") return `BW × ${s.reps || 0}`;
+                            if (s.loadType === "weighted_bodyweight") return `BW +${s.weightKg}kg × ${s.reps || 0}`;
+                            if (s.loadType === "assisted_bodyweight") return `Assisted -${s.weightKg}kg × ${s.reps || 0}`;
+                            return `${s.weightKg > 0 ? s.weightKg + "kg" : "BW"} × ${s.reps || 0} reps`;
+                        })
                         .join(", ");
                     sLog = setsStr ? ` [${setsStr}]` : "";
                 }
@@ -411,7 +423,13 @@ function generateStructuredText(history, streak, total, totalHours) {
                 if (ex.loggedSets && ex.loggedSets.some(s => s.completed)) {
                     setDetails = " -> " + ex.loggedSets
                         .filter(s => s.completed)
-                        .map(s => `${s.weightKg > 0 ? s.weightKg + "kg" : "BW"} × ${s.reps} reps`)
+                        .map(s => {
+                            if (s.loadType === "timed") return `${s.durationSec || s.reps || 0}s`;
+                            if (s.loadType === "bodyweight") return `BW × ${s.reps || 0} reps`;
+                            if (s.loadType === "weighted_bodyweight") return `BW +${s.weightKg}kg × ${s.reps || 0} reps`;
+                            if (s.loadType === "assisted_bodyweight") return `Assisted -${s.weightKg}kg × ${s.reps || 0} reps`;
+                            return `${s.weightKg > 0 ? s.weightKg + "kg" : "BW"} × ${s.reps} reps`;
+                        })
                         .join(", ");
                 }
                 text += `  • ${ex.name} (${ex.sets} sets)${setDetails}\n`;
@@ -680,18 +698,32 @@ function HistoryRow({ entry, isLast, onShare }) {
                             </View>
                             {ex.loggedSets && ex.loggedSets.some(s => s.completed) ? (
                                 <View style={hr.loggedSetsBox}>
-                                    {ex.loggedSets.filter(s => s.completed).map((s, sIdx) => (
-                                        <View key={sIdx} style={hr.loggedSetRow}>
-                                            <Text style={hr.loggedSetLabel}>Set {s.set}</Text>
-                                            <View style={hr.loggedSetValBox}>
-                                                <Ionicons name="checkmark" size={10} color={COLORS.primary} style={{ marginRight: 2 }} />
-                                                <Text style={hr.loggedSetVal}>
-                                                    {s.weightKg > 0 ? `${s.weightKg} kg` : "Bodyweight"}
-                                                    {s.reps > 0 ? ` × ${s.reps} reps` : ""}
-                                                </Text>
+                                    {ex.loggedSets.filter(s => s.completed).map((s, sIdx) => {
+                                        let label = `${s.weightKg > 0 ? `${s.weightKg} kg` : "Bodyweight"}${s.reps > 0 ? ` × ${s.reps} reps` : ""}`;
+                                        if (s.loadType === "timed") {
+                                            label = `${s.durationSec || s.reps || 0}s duration`;
+                                        } else if (s.loadType === "bodyweight") {
+                                            label = typeof s.bodyweightKg === "number" && s.bodyweightKg > 0
+                                                ? `Bodyweight (${s.bodyweightKg} kg) × ${s.reps} reps`
+                                                : `Bodyweight × ${s.reps} reps`;
+                                        } else if (s.loadType === "weighted_bodyweight") {
+                                            label = `BW +${s.weightKg} kg ${typeof s.totalSystemLoadKg === "number" ? `(${s.totalSystemLoadKg} kg Total)` : ""} × ${s.reps} reps`;
+                                        } else if (s.loadType === "assisted_bodyweight") {
+                                            label = `Assisted -${s.weightKg} kg ${typeof s.effectiveLoadKg === "number" ? `(${s.effectiveLoadKg} kg Eff)` : ""} × ${s.reps} reps`;
+                                        } else if (s.loadType === "machine") {
+                                            label = `${s.weightKg} kg (Stack) × ${s.reps} reps`;
+                                        }
+
+                                        return (
+                                            <View key={sIdx} style={hr.loggedSetRow}>
+                                                <Text style={hr.loggedSetLabel}>Set {s.set}</Text>
+                                                <View style={hr.loggedSetValBox}>
+                                                    <Ionicons name="checkmark" size={10} color={COLORS.primary} style={{ marginRight: 2 }} />
+                                                    <Text style={hr.loggedSetVal}>{label}</Text>
+                                                </View>
                                             </View>
-                                        </View>
-                                    ))}
+                                        );
+                                    })}
                                 </View>
                             ) : null}
                         </View>

@@ -12,9 +12,15 @@ import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { COLORS, FAMILY, SPACING, RADIUS } from "../utils/theme";
-import { getGeminiCoachResponse } from "../utils/gemini";
+import { getGeminiCoachResponse, buildAICoachingContext } from "../utils/gemini";
 import * as Speech from "expo-speech";
 import { getSettings } from "../utils/settings";
+import {
+    getWorkoutHistory, getBodyStats, getDailyReadiness,
+    getPRRecords, getActiveProgram, getLatestUserBodyweight,
+    getProgramVersions,
+} from "../utils/storage";
+import { getAthletePredictiveSummary } from "../utils/analytics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width } = Dimensions.get("window");
@@ -26,12 +32,12 @@ const VOICE_RATE_KEY = "@ai_coach_voice_rate";
 const MAX_SESSIONS = 20;
 
 const ACTION_CHIPS = [
-    { label: "Give me a motivation quote", icon: "flame-outline" },
-    { label: "How is my streak doing?", icon: "trending-up-outline" },
-    { label: "Suggest a workout tip", icon: "bulb-outline" },
-    { label: "How should I recover?", icon: "heart-outline" },
-    { label: "Best post-workout meal?", icon: "nutrition-outline" },
-    { label: "How to avoid burnout?", icon: "shield-checkmark-outline" },
+    { label: "How am I doing today?", icon: "pulse-outline" },
+    { label: "What should I focus on this week?", icon: "flag-outline" },
+    { label: "Should I push for a PR today?", icon: "trophy-outline" },
+    { label: "Why did the app recommend this?", icon: "help-circle-outline" },
+    { label: "Which exercises are progressing fastest?", icon: "trending-up-outline" },
+    { label: "How is my recovery & ACWR?", icon: "heart-outline" },
 ];
 
 const WELCOME_MSG = {
@@ -714,8 +720,34 @@ export default function AICoachScreen({ navigation }) {
         scrollToBottom();
 
         try {
-            const history = messages.map(m => ({ role: m.role, content: m.content }));
-            const response = await getGeminiCoachResponse(userMsg.content, history);
+            const chatHistory = messages.map(m => ({ role: m.role, content: m.content }));
+            
+            let athleteContext = null;
+            try {
+                const [wHistory, bStats, rHistory, prs, actProg, progVers, userBW] = await Promise.all([
+                    getWorkoutHistory(),
+                    getBodyStats(),
+                    getDailyReadiness(28),
+                    getPRRecords(),
+                    getActiveProgram(),
+                    getProgramVersions(),
+                    getLatestUserBodyweight(),
+                ]);
+                athleteContext = buildAICoachingContext({
+                    workouts: wHistory,
+                    readinessLogs: rHistory,
+                    activeProgram: actProg,
+                    programVersions: progVers,
+                    bodyStats: bStats,
+                    prRecords: prs,
+                    targetDate: new Date(),
+                    latestBodyweight: userBW,
+                });
+            } catch {
+                // Graceful fallback without context if storage error
+            }
+
+            const response = await getGeminiCoachResponse(userMsg.content, chatHistory, athleteContext);
 
             const aiMsg = {
                 id: (Date.now() + 1).toString(),

@@ -540,3 +540,51 @@ export const migrateLocalDataToCloud = async (uid) => {
         console.error("[Migration] Error during data migration:", e);
     }
 };
+
+// ─── Adaptive Program Versioning ───────────────────────────────────────────────
+
+export const fsSaveActiveProgram = async (programVersion) => {
+    try {
+        if (!programVersion || !programVersion.id) return;
+        const userRef = userDoc();
+        await updateDoc(userRef, {
+            activeProgramId: programVersion.id,
+            activeProgramVersion: programVersion.version || "1.0.0",
+            lastProgramUpdate: serverTimestamp(),
+        });
+
+        const progRef = doc(db, "users", uid(), "programs", programVersion.id);
+        await setDoc(progRef, {
+            ...programVersion,
+            savedAt: serverTimestamp(),
+        }, { merge: true });
+    } catch (e) {
+        console.warn("[Firestore] fsSaveActiveProgram error:", e?.message);
+    }
+};
+
+export const fsGetActiveProgram = async () => {
+    try {
+        const snap = await getDoc(userDoc());
+        if (!snap.exists()) return null;
+        const activeId = snap.data().activeProgramId;
+        if (!activeId) return null;
+        const progSnap = await getDoc(doc(db, "users", uid(), "programs", activeId));
+        return progSnap.exists() ? progSnap.data() : null;
+    } catch (e) {
+        console.warn("[Firestore] fsGetActiveProgram error:", e?.message);
+        return null;
+    }
+};
+
+export const fsGetProgramVersions = async () => {
+    try {
+        const q = query(subCol("programs"), orderBy("createdAt", "desc"), limit(20));
+        const snap = await getDocs(q);
+        return snap.docs.map(d => d.data());
+    } catch (e) {
+        console.warn("[Firestore] fsGetProgramVersions error:", e?.message);
+        return [];
+    }
+};
+

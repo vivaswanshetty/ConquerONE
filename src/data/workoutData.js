@@ -13,6 +13,8 @@ export const WORKOUT_PLAN = [
         exercises: [
             {
                 name: "Barbell Bench Press",
+                category: "free_weight",
+                muscleGroup: "Chest",
                 sets: 5,
                 type: "reps",
                 repRange: "5·5·6·8·10",
@@ -31,6 +33,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Incline Dumbbell Press",
+                category: "free_weight",
+                muscleGroup: "Chest",
                 sets: 4,
                 type: "reps",
                 repRange: "8-12",
@@ -49,6 +53,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Cable Crossover — High to Low",
+                category: "machine",
+                muscleGroup: "Chest",
                 sets: 3,
                 type: "reps",
                 repRange: "12-15",
@@ -67,13 +73,14 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Cable Fly — Low to High",
+                category: "machine",
+                muscleGroup: "Chest",
                 sets: 3,
                 type: "reps",
                 repRange: "12-15",
                 activeTimeSec: 45,
                 restTimeSec: 60,
                 primaryTarget: "Upper + Inner Chest",
-                image: null,
                 tips: [
                     "Cables at bottom, pull upward and across.",
                     "Great pump finisher for inner and upper chest.",
@@ -85,6 +92,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Cable Tricep Pushdown — Rope",
+                category: "machine",
+                muscleGroup: "Triceps",
                 sets: 4,
                 type: "reps",
                 repRange: "10-15",
@@ -103,6 +112,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Overhead Cable Tricep Extension",
+                category: "machine",
+                muscleGroup: "Triceps",
                 sets: 3,
                 type: "reps",
                 repRange: "10-12",
@@ -133,6 +144,8 @@ export const WORKOUT_PLAN = [
         exercises: [
             {
                 name: "Barbell Bent-Over Row",
+                category: "free_weight",
+                muscleGroup: "Back",
                 sets: 5,
                 type: "reps",
                 repRange: "5·5·6·8·10",
@@ -151,6 +164,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Lat Pulldown — Wide Grip",
+                category: "machine",
+                muscleGroup: "Back",
                 sets: 4,
                 type: "reps",
                 repRange: "8-12",
@@ -169,6 +184,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Seated Cable Row — Close Grip",
+                category: "machine",
+                muscleGroup: "Back",
                 sets: 4,
                 type: "reps",
                 repRange: "10-12",
@@ -187,6 +204,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Single Arm Dumbbell Row",
+                category: "free_weight",
+                muscleGroup: "Back",
                 sets: 3,
                 type: "reps",
                 repRange: "10-12",
@@ -205,6 +224,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Face Pulls — Cable",
+                category: "machine",
+                muscleGroup: "Shoulders",
                 sets: 3,
                 type: "reps",
                 repRange: "15-20",
@@ -223,6 +244,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "EZ Bar Bicep Curl",
+                category: "free_weight",
+                muscleGroup: "Biceps",
                 sets: 4,
                 type: "reps",
                 repRange: "8-12",
@@ -241,6 +264,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "EZ Bar Reverse Curl",
+                category: "free_weight",
+                muscleGroup: "Forearms",
                 sets: 4,
                 type: "reps",
                 repRange: "10-12",
@@ -259,6 +284,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Dead Hang",
+                category: "timed",
+                muscleGroup: "Forearms",
                 sets: 3,
                 type: "timer",
                 repRange: "30–45 sec",
@@ -289,6 +316,8 @@ export const WORKOUT_PLAN = [
         exercises: [
             {
                 name: "Barbell Overhead Press (OHP)",
+                category: "free_weight",
+                muscleGroup: "Shoulders",
                 sets: 5,
                 type: "reps",
                 repRange: "5·5·6·8·10",
@@ -307,6 +336,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Dumbbell Lateral Raise",
+                category: "free_weight",
+                muscleGroup: "Shoulders",
                 sets: 4,
                 type: "reps",
                 repRange: "12-15",
@@ -325,6 +356,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Cable Lateral Raise",
+                category: "machine",
+                muscleGroup: "Shoulders",
                 sets: 3,
                 type: "reps",
                 repRange: "12-15",
@@ -343,6 +376,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Rear Delt Fly — Pec Deck Reverse",
+                category: "machine",
+                muscleGroup: "Shoulders",
                 sets: 4,
                 type: "reps",
                 repRange: "15-20",
@@ -361,6 +396,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Hanging Leg Raise",
+                category: "bodyweight",
+                muscleGroup: "Core",
                 sets: 4,
                 type: "reps",
                 repRange: "12-15",
@@ -379,6 +416,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Cable Crunch",
+                category: "machine",
+                muscleGroup: "Core",
                 sets: 3,
                 type: "reps",
                 repRange: "15-20",
@@ -409,6 +448,8 @@ export const WORKOUT_PLAN = [
         exercises: [
             {
                 name: "Barbell Back Squat",
+                category: "free_weight",
+                muscleGroup: "Quads",
                 sets: 5,
                 type: "reps",
                 repRange: "5·5·6·8·10",
@@ -427,6 +468,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Romanian Deadlift",
+                category: "free_weight",
+                muscleGroup: "Hamstrings",
                 sets: 4,
                 type: "reps",
                 repRange: "8-10",
@@ -445,6 +488,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Leg Press",
+                category: "machine",
+                muscleGroup: "Quads",
                 sets: 3,
                 type: "reps",
                 repRange: "10-12",
@@ -463,6 +508,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Leg Curl — Lying Machine",
+                category: "machine",
+                muscleGroup: "Hamstrings",
                 sets: 3,
                 type: "reps",
                 repRange: "10-12",
@@ -481,6 +528,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Leg Extension",
+                category: "machine",
+                muscleGroup: "Quads",
                 sets: 3,
                 type: "reps",
                 repRange: "12-15",
@@ -499,6 +548,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Standing Calf Raise",
+                category: "machine",
+                muscleGroup: "Calves",
                 sets: 4,
                 type: "reps",
                 repRange: "15-25",
@@ -529,6 +580,8 @@ export const WORKOUT_PLAN = [
         exercises: [
             {
                 name: "Incline Barbell Press",
+                category: "free_weight",
+                muscleGroup: "Chest",
                 sets: 4,
                 type: "reps",
                 repRange: "6-10",
@@ -547,6 +600,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Weighted Pull-ups",
+                category: "bodyweight",
+                muscleGroup: "Back",
                 sets: 4,
                 type: "reps",
                 repRange: "6-10",
@@ -565,6 +620,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Chest Dip — Weighted",
+                category: "bodyweight",
+                muscleGroup: "Chest",
                 sets: 4,
                 type: "reps",
                 repRange: "8-12",
@@ -583,6 +640,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "T-Bar Row or Chest-Supported Row",
+                category: "free_weight",
+                muscleGroup: "Back",
                 sets: 4,
                 type: "reps",
                 repRange: "8-10",
@@ -601,6 +660,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Cable Fly — High to Low",
+                category: "machine",
+                muscleGroup: "Chest",
                 sets: 3,
                 type: "reps",
                 repRange: "12-15",
@@ -631,6 +692,8 @@ export const WORKOUT_PLAN = [
         exercises: [
             {
                 name: "Barbell Curl",
+                category: "free_weight",
+                muscleGroup: "Biceps",
                 sets: 4,
                 type: "reps",
                 repRange: "8-10",
@@ -649,6 +712,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Incline Dumbbell Curl",
+                category: "free_weight",
+                muscleGroup: "Biceps",
                 sets: 3,
                 type: "reps",
                 repRange: "10-12",
@@ -667,6 +732,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Hammer Curl",
+                category: "free_weight",
+                muscleGroup: "Biceps",
                 sets: 3,
                 type: "reps",
                 repRange: "10-12",
@@ -685,6 +752,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Close Grip Bench Press",
+                category: "free_weight",
+                muscleGroup: "Triceps",
                 sets: 4,
                 type: "reps",
                 repRange: "8-10",
@@ -703,6 +772,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Cable Pushdown — Straight Bar",
+                category: "machine",
+                muscleGroup: "Triceps",
                 sets: 3,
                 type: "reps",
                 repRange: "12-15",
@@ -721,6 +792,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "EZ Bar Reverse Curl",
+                category: "free_weight",
+                muscleGroup: "Forearms",
                 sets: 4,
                 type: "reps",
                 repRange: "10-12",
@@ -739,6 +812,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Barbell Wrist Curl",
+                category: "free_weight",
+                muscleGroup: "Forearms",
                 sets: 3,
                 type: "reps",
                 repRange: "15-20",
@@ -757,6 +832,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Reverse Wrist Curl",
+                category: "free_weight",
+                muscleGroup: "Forearms",
                 sets: 3,
                 type: "reps",
                 repRange: "15-20",
@@ -775,6 +852,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Farmer's Walk",
+                category: "timed",
+                muscleGroup: "Forearms",
                 sets: 3,
                 type: "timer",
                 repRange: "30 sec",
@@ -793,6 +872,8 @@ export const WORKOUT_PLAN = [
             },
             {
                 name: "Ab Wheel Rollout",
+                category: "bodyweight",
+                muscleGroup: "Core",
                 sets: 3,
                 type: "reps",
                 repRange: "8-12",
@@ -1029,4 +1110,156 @@ export const getSuggestedWeight = (exerciseName) => {
     if (!exerciseName) return "";
     return SUGGESTED_WEIGHTS[exerciseName.toLowerCase().trim()] || "";
 };
+
+// ────────────────────────────────────────────────────────────────
+// TAXONOMY HELPERS & STANDARDIZED MUSCLE GROUPS
+// ────────────────────────────────────────────────────────────────
+
+export const STANDARDIZED_MUSCLE_GROUPS = [
+    "Chest",
+    "Back",
+    "Shoulders",
+    "Biceps",
+    "Triceps",
+    "Forearms",
+    "Quads",
+    "Hamstrings",
+    "Glutes",
+    "Calves",
+    "Core",
+];
+
+/**
+ * Normalizes any muscle target string (including legacy ones) to the standard 11 groups
+ */
+export const normalizeMuscleGroup = (muscleStr) => {
+    if (!muscleStr || typeof muscleStr !== "string") return "Core";
+    const s = muscleStr.toLowerCase().trim();
+
+    if (s.includes("chest") || s.includes("pec")) return "Chest";
+    if (s.includes("lat") || s.includes("back") || s.includes("rhomboid") || s.includes("trap")) return "Back";
+    if (s.includes("shoulder") || s.includes("delt") || s.includes("ohp")) return "Shoulders";
+    if (s.includes("tricep")) return "Triceps";
+    if (s.includes("bicep") || s.includes("brachialis")) return "Biceps";
+    if (s.includes("forearm") || s.includes("wrist") || s.includes("grip") || s.includes("brachioradialis")) return "Forearms";
+    if (s.includes("quad") || s.includes("squat") || s.includes("leg press") || s.includes("leg extension")) return "Quads";
+    if (s.includes("hamstring") || s.includes("rdl") || s.includes("deadlift") || s.includes("leg curl")) return "Hamstrings";
+    if (s.includes("glute") || s.includes("hip thrust")) return "Glutes";
+    if (s.includes("calf") || s.includes("calves")) return "Calves";
+    if (s.includes("abs") || s.includes("core") || s.includes("crunch") || s.includes("leg raise") || s.includes("rollout") || s.includes("plank")) return "Core";
+
+    return "Core";
+};
+
+/**
+ * Builds a fast lookup map for all exercises defined in WORKOUT_PLAN
+ */
+export const EXERCISE_CATALOG = (() => {
+    const map = new Map();
+    WORKOUT_PLAN.forEach((day) => {
+        if (Array.isArray(day.exercises)) {
+            day.exercises.forEach((ex) => {
+                const key = ex.name.toLowerCase().trim();
+                map.set(key, {
+                    name: ex.name,
+                    category: ex.category || "free_weight",
+                    muscleGroup: ex.muscleGroup || normalizeMuscleGroup(ex.primaryTarget),
+                    primaryTarget: ex.primaryTarget,
+                    equipment: ex.equipment,
+                    unilateral: !!ex.unilateral,
+                    type: ex.type,
+                    repRange: ex.repRange,
+                    activeTimeSec: ex.activeTimeSec,
+                    restTimeSec: ex.restTimeSec,
+                    tips: ex.tips || [],
+                    tag: ex.tag || "",
+                });
+            });
+        }
+    });
+    return map;
+})();
+
+/**
+ * Gets the full metadata for an exercise by name
+ */
+export const getExerciseMetadata = (exerciseName) => {
+    if (!exerciseName || typeof exerciseName !== "string") return null;
+    const key = exerciseName.toLowerCase().trim();
+    if (EXERCISE_CATALOG.has(key)) {
+        return EXERCISE_CATALOG.get(key);
+    }
+    // Safe heuristic fallback for user-created custom exercises
+    return {
+        name: exerciseName,
+        category: isBodyweightMovement(exerciseName) ? "bodyweight" : "free_weight",
+        muscleGroup: normalizeMuscleGroup(exerciseName),
+        primaryTarget: "Custom",
+        equipment: "Custom",
+        unilateral: false,
+        type: "reps",
+        repRange: "8-12",
+        activeTimeSec: 45,
+        restTimeSec: 90,
+        tips: [],
+        tag: "CUSTOM",
+    };
+};
+
+/**
+ * Returns the exercise-level category: 'free_weight' | 'machine' | 'bodyweight' | 'timed'
+ */
+export const getExerciseLoadCategory = (exerciseName) => {
+    const meta = getExerciseMetadata(exerciseName);
+    return meta ? meta.category : "free_weight";
+};
+
+/**
+ * Returns the standardized muscle group (1 of 11) for any exercise name
+ */
+export const getExerciseMuscleGroup = (exerciseName) => {
+    const meta = getExerciseMetadata(exerciseName);
+    return meta ? meta.muscleGroup : "Core";
+};
+
+/**
+ * Returns true if the exercise is inherently a bodyweight movement
+ */
+export const isBodyweightMovement = (exerciseName) => {
+    if (!exerciseName || typeof exerciseName !== "string") return false;
+    const key = exerciseName.toLowerCase().trim();
+    const meta = EXERCISE_CATALOG.get(key);
+    if (meta && meta.category === "bodyweight") return true;
+
+    // String heuristics for custom exercise names
+    const s = key;
+    return (
+        s.includes("pull-up") ||
+        s.includes("pullup") ||
+        s.includes("chin-up") ||
+        s.includes("chinup") ||
+        s.includes("dip") ||
+        s.includes("push-up") ||
+        s.includes("pushup") ||
+        s.includes("leg raise") ||
+        s.includes("ab wheel") ||
+        s.includes("bodyweight")
+    );
+};
+
+/**
+ * Returns a list of all unique exercise names defined in the workout plan
+ */
+export const getAllPlanExercises = () => {
+    const names = [];
+    WORKOUT_PLAN.forEach((day) => {
+        (day.exercises || []).forEach((ex) => {
+            if (!names.includes(ex.name)) {
+                names.push(ex.name);
+            }
+        });
+    });
+    return names;
+};
+
 

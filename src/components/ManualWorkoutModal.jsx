@@ -20,8 +20,8 @@ import Svg, { Circle, Line, G, Path, Defs, LinearGradient as SvgGradient, Stop }
 import ViewShot from "react-native-view-shot";
 import * as Sharing from "expo-sharing";
 import { COLORS, FAMILY, RADIUS, SPACING, getMuscleColor } from "../utils/theme";
-import { WORKOUT_PLAN } from "../data/workoutData";
-import { saveManualWorkout } from "../utils/storage";
+import { WORKOUT_PLAN, getExerciseLoadCategory, isBodyweightMovement } from "../data/workoutData";
+import { saveManualWorkout, getLatestUserBodyweight } from "../utils/storage";
 import { syncAndroidWidget } from "../utils/widgetSync";
 
 const { width, height } = Dimensions.get("window");
@@ -665,6 +665,7 @@ export default function ManualWorkoutModal({
     const [customTargetInput, setCustomTargetInput] = useState("");
     const [durationMin, setDurationMin] = useState(60);
     const [notes, setNotes] = useState("");
+    const [userBodyweight, setUserBodyweight] = useState(null);
     const [exercises, setExercises] = useState([]);
 
     const [isSaving, setIsSaving] = useState(false);
@@ -685,10 +686,15 @@ export default function ManualWorkoutModal({
 
         const defaultExercises = (plan.exercises || []).map((ex) => {
             const setNum = ex.sets || 3;
+            const isBW = isBodyweightMovement(ex.name) || getExerciseLoadCategory(ex.name) === "bodyweight";
+            const isTimed = getExerciseLoadCategory(ex.name) === "timed";
+            const category = getExerciseLoadCategory(ex.name);
+
             const logs = Array.from({ length: setNum }, (_, idx) => ({
                 set: idx + 1,
-                weight: 40,
-                reps: 10,
+                loadType: isTimed ? "timed" : isBW ? "bodyweight" : category === "machine" ? "machine" : "free_weight",
+                weight: isBW || isTimed ? 0 : 40,
+                reps: isTimed ? 30 : 10,
                 completed: true,
             }));
             return {
@@ -704,6 +710,7 @@ export default function ManualWorkoutModal({
     // Initialize or reset state when modal opens
     useEffect(() => {
         if (visible) {
+            getLatestUserBodyweight().then(bw => setUserBodyweight(bw)).catch(() => {});
             const targetDate = initialDate || yesterdayStr;
             setSelectedDate(targetDate);
 
@@ -799,10 +806,12 @@ export default function ManualWorkoutModal({
         setExercises((prev) => {
             const next = JSON.parse(JSON.stringify(prev));
             const currentLogs = next[exIdx].logs || [];
-            const lastLog = currentLogs[currentLogs.length - 1] || { weight: 40, reps: 10 };
+            const isBW = isBodyweightMovement(next[exIdx].name) || getExerciseLoadCategory(next[exIdx].name) === "bodyweight";
+            const lastLog = currentLogs[currentLogs.length - 1] || { weight: isBW ? 0 : 40, reps: 10 };
             const newSetNum = currentLogs.length + 1;
             next[exIdx].logs.push({
                 set: newSetNum,
+                loadType: lastLog.loadType || (isBW ? "bodyweight" : "free_weight"),
                 weight: lastLog.weight,
                 reps: lastLog.reps,
                 completed: true,
@@ -835,15 +844,20 @@ export default function ManualWorkoutModal({
     const handleAddNewExercise = () => {
         if (!newExerciseInput.trim()) return;
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        const name = newExerciseInput.trim();
+        const isBW = isBodyweightMovement(name) || getExerciseLoadCategory(name) === "bodyweight";
+        const isTimed = getExerciseLoadCategory(name) === "timed";
+        const cat = getExerciseLoadCategory(name);
+
         setExercises((prev) => [
             ...prev,
             {
-                name: newExerciseInput.trim(),
+                name,
                 sets: 3,
                 logs: [
-                    { set: 1, weight: 30, reps: 10, completed: true },
-                    { set: 2, weight: 30, reps: 10, completed: true },
-                    { set: 3, weight: 30, reps: 10, completed: true },
+                    { set: 1, loadType: isTimed ? "timed" : isBW ? "bodyweight" : cat === "machine" ? "machine" : "free_weight", weight: isBW || isTimed ? 0 : 30, reps: isTimed ? 30 : 10, completed: true },
+                    { set: 2, loadType: isTimed ? "timed" : isBW ? "bodyweight" : cat === "machine" ? "machine" : "free_weight", weight: isBW || isTimed ? 0 : 30, reps: isTimed ? 30 : 10, completed: true },
+                    { set: 3, loadType: isTimed ? "timed" : isBW ? "bodyweight" : cat === "machine" ? "machine" : "free_weight", weight: isBW || isTimed ? 0 : 30, reps: isTimed ? 30 : 10, completed: true },
                 ],
             },
         ]);
@@ -851,12 +865,20 @@ export default function ManualWorkoutModal({
         setShowAddExerciseModal(false);
     };
 
-    // Calculate total stats
+    // Calculate total stats (Free weight & Machine volume only - never fabricate bodyweight tonnage)
     const totalVolume = useMemo(() => {
         let vol = 0;
         exercises.forEach((ex) => {
+            const isBW = isBodyweightMovement(ex.name) || getExerciseLoadCategory(ex.name) === "bodyweight";
+            const isTimed = getExerciseLoadCategory(ex.name) === "timed";
             (ex.logs || []).forEach((l) => {
-                vol += (parseFloat(l.weight) || 0) * (parseInt(l.reps, 10) || 0);
+                const w = parseFloat(l.weight) || 0;
+                const r = parseInt(l.reps, 10) || 0;
+                if (!isBW && !isTimed) {
+                    vol += w * r;
+                } else if (isBW && l.loadType === "weighted_bodyweight" && w > 0) {
+                    vol += w * r; // count added load
+                }
             });
         });
         return Math.round(vol);
@@ -880,12 +902,63 @@ export default function ManualWorkoutModal({
             const finalTarget = isCustomTarget ? (customTargetInput.trim() || "Custom Workout") : targetName;
             const durationSec = durationMin * 60;
 
+            const formattedExercises = exercises.map(ex => {
+                const isBW = isBodyweightMovement(ex.name) || getExerciseLoadCategory(ex.name) === "bodyweight";
+                const isTimed = getExerciseLoadCategory(ex.name) === "timed";
+                const category = getExerciseLoadCategory(ex.name);
+
+                const loggedSets = (ex.logs || []).map((l, i) => {
+                    const w = parseFloat(l.weight) || 0;
+                    const r = parseInt(l.reps, 10) || 0;
+                    let loadType = l.loadType;
+                    if (!loadType) {
+                        if (isTimed) loadType = "timed";
+                        else if (isBW) loadType = w > 0 ? "weighted_bodyweight" : "bodyweight";
+                        else if (category === "machine") loadType = "machine";
+                        else loadType = "free_weight";
+                    }
+
+                    let totalSystemLoadKg = null;
+                    let effectiveLoadKg = null;
+                    if (loadType === "bodyweight") {
+                        totalSystemLoadKg = typeof userBodyweight === "number" ? userBodyweight : null;
+                    } else if (loadType === "weighted_bodyweight") {
+                        totalSystemLoadKg = typeof userBodyweight === "number" ? userBodyweight + w : null;
+                    } else if (loadType === "assisted_bodyweight") {
+                        effectiveLoadKg = typeof userBodyweight === "number" ? Math.max(0, userBodyweight - w) : null;
+                    } else if (loadType === "free_weight" || loadType === "machine") {
+                        totalSystemLoadKg = w;
+                    }
+
+                    return {
+                        set: l.set || i + 1,
+                        loadType,
+                        weightKg: w,
+                        weight: w,
+                        reps: r,
+                        bodyweightKg: typeof userBodyweight === "number" ? userBodyweight : null,
+                        totalSystemLoadKg,
+                        effectiveLoadKg,
+                        durationSec: isTimed ? (r > 0 ? r : 30) : null,
+                        completed: l.completed ?? true,
+                        skipped: false,
+                    };
+                });
+
+                return {
+                    name: ex.name,
+                    sets: loggedSets.length,
+                    loggedSets,
+                    logs: loggedSets,
+                };
+            });
+
             const res = await saveManualWorkout({
                 date: selectedDate,
                 day: selectedDayNum || 1,
                 target: finalTarget,
                 durationSec,
-                exercises,
+                exercises: formattedExercises,
                 notes,
                 caloriesBurned: estimatedCalories,
             });
