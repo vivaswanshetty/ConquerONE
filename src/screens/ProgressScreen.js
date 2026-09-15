@@ -1330,7 +1330,7 @@ export default function ProgressScreen({ navigation, route }) {
                         <View style={[styles.sectionHeaderRow, { marginTop: 28 }]}>
                             <View style={styles.sectionTitleGroup}>
                                 <Ionicons name="alert-circle-outline" size={15} color={COLORS.primary} />
-                                <Text style={styles.sectionLabel}>MOVEMENT FRICTION & PLATEAU RADAR</Text>
+                                <Text style={styles.sectionLabel} numberOfLines={1}>PLATEAU & FRICTION RADAR</Text>
                             </View>
                             <View style={[styles.statusBadgeSmall, {
                                 backgroundColor: predictiveSummary.plateauRiskMovements.length === 0 ? "rgba(48, 209, 88, 0.12)" : "rgba(227, 30, 36, 0.12)",
@@ -1339,7 +1339,7 @@ export default function ProgressScreen({ navigation, route }) {
                                 <Text style={[styles.statusBadgeSmallText, {
                                     color: predictiveSummary.plateauRiskMovements.length === 0 ? "#30D158" : COLORS.primary
                                 }]}>
-                                    {predictiveSummary.plateauRiskMovements.length === 0 ? "ALL MOVEMENTS NOMINAL" : `${predictiveSummary.plateauRiskMovements.length} MOVEMENT(S) AT RISK`}
+                                    {predictiveSummary.plateauRiskMovements.length === 0 ? "ALL NOMINAL" : `${predictiveSummary.plateauRiskMovements.length} AT RISK`}
                                 </Text>
                             </View>
                         </View>
@@ -1368,10 +1368,10 @@ export default function ProgressScreen({ navigation, route }) {
                         <View style={[styles.sectionHeaderRow, { marginTop: 28 }]}>
                             <View style={styles.sectionTitleGroup}>
                                 <Ionicons name="grid-outline" size={15} color={COLORS.primary} />
-                                <Text style={styles.sectionLabel}>MUSCLE GROUP PERFORMANCE RESPONSE</Text>
+                                <Text style={styles.sectionLabel} numberOfLines={1}>MUSCLE GROUP RESPONSE</Text>
                             </View>
                             <View style={styles.infoPill}>
-                                <Text style={styles.infoPillText}>28-Day Volume vs Slope</Text>
+                                <Text style={styles.infoPillText}>28-Day Slope</Text>
                             </View>
                         </View>
 
@@ -1383,7 +1383,7 @@ export default function ProgressScreen({ navigation, route }) {
                         <View style={[styles.sectionHeaderRow, { marginTop: 28 }]}>
                             <View style={styles.sectionTitleGroup}>
                                 <Ionicons name="swap-horizontal-outline" size={15} color={COLORS.primary} />
-                                <Text style={styles.sectionLabel}>BODYWEIGHT & STRENGTH CORRELATION</Text>
+                                <Text style={styles.sectionLabel} numberOfLines={1}>BODYWEIGHT CORRELATION</Text>
                             </View>
                             <View style={[styles.statusBadgeSmall, { backgroundColor: "rgba(255, 255, 255, 0.04)", borderColor: "rgba(255, 255, 255, 0.08)" }]}>
                                 <Text style={[styles.statusBadgeSmallText, { color: COLORS.text }]}>
@@ -1600,8 +1600,8 @@ const styles = StyleSheet.create({
         flexDirection: "row", alignItems: "center", justifyContent: "space-between",
         paddingHorizontal: 16, marginTop: 20, marginBottom: 10,
     },
-    sectionTitleGroup: { flexDirection: "row", alignItems: "center", gap: 6 },
-    sectionLabel: { fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1.0 },
+    sectionTitleGroup: { flexDirection: "row", alignItems: "center", gap: 6, flexShrink: 1, marginRight: 8 },
+    sectionLabel: { fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1.0, flexShrink: 1 },
 
     // Insights Cards
     insightsWrap: { marginHorizontal: 16, gap: 10 },
