@@ -31,7 +31,7 @@ export default function AdaptiveRecommendationCard({
     return (
         <View style={styles.card}>
             <LinearGradient
-                colors={["#161619", "#0E0E10", "#0A0A0B"]}
+                colors={["rgba(255, 255, 255, 0.04)", "rgba(255, 255, 255, 0.008)"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
                 style={StyleSheet.absoluteFillObject}
@@ -114,19 +114,14 @@ export default function AdaptiveRecommendationCard({
 
 const styles = StyleSheet.create({
     card: {
-        width: "100%",
-        alignSelf: "stretch",
-        marginHorizontal: 0,
-        borderRadius: 0,
-        borderTopWidth: 1,
-        borderBottomWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.06)",
-        borderLeftWidth: 0,
-        borderRightWidth: 0,
-        backgroundColor: "#0E0E10",
-        paddingHorizontal: SPACING.base,
-        paddingVertical: 18,
-        marginBottom: 0,
+        marginHorizontal: 16,
+        marginVertical: 6,
+        borderRadius: 18,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+        backgroundColor: "#131316",
+        padding: 16,
+        overflow: "hidden",
     },
     topBar: {
         flexDirection: "row",

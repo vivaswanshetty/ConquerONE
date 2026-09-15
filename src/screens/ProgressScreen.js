@@ -626,12 +626,12 @@ export default function ProgressScreen({ navigation }) {
                     <ScrollView showsVerticalScrollIndicator={false} overScrollMode="never" contentContainerStyle={styles.scrollContent}>
                         {/* ── 0. Active Adaptive Program & Versions ── */}
                         {activeProgram && programPerformanceSummary && (
-                            <View style={{ marginHorizontal: 20, marginTop: 14, marginBottom: 8 }}>
+                            <View style={{ marginTop: 14, marginBottom: 8 }}>
                                 <ProgramStatusCard
                                     summary={programPerformanceSummary}
                                     activeProgram={activeProgram}
                                 />
-                                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: -6, marginBottom: 8, paddingHorizontal: 4 }}>
+                                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: -6, marginBottom: 8, paddingHorizontal: 16 }}>
                                     <ProgramVersionBadge
                                         activeProgram={activeProgram}
                                         versions={programVersions}
@@ -919,7 +919,7 @@ export default function ProgressScreen({ navigation }) {
                                 </View>
                             </View>
                         ) : (
-                            <View style={{ marginHorizontal: 20, gap: 10 }}>
+                            <View style={{ marginHorizontal: 16, gap: 10 }}>
                                 {stallRegistry.map((item, idx) => (
                                     <View key={item.name || idx} style={styles.stallCard}>
                                         <View style={styles.stallCardHeader}>
@@ -1262,7 +1262,7 @@ export default function ProgressScreen({ navigation }) {
                             })}
                         </ScrollView>
 
-                        <View style={{ marginHorizontal: 20 }}>
+                        <View style={{ marginHorizontal: 16 }}>
                             <PerformanceTrajectoryCard trajectoryData={selectedTrajectory} />
                         </View>
 
@@ -1277,7 +1277,7 @@ export default function ProgressScreen({ navigation }) {
                             </View>
                         </View>
 
-                        <View style={{ marginHorizontal: 20 }}>
+                        <View style={{ marginHorizontal: 16 }}>
                             {predictiveSummary.upcomingMilestones.length > 0 ? (
                                 predictiveSummary.upcomingMilestones.map((m, idx) => (
                                     <MilestoneForecastCard key={`${m.exerciseName}_${idx}`} milestoneData={m} />
@@ -1309,7 +1309,7 @@ export default function ProgressScreen({ navigation }) {
                             </View>
                         </View>
 
-                        <View style={{ marginHorizontal: 20 }}>
+                        <View style={{ marginHorizontal: 16 }}>
                             {predictiveSummary.plateauRiskMovements.length > 0 ? (
                                 predictiveSummary.plateauRiskMovements.map((r, idx) => (
                                     <PlateauRiskCard key={`${r.exerciseName}_${idx}`} riskData={r} />
@@ -1340,7 +1340,7 @@ export default function ProgressScreen({ navigation }) {
                             </View>
                         </View>
 
-                        <View style={{ marginHorizontal: 20 }}>
+                        <View style={{ marginHorizontal: 16 }}>
                             <MuscleResponseMatrix responseData={predictiveSummary.muscleResponseMatrix} />
                         </View>
 
@@ -1357,7 +1357,7 @@ export default function ProgressScreen({ navigation }) {
                             </View>
                         </View>
 
-                        <View style={[styles.card, { marginHorizontal: 20 }]}>
+                        <View style={styles.card}>
                             <View style={styles.loadGrid}>
                                 <View style={styles.loadGridCol}>
                                     <Text style={[styles.loadGridVal, { color: predictiveSummary.bodyweightCorrelation.bodyweightVelocityKgPerWeek >= 0 ? "#FF9500" : "#38BDF8" }]}>
@@ -1541,7 +1541,7 @@ const styles = StyleSheet.create({
     scrollContent: { paddingBottom: 60 },
     header: {
         flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-        paddingHorizontal: 20, paddingBottom: 16, paddingTop: 8,
+        paddingHorizontal: 16, paddingBottom: 16, paddingTop: 8,
     },
     backBtn: {
         width: 36, height: 36, borderRadius: RADIUS.pill, backgroundColor: COLORS.bgCard,
@@ -1552,7 +1552,7 @@ const styles = StyleSheet.create({
     savedText: { fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.text },
 
     tabs: {
-        flexDirection: "row", paddingHorizontal: 20,
+        flexDirection: "row", paddingHorizontal: 16,
         gap: 20, borderBottomWidth: 1, borderBottomColor: COLORS.border,
     },
     tab: { paddingVertical: 12 },
@@ -1560,19 +1560,19 @@ const styles = StyleSheet.create({
     tabText: { fontSize: 12, fontFamily: FAMILY.medium, color: COLORS.textMuted, letterSpacing: 0.5 },
     tabTextActive: { color: COLORS.text, fontFamily: FAMILY.bold },
 
-    sectionHeader: { paddingHorizontal: 20, marginTop: 24, marginBottom: 10 },
+    sectionHeader: { paddingHorizontal: 16, marginTop: 24, marginBottom: 10 },
     sectionHeaderRow: {
         flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-        paddingHorizontal: 20, marginTop: 20, marginBottom: 10,
+        paddingHorizontal: 16, marginTop: 20, marginBottom: 10,
     },
     sectionTitleGroup: { flexDirection: "row", alignItems: "center", gap: 6 },
     sectionLabel: { fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1.0 },
 
     // Insights Cards
-    insightsWrap: { marginHorizontal: 20, gap: 10 },
+    insightsWrap: { marginHorizontal: 16, gap: 10 },
     insightCard: {
-        backgroundColor: COLORS.bgCard, borderRadius: RADIUS.md,
-        borderWidth: 1, borderColor: COLORS.border, padding: 14, overflow: "hidden",
+        backgroundColor: "#131316", borderRadius: 14,
+        borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.08)", padding: 14, overflow: "hidden",
     },
     insightHeaderRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 },
     insightIconBox: { width: 22, height: 22, borderRadius: RADIUS.xs, alignItems: "center", justifyContent: "center" },
@@ -1591,11 +1591,11 @@ const styles = StyleSheet.create({
 
     // Physique Grid
     physiqueGrid: {
-        marginHorizontal: 20, flexDirection: "row", flexWrap: "wrap", gap: 8,
+        marginHorizontal: 16, flexDirection: "row", flexWrap: "wrap", gap: 8,
     },
     physiqueCard: {
-        width: (width - 48) / 2, backgroundColor: COLORS.bgCard,
-        borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border,
+        width: (width - 40) / 2, backgroundColor: "#131316",
+        borderRadius: 14, borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.08)",
         padding: 12,
     },
     physiqueLabel: { fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.textMuted, letterSpacing: 0.5 },
@@ -1620,9 +1620,9 @@ const styles = StyleSheet.create({
     infoPillText: { fontSize: 9, fontFamily: FAMILY.mono, color: COLORS.textSub },
 
     card: {
-        marginHorizontal: 20, backgroundColor: COLORS.bgCard,
-        borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border,
-        padding: 18, overflow: "hidden",
+        marginHorizontal: 16, backgroundColor: "#131316",
+        borderRadius: 18, borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.08)",
+        padding: 16, overflow: "hidden", marginBottom: 14,
     },
 
     summaryTopRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 },
@@ -1682,10 +1682,10 @@ const styles = StyleSheet.create({
     prFilterPillText: { fontSize: 10, fontFamily: FAMILY.medium, color: COLORS.textMuted },
     prFilterPillTextActive: { color: "#FFF", fontFamily: FAMILY.bold },
 
-    prListWrap: { marginHorizontal: 20, gap: 10 },
+    prListWrap: { marginHorizontal: 16, gap: 10 },
     emptyPRCard: {
-        marginHorizontal: 20, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg,
-        borderWidth: 1, borderColor: COLORS.border, padding: 28, alignItems: "center", justifyContent: "center",
+        marginHorizontal: 16, backgroundColor: "#131316", borderRadius: 14,
+        borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.08)", padding: 28, alignItems: "center", justifyContent: "center",
     },
 
     saveBtn: {
