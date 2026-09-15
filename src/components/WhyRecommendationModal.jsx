@@ -39,11 +39,11 @@ export default function WhyRecommendationModal({
                     <View style={styles.headerRow}>
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                             <View style={styles.iconCircle}>
-                                <Ionicons name="sparkles-sharp" size={16} color={COLORS.primary} />
+                                <Ionicons name="information-circle-outline" size={18} color={COLORS.primary} />
                             </View>
                             <View>
-                                <Text style={styles.modalTitle}>DECISION INTEL</Text>
-                                <Text style={styles.modalSub}>Deterministic Explainability Engine</Text>
+                                <Text style={styles.modalTitle}>DECISION BREAKDOWN</Text>
+                                <Text style={styles.modalSub}>Performance & Readiness Analysis</Text>
                             </View>
                         </View>
                         <TouchableOpacity
@@ -60,7 +60,7 @@ export default function WhyRecommendationModal({
                     <ScrollView style={styles.scrollBody} showsVerticalScrollIndicator={false}>
                         {/* Decision Status Pill */}
                         <View style={styles.decisionBanner}>
-                            <Text style={styles.decisionTag}>RESOLVED ATHLETE STATE</Text>
+                            <Text style={styles.decisionTag}>RECOMMENDED STATUS</Text>
                             <Text style={styles.decisionValue}>{decision.replace(/_/g, " ")}</Text>
                             <View style={styles.confidenceRow}>
                                 <Text style={styles.confidenceLabel}>Confidence: </Text>
@@ -70,7 +70,7 @@ export default function WhyRecommendationModal({
                             </View>
                         </View>
 
-                        {/* Underlying Deterministic Reasons */}
+                        {/* Underlying Reasons */}
                         <Text style={styles.sectionHeader}>WHY THIS RECOMMENDATION?</Text>
                         <View style={styles.reasonsList}>
                             {reasons.map((reason, idx) => (
@@ -81,8 +81,8 @@ export default function WhyRecommendationModal({
                             ))}
                         </View>
 
-                        {/* Telemetry Metrics Grid */}
-                        <Text style={styles.sectionHeader}>SUPPORTING TELEMETRY</Text>
+                        {/* Supporting Metrics Grid */}
+                        <Text style={styles.sectionHeader}>SUPPORTING METRICS</Text>
                         <View style={styles.telemetryGrid}>
                             <View style={styles.telemetryCell}>
                                 <Text style={styles.telemetryLabel}>READINESS</Text>
@@ -110,8 +110,8 @@ export default function WhyRecommendationModal({
                             </View>
                         </View>
 
-                        {/* Prescribed Tactical Action */}
-                        <Text style={styles.sectionHeader}>PRESCRIBED TACTICAL ACTION</Text>
+                        {/* Prescribed Action */}
+                        <Text style={styles.sectionHeader}>RECOMMENDED ACTION</Text>
                         <View style={styles.actionBox}>
                             <Ionicons name="shield-checkmark-outline" size={16} color="#10B981" />
                             <Text style={styles.actionText}>{command.subtext || "Execute scheduled training session."}</Text>
@@ -127,7 +127,7 @@ export default function WhyRecommendationModal({
                             onClose();
                         }}
                     >
-                        <Text style={styles.doneBtnText}>UNDERSTOOD</Text>
+                        <Text style={styles.doneBtnText}>CLOSE</Text>
                     </TouchableOpacity>
                 </View>
             </View>

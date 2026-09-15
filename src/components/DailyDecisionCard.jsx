@@ -196,7 +196,7 @@ export default function DailyDecisionCard({
                     }}
                 >
                     <Ionicons name="information-circle-outline" size={14} color={COLORS.textSub} />
-                    <Text style={styles.whyButtonText}>INTEL</Text>
+                    <Text style={styles.whyButtonText}>DETAILS</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
