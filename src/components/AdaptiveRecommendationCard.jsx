@@ -28,6 +28,41 @@ export default function AdaptiveRecommendationCard({
     const isHighPriority = status === "REDUCE_TRAINING_STRESS" || status === "REVIEW_PROGRAM";
     const handleReview = onReview || onReviewExercises;
 
+    // Determine if this recommendation represents an automated programmatic mutation or an analytical advisory
+    const isActionableMutation =
+        status === "REDUCE_TRAINING_STRESS" ||
+        actionType === "PROPOSE_DELOAD" ||
+        (actionType === "VOLUME_ADJUSTMENT" && !!recommendation.exerciseName);
+
+    const getPrimaryActionLabel = () => {
+        if (status === "REDUCE_TRAINING_STRESS" || actionType === "PROPOSE_DELOAD") {
+            return "REVIEW DELOAD PROTOCOL";
+        }
+        if (actionType === "VOLUME_ADJUSTMENT") {
+            return "APPLY VOLUME ADJUSTMENT";
+        }
+        if (status === "REVIEW_PROGRAM" || actionType === "REVIEW_STRUCTURE") {
+            return "REVIEW STALLED MOVEMENTS";
+        }
+        if (status === "REVIEW_EXERCISE") {
+            return "REVIEW EXERCISE PROGRESSION";
+        }
+        return "VIEW ANALYTICS INTEL";
+    };
+
+    const handlePrimaryPress = () => {
+        if (isActionableMutation && onAccept) {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            onAccept(recommendation);
+        } else if (handleReview) {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            handleReview(recommendation);
+        } else if (onAccept) {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            onAccept(recommendation);
+        }
+    };
+
     return (
         <View style={styles.card}>
             <LinearGradient
@@ -79,23 +114,18 @@ export default function AdaptiveRecommendationCard({
                 <Text style={styles.recText}>{recText}</Text>
             </View>
 
-            {/* Actions (Athlete Control) */}
+            {/* Actions (Contextual Athlete Control) */}
             <View style={styles.actionsRow}>
-                {onAccept && (
-                    <TouchableOpacity
-                        style={[styles.actionBtn, styles.acceptBtn, { backgroundColor: color }]}
-                        onPress={() => {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                            onAccept(recommendation);
-                        }}
-                        activeOpacity={0.85}
-                    >
-                        <Ionicons name="checkmark" size={13} color="#FFFFFF" style={{ marginRight: 5 }} />
-                        <Text style={styles.acceptBtnText}>ACCEPT ADAPTATION</Text>
-                    </TouchableOpacity>
-                )}
+                <TouchableOpacity
+                    style={[styles.actionBtn, styles.acceptBtn, { backgroundColor: color }]}
+                    onPress={handlePrimaryPress}
+                    activeOpacity={0.85}
+                >
+                    <Text style={styles.acceptBtnText}>{getPrimaryActionLabel()}</Text>
+                    <Ionicons name="chevron-forward" size={13} color="#FFFFFF" style={{ marginLeft: 4 }} />
+                </TouchableOpacity>
 
-                {handleReview && (
+                {isActionableMutation && handleReview && (
                     <TouchableOpacity
                         style={[styles.actionBtn, styles.reviewBtn]}
                         onPress={() => {
@@ -104,7 +134,7 @@ export default function AdaptiveRecommendationCard({
                         }}
                         activeOpacity={0.7}
                     >
-                        <Text style={styles.reviewBtnText}>REVIEW</Text>
+                        <Text style={styles.reviewBtnText}>DETAILS</Text>
                     </TouchableOpacity>
                 )}
             </View>
@@ -116,7 +146,7 @@ const styles = StyleSheet.create({
     card: {
         marginHorizontal: 16,
         marginVertical: 6,
-        borderRadius: 18,
+        borderRadius: RADIUS.card,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.08)",
         backgroundColor: "#131316",
