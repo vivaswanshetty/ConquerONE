@@ -10,7 +10,7 @@ import {
     getTrainingLoadTrend,
 } from "./analytics";
 
-const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
+const apiKey = (typeof process !== "undefined" && process?.env?.EXPO_PUBLIC_GEMINI_API_KEY) ? process.env.EXPO_PUBLIC_GEMINI_API_KEY : "";
 
 
 // Cache the last model that worked so we try it first next time
