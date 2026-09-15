@@ -1257,7 +1257,7 @@ export default function HomeScreen({ navigation, route }) {
 
                         {/* ── 2. Active Program Status (Chapter 2) ── */}
                         {activeProgram && programPerformanceSummary && (
-                            <View style={{ marginHorizontal: SPACING.base, marginTop: 28, marginBottom: 4 }}>
+                            <View style={{ marginTop: 28, marginBottom: 4 }}>
                                 <ProgramStatusCard
                                     summary={programPerformanceSummary}
                                     activeProgram={activeProgram}
@@ -1271,7 +1271,7 @@ export default function HomeScreen({ navigation, route }) {
                         {((adaptiveRecommendation && adaptiveRecommendation.status !== "CURRENT_PROGRAM") ||
                           missedWorkoutAdvisory?.hasMissedWorkout ||
                           athleteAlerts.length > 0) && (
-                            <View style={{ marginHorizontal: SPACING.base, marginTop: 24, gap: 12 }}>
+                            <View style={{ marginTop: 24, gap: 12 }}>
                                 {adaptiveRecommendation && adaptiveRecommendation.status !== "CURRENT_PROGRAM" && (
                                     <AdaptiveRecommendationCard
                                         recommendation={adaptiveRecommendation}
@@ -3220,13 +3220,19 @@ const styles = StyleSheet.create({
 
     // 7-Day Consistency Card
     consistencyCard: {
-        marginHorizontal: SPACING.base,
-        marginTop: 12,
-        borderRadius: RADIUS.lg,
-        borderWidth: 1,
-        borderColor: COLORS.border,
-        backgroundColor: COLORS.bgCard,
-        padding: 18,
+        width: "100%",
+        alignSelf: "stretch",
+        marginHorizontal: 0,
+        marginTop: 0,
+        borderRadius: 0,
+        borderTopWidth: 1,
+        borderBottomWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.06)",
+        borderLeftWidth: 0,
+        borderRightWidth: 0,
+        backgroundColor: "#0E0E10",
+        paddingHorizontal: SPACING.base,
+        paddingVertical: 18,
         overflow: "hidden",
     },
     consistencyHeader: {
@@ -4211,10 +4217,14 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         backgroundColor: "rgba(255, 149, 0, 0.08)",
-        borderRadius: RADIUS.md,
-        borderWidth: 1,
-        borderColor: "rgba(255, 149, 0, 0.3)",
-        padding: 12,
+        borderRadius: 0,
+        borderTopWidth: 1,
+        borderBottomWidth: 1,
+        borderColor: "rgba(255, 149, 0, 0.25)",
+        borderLeftWidth: 0,
+        borderRightWidth: 0,
+        paddingHorizontal: SPACING.base,
+        paddingVertical: 14,
         marginBottom: 8,
     },
     missedIconBox: {

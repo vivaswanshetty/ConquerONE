@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, SPACING, RADIUS, FAMILY } from "../utils/theme";
 import * as Haptics from "expo-haptics";
@@ -32,6 +33,13 @@ export default function ProgramStatusCard({
 
     return (
         <View style={styles.card}>
+            <LinearGradient
+                colors={["#141416", "#0E0E10", "#0A0A0B"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                style={StyleSheet.absoluteFillObject}
+                pointerEvents="none"
+            />
             {/* Header */}
             <View style={styles.header}>
                 <View style={styles.titleBox}>
@@ -108,12 +116,19 @@ export default function ProgramStatusCard({
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: "#141416",
-        borderRadius: RADIUS.lg,
-        borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.08)",
-        padding: 14,
-        marginBottom: SPACING.md,
+        width: "100%",
+        alignSelf: "stretch",
+        marginHorizontal: 0,
+        borderRadius: 0,
+        borderTopWidth: 1,
+        borderBottomWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.06)",
+        borderLeftWidth: 0,
+        borderRightWidth: 0,
+        backgroundColor: "#0E0E10",
+        paddingHorizontal: SPACING.base,
+        paddingVertical: 18,
+        marginBottom: 0,
     },
     header: {
         flexDirection: "row",

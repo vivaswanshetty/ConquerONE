@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { COLORS, FAMILY, SPACING, RADIUS } from "../utils/theme";
@@ -116,6 +117,13 @@ export default function DailyDecisionCard({
 
     return (
         <View style={styles.cardContainer}>
+            <LinearGradient
+                colors={["#161619", "#0E0E11", "#0A0A0B"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                style={StyleSheet.absoluteFillObject}
+                pointerEvents="none"
+            />
             {/* Header: Decision Badge & Readiness Telemetry */}
             <View style={styles.topRow}>
                 <View style={[styles.decisionBadge, { backgroundColor: theme.badgeBg, borderColor: theme.badgeBorder }]}>
@@ -210,14 +218,20 @@ export default function DailyDecisionCard({
 
 const styles = StyleSheet.create({
     cardContainer: {
-        marginHorizontal: SPACING.base,
-        marginTop: 10,
-        marginBottom: 8,
-        borderRadius: RADIUS.lg,
-        borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.08)",
-        backgroundColor: "#141416",
-        padding: 14,
+        width: "100%",
+        alignSelf: "stretch",
+        marginHorizontal: 0,
+        marginTop: 0,
+        marginBottom: 0,
+        borderRadius: 0,
+        borderTopWidth: 0,
+        borderBottomWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.06)",
+        borderLeftWidth: 0,
+        borderRightWidth: 0,
+        backgroundColor: "#0F0F12",
+        paddingHorizontal: SPACING.base,
+        paddingVertical: 18,
     },
     topRow: {
         flexDirection: "row",

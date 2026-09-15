@@ -53,10 +53,16 @@ export default function AthleteAlertCard({ alert, onPress, style }) {
 
 const styles = StyleSheet.create({
     container: {
+        width: "100%",
+        alignSelf: "stretch",
         backgroundColor: "#141417",
-        borderRadius: RADIUS.md,
-        borderWidth: 1,
-        padding: SPACING.sm + 4,
+        borderRadius: 0,
+        borderTopWidth: 1,
+        borderBottomWidth: 1,
+        borderLeftWidth: 0,
+        borderRightWidth: 0,
+        paddingHorizontal: SPACING.base,
+        paddingVertical: 14,
         marginVertical: 4,
     },
     headerRow: {
