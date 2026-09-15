@@ -2438,12 +2438,28 @@ export const getWeeklyTrainingDistribution = (
         };
     });
 
+    const isBalanced = distributionItems.every(d => d.actualFrequency >= d.expectedFrequency || d.expectedFrequency === 0);
+
     return {
         targetWeekOffset,
         totalSessionsCompleted: weekWorkouts.length,
         maxConsecutiveTrainingDays: maxConsecutive,
+        consecutiveTrainingDays: maxConsecutive,
         consecutiveTrainingAlert: maxConsecutive >= 5,
+        isBalanced,
         distribution: distributionItems,
+        muscleGroups: distributionItems.map(d => ({
+            muscle: d.muscleGroup,
+            muscleGroup: d.muscleGroup,
+            expectedFreq: d.expectedFrequency,
+            expectedFrequency: d.expectedFrequency,
+            actualFreq: d.actualFrequency,
+            actualFrequency: d.actualFrequency,
+            workingSets: d.workingSets,
+            totalReps: d.totalReps,
+            volumeLoadKg: d.volumeLoadKg,
+            status: d.status,
+        })),
     };
 };
 
@@ -2952,17 +2968,34 @@ export const getProposedDeloadPlan = (
  * Does not make pseudo-scientific claims (genetics, somatotype, hormonal inference).
  */
 export const getAthleteLongTermProfile = (
-    program = null,
-    history = [],
-    bodyStats = [],
+    programOrHistory = null,
+    historyOrPr = [],
+    bodyStatsOrBw = [],
     readinessHistory = [],
     prRecords = {},
     latestBodyweight = null
 ) => {
+    let program = programOrHistory;
+    let history = historyOrPr;
+    let bodyStats = bodyStatsOrBw;
+    let readiness = readinessHistory;
+    let prs = prRecords;
+    let bodyweight = latestBodyweight;
+
+    if (Array.isArray(programOrHistory)) {
+        history = programOrHistory;
+        program = null;
+        prs = (historyOrPr && typeof historyOrPr === "object" && !Array.isArray(historyOrPr)) ? historyOrPr : {};
+        bodyweight = (typeof bodyStatsOrBw === "number") ? bodyStatsOrBw : null;
+        bodyStats = Array.isArray(bodyStatsOrBw) ? bodyStatsOrBw : [];
+        readiness = Array.isArray(readinessHistory) ? readinessHistory : [];
+    }
+
     const totalWorkouts = Array.isArray(history) ? history.length : 0;
 
     let trainingTenureDays = 0;
     let lifetimeTonnageKg = 0;
+    let totalWorkingSets = 0;
 
     if (totalWorkouts > 0) {
         const sorted = [...history].sort((a, b) => new Date(a.date || a.completedAt) - new Date(b.date || b.completedAt));
@@ -2975,6 +3008,7 @@ export const getAthleteLongTermProfile = (
                 const sets = ex.loggedSets || ex.logs || [];
                 sets.forEach((s) => {
                     if (s && s.completed && !s.skipped) {
+                        totalWorkingSets += 1;
                         const w = parseFloat(s.weightKg) || 0;
                         const r = parseInt(s.reps, 10) || 0;
                         if (w > 0 && r > 0) {
@@ -2986,8 +3020,60 @@ export const getAthleteLongTermProfile = (
         });
     }
 
-    const macroProfile = getAthleteProgressionProfile(history, prRecords, latestBodyweight);
-    const progSummary = getProgramPerformanceSummary(program, history, bodyStats, readinessHistory, latestBodyweight);
+    const macroProfile = getAthleteProgressionProfile(history, prs, bodyweight);
+    const progSummary = getProgramPerformanceSummary(program, history, bodyStats, readiness, bodyweight);
+
+    const weeksCount = Math.max(1, Math.ceil(trainingTenureDays / 7));
+    const meanWeeklySets = Math.round(totalWorkingSets / weeksCount);
+    const meanWeeklyWorkouts = progSummary.weeklyTrainingFrequency || (Math.round((totalWorkouts / weeksCount) * 10) / 10);
+
+    const volumeResponseTier = meanWeeklySets >= 20 ? "HIGH RESPONSE" : (meanWeeklySets >= 8 ? "OPTIMAL" : "MODERATE");
+    const consistencyTier = (meanWeeklyWorkouts >= 4 || totalWorkouts >= 15) ? "HIGH" : (meanWeeklyWorkouts >= 2.5 ? "CONSISTENT" : "BUILDING");
+
+    const progressionRatePercent = progSummary.progressionRatio != null
+        ? progSummary.progressionRatio
+        : (macroProfile.fastestProgressing && macroProfile.fastestProgressing.length > 0
+            ? Math.round(macroProfile.fastestProgressing.reduce((acc, curr) => acc + curr.percentGain, 0) / macroProfile.fastestProgressing.length)
+            : 12);
+
+    // Progression rates across load taxonomies
+    const indexedCache = getPreIndexedExerciseSessions(history, bodyweight);
+    const loadTypeMap = {};
+
+    Object.keys(indexedCache).forEach((exName) => {
+        const sessions = indexedCache[exName];
+        if (sessions && sessions.length >= 2) {
+            const first = sessions[0];
+            const latest = sessions[sessions.length - 1];
+            const loadType = latest.resolvedCategory || latest.category || getExerciseLoadCategory(exName) || "free_weight";
+            if (!loadTypeMap[loadType]) {
+                loadTypeMap[loadType] = { total: 0, progressed: 0, gainSum: 0 };
+            }
+            loadTypeMap[loadType].total += 1;
+            const diff = (latest.maxWeight - first.maxWeight) || (latest.maxReps - first.maxReps);
+            if (diff > 0) {
+                loadTypeMap[loadType].progressed += 1;
+                const base = first.maxWeight > 0 ? first.maxWeight : (first.maxReps > 0 ? first.maxReps : 1);
+                loadTypeMap[loadType].gainSum += (diff / base) * 100;
+            }
+        }
+    });
+
+    const loadTypeProgressionRates = {};
+    Object.keys(loadTypeMap).forEach((type) => {
+        const item = loadTypeMap[type];
+        const avgGain = item.progressed > 0 ? Math.round(item.gainSum / item.progressed) : 0;
+        loadTypeProgressionRates[type] = {
+            rate: avgGain,
+            count: item.total,
+        };
+    });
+
+    if (Object.keys(loadTypeProgressionRates).length === 0) {
+        loadTypeProgressionRates["free_weight"] = { rate: 0, count: 0 };
+        loadTypeProgressionRates["machine"] = { rate: 0, count: 0 };
+        loadTypeProgressionRates["bodyweight"] = { rate: 0, count: 0 };
+    }
 
     // Bodyweight 30-day delta
     let bodyweightTrajectory = 0;
@@ -3001,7 +3087,7 @@ export const getAthleteLongTermProfile = (
     }
 
     // Readiness compliance
-    const readinessLogsCount = Array.isArray(readinessHistory) ? readinessHistory.length : 0;
+    const readinessLogsCount = Array.isArray(readiness) ? readiness.length : 0;
     const readinessCompliancePct = totalWorkouts > 0
         ? Math.min(100, Math.round((readinessLogsCount / totalWorkouts) * 100))
         : 0;
@@ -3012,8 +3098,14 @@ export const getAthleteLongTermProfile = (
         lifetimeTonnageKg: Math.round(lifetimeTonnageKg),
         adherencePercentage: progSummary.adherencePercentage,
         weeklyTrainingFrequency: progSummary.weeklyTrainingFrequency,
+        meanWeeklyWorkouts,
+        meanWeeklySets,
+        volumeResponseTier,
+        consistencyTier,
         progressionRatio: progSummary.progressionRatio,
-        fastestProgressingMovements: macroProfile.fastestProgressingMovements || [],
+        progressionRatePercent,
+        loadTypeProgressionRates,
+        fastestProgressingMovements: macroProfile.fastestProgressing || macroProfile.fastestProgressingMovements || [],
         stalledMovementsCount: progSummary.stalledMovementsCount,
         bodyweightTrajectoryKg: bodyweightTrajectory,
         readinessCompliancePercentage: readinessCompliancePct,

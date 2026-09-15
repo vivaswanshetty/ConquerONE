@@ -473,8 +473,8 @@ export default function ProgressScreen({ navigation }) {
     }, [activeProgram, history]);
 
     const longTermProfile = useMemo(() => {
-        return getAthleteLongTermProfile(history, prRecords, userBodyweight);
-    }, [history, prRecords, userBodyweight]);
+        return getAthleteLongTermProfile(activeProgram, history, bodyStats, readinessHistory, prRecords, userBodyweight);
+    }, [activeProgram, history, bodyStats, readinessHistory, prRecords, userBodyweight]);
 
     const handleAcceptDeload = async (plan) => {
         setDeloadProposalModalVisible(false);
@@ -631,17 +631,19 @@ export default function ProgressScreen({ navigation }) {
                                     summary={programPerformanceSummary}
                                     activeProgram={activeProgram}
                                 />
-                                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: -6, marginBottom: 8, paddingHorizontal: 16 }}>
+                                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 4, marginBottom: 10, paddingHorizontal: 16 }}>
                                     <ProgramVersionBadge
                                         activeProgram={activeProgram}
                                         versions={programVersions}
                                     />
                                     <TouchableOpacity
                                         onPress={handleResetProgram}
+                                        style={styles.resetProgramBtn}
                                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                                     >
-                                        <Text style={{ fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.textMuted }}>
-                                            Reset to Default Routine
+                                        <Ionicons name="refresh-outline" size={11} color={COLORS.textMuted} style={{ marginRight: 4 }} />
+                                        <Text style={styles.resetProgramBtnText}>
+                                            RESET ROUTINE
                                         </Text>
                                     </TouchableOpacity>
                                 </View>
@@ -656,8 +658,8 @@ export default function ProgressScreen({ navigation }) {
                                         <Ionicons name="pie-chart-outline" size={15} color={COLORS.primary} />
                                         <Text style={styles.sectionLabel}>WEEKLY TRAINING DISTRIBUTION</Text>
                                     </View>
-                                    <View style={[styles.statusBadgeSmall, { backgroundColor: weeklyDistribution.isBalanced ? "rgba(0, 200, 83, 0.15)" : "rgba(255, 149, 0, 0.15)", borderColor: weeklyDistribution.isBalanced ? "rgba(0, 200, 83, 0.4)" : "rgba(255, 149, 0, 0.4)" }]}>
-                                        <Text style={[styles.statusBadgeSmallText, { color: weeklyDistribution.isBalanced ? "#00C853" : "#FF9500" }]}>
+                                    <View style={[styles.statusBadgeSmall, { backgroundColor: weeklyDistribution.isBalanced ? "rgba(48, 209, 88, 0.12)" : "rgba(255, 159, 10, 0.12)", borderColor: weeklyDistribution.isBalanced ? "rgba(48, 209, 88, 0.3)" : "rgba(255, 159, 10, 0.3)" }]}>
+                                        <Text style={[styles.statusBadgeSmallText, { color: weeklyDistribution.isBalanced ? "#30D158" : "#FF9F0A" }]}>
                                             {weeklyDistribution.isBalanced ? "SPLIT BALANCED" : "DISTRIBUTION DELTA"}
                                         </Text>
                                     </View>
@@ -672,35 +674,44 @@ export default function ProgressScreen({ navigation }) {
                                         pointerEvents="none"
                                     />
                                     <View style={styles.distGrid}>
-                                        {weeklyDistribution.muscleGroups && weeklyDistribution.muscleGroups.map((mg) => (
-                                            <View key={mg.muscle} style={styles.distCell}>
-                                                <Text style={styles.distMuscleText} numberOfLines={1}>{mg.muscle.toUpperCase()}</Text>
-                                                <View style={styles.distBarRow}>
-                                                    <Text style={[styles.distFreqVal, mg.actualFreq >= mg.expectedFreq ? { color: "#00C853" } : { color: "#FF9500" }]}>
-                                                        {mg.actualFreq}
-                                                    </Text>
-                                                    <Text style={styles.distExpectedText}>/ {mg.expectedFreq}x</Text>
+                                        {(weeklyDistribution.muscleGroups || weeklyDistribution.distribution || []).map((mg) => {
+                                            const muscleName = (mg.muscle || mg.muscleGroup || "").toUpperCase();
+                                            const actual = mg.actualFreq ?? mg.actualFrequency ?? 0;
+                                            const expected = mg.expectedFreq ?? mg.expectedFrequency ?? 0;
+                                            const isMet = actual >= expected && expected > 0;
+                                            const isUnstimulated = actual === 0 && expected > 0;
+                                            const fillPct = Math.min(100, (actual / (expected || 1)) * 100);
+
+                                            return (
+                                                <View key={muscleName} style={styles.distCell}>
+                                                    <Text style={styles.distMuscleText} numberOfLines={1}>{muscleName}</Text>
+                                                    <View style={styles.distBarRow}>
+                                                        <Text style={[styles.distFreqVal, { color: isMet ? "#30D158" : isUnstimulated ? "#FF453A" : "#FF9F0A" }]}>
+                                                            {actual}
+                                                        </Text>
+                                                        <Text style={styles.distExpectedText}>/ {expected}x</Text>
+                                                    </View>
+                                                    <View style={styles.distMiniTrack}>
+                                                        <View
+                                                            style={[
+                                                                styles.distMiniFill,
+                                                                {
+                                                                    width: `${fillPct}%`,
+                                                                    backgroundColor: isMet ? "#30D158" : isUnstimulated ? "#FF453A" : "#FF9F0A"
+                                                                }
+                                                            ]}
+                                                        />
+                                                    </View>
                                                 </View>
-                                                <View style={styles.distMiniTrack}>
-                                                    <View
-                                                        style={[
-                                                            styles.distMiniFill,
-                                                            {
-                                                                width: `${Math.min(100, (mg.actualFreq / (mg.expectedFreq || 1)) * 100)}%`,
-                                                                backgroundColor: mg.actualFreq >= mg.expectedFreq ? "#00C853" : "#FF9500"
-                                                            }
-                                                        ]}
-                                                    />
-                                                </View>
-                                            </View>
-                                        ))}
+                                            );
+                                        })}
                                     </View>
 
-                                    {weeklyDistribution.consecutiveTrainingDays >= 5 && (
+                                    {(weeklyDistribution.consecutiveTrainingDays >= 5 || weeklyDistribution.maxConsecutiveTrainingDays >= 5) && (
                                         <View style={styles.consecutiveWarningBox}>
-                                            <Ionicons name="warning-outline" size={13} color="#FF9500" style={{ marginRight: 6 }} />
+                                            <Ionicons name="warning-outline" size={13} color="#FF9F0A" style={{ marginRight: 6 }} />
                                             <Text style={styles.consecutiveWarningText}>
-                                                {weeklyDistribution.consecutiveTrainingDays} consecutive training days detected. Ensure recovery protocols are observed.
+                                                {weeklyDistribution.consecutiveTrainingDays || weeklyDistribution.maxConsecutiveTrainingDays} consecutive training days detected. Ensure recovery protocols are observed.
                                             </Text>
                                         </View>
                                     )}
@@ -730,11 +741,11 @@ export default function ProgressScreen({ navigation }) {
                                         <View style={styles.loadGridCol}>
                                             <Text style={styles.loadGridVal}>{longTermProfile.volumeResponseTier || "OPTIMAL"}</Text>
                                             <Text style={styles.loadGridLabel}>VOLUME RESPONSE</Text>
-                                            <Text style={styles.profileSubMini}>{longTermProfile.meanWeeklySets} sets/wk</Text>
+                                            <Text style={styles.profileSubMini}>{longTermProfile.meanWeeklySets ?? 0} sets/wk</Text>
                                         </View>
                                         <View style={styles.summaryMetricDivider} />
                                         <View style={styles.loadGridCol}>
-                                            <Text style={[styles.loadGridVal, { color: "#00C853" }]}>{longTermProfile.progressionRatePercent}%</Text>
+                                            <Text style={[styles.loadGridVal, { color: "#30D158" }]}>{longTermProfile.progressionRatePercent ?? 0}%</Text>
                                             <Text style={styles.loadGridLabel}>PROGRESSION RATE</Text>
                                             <Text style={styles.profileSubMini}>Across load types</Text>
                                         </View>
@@ -742,7 +753,7 @@ export default function ProgressScreen({ navigation }) {
                                         <View style={styles.loadGridCol}>
                                             <Text style={styles.loadGridVal}>{longTermProfile.consistencyTier || "HIGH"}</Text>
                                             <Text style={styles.loadGridLabel}>CONSISTENCY</Text>
-                                            <Text style={styles.profileSubMini}>{longTermProfile.meanWeeklyWorkouts} workouts/wk</Text>
+                                            <Text style={styles.profileSubMini}>{longTermProfile.meanWeeklyWorkouts ?? 0} workouts/wk</Text>
                                         </View>
                                     </View>
 
@@ -1862,6 +1873,22 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontFamily: FAMILY.monoBold,
         color: "#FFFFFF",
+    },
+    resetProgramBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: RADIUS.xs,
+        backgroundColor: "rgba(255, 255, 255, 0.04)",
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+    },
+    resetProgramBtnText: {
+        fontSize: 9,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textMuted,
+        letterSpacing: 0.5,
     },
 });
 
