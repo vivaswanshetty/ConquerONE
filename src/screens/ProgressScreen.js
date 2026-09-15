@@ -842,7 +842,7 @@ export default function ProgressScreen({ navigation }) {
                                 <View style={styles.loadTonnageBreakdown}>
                                     <Text style={styles.loadTonnageLabel}>7-DAY ACUTE LOAD</Text>
                                     <Text style={styles.loadTonnageVal}>
-                                        {trainingLoad.currentWeekTonnageKg.toLocaleString()} <Text style={{ fontSize: 11, color: COLORS.textMuted }}>kg tonnage</Text>
+                                        {trainingLoad.currentWeekTonnageKg.toLocaleString()} <Text style={{ fontSize: 10.5, fontFamily: FAMILY.mono, color: COLORS.textMuted }}>kg tonnage</Text>
                                     </Text>
                                     <Text style={styles.loadBWCount}>+ {trainingLoad.currentWeekSets} completed sets</Text>
                                 </View>
@@ -870,9 +870,9 @@ export default function ProgressScreen({ navigation }) {
 
                             <Text style={styles.loadSummaryText}>{trainingLoad.summaryMessage}</Text>
 
-                            {/* Deload / Training Stress Observation Box */}
-                            {deloadRecommendation.status !== "NORMAL" ? (
-                                <View style={[styles.deloadAlertBox, { borderColor: `${deloadRecommendation.color}40`, backgroundColor: `${deloadRecommendation.color}10` }]}>
+                            {/* Deload / Fatigue Advisory Box (rendered when active deload is advised) */}
+                            {deloadRecommendation.status !== "NORMAL" && (
+                                <View style={[styles.deloadAlertBox, { borderColor: `${deloadRecommendation.color}40`, backgroundColor: `${deloadRecommendation.color}10`, marginTop: 10 }]}>
                                     <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 }}>
                                         <Ionicons name="alert-circle" size={14} color={deloadRecommendation.color} />
                                         <Text style={[styles.deloadAlertTitle, { color: deloadRecommendation.color }]}>
@@ -887,13 +887,6 @@ export default function ProgressScreen({ navigation }) {
                                             ))}
                                         </View>
                                     )}
-                                </View>
-                            ) : (
-                                <View style={styles.deloadNominalBox}>
-                                    <Ionicons name="checkmark-circle-outline" size={13} color="#00C853" />
-                                    <Text style={styles.deloadNominalText}>
-                                        TRAINING STRESS NOMINAL — Load and recovery signals remain in equilibrium.
-                                    </Text>
                                 </View>
                             )}
                         </View>
@@ -1716,27 +1709,34 @@ const styles = StyleSheet.create({
     statusBadgeSmall: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.xs, borderWidth: 1 },
     statusBadgeSmallText: { fontSize: 8.5, fontFamily: FAMILY.monoBold, letterSpacing: 0.5 },
 
-    loadHeaderRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 },
-    loadSubLabel: { fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.textMuted, letterSpacing: 0.8 },
-    loadRatioValue: { fontSize: 28, fontFamily: FAMILY.monoBold, color: COLORS.text, marginTop: 2 },
-    loadRatioUnit: { fontSize: 16, fontFamily: FAMILY.mono, color: COLORS.textMuted },
+    loadHeaderRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 },
+    loadSubLabel: { fontSize: 8.5, fontFamily: FAMILY.monoBold, color: COLORS.textMuted, letterSpacing: 0.8 },
+    loadRatioValue: { fontSize: 26, fontFamily: FAMILY.monoBold, color: "#FFFFFF", marginTop: 2, fontVariant: ["tabular-nums"] },
+    loadRatioUnit: { fontSize: 14, fontFamily: FAMILY.monoBold, color: COLORS.textMuted },
     loadTonnageBreakdown: { alignItems: "flex-end" },
-    loadTonnageLabel: { fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.textMuted, letterSpacing: 0.5 },
-    loadTonnageVal: { fontSize: 14, fontFamily: FAMILY.monoBold, color: COLORS.text, marginTop: 2 },
-    loadBWCount: { fontSize: 10, fontFamily: FAMILY.regular, color: COLORS.textMuted, marginTop: 2 },
+    loadTonnageLabel: { fontSize: 8.5, fontFamily: FAMILY.monoBold, color: COLORS.textMuted, letterSpacing: 0.5 },
+    loadTonnageVal: { fontSize: 13.5, fontFamily: FAMILY.monoBold, color: "#FFFFFF", marginTop: 2, fontVariant: ["tabular-nums"] },
+    loadBWCount: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.textMuted, marginTop: 2 },
 
-    loadGrid: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 8, backgroundColor: "rgba(255,255,255,0.02)", borderRadius: RADIUS.sm, paddingHorizontal: 12, marginBottom: 12 },
+    loadGrid: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingVertical: 10,
+        marginVertical: 4,
+        borderTopWidth: 1,
+        borderBottomWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.06)",
+    },
     loadGridCol: { flex: 1, alignItems: "center" },
-    loadGridVal: { fontSize: 13, fontFamily: FAMILY.monoBold, color: COLORS.text },
-    loadGridLabel: { fontSize: 8.5, fontFamily: FAMILY.medium, color: COLORS.textMuted, marginTop: 3 },
-    loadSummaryText: { fontSize: 11, fontFamily: FAMILY.regular, color: COLORS.textSub, lineHeight: 15, marginBottom: 12 },
+    loadGridVal: { fontSize: 13.5, fontFamily: FAMILY.monoBold, color: "#FFFFFF", fontVariant: ["tabular-nums"] },
+    loadGridLabel: { fontSize: 8.5, fontFamily: FAMILY.monoBold, color: COLORS.textMuted, letterSpacing: 0.5, marginTop: 3 },
+    loadSummaryText: { fontSize: 11, fontFamily: FAMILY.body, color: "#B0B0B8", lineHeight: 16, marginTop: 10 },
 
     deloadAlertBox: { borderRadius: RADIUS.sm, padding: 12, borderWidth: 1 },
     deloadAlertTitle: { fontSize: 10, fontFamily: FAMILY.monoBold, letterSpacing: 0.5 },
-    deloadAlertReason: { fontSize: 11, fontFamily: FAMILY.regular, color: COLORS.textSub, lineHeight: 15 },
+    deloadAlertReason: { fontSize: 11, fontFamily: FAMILY.body, color: COLORS.textSub, lineHeight: 15 },
     deloadObsBullet: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.textMuted },
-    deloadNominalBox: { flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 6, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.04)" },
-    deloadNominalText: { fontSize: 10, fontFamily: FAMILY.mono, color: "#00C853", flex: 1 },
 
     stallNominalRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 4 },
     stallNominalIconBox: { width: 36, height: 36, borderRadius: RADIUS.sm, backgroundColor: "rgba(0, 200, 83, 0.12)", alignItems: "center", justifyContent: "center" },
