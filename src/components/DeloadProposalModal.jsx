@@ -1,7 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { COLORS, SPACING, RADIUS, FAMILY } from "../utils/theme";
 import * as Haptics from "expo-haptics";
 
@@ -31,19 +30,12 @@ export default function DeloadProposalModal({
                 <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
 
                 <View style={styles.sheet}>
-                    <LinearGradient
-                        colors={["#1C1C1E", "#121214"]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 0, y: 1 }}
-                        style={StyleSheet.absoluteFill}
-                    />
-
                     <View style={styles.dragPill} />
 
                     {/* Header */}
                     <View style={styles.header}>
                         <View style={styles.iconCircle}>
-                            <Ionicons name="refresh-circle" size={24} color="#FF9500" />
+                            <Ionicons name="refresh-circle" size={22} color="#FF9F0A" />
                         </View>
                         <View style={styles.headerText}>
                             <Text style={styles.title}>STRUCTURED DELOAD PROTOCOL</Text>
@@ -59,13 +51,13 @@ export default function DeloadProposalModal({
                         <View style={styles.matrixRow}>
                             <View style={styles.matrixCol}>
                                 <Text style={styles.matrixLabel}>VOLUME REDUCTION</Text>
-                                <Text style={[styles.matrixVal, { color: "#FF9500" }]}>-40%</Text>
+                                <Text style={[styles.matrixVal, { color: "#FF9F0A" }]}>-40%</Text>
                                 <Text style={styles.matrixSub}>Working sets per movement</Text>
                             </View>
                             <View style={styles.matrixDivider} />
                             <View style={styles.matrixCol}>
                                 <Text style={styles.matrixLabel}>LOAD INTENSITY</Text>
-                                <Text style={[styles.matrixVal, { color: "#00C853" }]}>85–90%</Text>
+                                <Text style={[styles.matrixVal, { color: "#30D158" }]}>85–90%</Text>
                                 <Text style={styles.matrixSub}>Of regular working load</Text>
                             </View>
                             <View style={styles.matrixDivider} />
@@ -89,7 +81,7 @@ export default function DeloadProposalModal({
                                 {day.exercises && (
                                     <View style={styles.exerciseList}>
                                         {day.exercises.map((ex, idx) => (
-                                            <View key={idx} style={styles.exerciseRow}>
+                                             <View key={idx} style={styles.exerciseRow}>
                                                 <Text style={styles.exName} numberOfLines={1}>• {ex.name}</Text>
                                                 <Text style={styles.exSets}>{ex.sets} sets (Deload)</Text>
                                             </View>
@@ -110,7 +102,7 @@ export default function DeloadProposalModal({
                             }}
                             activeOpacity={0.85}
                         >
-                            <Ionicons name="checkmark-circle" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+                            <Ionicons name="checkmark-circle" size={16} color="#000000" style={{ marginRight: 6 }} />
                             <Text style={styles.acceptBtnText}>ACTIVATE DELOAD WEEK</Text>
                         </TouchableOpacity>
 
@@ -138,9 +130,9 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     sheet: {
-        backgroundColor: "#18181B",
-        borderTopLeftRadius: RADIUS.xl,
-        borderTopRightRadius: RADIUS.xl,
+        backgroundColor: "#161619",
+        borderTopLeftRadius: RADIUS.lg,
+        borderTopRightRadius: RADIUS.lg,
         borderTopWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.12)",
         paddingHorizontal: SPACING.base,
@@ -150,8 +142,8 @@ const styles = StyleSheet.create({
         overflow: "hidden",
     },
     dragPill: {
-        width: 36,
-        height: 4,
+        width: 32,
+        height: 3.5,
         borderRadius: 2,
         backgroundColor: "rgba(255, 255, 255, 0.2)",
         alignSelf: "center",
@@ -163,12 +155,12 @@ const styles = StyleSheet.create({
         marginBottom: SPACING.base,
     },
     iconCircle: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: "rgba(255, 149, 0, 0.12)",
+        width: 36,
+        height: 36,
+        borderRadius: RADIUS.sm,
+        backgroundColor: "rgba(255, 159, 10, 0.12)",
         borderWidth: 1,
-        borderColor: "rgba(255, 149, 0, 0.3)",
+        borderColor: "rgba(255, 159, 10, 0.3)",
         alignItems: "center",
         justifyContent: "center",
         marginRight: 12,
@@ -177,14 +169,14 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     title: {
-        fontSize: 15,
-        fontFamily: FAMILY.display,
+        fontSize: 14,
+        fontFamily: FAMILY.chakraBold,
         color: "#FFFFFF",
-        letterSpacing: 0.5,
+        letterSpacing: 0.8,
     },
     subtitle: {
-        fontSize: 10.5,
-        fontFamily: FAMILY.sans,
+        fontSize: 11,
+        fontFamily: FAMILY.body,
         color: COLORS.textMuted,
         marginTop: 2,
     },
@@ -193,7 +185,7 @@ const styles = StyleSheet.create({
     },
     matrixCard: {
         backgroundColor: "rgba(255, 255, 255, 0.03)",
-        borderRadius: RADIUS.md,
+        borderRadius: RADIUS.sm,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.08)",
         padding: 12,
@@ -260,12 +252,12 @@ const styles = StyleSheet.create({
     dayNumber: {
         fontSize: 10,
         fontFamily: FAMILY.monoBold,
-        color: "#FF9500",
+        color: "#FF9F0A",
         letterSpacing: 0.5,
     },
     dayTarget: {
         fontSize: 11,
-        fontFamily: FAMILY.monoBold,
+        fontFamily: FAMILY.chakraBold,
         color: "#FFFFFF",
     },
     exerciseList: {
@@ -278,7 +270,7 @@ const styles = StyleSheet.create({
     },
     exName: {
         fontSize: 10.5,
-        fontFamily: FAMILY.sans,
+        fontFamily: FAMILY.body,
         color: COLORS.textSecondary,
         flex: 1,
         marginRight: 8,
@@ -286,7 +278,7 @@ const styles = StyleSheet.create({
     exSets: {
         fontSize: 9.5,
         fontFamily: FAMILY.monoBold,
-        color: "#FF9500",
+        color: "#FF9F0A",
     },
     actionsRow: {
         flexDirection: "row",
@@ -294,20 +286,20 @@ const styles = StyleSheet.create({
     },
     btn: {
         paddingVertical: 12,
-        borderRadius: RADIUS.md,
+        borderRadius: RADIUS.sm,
         alignItems: "center",
         justifyContent: "center",
         flexDirection: "row",
     },
     acceptBtn: {
         flex: 2,
-        backgroundColor: "#FF9500",
+        backgroundColor: "#FF9F0A",
     },
     acceptBtnText: {
-        fontSize: 12,
-        fontFamily: FAMILY.monoBold,
+        fontSize: 11,
+        fontFamily: FAMILY.chakraBold,
         color: "#000000",
-        letterSpacing: 0.5,
+        letterSpacing: 0.8,
     },
     cancelBtn: {
         flex: 1,
@@ -316,8 +308,9 @@ const styles = StyleSheet.create({
         borderColor: "rgba(255, 255, 255, 0.12)",
     },
     cancelBtnText: {
-        fontSize: 12,
+        fontSize: 11,
         fontFamily: FAMILY.monoBold,
         color: COLORS.textSecondary,
+        letterSpacing: 0.5,
     },
 });

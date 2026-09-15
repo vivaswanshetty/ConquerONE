@@ -55,7 +55,7 @@ export default function MuscleResponseMatrix({ responseData = [] }) {
 
 const styles = StyleSheet.create({
     container: {
-        marginBottom: 16,
+        marginBottom: 14,
     },
     grid: {
         flexDirection: "row",
@@ -64,47 +64,49 @@ const styles = StyleSheet.create({
     },
     gridItem: {
         width: "48.5%",
-        backgroundColor: COLORS.card,
-        borderRadius: RADIUS.md,
+        backgroundColor: "#141416",
+        borderRadius: RADIUS.sm,
         borderWidth: 1,
-        borderColor: COLORS.cardBorder,
-        padding: 12,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+        padding: 10,
     },
     itemHeader: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        marginBottom: 6,
+        marginBottom: 4,
     },
     muscleName: {
-        fontFamily: FAMILY.bold,
-        fontSize: FONTS.sm,
-        color: COLORS.text,
+        fontFamily: FAMILY.chakraBold,
+        fontSize: 12,
+        color: "#FFFFFF",
+        letterSpacing: 0.3,
     },
     metricsRow: {
         flexDirection: "row",
         justifyContent: "space-between",
-        marginBottom: 8,
+        marginBottom: 6,
     },
     volumeText: {
-        fontFamily: FAMILY.monoRegular,
-        fontSize: 10,
+        fontFamily: FAMILY.mono,
+        fontSize: 9,
         color: COLORS.textMuted,
     },
     slopeText: {
         fontFamily: FAMILY.monoBold,
-        fontSize: 10,
+        fontSize: 9.5,
+        fontVariant: ["tabular-nums"],
     },
     statusPill: {
         paddingHorizontal: 6,
-        paddingVertical: 3,
+        paddingVertical: 2.5,
         borderRadius: RADIUS.xs,
         borderWidth: 1,
         alignItems: "center",
     },
     statusText: {
         fontFamily: FAMILY.monoBold,
-        fontSize: 9,
+        fontSize: 8.5,
         letterSpacing: 0.3,
     },
 });

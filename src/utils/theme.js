@@ -146,13 +146,13 @@ export const SPACING = {
 };
 
 export const RADIUS = {
-    xs: 6,
-    sm: 10,
-    md: 14,
+    xs: 4,
+    sm: 6,
+    md: 10,
     card: 14,
-    lg: 18,
-    xl: 22,
-    xxl: 28,
+    lg: 14,
+    xl: 18,
+    xxl: 24,
     full: 999,
     pill: 999,
 };

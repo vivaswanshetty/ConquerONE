@@ -1,7 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { COLORS, SPACING, RADIUS, FAMILY } from "../utils/theme";
 import * as Haptics from "expo-haptics";
 
@@ -29,21 +28,14 @@ export default function AdaptiveRecommendationCard({
     const handleReview = onReview || onReviewExercises;
 
     return (
-        <View style={[styles.card, { borderColor: `${color}40` }]}>
-            <LinearGradient
-                colors={[`${color}12`, "rgba(16, 16, 18, 0.98)"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-                style={StyleSheet.absoluteFill}
-            />
-
+        <View style={styles.card}>
             {/* Top Bar */}
             <View style={styles.topBar}>
                 <View style={styles.badgeRow}>
-                    <View style={[styles.badge, { backgroundColor: `${color}20`, borderColor: `${color}50` }]}>
+                    <View style={[styles.badge, { backgroundColor: `${color}15`, borderColor: `${color}40` }]}>
                         <Ionicons
-                            name={isHighPriority ? "alert-circle" : "sparkles"}
-                            size={12}
+                            name={isHighPriority ? "alert-circle" : "analytics-outline"}
+                            size={11}
                             color={color}
                             style={{ marginRight: 5 }}
                         />
@@ -75,7 +67,7 @@ export default function AdaptiveRecommendationCard({
 
             {/* Recommendation Box */}
             <View style={[styles.recBox, { borderLeftColor: color }]}>
-                <Text style={styles.recTitle}>ADAPTIVE RECOMMENDATION</Text>
+                <Text style={styles.recTitle}>RECOMMENDED ADAPTATION</Text>
                 <Text style={styles.recText}>{recText}</Text>
             </View>
 
@@ -90,7 +82,7 @@ export default function AdaptiveRecommendationCard({
                         }}
                         activeOpacity={0.85}
                     >
-                        <Ionicons name="checkmark" size={14} color="#FFFFFF" style={{ marginRight: 5 }} />
+                        <Ionicons name="checkmark" size={13} color="#FFFFFF" style={{ marginRight: 5 }} />
                         <Text style={styles.acceptBtnText}>ACCEPT ADAPTATION</Text>
                     </TouchableOpacity>
                 )}
@@ -117,15 +109,15 @@ const styles = StyleSheet.create({
         backgroundColor: "#141416",
         borderRadius: RADIUS.lg,
         borderWidth: 1,
-        padding: SPACING.base,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+        padding: 14,
         marginBottom: SPACING.md,
-        overflow: "hidden",
     },
     topBar: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        marginBottom: SPACING.sm + 2,
+        marginBottom: 10,
     },
     badgeRow: {
         flexDirection: "row",
@@ -135,18 +127,18 @@ const styles = StyleSheet.create({
     badge: {
         flexDirection: "row",
         alignItems: "center",
-        paddingHorizontal: 8,
-        paddingVertical: 3.5,
-        borderRadius: 6,
+        paddingHorizontal: 7,
+        paddingVertical: 3,
+        borderRadius: RADIUS.xs,
         borderWidth: 1,
     },
     badgeText: {
-        fontSize: 10,
+        fontSize: 9,
         fontFamily: FAMILY.monoBold,
         letterSpacing: 0.6,
     },
     confidenceText: {
-        fontSize: 9.5,
+        fontSize: 9,
         fontFamily: FAMILY.mono,
         color: COLORS.textMuted,
         letterSpacing: 0.5,
@@ -155,31 +147,31 @@ const styles = StyleSheet.create({
         padding: 4,
     },
     observationText: {
-        fontSize: 13,
-        fontFamily: FAMILY.regular,
+        fontSize: 12.5,
+        fontFamily: FAMILY.body,
         color: "#E0E0E6",
-        lineHeight: 18.5,
-        marginBottom: SPACING.sm + 2,
+        lineHeight: 17.5,
+        marginBottom: 10,
     },
     recBox: {
-        backgroundColor: "rgba(255, 255, 255, 0.03)",
+        backgroundColor: "rgba(255, 255, 255, 0.025)",
         borderLeftWidth: 3,
-        borderRadius: 6,
-        padding: 11,
-        marginBottom: SPACING.base,
+        borderRadius: RADIUS.xs,
+        padding: 10,
+        marginBottom: 12,
     },
     recTitle: {
-        fontSize: 9.5,
+        fontSize: 8.5,
         fontFamily: FAMILY.monoBold,
         color: COLORS.textMuted,
         letterSpacing: 0.8,
-        marginBottom: 4,
+        marginBottom: 3,
     },
     recText: {
-        fontSize: 12.5,
-        fontFamily: FAMILY.regular,
+        fontSize: 12,
+        fontFamily: FAMILY.body,
         color: "#FFFFFF",
-        lineHeight: 18,
+        lineHeight: 16.5,
     },
     actionsRow: {
         flexDirection: "row",
@@ -188,8 +180,8 @@ const styles = StyleSheet.create({
     },
     actionBtn: {
         paddingVertical: 10,
-        paddingHorizontal: 16,
-        borderRadius: RADIUS.md,
+        paddingHorizontal: 14,
+        borderRadius: RADIUS.sm,
         alignItems: "center",
         justifyContent: "center",
         flexDirection: "row",
@@ -198,19 +190,19 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     acceptBtnText: {
-        fontSize: 11.5,
+        fontSize: 11,
         fontFamily: FAMILY.chakraBold,
         color: "#FFFFFF",
         letterSpacing: 0.8,
     },
     reviewBtn: {
-        backgroundColor: "rgba(255, 255, 255, 0.06)",
+        backgroundColor: "rgba(255, 255, 255, 0.04)",
         borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.12)",
-        paddingHorizontal: 18,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+        paddingHorizontal: 16,
     },
     reviewBtnText: {
-        fontSize: 11.5,
+        fontSize: 11,
         fontFamily: FAMILY.chakraBold,
         color: "#D1D1D6",
         letterSpacing: 0.8,

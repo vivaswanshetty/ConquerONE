@@ -1,7 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { COLORS, SPACING, RADIUS, FAMILY } from "../utils/theme";
 import * as Haptics from "expo-haptics";
 
@@ -33,20 +32,13 @@ export default function ProgramStatusCard({
 
     return (
         <View style={styles.card}>
-            <LinearGradient
-                colors={isDeload ? ["rgba(255, 159, 10, 0.08)", "rgba(16, 16, 18, 0.98)"] : ["rgba(227, 30, 36, 0.08)", "rgba(16, 16, 18, 0.98)"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-                style={StyleSheet.absoluteFill}
-            />
-
             {/* Header */}
             <View style={styles.header}>
                 <View style={styles.titleBox}>
                     <View style={styles.labelRow}>
                         <Ionicons
                             name={isDeload ? "refresh-circle" : "shield-checkmark"}
-                            size={13}
+                            size={12}
                             color={isDeload ? "#FF9F0A" : COLORS.primary}
                             style={{ marginRight: 5 }}
                         />
@@ -120,15 +112,14 @@ const styles = StyleSheet.create({
         borderRadius: RADIUS.lg,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.08)",
-        padding: SPACING.base,
+        padding: 14,
         marginBottom: SPACING.md,
-        overflow: "hidden",
     },
     header: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        marginBottom: SPACING.sm + 4,
+        marginBottom: 12,
     },
     titleBox: {
         flex: 1,
@@ -137,45 +128,45 @@ const styles = StyleSheet.create({
     labelRow: {
         flexDirection: "row",
         alignItems: "center",
-        marginBottom: 3,
+        marginBottom: 2,
     },
     programLabel: {
-        fontSize: 9.5,
+        fontSize: 9,
         fontFamily: FAMILY.monoBold,
         color: COLORS.primary,
-        letterSpacing: 1.1,
+        letterSpacing: 1,
     },
     programTitle: {
-        fontSize: 17,
+        fontSize: 16,
         fontFamily: FAMILY.chakraBold,
         color: "#FFFFFF",
-        letterSpacing: 0.5,
+        letterSpacing: 0.4,
     },
     versionBadge: {
         flexDirection: "row",
         alignItems: "center",
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 6,
-        backgroundColor: "rgba(227, 30, 36, 0.12)",
+        paddingHorizontal: 7,
+        paddingVertical: 3,
+        borderRadius: RADIUS.xs,
+        backgroundColor: "rgba(227, 30, 36, 0.1)",
         borderWidth: 1,
-        borderColor: "rgba(227, 30, 36, 0.35)",
+        borderColor: "rgba(227, 30, 36, 0.3)",
     },
     versionBadgeDeload: {
-        backgroundColor: "rgba(255, 159, 10, 0.12)",
-        borderColor: "rgba(255, 159, 10, 0.35)",
+        backgroundColor: "rgba(255, 159, 10, 0.1)",
+        borderColor: "rgba(255, 159, 10, 0.3)",
     },
     versionText: {
-        fontSize: 10.5,
+        fontSize: 9.5,
         fontFamily: FAMILY.monoBold,
         color: COLORS.primary,
-        letterSpacing: 0.4,
+        letterSpacing: 0.3,
     },
     metricsGrid: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "rgba(255, 255, 255, 0.025)",
-        borderRadius: RADIUS.md,
+        backgroundColor: "rgba(255, 255, 255, 0.02)",
+        borderRadius: RADIUS.sm,
         paddingVertical: 10,
         paddingHorizontal: 4,
         borderWidth: 1,
@@ -189,7 +180,7 @@ const styles = StyleSheet.create({
     },
     divider: {
         width: 1,
-        height: 28,
+        height: 26,
         backgroundColor: "rgba(255, 255, 255, 0.07)",
     },
     metricLabel: {

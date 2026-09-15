@@ -1,7 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { COLORS, SPACING, RADIUS, FAMILY } from "../utils/theme";
 import * as Haptics from "expo-haptics";
 
@@ -26,20 +25,13 @@ export default function MissedWorkoutModal({
                 <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
 
                 <View style={styles.sheet}>
-                    <LinearGradient
-                        colors={["#1C1C1E", "#121214"]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 0, y: 1 }}
-                        style={StyleSheet.absoluteFill}
-                    />
-
                     {/* Drag indicator */}
                     <View style={styles.dragPill} />
 
                     {/* Header */}
                     <View style={styles.header}>
                         <View style={styles.iconCircle}>
-                            <Ionicons name="calendar-outline" size={20} color="#FF9500" />
+                            <Ionicons name="calendar-outline" size={18} color="#FF9F0A" />
                         </View>
                         <View style={styles.headerText}>
                             <Text style={styles.title}>MISSED WORKOUT DETECTED</Text>
@@ -82,10 +74,10 @@ export default function MissedWorkoutModal({
                                 activeOpacity={0.8}
                             >
                                 <View style={styles.optionHeader}>
-                                    <View style={[styles.badge, { backgroundColor: `${opt.badgeColor}26`, borderColor: `${opt.badgeColor}4D` }]}>
+                                    <View style={[styles.badge, { backgroundColor: `${opt.badgeColor}20`, borderColor: `${opt.badgeColor}40` }]}>
                                         <Text style={[styles.badgeText, { color: opt.badgeColor }]}>{opt.badge}</Text>
                                     </View>
-                                    <Ionicons name="chevron-forward" size={16} color="rgba(255, 255, 255, 0.4)" />
+                                    <Ionicons name="chevron-forward" size={14} color="rgba(255, 255, 255, 0.4)" />
                                 </View>
                                 <Text style={styles.optionTitle}>{opt.title}</Text>
                                 <Text style={styles.optionReason}>{opt.reason}</Text>
@@ -108,9 +100,9 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     sheet: {
-        backgroundColor: "#18181B",
-        borderTopLeftRadius: RADIUS.xl,
-        borderTopRightRadius: RADIUS.xl,
+        backgroundColor: "#161619",
+        borderTopLeftRadius: RADIUS.lg,
+        borderTopRightRadius: RADIUS.lg,
         borderTopWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.12)",
         paddingHorizontal: SPACING.base,
@@ -120,8 +112,8 @@ const styles = StyleSheet.create({
         overflow: "hidden",
     },
     dragPill: {
-        width: 36,
-        height: 4,
+        width: 32,
+        height: 3.5,
         borderRadius: 2,
         backgroundColor: "rgba(255, 255, 255, 0.2)",
         alignSelf: "center",
@@ -133,12 +125,12 @@ const styles = StyleSheet.create({
         marginBottom: SPACING.base,
     },
     iconCircle: {
-        width: 38,
-        height: 38,
-        borderRadius: 19,
-        backgroundColor: "rgba(255, 149, 0, 0.12)",
+        width: 36,
+        height: 36,
+        borderRadius: RADIUS.sm,
+        backgroundColor: "rgba(255, 159, 10, 0.12)",
         borderWidth: 1,
-        borderColor: "rgba(255, 149, 0, 0.3)",
+        borderColor: "rgba(255, 159, 10, 0.3)",
         alignItems: "center",
         justifyContent: "center",
         marginRight: 12,
@@ -147,14 +139,14 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     title: {
-        fontSize: 16,
-        fontFamily: FAMILY.display,
+        fontSize: 14,
+        fontFamily: FAMILY.chakraBold,
         color: "#FFFFFF",
-        letterSpacing: 0.5,
+        letterSpacing: 0.8,
     },
     subtitle: {
         fontSize: 11,
-        fontFamily: FAMILY.sans,
+        fontFamily: FAMILY.body,
         color: COLORS.textMuted,
         marginTop: 2,
     },
@@ -165,7 +157,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         backgroundColor: "rgba(255, 255, 255, 0.03)",
-        borderRadius: RADIUS.md,
+        borderRadius: RADIUS.sm,
         padding: 12,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.06)",
@@ -204,7 +196,7 @@ const styles = StyleSheet.create({
     },
     optionCard: {
         backgroundColor: "rgba(255, 255, 255, 0.03)",
-        borderRadius: RADIUS.lg,
+        borderRadius: RADIUS.md,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.08)",
         padding: 14,
@@ -219,7 +211,7 @@ const styles = StyleSheet.create({
     badge: {
         paddingHorizontal: 7,
         paddingVertical: 2,
-        borderRadius: 4,
+        borderRadius: RADIUS.xs,
         borderWidth: 1,
     },
     badgeText: {
@@ -228,14 +220,14 @@ const styles = StyleSheet.create({
         letterSpacing: 0.5,
     },
     optionTitle: {
-        fontSize: 13.5,
-        fontFamily: FAMILY.monoBold,
+        fontSize: 13,
+        fontFamily: FAMILY.chakraBold,
         color: "#FFFFFF",
         marginBottom: 4,
     },
     optionReason: {
         fontSize: 11,
-        fontFamily: FAMILY.sans,
+        fontFamily: FAMILY.body,
         color: COLORS.textMuted,
         lineHeight: 16,
     },

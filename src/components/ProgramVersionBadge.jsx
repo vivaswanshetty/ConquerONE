@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { COLORS, SPACING, RADIUS, FAMILY } from "../utils/theme";
 import * as Haptics from "expo-haptics";
 
@@ -28,16 +27,16 @@ export default function ProgramVersionBadge({
                 <Ionicons
                     name={isDeload ? "refresh-circle" : "git-branch-outline"}
                     size={11}
-                    color={isDeload ? "#FF9500" : COLORS.primary}
+                    color={isDeload ? "#FF9F0A" : COLORS.primary}
                     style={{ marginRight: 4 }}
                 />
-                <Text style={[styles.badgeText, isDeload && { color: "#FF9500" }]}>
+                <Text style={[styles.badgeText, isDeload && { color: "#FF9F0A" }]}>
                     {isDeload ? `DELOAD v${version}` : `v${version}`}
                 </Text>
                 <Ionicons
                     name="chevron-down"
                     size={10}
-                    color={isDeload ? "#FF9500" : COLORS.primary}
+                    color={isDeload ? "#FF9F0A" : COLORS.primary}
                     style={{ marginLeft: 3 }}
                 />
             </TouchableOpacity>
@@ -57,18 +56,11 @@ export default function ProgramVersionBadge({
                     />
 
                     <View style={styles.sheet}>
-                        <LinearGradient
-                            colors={["#1C1C1E", "#121214"]}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 0, y: 1 }}
-                            style={StyleSheet.absoluteFill}
-                        />
-
                         <View style={styles.dragPill} />
 
                         <View style={styles.header}>
                             <View style={styles.headerIcon}>
-                                <Ionicons name="git-branch" size={18} color={COLORS.primary} />
+                                <Ionicons name="git-branch" size={16} color={COLORS.primary} />
                             </View>
                             <View style={{ flex: 1 }}>
                                 <Text style={styles.sheetTitle}>PROGRAM VERSION HISTORY</Text>
@@ -106,7 +98,7 @@ export default function ProgramVersionBadge({
                                 )}
                                 {isDeload && (
                                     <View style={styles.deloadNotice}>
-                                        <Ionicons name="information-circle" size={13} color="#FF9500" style={{ marginRight: 5 }} />
+                                        <Ionicons name="information-circle" size={13} color="#FF9F0A" style={{ marginRight: 5 }} />
                                         <Text style={styles.deloadNoticeText}>
                                             Temporary 7-day deload protocol. Will revert to source version when completed.
                                         </Text>
@@ -156,17 +148,17 @@ const styles = StyleSheet.create({
         alignItems: "center",
         paddingHorizontal: 7,
         paddingVertical: 3,
-        borderRadius: 6,
+        borderRadius: RADIUS.xs,
         backgroundColor: "rgba(227, 30, 36, 0.12)",
         borderWidth: 1,
         borderColor: "rgba(227, 30, 36, 0.3)",
     },
     badgeDeload: {
-        backgroundColor: "rgba(255, 149, 0, 0.12)",
-        borderColor: "rgba(255, 149, 0, 0.3)",
+        backgroundColor: "rgba(255, 159, 10, 0.12)",
+        borderColor: "rgba(255, 159, 10, 0.3)",
     },
     badgeText: {
-        fontSize: 10.5,
+        fontSize: 10,
         fontFamily: FAMILY.monoBold,
         color: COLORS.primary,
         letterSpacing: 0.5,
@@ -180,9 +172,9 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     sheet: {
-        backgroundColor: "#18181B",
-        borderTopLeftRadius: RADIUS.xl,
-        borderTopRightRadius: RADIUS.xl,
+        backgroundColor: "#161619",
+        borderTopLeftRadius: RADIUS.lg,
+        borderTopRightRadius: RADIUS.lg,
         borderTopWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.12)",
         paddingHorizontal: SPACING.base,
@@ -192,8 +184,8 @@ const styles = StyleSheet.create({
         overflow: "hidden",
     },
     dragPill: {
-        width: 36,
-        height: 4,
+        width: 32,
+        height: 3.5,
         borderRadius: 2,
         backgroundColor: "rgba(255, 255, 255, 0.2)",
         alignSelf: "center",
@@ -205,9 +197,9 @@ const styles = StyleSheet.create({
         marginBottom: SPACING.base,
     },
     headerIcon: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
+        width: 32,
+        height: 32,
+        borderRadius: RADIUS.xs,
         backgroundColor: "rgba(227, 30, 36, 0.12)",
         borderWidth: 1,
         borderColor: "rgba(227, 30, 36, 0.3)",
@@ -216,14 +208,14 @@ const styles = StyleSheet.create({
         marginRight: 10,
     },
     sheetTitle: {
-        fontSize: 15,
-        fontFamily: FAMILY.display,
+        fontSize: 14,
+        fontFamily: FAMILY.chakraBold,
         color: "#FFFFFF",
-        letterSpacing: 0.5,
+        letterSpacing: 0.8,
     },
     sheetSubtitle: {
-        fontSize: 10.5,
-        fontFamily: FAMILY.sans,
+        fontSize: 11,
+        fontFamily: FAMILY.body,
         color: COLORS.textMuted,
         marginTop: 2,
     },
@@ -235,7 +227,7 @@ const styles = StyleSheet.create({
     },
     versionCard: {
         backgroundColor: "rgba(255, 255, 255, 0.03)",
-        borderRadius: RADIUS.md,
+        borderRadius: RADIUS.sm,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.08)",
         padding: 12,
@@ -257,18 +249,18 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     versionNumber: {
-        fontSize: 14,
+        fontSize: 13,
         fontFamily: FAMILY.monoBold,
         color: "#FFFFFF",
     },
     versionNumberMuted: {
-        fontSize: 13,
+        fontSize: 12,
         fontFamily: FAMILY.monoBold,
         color: "rgba(255, 255, 255, 0.7)",
     },
     activeTag: {
         backgroundColor: "rgba(227, 30, 36, 0.2)",
-        borderRadius: 4,
+        borderRadius: RADIUS.xs,
         paddingHorizontal: 6,
         paddingVertical: 2,
     },
@@ -285,19 +277,19 @@ const styles = StyleSheet.create({
     },
     progNameText: {
         fontSize: 12,
-        fontFamily: FAMILY.monoBold,
+        fontFamily: FAMILY.chakraBold,
         color: COLORS.textSecondary,
         marginBottom: 4,
     },
     progNameMuted: {
-        fontSize: 12,
-        fontFamily: FAMILY.mono,
+        fontSize: 11,
+        fontFamily: FAMILY.body,
         color: COLORS.textMuted,
         marginBottom: 4,
     },
     notesText: {
         fontSize: 11,
-        fontFamily: FAMILY.sans,
+        fontFamily: FAMILY.body,
         color: "rgba(255, 255, 255, 0.6)",
         lineHeight: 15,
         marginTop: 2,
@@ -319,16 +311,16 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginTop: 8,
         padding: 8,
-        borderRadius: 6,
-        backgroundColor: "rgba(255, 149, 0, 0.08)",
+        borderRadius: RADIUS.xs,
+        backgroundColor: "rgba(255, 159, 10, 0.08)",
         borderWidth: 1,
-        borderColor: "rgba(255, 149, 0, 0.2)",
+        borderColor: "rgba(255, 159, 10, 0.2)",
     },
     deloadNoticeText: {
         flex: 1,
         fontSize: 10,
-        fontFamily: FAMILY.sans,
-        color: "#FF9500",
+        fontFamily: FAMILY.body,
+        color: "#FF9F0A",
         lineHeight: 14,
     },
 });
