@@ -65,8 +65,12 @@ export const calculateEstimated1RM = (weightKg, reps, loadType = "free_weight") 
  * Extracts and normalizes session-by-session history for a specific exercise.
  * Returns chronologically sorted sessions (oldest to newest).
  */
-export const getExerciseHistory = (exerciseName, history = [], latestBodyweight = null) => {
-    if (!exerciseName || !Array.isArray(history) || history.length === 0) {
+export const getExerciseHistory = (exerciseName, history = [], latestBodyweight = null, indexedSessions = null) => {
+    if (!exerciseName) return [];
+    if (indexedSessions && indexedSessions[exerciseName]) {
+        return indexedSessions[exerciseName];
+    }
+    if (!Array.isArray(history) || history.length === 0) {
         return [];
     }
 
@@ -3180,8 +3184,8 @@ export const calculateTheilSenSlope = (points = []) => {
 /**
  * Extracts chronological native session data for an exercise without cross-metric pollution.
  */
-export const getExerciseNativeSessions = (exerciseName, history = [], latestBodyweight = null) => {
-    const rawSessions = getExerciseHistory(exerciseName, history, latestBodyweight);
+export const getExerciseNativeSessions = (exerciseName, history = [], latestBodyweight = null, indexedSessions = null) => {
+    const rawSessions = getExerciseHistory(exerciseName, history, latestBodyweight, indexedSessions);
     if (!rawSessions || rawSessions.length === 0) return [];
 
     const meta = getExerciseMetadata(exerciseName);
@@ -3284,11 +3288,12 @@ export const getExerciseNativeSessions = (exerciseName, history = [], latestBody
 export const getExercisePerformanceTrajectory = (
     exerciseName,
     history = [],
-    latestBodyweight = null
+    latestBodyweight = null,
+    indexedSessions = null
 ) => {
-    if (!exerciseName || !Array.isArray(history) || history.length === 0) {
+    if (!exerciseName) {
         return {
-            exerciseName: exerciseName || "",
+            exerciseName: "",
             loadType: "free_weight",
             metricUnit: "kg",
             sessionCount: 0,
@@ -3304,7 +3309,7 @@ export const getExercisePerformanceTrajectory = (
         };
     }
 
-    const sessions = getExerciseNativeSessions(exerciseName, history, latestBodyweight);
+    const sessions = getExerciseNativeSessions(exerciseName, history, latestBodyweight, indexedSessions);
     const meta = getExerciseMetadata(exerciseName);
     const loadType = meta?.category || (sessions[0]?.loadType || "free_weight");
 
@@ -3487,9 +3492,10 @@ export const getExercisePerformanceVelocity = (
 export const getExerciseMilestoneForecast = (
     exerciseName,
     history = [],
-    latestBodyweight = null
+    latestBodyweight = null,
+    indexedSessions = null
 ) => {
-    const trajectory = getExercisePerformanceTrajectory(exerciseName, history, latestBodyweight);
+    const trajectory = getExercisePerformanceTrajectory(exerciseName, history, latestBodyweight, indexedSessions);
 
     if (trajectory.trajectory === "INSUFFICIENT_DATA" || trajectory.sessionCount < 3) {
         return {
@@ -3585,9 +3591,9 @@ export const getExercisePlateauRisk = (
     latestBodyweight = null,
     indexedCache = null
 ) => {
-    if (!exerciseName || !Array.isArray(history) || history.length === 0) {
+    if (!exerciseName) {
         return {
-            exerciseName: exerciseName || "",
+            exerciseName: "",
             riskScore: 0,
             riskLevel: "INSUFFICIENT_DATA",
             factors: { stagnantSessions: 0, velocityDecay: false, setDropOff: false, systemicFatigue: false },
@@ -3597,7 +3603,7 @@ export const getExercisePlateauRisk = (
     }
 
     const stallStatus = getExerciseStallStatus(exerciseName, history, latestBodyweight, indexedCache);
-    const trajectory = getExercisePerformanceTrajectory(exerciseName, history, latestBodyweight);
+    const trajectory = getExercisePerformanceTrajectory(exerciseName, history, latestBodyweight, indexedCache);
 
     if (trajectory.trajectory === "INSUFFICIENT_DATA" || trajectory.sessionCount < 3) {
         return {
@@ -3673,7 +3679,8 @@ export const getExercisePlateauRisk = (
 export const getMuscleGroupResponseMatrix = (
     program = null,
     history = [],
-    latestBodyweight = null
+    latestBodyweight = null,
+    precomputedTrajectories = null
 ) => {
     const muscleMap = {};
 
@@ -3718,7 +3725,7 @@ export const getMuscleGroupResponseMatrix = (
         const mg = getExerciseMuscleGroup(exName);
         if (!muscleMap[mg]) return;
 
-        const traj = getExercisePerformanceTrajectory(exName, history, latestBodyweight);
+        const traj = precomputedTrajectories?.[exName] || getExercisePerformanceTrajectory(exName, history, latestBodyweight);
         if (traj.trajectory !== "INSUFFICIENT_DATA" && traj.sessionCount >= 3) {
             muscleMap[mg].exerciseCount += 1;
             muscleMap[mg].slopesList.push(traj.slopePerWeek);
@@ -3874,26 +3881,30 @@ export const getAthletePredictiveSummary = (
     bodyStats = [],
     readinessHistory = [],
     prRecords = {},
-    latestBodyweight = null
+    latestBodyweight = null,
+    indexedSessions = null
 ) => {
     const allExercises = getAllPlanExercises();
+    const indexed = indexedSessions || getPreIndexedExerciseSessions(history, latestBodyweight);
 
     const trajectories = [];
+    const trajectoryMap = {};
     const upcomingMilestones = [];
     const plateauRisks = [];
 
     allExercises.forEach((exName) => {
-        const traj = getExercisePerformanceTrajectory(exName, history, latestBodyweight);
+        const traj = getExercisePerformanceTrajectory(exName, history, latestBodyweight, indexed);
+        trajectoryMap[exName] = traj;
         if (traj.trajectory !== "INSUFFICIENT_DATA") {
             trajectories.push(traj);
         }
 
-        const milestone = getExerciseMilestoneForecast(exName, history, latestBodyweight);
+        const milestone = getExerciseMilestoneForecast(exName, history, latestBodyweight, indexed);
         if (milestone.status === "ON_TRACK") {
             upcomingMilestones.push(milestone);
         }
 
-        const risk = getExercisePlateauRisk(exName, history, readinessHistory, latestBodyweight);
+        const risk = getExercisePlateauRisk(exName, history, readinessHistory, latestBodyweight, indexed);
         if (risk.riskLevel === "ELEVATED_RISK" || risk.riskLevel === "MODERATE") {
             plateauRisks.push(risk);
         }
@@ -3906,7 +3917,7 @@ export const getAthletePredictiveSummary = (
     // Sort milestones by shortest horizon
     upcomingMilestones.sort((a, b) => (a.projectedWeeks || 99) - (b.projectedWeeks || 99));
 
-    const muscleResponse = getMuscleGroupResponseMatrix(program, history, latestBodyweight);
+    const muscleResponse = getMuscleGroupResponseMatrix(program, history, latestBodyweight, trajectoryMap);
     const bwCorrelation = getBodyweightPerformanceCorrelation(bodyStats, history, latestBodyweight);
 
     return {
@@ -4285,6 +4296,9 @@ export const getDailyAthleteCommand = ({
     // 6. Surface Top Actionable Alert
     const highPriorityAlert = alerts.length > 0 ? alerts[0] : null;
 
+    // 7. Check if workout completed on targetDate
+    const isCompletedToday = validWorkouts.some(w => normalizeToLocalDate(w.date || w.completedAt).dateString === targetNorm.dateString);
+
     return {
         decision,
         priority,
@@ -4292,7 +4306,9 @@ export const getDailyAthleteCommand = ({
         subtext,
         action,
         reasons,
+        isCompletedToday,
         supportingMetrics: {
+            isCompletedToday,
             totalWorkouts: validWorkouts.length,
             readinessScore,
             acwr,

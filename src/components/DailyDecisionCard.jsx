@@ -11,6 +11,7 @@ export default function DailyDecisionCard({
     onOpenWhy,
     onOpenReadiness,
     activeSession = null,
+    isCompletedToday = false,
 }) {
     if (!command) return null;
 
@@ -22,7 +23,10 @@ export default function DailyDecisionCard({
         supportingMetrics = {},
         primeTarget = null,
         recommendedWorkout = null,
+        isCompletedToday: commandCompleted = false,
     } = command;
+
+    const isDoneToday = isCompletedToday || commandCompleted;
 
     const getDecisionTheme = (dec) => {
         switch (dec) {
@@ -205,9 +209,11 @@ export default function DailyDecisionCard({
                 >
                     <Text style={[styles.ctaButtonText, { color: theme.ctaText }]}>
                         {activeSession ? "RESUME SESSION ›" : (
-                            decision === "REST_DAY" || decision === "RECOVERY_FOCUS"
-                                ? "VIEW RECOVERY ›"
-                                : "START SESSION ›"
+                            isDoneToday
+                                ? "HIT AGAIN ›"
+                                : (decision === "REST_DAY" || decision === "RECOVERY_FOCUS"
+                                    ? "VIEW RECOVERY ›"
+                                    : "START SESSION ›")
                         )}
                     </Text>
                 </TouchableOpacity>

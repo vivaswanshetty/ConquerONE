@@ -40,6 +40,8 @@ import {
     getWeeklyAthleteRecap,
     getAthleteAchievements,
     getAthleteTimelineEvents,
+    getPreIndexedExerciseSessions,
+    normalizeToLocalDate,
 } from "../utils/analytics";
 import MaskedView from "@react-native-masked-view/masked-view";
 import * as Haptics from "expo-haptics";
@@ -628,6 +630,19 @@ export default function HomeScreen({ navigation, route }) {
         return getWorkoutDayTargets(d, history, latestBodyweight);
     }, [todayDay, activeProgram, history, latestBodyweight]);
 
+    const isTodayFinished = useMemo(() => {
+        if (!total || !Array.isArray(history) || history.length === 0) return false;
+        const todayStr = normalizeToLocalDate().dateString;
+        return history.some(item => {
+            const itemDate = item.date || (item.completedAt ? item.completedAt.split("T")[0] : null);
+            return itemDate ? normalizeToLocalDate(itemDate).dateString === todayStr : false;
+        });
+    }, [total, history]);
+
+    const indexedSessions = useMemo(() => {
+        return getPreIndexedExerciseSessions(history, latestBodyweight);
+    }, [history, latestBodyweight]);
+
     const todayReadinessScore = useMemo(() => {
         return todayReadiness ? getReadinessScore(todayReadiness) : null;
     }, [todayReadiness]);
@@ -1124,6 +1139,8 @@ export default function HomeScreen({ navigation, route }) {
                         {dailyAthleteCommand && (
                             <DailyDecisionCard
                                 command={dailyAthleteCommand}
+                                isCompletedToday={isTodayFinished}
+                                indexedSessions={indexedSessions}
                                 onStartWorkout={() => {
                                     if (activeSession && activeSession.day) {
                                         navigation.navigate("ActiveWorkout", { day: activeSession.day, resume: true });
