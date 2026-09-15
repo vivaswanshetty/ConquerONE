@@ -145,7 +145,7 @@ function generateStructuredCSV(history, streak, total, totalHours) {
         "Time",
         "Day Code",
         "Target Muscle Group",
-        "Duration (Seconds)",
+        "Duration (Minutes)",
         "Duration (Formatted)",
         "Calories (kcal)",
         "Exercise Count",
@@ -153,7 +153,7 @@ function generateStructuredCSV(history, streak, total, totalHours) {
     ];
 
     const escapeCsv = (str) => {
-        if (!str) return '""';
+        if (str === undefined || str === null) return '""';
         const escaped = String(str).replace(/"/g, '""');
         return `"${escaped}"`;
     };
@@ -165,6 +165,7 @@ function generateStructuredCSV(history, streak, total, totalHours) {
         const dayCode = h.day === 0 ? "Custom" : `Day 0${h.day}`;
         const target = h.target || "Workout";
         const durSec = h.durationSec || 0;
+        const durMin = (durSec / 60).toFixed(1);
         const durFormatted = formatDuration(durSec);
         const cals = h.caloriesBurned || Math.round(durSec * 0.11);
         const exCount = h.exercises ? h.exercises.length : 0;
@@ -190,7 +191,7 @@ function generateStructuredCSV(history, streak, total, totalHours) {
             escapeCsv(timeStr),
             escapeCsv(dayCode),
             escapeCsv(target),
-            durSec,
+            durMin,
             escapeCsv(durFormatted),
             cals,
             exCount,
@@ -198,7 +199,160 @@ function generateStructuredCSV(history, streak, total, totalHours) {
         ].join(",");
     });
 
-    return [headers.join(","), ...rows].join("\n");
+    // Prepend UTF-8 BOM (\uFEFF) so Excel opens UTF-8 files seamlessly
+    return "\uFEFF" + [headers.join(","), ...rows].join("\r\n");
+}
+
+function generateStructuredExcel(history, streak, total, totalHours) {
+    const escapeXml = (str) => {
+        if (str === undefined || str === null) return "";
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&apos;");
+    };
+
+    let workoutRows = "";
+    history.forEach((h, idx) => {
+        const d = toDate(h.completedAt);
+        const dateStr = d.toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" });
+        const timeStr = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
+        const dayCode = h.day === 0 ? "Custom" : `Day 0${h.day}`;
+        const target = h.target || "Workout";
+        const durSec = h.durationSec || 0;
+        const durFormatted = formatDuration(durSec);
+        const cals = h.caloriesBurned || Math.round(durSec * 0.11);
+        const exCount = h.exercises ? h.exercises.length : 0;
+
+        let exBreakdown = "—";
+        if (h.exercises && h.exercises.length > 0) {
+            exBreakdown = h.exercises.map(ex => {
+                let sLog = "";
+                if (ex.loggedSets && ex.loggedSets.length > 0) {
+                    const setsStr = ex.loggedSets
+                        .filter(s => s.completed)
+                        .map(s => `${s.weightKg > 0 ? s.weightKg + "kg" : "BW"} × ${s.reps || 0} reps`)
+                        .join(", ");
+                    sLog = setsStr ? ` [${setsStr}]` : "";
+                }
+                return `${ex.name} (${ex.sets}s)${sLog}`;
+            }).join(" | ");
+        }
+
+        workoutRows += `
+   <Row ss:Height="20">
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">${escapeXml(dateStr)}</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">${escapeXml(timeStr)}</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">${escapeXml(dayCode)}</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">${escapeXml(target)}</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">${escapeXml(durFormatted)}</Data></Cell>
+    <Cell ss:StyleID="DataCellNum"><Data ss:Type="Number">${cals}</Data></Cell>
+    <Cell ss:StyleID="DataCellNum"><Data ss:Type="Number">${exCount}</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">${escapeXml(exBreakdown)}</Data></Cell>
+   </Row>`;
+    });
+
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+ <Styles>
+  <Style ss:ID="Default" ss:Name="Normal">
+   <Alignment ss:Vertical="Center"/>
+   <Borders/>
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#000000"/>
+   <Interior/>
+   <NumberFormat/>
+   <Protection/>
+  </Style>
+  <Style ss:ID="Header">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2" ss:Color="#333333"/>
+   </Borders>
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#FFFFFF" ss:Bold="1"/>
+   <Interior ss:Color="#1A1A1E" ss:Pattern="Solid"/>
+  </Style>
+  <Style ss:ID="HeaderAccent">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2" ss:Color="#333333"/>
+   </Borders>
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#FF9500" ss:Bold="1"/>
+   <Interior ss:Color="#1A1A1E" ss:Pattern="Solid"/>
+  </Style>
+  <Style ss:ID="DataCell">
+   <Alignment ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E5E5EA"/>
+   </Borders>
+   <Font ss:FontName="Calibri" ss:Size="10" ss:Color="#1C1C1E"/>
+  </Style>
+  <Style ss:ID="DataCellCenter">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E5E5EA"/>
+   </Borders>
+   <Font ss:FontName="Calibri" ss:Size="10" ss:Color="#1C1C1E"/>
+  </Style>
+  <Style ss:ID="DataCellNum">
+   <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E5E5EA"/>
+   </Borders>
+   <Font ss:FontName="Calibri" ss:Size="10" ss:Color="#1C1C1E"/>
+  </Style>
+ </Styles>
+ <Worksheet ss:Name="Workout History">
+  <Table>
+   <Column ss:Width="85"/>
+   <Column ss:Width="65"/>
+   <Column ss:Width="70"/>
+   <Column ss:Width="130"/>
+   <Column ss:Width="90"/>
+   <Column ss:Width="80"/>
+   <Column ss:Width="75"/>
+   <Column ss:Width="320"/>
+   <Row ss:Height="24">
+    <Cell ss:StyleID="HeaderAccent"><Data ss:Type="String">Date</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Time</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Day</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Target Group</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Duration</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Calories</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Exercises</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Detailed Sets &amp; Weights Log</Data></Cell>
+   </Row>${workoutRows}
+  </Table>
+ </Worksheet>
+ <Worksheet ss:Name="Athlete Summary">
+  <Table>
+   <Column ss:Width="180"/>
+   <Column ss:Width="120"/>
+   <Row ss:Height="24">
+    <Cell ss:StyleID="HeaderAccent"><Data ss:Type="String">Performance Metric</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Value</Data></Cell>
+   </Row>
+   <Row ss:Height="20">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Total Sessions Logged</Data></Cell>
+    <Cell ss:StyleID="DataCellNum"><Data ss:Type="Number">${total}</Data></Cell>
+   </Row>
+   <Row ss:Height="20">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Active Streak</Data></Cell>
+    <Cell ss:StyleID="DataCellNum"><Data ss:Type="String">${streak} Days</Data></Cell>
+   </Row>
+   <Row ss:Height="20">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cumulative Volume</Data></Cell>
+    <Cell ss:StyleID="DataCellNum"><Data ss:Type="String">${totalHours} Hours</Data></Cell>
+   </Row>
+  </Table>
+ </Worksheet>
+</Workbook>`;
 }
 
 function generateStructuredJSON(history, streak, total, totalHours) {
@@ -950,7 +1104,7 @@ export default function HistoryScreen({ navigation }) {
     };
 
     /* ── Export Actions ── */
-    const handleExportCSV = async () => {
+    const shareExportFile = async ({ filename, content, mimeType, uti, dialogTitle, typeKey }) => {
         if (history.length === 0) {
             showDialog({
                 title: "NO DATA",
@@ -962,121 +1116,108 @@ export default function HistoryScreen({ navigation }) {
         }
 
         try {
-            setExportingType("csv");
+            setExportingType(typeKey);
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            const csvContent = generateStructuredCSV(history, streak, total, totalHours);
-            const filename = `ConquerONE_Workouts_${new Date().toISOString().split("T")[0]}.csv`;
-            const baseDir = FileSystem.cacheDirectory || FileSystem.documentDirectory;
-            const fileUri = `${baseDir}${filename}`;
 
-            await FileSystem.writeAsStringAsync(fileUri, csvContent, {
-                encoding: FileSystem.EncodingType.UTF8,
-            });
+            const baseDir = FileSystem.documentDirectory || FileSystem.cacheDirectory;
+            let shared = false;
+
+            if (baseDir) {
+                const fileUri = `${baseDir}${filename}`;
+                await FileSystem.writeAsStringAsync(fileUri, content, {
+                    encoding: "utf8",
+                });
+
+                if (await Sharing.isAvailableAsync()) {
+                    await Sharing.shareAsync(fileUri, {
+                        mimeType,
+                        dialogTitle,
+                        UTI: uti,
+                    });
+                    shared = true;
+                }
+            }
+
+            if (!shared) {
+                await Share.share({
+                    title: dialogTitle,
+                    message: content,
+                });
+            }
 
             setExportModalVisible(false);
             setExportingType(null);
-
-            if (await Sharing.isAvailableAsync()) {
-                await Sharing.shareAsync(fileUri, {
-                    mimeType: "text/csv",
-                    dialogTitle: "Export Workout Logs (CSV)",
-                    UTI: "public.comma-separated-values-text",
-                });
-            } else {
-                await Share.share({ message: csvContent, title: "ConquerONE CSV Logs" });
-            }
         } catch (e) {
             setExportingType(null);
-            console.warn("CSV export failed", e);
-            showDialog({
-                title: "EXPORT FAILED",
-                message: "Unable to export CSV file.",
-                confirmText: "CLOSE",
-                singleButton: true,
-            });
+            console.warn(`${typeKey} export error, trying Share fallback:`, e);
+            try {
+                await Share.share({
+                    title: dialogTitle,
+                    message: content,
+                });
+                setExportModalVisible(false);
+            } catch (shareErr) {
+                showDialog({
+                    title: "EXPORT FAILED",
+                    message: `Unable to export ${typeKey.toUpperCase()} log.`,
+                    confirmText: "CLOSE",
+                    singleButton: true,
+                });
+            }
         }
     };
 
-    const handleExportJSON = async () => {
-        if (history.length === 0) {
-            showDialog({
-                title: "NO DATA",
-                message: "Complete workouts to generate export data.",
-                confirmText: "CLOSE",
-                singleButton: true,
-            });
-            return;
-        }
-
-        try {
-            setExportingType("json");
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            const jsonObject = generateStructuredJSON(history, streak, total, totalHours);
-            const jsonString = JSON.stringify(jsonObject, null, 2);
-            const filename = `ConquerONE_Backup_${new Date().toISOString().split("T")[0]}.json`;
-            const baseDir = FileSystem.cacheDirectory || FileSystem.documentDirectory;
-            const fileUri = `${baseDir}${filename}`;
-
-            await FileSystem.writeAsStringAsync(fileUri, jsonString, {
-                encoding: FileSystem.EncodingType.UTF8,
-            });
-
-            setExportModalVisible(false);
-            setExportingType(null);
-
-            if (await Sharing.isAvailableAsync()) {
-                await Sharing.shareAsync(fileUri, {
-                    mimeType: "application/json",
-                    dialogTitle: "Export Full Data Backup (JSON)",
-                    UTI: "public.json",
-                });
-            } else {
-                await Share.share({ message: jsonString, title: "ConquerONE Backup JSON" });
-            }
-        } catch (e) {
-            setExportingType(null);
-            console.warn("JSON export failed", e);
-            showDialog({
-                title: "EXPORT FAILED",
-                message: "Unable to export JSON backup.",
-                confirmText: "CLOSE",
-                singleButton: true,
-            });
-        }
+    const handleExportExcel = () => {
+        const content = generateStructuredExcel(history, streak, total, totalHours);
+        const filename = `ConquerONE_Workouts_${new Date().toISOString().split("T")[0]}.xls`;
+        shareExportFile({
+            filename,
+            content,
+            mimeType: "application/vnd.ms-excel",
+            uti: "com.microsoft.excel.xls",
+            dialogTitle: "Export Workout Logs (Excel)",
+            typeKey: "excel",
+        });
     };
 
-    const handleExportText = async () => {
-        if (history.length === 0) {
-            showDialog({
-                title: "NO DATA",
-                message: "Complete workouts to generate export data.",
-                confirmText: "CLOSE",
-                singleButton: true,
-            });
-            return;
-        }
+    const handleExportCSV = () => {
+        const content = generateStructuredCSV(history, streak, total, totalHours);
+        const filename = `ConquerONE_Workouts_${new Date().toISOString().split("T")[0]}.csv`;
+        shareExportFile({
+            filename,
+            content,
+            mimeType: "text/csv",
+            uti: "public.comma-separated-values-text",
+            dialogTitle: "Export Workout Logs (CSV)",
+            typeKey: "csv",
+        });
+    };
 
-        try {
-            setExportingType("text");
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            const textReport = generateStructuredText(history, streak, total, totalHours);
-            setExportModalVisible(false);
-            setExportingType(null);
+    const handleExportJSON = () => {
+        const jsonObject = generateStructuredJSON(history, streak, total, totalHours);
+        const content = JSON.stringify(jsonObject, null, 2);
+        const filename = `ConquerONE_Backup_${new Date().toISOString().split("T")[0]}.json`;
+        shareExportFile({
+            filename,
+            content,
+            mimeType: "application/json",
+            uti: "public.json",
+            dialogTitle: "Export Full Data Backup (JSON)",
+            typeKey: "json",
+        });
+    };
 
-            await Share.share({
-                message: textReport,
-                title: "CONQUER ONE — Athlete Performance Log",
-            });
-        } catch (e) {
-            setExportingType(null);
-            console.warn("Text export failed", e);
-            showDialog({
-                title: "EXPORT FAILED",
-                message: "Unable to share performance log.",
-                confirmText: "CLOSE",
-                singleButton: true,
-            });
-        }
+    const handleExportText = () => {
+        const textReport = generateStructuredText(history, streak, total, totalHours);
+        const filename = `ConquerONE_Report_${new Date().toISOString().split("T")[0]}.txt`;
+        shareExportFile({
+            filename,
+            content: textReport,
+            mimeType: "text/plain",
+            uti: "public.plain-text",
+            dialogTitle: "CONQUER ONE — Athlete Performance Log",
+            typeKey: "text",
+        });
     };
 
     const activeShareTarget = selectedWorkout || history[0] || {
@@ -1549,10 +1690,10 @@ export default function HistoryScreen({ navigation }) {
 
                         {/* Export Options */}
                         <View style={styles.exportOptionsList}>
-                            {/* Option 1: CSV Spreadsheet */}
+                            {/* Option 1: Excel Workbook */}
                             <TouchableOpacity
                                 style={styles.exportOptionCard}
-                                onPress={handleExportCSV}
+                                onPress={handleExportExcel}
                                 activeOpacity={0.8}
                                 disabled={exportingType !== null}
                             >
@@ -1562,36 +1703,36 @@ export default function HistoryScreen({ navigation }) {
                                     pointerEvents="none"
                                 />
                                 <View style={[styles.exportOptionIconBox, { backgroundColor: "rgba(48, 209, 88, 0.12)", borderColor: "rgba(48, 209, 88, 0.3)" }]}>
-                                    <Ionicons name="grid-outline" size={18} color="#30D158" />
+                                    <Ionicons name="document-text" size={18} color="#30D158" />
                                 </View>
                                 <View style={styles.exportOptionInfo}>
-                                    <Text style={styles.exportOptionTitle}>Spreadsheet (.CSV)</Text>
+                                    <Text style={styles.exportOptionTitle}>Excel Spreadsheet (.XLS)</Text>
                                     <Text style={styles.exportOptionDesc}>
-                                        Tabular log formatted for Excel, Google Sheets, or Notion with all sets, reps, and weights.
+                                        Multi-worksheet workbook with styled tables, workout logs, and athlete summary.
                                     </Text>
                                 </View>
                                 <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />
                             </TouchableOpacity>
 
-                            {/* Option 2: JSON Backup */}
+                            {/* Option 2: CSV Spreadsheet */}
                             <TouchableOpacity
                                 style={styles.exportOptionCard}
-                                onPress={handleExportJSON}
+                                onPress={handleExportCSV}
                                 activeOpacity={0.8}
                                 disabled={exportingType !== null}
                             >
                                 <LinearGradient
-                                    colors={["rgba(255, 149, 0, 0.08)", "transparent"]}
+                                    colors={["rgba(48, 176, 199, 0.08)", "transparent"]}
                                     style={StyleSheet.absoluteFillObject}
                                     pointerEvents="none"
                                 />
-                                <View style={[styles.exportOptionIconBox, { backgroundColor: "rgba(255, 149, 0, 0.12)", borderColor: "rgba(255, 149, 0, 0.3)" }]}>
-                                    <Ionicons name="code-slash" size={18} color="#FF9500" />
+                                <View style={[styles.exportOptionIconBox, { backgroundColor: "rgba(48, 176, 199, 0.12)", borderColor: "rgba(48, 176, 199, 0.3)" }]}>
+                                    <Ionicons name="grid-outline" size={18} color="#30B0C7" />
                                 </View>
                                 <View style={styles.exportOptionInfo}>
-                                    <Text style={styles.exportOptionTitle}>Full JSON Backup (.JSON)</Text>
+                                    <Text style={styles.exportOptionTitle}>Spreadsheet (.CSV)</Text>
                                     <Text style={styles.exportOptionDesc}>
-                                        Complete raw data payload including all exercise metadata, timestamps, and streaks.
+                                        Universal tabular data with UTF-8 BOM encoding for Google Sheets, Numbers, or Notion.
                                     </Text>
                                 </View>
                                 <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />
@@ -1605,17 +1746,41 @@ export default function HistoryScreen({ navigation }) {
                                 disabled={exportingType !== null}
                             >
                                 <LinearGradient
-                                    colors={["rgba(48, 176, 199, 0.08)", "transparent"]}
+                                    colors={["rgba(255, 149, 0, 0.08)", "transparent"]}
                                     style={StyleSheet.absoluteFillObject}
                                     pointerEvents="none"
                                 />
-                                <View style={[styles.exportOptionIconBox, { backgroundColor: "rgba(48, 176, 199, 0.12)", borderColor: "rgba(48, 176, 199, 0.3)" }]}>
-                                    <Ionicons name="document-text-outline" size={18} color="#30B0C7" />
+                                <View style={[styles.exportOptionIconBox, { backgroundColor: "rgba(255, 149, 0, 0.12)", borderColor: "rgba(255, 149, 0, 0.3)" }]}>
+                                    <Ionicons name="newspaper-outline" size={18} color="#FF9500" />
                                 </View>
                                 <View style={styles.exportOptionInfo}>
                                     <Text style={styles.exportOptionTitle}>Athlete Summary Report (.TXT)</Text>
                                     <Text style={styles.exportOptionDesc}>
                                         Clean formatted performance log ready for pasting into notes, journals, or chat.
+                                    </Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />
+                            </TouchableOpacity>
+
+                            {/* Option 4: JSON Backup */}
+                            <TouchableOpacity
+                                style={styles.exportOptionCard}
+                                onPress={handleExportJSON}
+                                activeOpacity={0.8}
+                                disabled={exportingType !== null}
+                            >
+                                <LinearGradient
+                                    colors={["rgba(191, 90, 242, 0.08)", "transparent"]}
+                                    style={StyleSheet.absoluteFillObject}
+                                    pointerEvents="none"
+                                />
+                                <View style={[styles.exportOptionIconBox, { backgroundColor: "rgba(191, 90, 242, 0.12)", borderColor: "rgba(191, 90, 242, 0.3)" }]}>
+                                    <Ionicons name="code-slash" size={18} color="#BF5AF2" />
+                                </View>
+                                <View style={styles.exportOptionInfo}>
+                                    <Text style={styles.exportOptionTitle}>Full JSON Backup (.JSON)</Text>
+                                    <Text style={styles.exportOptionDesc}>
+                                        Complete raw data payload including all exercise metadata, timestamps, and streaks.
                                     </Text>
                                 </View>
                                 <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />
