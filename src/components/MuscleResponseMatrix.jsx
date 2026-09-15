@@ -9,13 +9,13 @@ export default function MuscleResponseMatrix({ responseData = [] }) {
     const getResponseBadge = (category) => {
         switch (category) {
             case "HIGH_RESPONDER":
-                return { color: "#00E676", label: "HIGH RESPONDER", icon: "flash" };
+                return { color: "#30D158", label: "HIGH RESPONDER", icon: "flash" };
             case "EFFICIENT_PROGRESSION":
-                return { color: "#00C853", label: "EFFICIENT", icon: "trending-up" };
+                return { color: "#30D158", label: "EFFICIENT", icon: "trending-up" };
             case "FATIGUE_ACCUMULATING":
                 return { color: COLORS.primary, label: "FATIGUE ACCUMULATING", icon: "alert-circle" };
             case "LOW_VOLUME_MAINTENANCE":
-                return { color: "#FFB300", label: "MAINTENANCE", icon: "remove" };
+                return { color: "#FF9F0A", label: "MAINTENANCE", icon: "remove" };
             default:
                 return { color: COLORS.textMuted, label: "INSUFFICIENT DATA", icon: "help-circle-outline" };
         }
@@ -35,7 +35,7 @@ export default function MuscleResponseMatrix({ responseData = [] }) {
 
                             <View style={styles.metricsRow}>
                                 <Text style={styles.volumeText}>{item.volumeSets28d} sets/28d</Text>
-                                <Text style={[styles.slopeText, { color: item.averageSlope >= 0 ? "#00C853" : COLORS.primary }]}>
+                                <Text style={[styles.slopeText, { color: item.averageSlope >= 0 ? "#30D158" : COLORS.primary }]}>
                                     {item.averageSlope >= 0 ? "+" : ""}{item.averageSlope.toFixed(2)}/wk
                                 </Text>
                             </View>

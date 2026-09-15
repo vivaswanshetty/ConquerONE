@@ -31,11 +31,11 @@ export default function PerformanceTrajectoryCard({ trajectoryData }) {
     const getTrajectoryColor = (t) => {
         switch (t) {
             case "ACCELERATING":
-                return "#00E676";
+                return "#30D158";
             case "STEADY_PROGRESSION":
-                return "#00C853";
+                return "#30D158";
             case "STABLE":
-                return "#FFB300";
+                return "#FF9F0A";
             case "DECLINING":
                 return COLORS.primary;
             default:
@@ -169,7 +169,7 @@ export default function PerformanceTrajectoryCard({ trajectoryData }) {
             <View style={styles.statsRow}>
                 <View style={styles.statCol}>
                     <Text style={styles.statLabel}>VELOCITY</Text>
-                    <Text style={[styles.statValue, { color: slopePerWeek >= 0 ? "#00C853" : COLORS.primary }]}>
+                    <Text style={[styles.statValue, { color: slopePerWeek >= 0 ? "#30D158" : COLORS.primary }]}>
                         {slopePerWeek >= 0 ? "+" : ""}{slopePerWeek.toFixed(2)} <Text style={styles.statUnit}>{metricUnit}/wk</Text>
                     </Text>
                 </View>
@@ -185,9 +185,9 @@ export default function PerformanceTrajectoryCard({ trajectoryData }) {
                         <Ionicons
                             name={confidence === "HIGH" ? "checkmark-circle" : "shield-checkmark-outline"}
                             size={12}
-                            color={confidence === "HIGH" ? "#00C853" : confidence === "MEDIUM" ? "#FFB300" : COLORS.textMuted}
+                            color={confidence === "HIGH" ? "#30D158" : confidence === "MEDIUM" ? "#FF9F0A" : COLORS.textMuted}
                         />
-                        <Text style={[styles.confidenceText, { color: confidence === "HIGH" ? "#00C853" : confidence === "MEDIUM" ? "#FFB300" : COLORS.textMuted }]}>
+                        <Text style={[styles.confidenceText, { color: confidence === "HIGH" ? "#30D158" : confidence === "MEDIUM" ? "#FF9F0A" : COLORS.textMuted }]}>
                             {confidence}
                         </Text>
                     </View>

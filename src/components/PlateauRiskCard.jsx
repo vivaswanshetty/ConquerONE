@@ -21,9 +21,9 @@ export default function PlateauRiskCard({ riskData }) {
             case "ELEVATED_RISK":
                 return COLORS.primary;
             case "MODERATE":
-                return "#FF9500";
+                return "#FF9F0A";
             case "LOW":
-                return "#00C853";
+                return "#30D158";
             default:
                 return COLORS.textMuted;
         }

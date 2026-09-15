@@ -197,9 +197,9 @@ function ProgressionCurveChart({ data, weightUnit = "kg" }) {
                         {lastVal} <Text style={pc.latestUnit}>{data[data.length - 1].metricLabel}</Text>
                     </Text>
                 </View>
-                <View style={[pc.deltaBadge, { backgroundColor: diff >= 0 ? "rgba(0, 200, 83, 0.12)" : "rgba(227, 30, 36, 0.12)" }]}>
-                    <Ionicons name={diff >= 0 ? "arrow-up" : "arrow-down"} size={12} color={diff >= 0 ? "#00C853" : COLORS.primary} />
-                    <Text style={[pc.deltaText, { color: diff >= 0 ? "#00C853" : COLORS.primary }]}>
+                <View style={[pc.deltaBadge, { backgroundColor: diff >= 0 ? "rgba(48, 209, 88, 0.12)" : "rgba(227, 30, 36, 0.12)" }]}>
+                    <Ionicons name={diff >= 0 ? "arrow-up" : "arrow-down"} size={12} color={diff >= 0 ? "#30D158" : COLORS.primary} />
+                    <Text style={[pc.deltaText, { color: diff >= 0 ? "#30D158" : COLORS.primary }]}>
                         {diff >= 0 ? "+" : ""}{diff.toFixed(1)} {data[data.length - 1].metricLabel}
                     </Text>
                 </View>
@@ -810,9 +810,9 @@ export default function ProgressScreen({ navigation, route }) {
                         <View style={styles.insightsWrap}>
                             {progressInsights.map((ins) => {
                                 const insColor =
-                                    ins.type === "strength" ? "#00C853" :
+                                    ins.type === "strength" ? "#30D158" :
                                     ins.type === "consistency" ? "#38BDF8" :
-                                    ins.type === "bodyweight" ? "#FF9500" :
+                                    ins.type === "bodyweight" ? "#FF9F0A" :
                                     ins.type === "volume" ? COLORS.primary : "#EDEAE3";
                                 const insIcon =
                                     ins.type === "strength" ? "trending-up" :
@@ -929,11 +929,11 @@ export default function ProgressScreen({ navigation, route }) {
                         {/* ── 3. Plateau & Stall Registry ── */}
                         <View style={[styles.sectionHeaderRow, { marginTop: 24 }]}>
                             <View style={styles.sectionTitleGroup}>
-                                <Ionicons name="shield-checkmark" size={15} color={stallRegistry.length > 0 ? "#FF5E3A" : "#00C853"} />
+                                <Ionicons name="shield-checkmark" size={15} color={stallRegistry.length > 0 ? COLORS.primary : "#30D158"} />
                                 <Text style={styles.sectionLabel}>PLATEAU & STALL REGISTRY</Text>
                             </View>
-                            <View style={[styles.statusBadgeSmall, { backgroundColor: stallRegistry.length > 0 ? "rgba(255, 94, 58, 0.15)" : "rgba(0, 200, 83, 0.15)", borderColor: stallRegistry.length > 0 ? "rgba(255, 94, 58, 0.4)" : "rgba(0, 200, 83, 0.4)" }]}>
-                                <Text style={[styles.statusBadgeSmallText, { color: stallRegistry.length > 0 ? "#FF5E3A" : "#00C853" }]}>
+                            <View style={[styles.statusBadgeSmall, { backgroundColor: stallRegistry.length > 0 ? "rgba(227, 30, 36, 0.12)" : "rgba(48, 209, 88, 0.12)", borderColor: stallRegistry.length > 0 ? "rgba(227, 30, 36, 0.3)" : "rgba(48, 209, 88, 0.3)" }]}>
+                                <Text style={[styles.statusBadgeSmallText, { color: stallRegistry.length > 0 ? COLORS.primary : "#30D158" }]}>
                                     {stallRegistry.length > 0 ? `${stallRegistry.length} STALLED` : "ALL PROGRESSING"}
                                 </Text>
                             </View>
@@ -943,7 +943,7 @@ export default function ProgressScreen({ navigation, route }) {
                             <View style={styles.card}>
                                 <View style={styles.stallNominalRow}>
                                     <View style={styles.stallNominalIconBox}>
-                                        <Ionicons name="shield-checkmark" size={20} color="#00C853" />
+                                        <Ionicons name="shield-checkmark" size={20} color="#30D158" />
                                     </View>
                                     <View style={{ flex: 1 }}>
                                         <Text style={styles.stallNominalTitle}>ALL MOVEMENTS PROGRESSING NORMALLY</Text>
@@ -1088,8 +1088,8 @@ export default function ProgressScreen({ navigation, route }) {
                                         {weeklySummary.completedWorkouts} of {weeklySummary.plannedWorkouts} Workouts Completed
                                     </Text>
                                 </View>
-                                <View style={[styles.adherenceBadge, { backgroundColor: weeklySummary.adherenceRate >= 80 ? "rgba(0, 200, 83, 0.15)" : "rgba(227, 30, 36, 0.15)" }]}>
-                                    <Text style={[styles.adherenceText, { color: weeklySummary.adherenceRate >= 80 ? "#00C853" : COLORS.primary }]}>
+                                <View style={[styles.adherenceBadge, { backgroundColor: weeklySummary.adherenceRate >= 80 ? "rgba(48, 209, 88, 0.12)" : "rgba(227, 30, 36, 0.12)" }]}>
+                                    <Text style={[styles.adherenceText, { color: weeklySummary.adherenceRate >= 80 ? "#30D158" : COLORS.primary }]}>
                                         {weeklySummary.adherenceRate}% ADHERENCE
                                     </Text>
                                 </View>
@@ -1143,7 +1143,7 @@ export default function ProgressScreen({ navigation, route }) {
                                 const inRange = count >= 10 && count <= 20;
                                 const aboveRange = count > 20;
 
-                                const barColor = inRange ? "#00C853" : aboveRange ? "#FF9500" : count > 0 ? COLORS.primary : COLORS.border;
+                                const barColor = inRange ? "#30D158" : aboveRange ? "#FF9F0A" : count > 0 ? COLORS.primary : COLORS.border;
 
                                 return (
                                     <View key={item.muscleGroup} style={[styles.muscleVolRow, idx < weeklyMuscleVolumes.length - 1 && styles.muscleVolRowBorder]}>
@@ -1329,15 +1329,15 @@ export default function ProgressScreen({ navigation, route }) {
                         {/* ── 3. Movement Friction & Plateau Risk ── */}
                         <View style={[styles.sectionHeaderRow, { marginTop: 28 }]}>
                             <View style={styles.sectionTitleGroup}>
-                                <Ionicons name="shield-alert-outline" size={15} color={COLORS.primary} />
+                                <Ionicons name="alert-circle-outline" size={15} color={COLORS.primary} />
                                 <Text style={styles.sectionLabel}>MOVEMENT FRICTION & PLATEAU RADAR</Text>
                             </View>
                             <View style={[styles.statusBadgeSmall, {
-                                backgroundColor: predictiveSummary.plateauRiskMovements.length === 0 ? "rgba(0, 200, 83, 0.15)" : "rgba(255, 94, 58, 0.15)",
-                                borderColor: predictiveSummary.plateauRiskMovements.length === 0 ? "rgba(0, 200, 83, 0.4)" : "rgba(255, 94, 58, 0.4)"
+                                backgroundColor: predictiveSummary.plateauRiskMovements.length === 0 ? "rgba(48, 209, 88, 0.12)" : "rgba(227, 30, 36, 0.12)",
+                                borderColor: predictiveSummary.plateauRiskMovements.length === 0 ? "rgba(48, 209, 88, 0.3)" : "rgba(227, 30, 36, 0.3)"
                             }]}>
                                 <Text style={[styles.statusBadgeSmallText, {
-                                    color: predictiveSummary.plateauRiskMovements.length === 0 ? "#00C853" : "#FF5E3A"
+                                    color: predictiveSummary.plateauRiskMovements.length === 0 ? "#30D158" : COLORS.primary
                                 }]}>
                                     {predictiveSummary.plateauRiskMovements.length === 0 ? "ALL MOVEMENTS NOMINAL" : `${predictiveSummary.plateauRiskMovements.length} MOVEMENT(S) AT RISK`}
                                 </Text>
@@ -1352,7 +1352,7 @@ export default function ProgressScreen({ navigation, route }) {
                             ) : (
                                 <View style={styles.stallNominalRow}>
                                     <View style={styles.stallNominalIconBox}>
-                                        <Ionicons name="checkmark-circle-outline" size={20} color="#00C853" />
+                                        <Ionicons name="checkmark-circle-outline" size={20} color="#30D158" />
                                     </View>
                                     <View style={{ flex: 1 }}>
                                         <Text style={styles.stallNominalTitle}>Zero Plateau Friction Detected</Text>
@@ -1404,7 +1404,7 @@ export default function ProgressScreen({ navigation, route }) {
                                 </View>
                                 <View style={styles.summaryMetricDivider} />
                                 <View style={styles.loadGridCol}>
-                                    <Text style={[styles.loadGridVal, { color: predictiveSummary.bodyweightCorrelation.strengthVelocityAvg >= 0 ? "#00C853" : COLORS.primary }]}>
+                                    <Text style={[styles.loadGridVal, { color: predictiveSummary.bodyweightCorrelation.strengthVelocityAvg >= 0 ? "#30D158" : COLORS.primary }]}>
                                         {predictiveSummary.bodyweightCorrelation.strengthVelocityAvg >= 0 ? "+" : ""}
                                         {predictiveSummary.bodyweightCorrelation.strengthVelocityAvg} kg/wk
                                     </Text>
@@ -1478,7 +1478,7 @@ export default function ProgressScreen({ navigation, route }) {
                                         </Text>
                                         <View style={styles.physiqueDeltaRow}>
                                             {delta != null ? (
-                                                <Text style={[styles.physiqueDeltaText, { color: delta >= 0 ? "#00C853" : COLORS.primary }]}>
+                                                <Text style={[styles.physiqueDeltaText, { color: delta >= 0 ? "#30D158" : COLORS.primary }]}>
                                                     {delta >= 0 ? "+" : ""}{delta} {f.unit} {pct != null ? `(${pct >= 0 ? "+" : ""}${pct}%)` : ""}
                                                 </Text>
                                             ) : (
@@ -1774,27 +1774,27 @@ const styles = StyleSheet.create({
     deloadObsBullet: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.textMuted },
 
     stallNominalRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 4 },
-    stallNominalIconBox: { width: 36, height: 36, borderRadius: RADIUS.sm, backgroundColor: "rgba(0, 200, 83, 0.12)", alignItems: "center", justifyContent: "center" },
-    stallNominalTitle: { fontSize: 12, fontFamily: FAMILY.monoBold, color: "#00C853", letterSpacing: 0.5 },
+    stallNominalIconBox: { width: 36, height: 36, borderRadius: RADIUS.sm, backgroundColor: "rgba(48, 209, 88, 0.12)", alignItems: "center", justifyContent: "center" },
+    stallNominalTitle: { fontSize: 12, fontFamily: FAMILY.monoBold, color: "#30D158", letterSpacing: 0.5 },
     stallNominalSub: { fontSize: 11, fontFamily: FAMILY.regular, color: COLORS.textMuted, marginTop: 3, lineHeight: 15 },
 
     stallCard: { backgroundColor: COLORS.bgCard, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, padding: 14 },
     stallCardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 },
     stallCardExName: { fontSize: 12, fontFamily: FAMILY.bold, color: COLORS.text },
     stallCardMeta: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.textMuted, marginTop: 2 },
-    stallBadge: { backgroundColor: "rgba(255, 94, 58, 0.15)", borderColor: "rgba(255, 94, 58, 0.4)", borderWidth: 1, paddingHorizontal: 6, paddingVertical: 2, borderRadius: RADIUS.xs },
-    stallBadgeText: { fontSize: 8.5, fontFamily: FAMILY.monoBold, color: "#FF5E3A" },
+    stallBadge: { backgroundColor: "rgba(227, 30, 36, 0.12)", borderColor: "rgba(227, 30, 36, 0.3)", borderWidth: 1, paddingHorizontal: 6, paddingVertical: 2, borderRadius: RADIUS.xs },
+    stallBadgeText: { fontSize: 8.5, fontFamily: FAMILY.monoBold, color: COLORS.primary },
     stallCardDesc: { fontSize: 11, fontFamily: FAMILY.regular, color: COLORS.textSub, lineHeight: 15, marginBottom: 8 },
-    stallActionBox: { flexDirection: "row", alignItems: "flex-start", gap: 6, backgroundColor: "rgba(255, 149, 0, 0.08)", padding: 8, borderRadius: RADIUS.xs },
-    stallActionText: { flex: 1, fontSize: 10.5, fontFamily: FAMILY.regular, color: "#FF9500", lineHeight: 14 },
+    stallActionBox: { flexDirection: "row", alignItems: "flex-start", gap: 6, backgroundColor: "rgba(255, 159, 10, 0.08)", padding: 8, borderRadius: RADIUS.xs },
+    stallActionText: { flex: 1, fontSize: 10.5, fontFamily: FAMILY.regular, color: "#FF9F0A", lineHeight: 14 },
 
     profileSectionTitle: { fontSize: 10, fontFamily: FAMILY.monoBold, color: COLORS.textMuted, letterSpacing: 0.8, marginBottom: 8 },
     progProfileRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 },
     progProfileBorder: { borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.03)" },
     progProfileExName: { fontSize: 12, fontFamily: FAMILY.medium, color: COLORS.text },
     progProfileSub: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.textMuted, marginTop: 2 },
-    gainPill: { backgroundColor: "rgba(0, 200, 83, 0.12)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.xs, borderWidth: 1, borderColor: "rgba(0, 200, 83, 0.3)" },
-    gainPillText: { fontSize: 10, fontFamily: FAMILY.monoBold, color: "#00C853" },
+    gainPill: { backgroundColor: "rgba(48, 209, 88, 0.12)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.xs, borderWidth: 1, borderColor: "rgba(48, 209, 88, 0.3)" },
+    gainPillText: { fontSize: 10, fontFamily: FAMILY.monoBold, color: "#30D158" },
     profileDivider: { height: 1, backgroundColor: "rgba(255,255,255,0.04)", marginVertical: 12 },
     consistencyRow: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
     weekdayChip: { backgroundColor: "rgba(255,255,255,0.03)", borderRadius: RADIUS.xs, paddingHorizontal: 8, paddingVertical: 5, borderWidth: 1, borderColor: COLORS.border },

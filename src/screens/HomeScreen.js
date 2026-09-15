@@ -2891,7 +2891,7 @@ const styles = StyleSheet.create({
         width: 7,
         height: 7,
         borderRadius: 3.5,
-        backgroundColor: "#FF5E3A",
+        backgroundColor: COLORS.primary,
     },
     heroBadgeText: {
         fontSize: 10.5,
@@ -3167,17 +3167,17 @@ const styles = StyleSheet.create({
         marginTop: 2,
     },
     recentProgDeltaBadge: {
-        backgroundColor: "rgba(0, 200, 83, 0.12)",
+        backgroundColor: "rgba(48, 209, 88, 0.12)",
         paddingHorizontal: 8,
         paddingVertical: 4,
-        borderRadius: RADIUS.pill,
+        borderRadius: RADIUS.xs,
         borderWidth: 1,
-        borderColor: "rgba(0, 200, 83, 0.25)",
+        borderColor: "rgba(48, 209, 88, 0.25)",
     },
     recentProgDeltaText: {
         fontSize: 9.5,
         fontFamily: FAMILY.monoBold,
-        color: "#00C853",
+        color: "#30D158",
         letterSpacing: 0.3,
     },
     emptyRecentProg: {

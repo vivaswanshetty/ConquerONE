@@ -49,8 +49,8 @@ export default function MilestoneForecastCard({ milestoneData }) {
                     <Text style={styles.exerciseName} numberOfLines={1}>{exerciseName}</Text>
                     <Text style={styles.subText}>{loadType?.toUpperCase().replace("_", " ")} MILESTONE</Text>
                 </View>
-                <View style={[styles.horizonBadge, { backgroundColor: "rgba(0, 200, 83, 0.12)", borderColor: "rgba(0, 200, 83, 0.3)" }]}>
-                    <Ionicons name="time-outline" size={12} color="#00C853" />
+                <View style={[styles.horizonBadge, { backgroundColor: "rgba(48, 209, 88, 0.12)", borderColor: "rgba(48, 209, 88, 0.3)" }]}>
+                    <Ionicons name="time-outline" size={12} color="#30D158" />
                     <Text style={styles.horizonText}>~{projectedWeeks} WKS</Text>
                 </View>
             </View>
@@ -83,7 +83,7 @@ export default function MilestoneForecastCard({ milestoneData }) {
             <View style={styles.footerRow}>
                 <Text style={styles.rationaleText} numberOfLines={2}>{rationale}</Text>
                 <View style={styles.confWrap}>
-                    <Text style={[styles.confText, { color: confidence === "HIGH" ? "#00C853" : "#FFB300" }]}>
+                    <Text style={[styles.confText, { color: confidence === "HIGH" ? "#30D158" : "#FF9F0A" }]}>
                         {confidence} CONFIDENCE
                     </Text>
                 </View>

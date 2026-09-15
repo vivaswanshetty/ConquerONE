@@ -36,7 +36,7 @@ export default function ExerciseTargetCard({ targetInfo, compact = false }) {
         lastSetSummary,
     } = targetInfo;
 
-    const badgeColor = rawBadgeColor || (recommendation === "INCREASE_LOAD" ? "#00C853" : "#30B0C7");
+    const badgeColor = rawBadgeColor || (recommendation === "INCREASE_LOAD" ? "#30D158" : "#30B0C7");
     const displayBadge = statusBadge || badgeText || "TARGET";
 
     // Formatting helpers
@@ -184,17 +184,17 @@ const styles = StyleSheet.create({
         textTransform: "uppercase",
     },
     stalledPill: {
-        backgroundColor: "rgba(255, 149, 0, 0.15)",
+        backgroundColor: "rgba(255, 159, 10, 0.12)",
         paddingHorizontal: 6,
         paddingVertical: 2,
         borderRadius: 4,
         borderWidth: 1,
-        borderColor: "rgba(255, 149, 0, 0.4)",
+        borderColor: "rgba(255, 159, 10, 0.3)",
     },
     stalledPillText: {
         fontFamily: FAMILY.monoBold,
         fontSize: 9,
-        color: "#FF9500",
+        color: "#FF9F0A",
         letterSpacing: 0.5,
     },
     comparisonGrid: {

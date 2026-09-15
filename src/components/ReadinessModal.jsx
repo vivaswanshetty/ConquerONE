@@ -101,10 +101,10 @@ export default function ReadinessModal({ visible, onClose, onSaved }) {
     );
 
     const getScoreColor = (score) => {
-        if (score >= 80) return "#00C853";
+        if (score >= 80) return "#30D158";
         if (score >= 60) return "#30B0C7";
-        if (score >= 40) return "#FF9500";
-        return "#FF5E3A";
+        if (score >= 40) return "#FF9F0A";
+        return COLORS.primary;
     };
 
     const handleSave = async () => {
