@@ -817,21 +817,33 @@ export default function ProgressScreen({ navigation, route }) {
                                     />
                                     <View style={styles.loadGrid}>
                                         <View style={styles.loadGridCol}>
-                                            <Text style={styles.loadGridVal}>{longTermProfile.volumeResponseTier || "OPTIMAL"}</Text>
-                                            <Text style={styles.loadGridLabel}>VOLUME RESPONSE</Text>
-                                            <Text style={styles.profileSubMini}>{longTermProfile.meanWeeklySets ?? 0} sets/wk</Text>
+                                            <View style={styles.metricValBox}>
+                                                <Text style={styles.loadGridVal} numberOfLines={1} adjustsFontSizeToFit>
+                                                    {(longTermProfile.volumeResponseTier || "OPTIMAL").replace(/\s*RESPONSE/i, "").trim()}
+                                                </Text>
+                                            </View>
+                                            <Text style={styles.loadGridLabel} numberOfLines={1}>VOLUME RESPONSE</Text>
+                                            <Text style={styles.profileSubMini} numberOfLines={1}>{longTermProfile.meanWeeklySets ?? 0} sets/wk</Text>
                                         </View>
-                                        <View style={styles.summaryMetricDivider} />
+                                        <View style={styles.profileMetricDivider} />
                                         <View style={styles.loadGridCol}>
-                                            <Text style={[styles.loadGridVal, { color: "#30D158" }]}>{longTermProfile.progressionRatePercent ?? 0}%</Text>
-                                            <Text style={styles.loadGridLabel}>PROGRESSION RATE</Text>
-                                            <Text style={styles.profileSubMini}>Across load types</Text>
+                                            <View style={styles.metricValBox}>
+                                                <Text style={[styles.loadGridVal, { color: "#30D158" }]} numberOfLines={1}>
+                                                    {longTermProfile.progressionRatePercent ?? 0}%
+                                                </Text>
+                                            </View>
+                                            <Text style={styles.loadGridLabel} numberOfLines={1}>PROGRESSION RATE</Text>
+                                            <Text style={styles.profileSubMini} numberOfLines={1}>Across load types</Text>
                                         </View>
-                                        <View style={styles.summaryMetricDivider} />
+                                        <View style={styles.profileMetricDivider} />
                                         <View style={styles.loadGridCol}>
-                                            <Text style={styles.loadGridVal}>{longTermProfile.consistencyTier || "HIGH"}</Text>
-                                            <Text style={styles.loadGridLabel}>CONSISTENCY</Text>
-                                            <Text style={styles.profileSubMini}>{longTermProfile.meanWeeklyWorkouts ?? 0} workouts/wk</Text>
+                                            <View style={styles.metricValBox}>
+                                                <Text style={styles.loadGridVal} numberOfLines={1} adjustsFontSizeToFit>
+                                                    {longTermProfile.consistencyTier || "HIGH"}
+                                                </Text>
+                                            </View>
+                                            <Text style={styles.loadGridLabel} numberOfLines={1}>CONSISTENCY</Text>
+                                            <Text style={styles.profileSubMini} numberOfLines={1}>{longTermProfile.meanWeeklyWorkouts ?? 0} workouts/wk</Text>
                                         </View>
                                     </View>
 
@@ -842,10 +854,22 @@ export default function ProgressScreen({ navigation, route }) {
                                     <View style={styles.taxonomyRatesGrid}>
                                         {Object.entries(longTermProfile.loadTypeProgressionRates || {}).map(([type, stats]) => (
                                             <View key={type} style={styles.taxRateItem}>
-                                                <Text style={styles.taxRateLabel}>{type.replace(/_/g, " ").toUpperCase()}</Text>
-                                                <Text style={styles.taxRateVal}>
-                                                    {stats.rate}% <Text style={{ fontSize: 9, color: COLORS.textMuted }}>({stats.count})</Text>
+                                                <LinearGradient
+                                                    colors={["rgba(255, 255, 255, 0.03)", "transparent"]}
+                                                    start={{ x: 0, y: 0 }}
+                                                    end={{ x: 0, y: 1 }}
+                                                    style={StyleSheet.absoluteFill}
+                                                    pointerEvents="none"
+                                                />
+                                                <Text style={styles.taxRateLabel} numberOfLines={1} adjustsFontSizeToFit>
+                                                    {type.replace(/_/g, " ").toUpperCase()}
                                                 </Text>
+                                                <View style={styles.taxRateValRow}>
+                                                    <Text style={[styles.taxRateVal, stats.rate > 0 && { color: "#30D158" }]}>
+                                                        {stats.rate > 0 ? `+${stats.rate}%` : `${stats.rate}%`}
+                                                    </Text>
+                                                    <Text style={styles.taxRateCount}>({stats.count})</Text>
+                                                </View>
                                             </View>
                                         ))}
                                     </View>
@@ -1866,14 +1890,14 @@ const styles = StyleSheet.create({
     stallActionBox: { flexDirection: "row", alignItems: "flex-start", gap: 6, backgroundColor: "rgba(255, 159, 10, 0.08)", padding: 8, borderRadius: RADIUS.xs },
     stallActionText: { flex: 1, fontSize: 10.5, fontFamily: FAMILY.regular, color: "#FF9F0A", lineHeight: 14 },
 
-    profileSectionTitle: { fontSize: 10, fontFamily: FAMILY.monoBold, color: COLORS.textMuted, letterSpacing: 0.8, marginBottom: 8 },
+    profileSectionTitle: { fontSize: 10, fontFamily: FAMILY.monoBold, color: COLORS.textMuted, letterSpacing: 0.8, marginBottom: 10 },
     progProfileRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 6 },
     progProfileBorder: { borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.03)" },
     progProfileExName: { fontSize: 12, fontFamily: FAMILY.medium, color: COLORS.text },
     progProfileSub: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.textMuted, marginTop: 2 },
     gainPill: { backgroundColor: "rgba(48, 209, 88, 0.12)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.xs, borderWidth: 1, borderColor: "rgba(48, 209, 88, 0.3)" },
     gainPillText: { fontSize: 10, fontFamily: FAMILY.monoBold, color: "#30D158" },
-    profileDivider: { height: 1, backgroundColor: "rgba(255,255,255,0.04)", marginVertical: 12 },
+    profileDivider: { height: 1, backgroundColor: "rgba(255,255,255,0.07)", marginVertical: 14 },
     consistencyRow: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
     weekdayChip: { backgroundColor: "rgba(255,255,255,0.03)", borderRadius: RADIUS.xs, paddingHorizontal: 8, paddingVertical: 5, borderWidth: 1, borderColor: COLORS.border },
     weekdayName: { fontSize: 9.5, fontFamily: FAMILY.monoBold, color: COLORS.text },
@@ -1886,15 +1910,17 @@ const styles = StyleSheet.create({
     distGrid: {
         flexDirection: "row",
         flexWrap: "wrap",
-        gap: 8,
+        justifyContent: "space-between",
+        rowGap: 8,
     },
     distCell: {
-        width: (CARD_W - 36 - 16) / 3,
-        backgroundColor: "rgba(255, 255, 255, 0.02)",
-        borderRadius: RADIUS.sm,
+        width: "31.5%",
+        backgroundColor: "#0A0A0D",
+        borderRadius: 10,
         borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.05)",
+        borderColor: "rgba(255, 255, 255, 0.09)",
         padding: 8,
+        overflow: "hidden",
     },
     distMuscleText: {
         fontSize: 8.5,
@@ -1946,36 +1972,63 @@ const styles = StyleSheet.create({
     },
 
     // Phase 4 Long-Term Profile Styles
+    metricValBox: {
+        height: 26,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    profileMetricDivider: {
+        width: 1,
+        height: 36,
+        backgroundColor: "rgba(255, 255, 255, 0.08)",
+    },
     profileSubMini: {
-        fontSize: 8.5,
+        fontSize: 9,
         fontFamily: FAMILY.mono,
-        color: "rgba(255, 255, 255, 0.4)",
-        marginTop: 2,
+        color: "rgba(255, 255, 255, 0.45)",
+        marginTop: 3,
         includeFontPadding: false,
     },
     taxonomyRatesGrid: {
         flexDirection: "row",
         flexWrap: "wrap",
-        gap: 8,
+        justifyContent: "space-between",
+        rowGap: 8,
     },
     taxRateItem: {
-        width: (CARD_W - 36 - 8) / 2,
-        backgroundColor: "rgba(255, 255, 255, 0.02)",
-        borderRadius: RADIUS.sm,
+        width: "48.6%",
+        backgroundColor: "#0A0A0D",
+        borderRadius: 12,
         borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.05)",
-        padding: 8,
+        borderColor: "rgba(255, 255, 255, 0.09)",
+        paddingVertical: 10,
+        paddingHorizontal: 12,
+        overflow: "hidden",
     },
     taxRateLabel: {
-        fontSize: 8,
+        fontSize: 9,
         fontFamily: FAMILY.monoBold,
         color: COLORS.textMuted,
-        marginBottom: 2,
+        letterSpacing: 0.6,
+        marginBottom: 4,
+    },
+    taxRateValRow: {
+        flexDirection: "row",
+        alignItems: "baseline",
+        gap: 5,
     },
     taxRateVal: {
-        fontSize: 12,
+        fontSize: 15,
         fontFamily: FAMILY.monoBold,
         color: "#FFFFFF",
+        fontVariant: ["tabular-nums"],
+        includeFontPadding: false,
+    },
+    taxRateCount: {
+        fontSize: 9.5,
+        fontFamily: FAMILY.mono,
+        color: COLORS.textMuted,
+        includeFontPadding: false,
     },
     resetProgramBtn: {
         flexDirection: "row",

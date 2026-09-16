@@ -3031,7 +3031,7 @@ export const getAthleteLongTermProfile = (
     const meanWeeklySets = Math.round(totalWorkingSets / weeksCount);
     const meanWeeklyWorkouts = progSummary.weeklyTrainingFrequency || (Math.round((totalWorkouts / weeksCount) * 10) / 10);
 
-    const volumeResponseTier = meanWeeklySets >= 20 ? "HIGH RESPONSE" : (meanWeeklySets >= 8 ? "OPTIMAL" : "MODERATE");
+    const volumeResponseTier = meanWeeklySets >= 20 ? "HIGH" : (meanWeeklySets >= 8 ? "OPTIMAL" : "MODERATE");
     const consistencyTier = (meanWeeklyWorkouts >= 4 || totalWorkouts >= 15) ? "HIGH" : (meanWeeklyWorkouts >= 2.5 ? "CONSISTENT" : "BUILDING");
 
     const progressionRatePercent = progSummary.progressionRatio != null
