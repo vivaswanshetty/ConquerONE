@@ -192,13 +192,13 @@ export default function DailyDecisionCard({
                     <View style={styles.primeTargetBox}>
                         <View style={[styles.primeAccentStripe, { backgroundColor: theme.badgeColor }]} />
                         <View style={styles.primeTargetHeader}>
-                            <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+                            <View style={styles.primeTargetTagWrap}>
                                 <Ionicons name="trending-up" size={12} color="#30D158" />
-                                <Text style={styles.primeTargetTag}>PRIME PROGRESSION TARGET</Text>
+                                <Text style={styles.primeTargetTag} numberOfLines={1}>PRIME TARGET</Text>
                             </View>
                             {primeTarget.actionLabel && (
                                 <View style={styles.primeTargetActionPill}>
-                                    <Text style={styles.primeTargetAction}>{primeTarget.actionLabel}</Text>
+                                    <Text style={styles.primeTargetAction} numberOfLines={1}>{primeTarget.actionLabel}</Text>
                                 </View>
                             )}
                         </View>
@@ -369,7 +369,15 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
+        flexWrap: "wrap",
+        gap: 6,
         marginBottom: 4,
+    },
+    primeTargetTagWrap: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 5,
+        flexShrink: 1,
     },
     primeTargetTag: {
         fontSize: 9,
