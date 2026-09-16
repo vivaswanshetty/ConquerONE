@@ -1141,6 +1141,8 @@ export default function HomeScreen({ navigation, route }) {
                                 command={dailyAthleteCommand}
                                 isCompletedToday={isTodayFinished}
                                 indexedSessions={indexedSessions}
+                                todayWorkout={todayWorkout}
+                                headerImage={todayWorkout?.headerImage}
                                 onStartWorkout={() => {
                                     if (activeSession && activeSession.day) {
                                         navigation.navigate("ActiveWorkout", { day: activeSession.day, resume: true });
@@ -2915,6 +2917,8 @@ const styles = StyleSheet.create({
         fontFamily: FAMILY.bold,
         color: "#FFFFFF",
         letterSpacing: 1.2,
+        includeFontPadding: false,
+        textAlignVertical: "center",
     },
     heroTitle: {
         fontSize: 26,
@@ -2923,12 +2927,14 @@ const styles = StyleSheet.create({
         letterSpacing: 0.6,
         lineHeight: 30,
         marginTop: 4,
+        includeFontPadding: false,
     },
     heroSub: {
         fontSize: 12,
         fontFamily: FAMILY.regular,
         color: COLORS.textSub,
         marginTop: 4,
+        includeFontPadding: false,
     },
     heroMetaRow: {
         flexDirection: "row",
@@ -2945,12 +2951,15 @@ const styles = StyleSheet.create({
         color: COLORS.textMuted,
         letterSpacing: 1,
         textTransform: "uppercase",
+        includeFontPadding: false,
     },
     heroMetaValue: {
         fontSize: 13,
         fontFamily: FAMILY.monoBold,
         color: "#FFFFFF",
         letterSpacing: 0.5,
+        includeFontPadding: false,
+        textAlignVertical: "center",
     },
     heroCta: {
         height: 42,
@@ -2963,6 +2972,8 @@ const styles = StyleSheet.create({
         fontFamily: FAMILY.bold,
         color: "#FFFFFF",
         letterSpacing: 0.2,
+        includeFontPadding: false,
+        textAlignVertical: "center",
     },
 
     // Unified Horizontal Dashboard Card

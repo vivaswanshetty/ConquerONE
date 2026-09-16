@@ -89,7 +89,9 @@ const styles = StyleSheet.create({
     },
     badge: {
         paddingHorizontal: 7,
-        paddingVertical: 2,
+        height: 20,
+        justifyContent: "center",
+        alignItems: "center",
         borderRadius: 4,
         borderWidth: 1,
     },
@@ -98,6 +100,8 @@ const styles = StyleSheet.create({
         fontSize: 9,
         letterSpacing: 0.5,
         textTransform: "uppercase",
+        includeFontPadding: false,
+        textAlignVertical: "center",
     },
     messageText: {
         fontFamily: FAMILY.body,

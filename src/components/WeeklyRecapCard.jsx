@@ -111,7 +111,9 @@ const styles = StyleSheet.create({
     adherencePill: {
         backgroundColor: "rgba(255, 255, 255, 0.04)",
         paddingHorizontal: 7,
-        paddingVertical: 2.5,
+        height: 20,
+        justifyContent: "center",
+        alignItems: "center",
         borderRadius: RADIUS.xs,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.06)",
@@ -121,6 +123,8 @@ const styles = StyleSheet.create({
         fontFamily: FAMILY.monoBold,
         color: COLORS.textSub,
         letterSpacing: 0.3,
+        includeFontPadding: false,
+        textAlignVertical: "center",
     },
     metricsRow: {
         flexDirection: "row",

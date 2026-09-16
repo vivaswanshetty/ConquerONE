@@ -155,8 +155,9 @@ const styles = StyleSheet.create({
     versionBadge: {
         flexDirection: "row",
         alignItems: "center",
+        justifyContent: "center",
         paddingHorizontal: 7,
-        paddingVertical: 3,
+        height: 22,
         borderRadius: RADIUS.xs,
         backgroundColor: "rgba(227, 30, 36, 0.1)",
         borderWidth: 1,
@@ -171,6 +172,8 @@ const styles = StyleSheet.create({
         fontFamily: FAMILY.monoBold,
         color: COLORS.primary,
         letterSpacing: 0.3,
+        includeFontPadding: false,
+        textAlignVertical: "center",
     },
     metricsGrid: {
         flexDirection: "row",
