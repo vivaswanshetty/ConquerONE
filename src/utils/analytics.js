@@ -3871,6 +3871,11 @@ export const getBodyweightPerformanceCorrelation = (
     };
 };
 
+let _predictiveSummaryCache = {
+    key: "",
+    result: null,
+};
+
 /**
  * Master Phase 5 Predictive Intelligence summary.
  * Compiles a structured, deterministic payload for UI cards and the Gemini AI coach context.
@@ -3884,6 +3889,11 @@ export const getAthletePredictiveSummary = (
     latestBodyweight = null,
     indexedSessions = null
 ) => {
+    const cacheKey = `${history?.length || 0}_${history?.[0]?.completedAt || history?.[0]?.date || ""}_${bodyStats?.length || 0}_${bodyStats?.[0]?.date || ""}_${readinessHistory?.length || 0}_${readinessHistory?.[0]?.date || ""}_${program?.id || ""}_${program?.updatedAt || ""}_${latestBodyweight}`;
+    if (_predictiveSummaryCache.key === cacheKey && _predictiveSummaryCache.result) {
+        return _predictiveSummaryCache.result;
+    }
+
     const allExercises = getAllPlanExercises();
     const indexed = indexedSessions || getPreIndexedExerciseSessions(history, latestBodyweight);
 
@@ -3893,6 +3903,37 @@ export const getAthletePredictiveSummary = (
     const plateauRisks = [];
 
     allExercises.forEach((exName) => {
+        const exKey = (exName || "").toLowerCase().trim();
+        const exSessions = indexed ? indexed[exKey] : null;
+
+        // Skip heavy Theil-Sen regressions for exercises with < 2 logged sessions
+        if (!exSessions || exSessions.length < 2) {
+            const meta = getExerciseMetadata(exName);
+            const loadType = meta?.category || "free_weight";
+            let metricUnit = "kg";
+            if (loadType === "bodyweight") metricUnit = "reps";
+            else if (loadType === "timed") metricUnit = "s";
+            else if (loadType === "weighted_bodyweight") metricUnit = "+kg";
+            else if (loadType === "assisted_bodyweight") metricUnit = "-kg assist";
+
+            trajectoryMap[exName] = {
+                exerciseName: exName,
+                loadType,
+                metricUnit,
+                sessionCount: exSessions ? exSessions.length : 0,
+                slopePerWeek: 0,
+                recentSlopePerWeek: 0,
+                rSquared: 0,
+                trajectory: "INSUFFICIENT_DATA",
+                confidence: "INSUFFICIENT_DATA",
+                currentBaseline: null,
+                projectedIn4Weeks: null,
+                projectedIn8Weeks: null,
+                sessions: [],
+            };
+            return;
+        }
+
         const traj = getExercisePerformanceTrajectory(exName, history, latestBodyweight, indexed);
         trajectoryMap[exName] = traj;
         if (traj.trajectory !== "INSUFFICIENT_DATA") {
@@ -3920,7 +3961,7 @@ export const getAthletePredictiveSummary = (
     const muscleResponse = getMuscleGroupResponseMatrix(program, history, latestBodyweight, trajectoryMap);
     const bwCorrelation = getBodyweightPerformanceCorrelation(bodyStats, history, latestBodyweight);
 
-    return {
+    const result = {
         topProgressingMovements: topProgressing,
         upcomingMilestones: upcomingMilestones.slice(0, 5),
         plateauRiskMovements: plateauRisks,
@@ -3928,6 +3969,8 @@ export const getAthletePredictiveSummary = (
         bodyweightCorrelation: bwCorrelation,
         activeTrajectoriesCount: trajectories.length,
     };
+    _predictiveSummaryCache = { key: cacheKey, result };
+    return result;
 };
 
 // ────────────────────────────────────────────────────────────────
@@ -4079,6 +4122,11 @@ export const getFilteredRecordsOnOrBefore = (records = [], targetDate = new Date
  * 8. REST_DAY (Nominal rest day)
  * 9. INSUFFICIENT_DATA (No workouts on or before target date)
  */
+let _dailyAthleteCommandCache = {
+    key: "",
+    result: null,
+};
+
 export const getDailyAthleteCommand = ({
     workouts = [],
     readinessLogs = [],
@@ -4090,6 +4138,11 @@ export const getDailyAthleteCommand = ({
     targetDate = new Date(),
     latestBodyweight = null,
 } = {}) => {
+    const cacheKey = `${workouts?.length || 0}_${workouts?.[0]?.completedAt || workouts?.[0]?.date || ""}_${readinessLogs?.length || 0}_${readinessLogs?.[0]?.date || ""}_${bodyStats?.length || 0}_${latestBodyweight}_${activeProgram?.id || ""}_${activeProgram?.updatedAt || ""}_${programVersions?.length || 0}_${targetDate instanceof Date ? targetDate.toDateString() : String(targetDate || "")}_${missedWorkoutState?.hasMissedWorkout ? "1" : "0"}`;
+    if (_dailyAthleteCommandCache.key === cacheKey && _dailyAthleteCommandCache.result) {
+        return _dailyAthleteCommandCache.result;
+    }
+
     const validWorkouts = getFilteredRecordsOnOrBefore(workouts, targetDate, "date");
     const validReadiness = getFilteredRecordsOnOrBefore(readinessLogs, targetDate, "date");
     const validBodyStats = getFilteredRecordsOnOrBefore(bodyStats, targetDate, "date");
@@ -4105,7 +4158,7 @@ export const getDailyAthleteCommand = ({
             scheduledDay = WORKOUT_PLAN.find(d => d.day === calendarDayIndex) || null;
         }
 
-        return {
+        const emptyRes = {
             decision: "INSUFFICIENT_DATA",
             priority: 9,
             headline: "BUILD YOUR BASELINE",
@@ -4125,6 +4178,8 @@ export const getDailyAthleteCommand = ({
             highPriorityAlert: null,
             milestoneHighlight: null,
         };
+        _dailyAthleteCommandCache = { key: cacheKey, result: emptyRes };
+        return emptyRes;
     }
 
     // 2. Fetch underlying Phase 1-5 facts
@@ -4136,6 +4191,7 @@ export const getDailyAthleteCommand = ({
     const chronicLoad = loadTrend?.chronicBaselineTonnageKg ?? loadTrend?.chronicLoad ?? 0;
     const fatigueStatus = loadTrend?.trendClassification ?? loadTrend?.fatigueStatus ?? "OPTIMAL_PROGRESSION";
 
+    const indexedSessions = getPreIndexedExerciseSessions(validWorkouts, latestBodyweight);
     const alerts = getAthleteAlerts(validWorkouts, validBodyStats, validReadiness, prRecords, latestBodyweight);
     const predictiveSummary = getAthletePredictiveSummary(
         activeProgram,
@@ -4143,7 +4199,8 @@ export const getDailyAthleteCommand = ({
         validBodyStats,
         validReadiness,
         prRecords,
-        latestBodyweight
+        latestBodyweight,
+        indexedSessions
     );
     const latestReadiness = getLatestRecordOnOrBefore(validReadiness, targetDate, "date");
     const readinessScore = (latestReadiness && typeof latestReadiness.score === "number")
@@ -4299,7 +4356,7 @@ export const getDailyAthleteCommand = ({
     // 7. Check if workout completed on targetDate
     const isCompletedToday = validWorkouts.some(w => normalizeToLocalDate(w.date || w.completedAt).dateString === targetNorm.dateString);
 
-    return {
+    const commandResult = {
         decision,
         priority,
         headline,
@@ -4322,6 +4379,8 @@ export const getDailyAthleteCommand = ({
         highPriorityAlert,
         milestoneHighlight,
     };
+    _dailyAthleteCommandCache = { key: cacheKey, result: commandResult };
+    return commandResult;
 };
 
 /**

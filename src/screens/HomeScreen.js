@@ -17,11 +17,14 @@ import {
     getXP, getXPLocal, getRecordStreak, getRecordStreakLocal,
     getWorkoutHistory, getWorkoutHistoryLocal, getPreviousFreezeDate,
     getActiveWorkoutSession, clearActiveWorkoutSession,
-    getBodyStats, getPRRecords, getLatestUserBodyweight,
-    getDailyReadiness, saveDailyReadiness, getTodayReadiness,
-    getActiveProgram, saveActiveProgram, getProgramVersions,
+    getBodyStats, getBodyStatsLocal, getPRRecords, getPRRecordsLocal,
+    getLatestUserBodyweight, getLatestUserBodyweightLocal,
+    getDailyReadiness, getDailyReadinessLocal, saveDailyReadiness,
+    getTodayReadiness, getTodayReadinessLocal,
+    getActiveProgram, getActiveProgramLocal, saveActiveProgram,
+    getProgramVersions, getProgramVersionsLocal,
     dismissAdaptiveRecommendation, getDismissedRecommendations,
-    createDefaultProgramVersion,
+    createDefaultProgramVersion, getMemCacheSnapshot, isMemCacheHydrated,
 } from "../utils/storage";
 import {
     getRolling7DayAverageBodyweight,
@@ -515,26 +518,27 @@ const renderSvgChart = (weeklyData) => {
 export default function HomeScreen({ navigation, route }) {
     const insets = useSafeAreaInsets();
     const { user, profile = null } = useAuth();
-    const [streak, setStreak] = useState(0);
-    const [total, setTotal] = useState(0);
+    const cacheSnap = getMemCacheSnapshot();
+    const [streak, setStreak] = useState(() => cacheSnap.streak || 0);
+    const [total, setTotal] = useState(() => cacheSnap.total || 0);
     const [todayDay, setTodayDay] = useState(1);
     const [greeting, setGreeting] = useState("COMMANDER");
-    const [isFrozen, setIsFrozen] = useState(false);
-    const [lastFreezeDate, setLastFreezeDate] = useState(null);
-    const [previousFreezeDate, setPreviousFreezeDate] = useState(null);
+    const [isFrozen, setIsFrozen] = useState(() => cacheSnap.lastFreezeDate === new Date().toISOString().split("T")[0]);
+    const [lastFreezeDate, setLastFreezeDate] = useState(() => cacheSnap.lastFreezeDate);
+    const [previousFreezeDate, setPreviousFreezeDate] = useState(() => cacheSnap.previousFreezeDate);
     const [freezeModal, setFreezeModal] = useState(false);
     const [streakResetModal, setStreakResetModal] = useState(false);
     const [prevStreak, setPrevStreak] = useState(0);
-    const [xp, setXP] = useState(0);
-    const [recordStreak, setRecordStreak] = useState(0);
+    const [xp, setXP] = useState(() => cacheSnap.xp || 0);
+    const [recordStreak, setRecordStreak] = useState(() => cacheSnap.recordStreak || 0);
     const [completedDays, setCompletedDays] = useState([]);
     const [completedTargets, setCompletedTargets] = useState({});
     const [freezeDays, setFreezeDays] = useState([]);
-    const [history, setHistory] = useState([]);
-    const [bodyStats, setBodyStats] = useState([]);
-    const [prRecords, setPRRecords] = useState({});
-    const [latestBodyweight, setLatestBodyweight] = useState(null);
-    const [readinessHistory, setReadinessHistory] = useState([]);
+    const [history, setHistory] = useState(() => Array.isArray(cacheSnap.history) ? cacheSnap.history : []);
+    const [bodyStats, setBodyStats] = useState(() => Array.isArray(cacheSnap.bodyStats) ? cacheSnap.bodyStats : []);
+    const [prRecords, setPRRecords] = useState(() => cacheSnap.prRecords && typeof cacheSnap.prRecords === "object" ? cacheSnap.prRecords : {});
+    const [latestBodyweight, setLatestBodyweight] = useState(() => cacheSnap.latestBodyweight);
+    const [readinessHistory, setReadinessHistory] = useState(() => Array.isArray(cacheSnap.readinessHistory) ? cacheSnap.readinessHistory : []);
     const [todayReadiness, setTodayReadiness] = useState(null);
     const [readinessModalVisible, setReadinessModalVisible] = useState(false);
     const [selectedDetailExercise, setSelectedDetailExercise] = useState(null);
@@ -544,9 +548,9 @@ export default function HomeScreen({ navigation, route }) {
     const [activeSession, setActiveSession] = useState(null);
 
     // ── Phase 4 Adaptive Programming State ──
-    const [activeProgram, setActiveProgram] = useState(createDefaultProgramVersion);
-    const [programVersions, setProgramVersions] = useState(() => [createDefaultProgramVersion()]);
-    const [dismissedAlerts, setDismissedAlerts] = useState([]);
+    const [activeProgram, setActiveProgram] = useState(() => cacheSnap.activeProgram || createDefaultProgramVersion());
+    const [programVersions, setProgramVersions] = useState(() => Array.isArray(cacheSnap.programVersions) && cacheSnap.programVersions.length > 0 ? cacheSnap.programVersions : [createDefaultProgramVersion()]);
+    const [dismissedAlerts, setDismissedAlerts] = useState(() => cacheSnap.dismissedAlerts || []);
     const [missedWorkoutModalVisible, setMissedWorkoutModalVisible] = useState(false);
     const [deloadProposalModalVisible, setDeloadProposalModalVisible] = useState(false);
     const [proposedDeloadPlan, setProposedDeloadPlan] = useState(null);
@@ -728,9 +732,10 @@ export default function HomeScreen({ navigation, route }) {
         }
     };
 
-    const [initialLoading, setInitialLoading] = useState(true);
-    const contentFadeAnim = useRef(new Animated.Value(0)).current;
-    const isInitialMountRef = useRef(true);
+    const isHydrated = isMemCacheHydrated();
+    const [initialLoading, setInitialLoading] = useState(() => !isHydrated);
+    const contentFadeAnim = useRef(new Animated.Value(isHydrated ? 1 : 0)).current;
+    const isInitialMountRef = useRef(!isHydrated);
 
     const finishInitialLoading = () => {
         if (isInitialMountRef.current) {
@@ -741,6 +746,8 @@ export default function HomeScreen({ navigation, route }) {
                 duration: 200,
                 useNativeDriver: true,
             }).start();
+        } else {
+            setInitialLoading(false);
         }
     };
 
@@ -823,13 +830,13 @@ export default function HomeScreen({ navigation, route }) {
                 getWorkoutHistoryLocal(),
                 getLastFreezeDate(),
                 getPreviousFreezeDate(),
-                getBodyStats(),
-                getPRRecords(),
-                getLatestUserBodyweight(),
-                getDailyReadiness(30),
-                getTodayReadiness(),
-                getActiveProgram(),
-                getProgramVersions(),
+                getBodyStatsLocal(),
+                getPRRecordsLocal(),
+                getLatestUserBodyweightLocal(),
+                getDailyReadinessLocal(30),
+                getTodayReadinessLocal(),
+                getActiveProgramLocal(),
+                getProgramVersionsLocal(),
                 getDismissedRecommendations(),
             ]);
 

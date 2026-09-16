@@ -12,10 +12,13 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import { COLORS, FONTS, SPACING, RADIUS, FAMILY } from "../utils/theme";
 import {
-    getBodyStats, saveBodyStat, getPRRecords, getWorkoutHistory,
-    getStreak, getLatestUserBodyweight, getDailyReadiness,
-    getActiveProgram, getProgramVersions, saveActiveProgram, resetToDefaultProgram,
-    createDefaultProgramVersion
+    getBodyStats, getBodyStatsLocal, saveBodyStat, getPRRecords, getPRRecordsLocal,
+    getWorkoutHistory, getWorkoutHistoryLocal, getStreak, getStreakLocal,
+    getLatestUserBodyweight, getLatestUserBodyweightLocal,
+    getDailyReadiness, getDailyReadinessLocal,
+    getActiveProgram, getActiveProgramLocal, getProgramVersions, getProgramVersionsLocal,
+    saveActiveProgram, resetToDefaultProgram, createDefaultProgramVersion,
+    getMemCacheSnapshot,
 } from "../utils/storage";
 import { getSettings, displayWeight } from "../utils/settings";
 import {
@@ -383,17 +386,18 @@ export default function ProgressScreen({ navigation, route }) {
         }
     }, [route?.params]);
 
-    const [bodyStats, setBodyStats] = useState([]);
-    const [prRecords, setPRRecords] = useState({});
-    const [history, setHistory] = useState([]);
-    const [streak, setStreak] = useState(0);
-    const [userBodyweight, setUserBodyweight] = useState(null);
-    const [readinessHistory, setReadinessHistory] = useState([]);
+    const snap = getMemCacheSnapshot();
+    const [bodyStats, setBodyStats] = useState(() => Array.isArray(snap.bodyStats) ? snap.bodyStats : []);
+    const [prRecords, setPRRecords] = useState(() => snap.prRecords && typeof snap.prRecords === "object" ? snap.prRecords : {});
+    const [history, setHistory] = useState(() => Array.isArray(snap.history) ? snap.history : []);
+    const [streak, setStreak] = useState(() => snap.streak || 0);
+    const [userBodyweight, setUserBodyweight] = useState(() => snap.latestBodyweight);
+    const [readinessHistory, setReadinessHistory] = useState(() => Array.isArray(snap.readinessHistory) ? snap.readinessHistory : []);
     const [settings, setSettings] = useState({ weightUnit: "kg" });
 
     // ── Phase 4 Adaptive System State ──
-    const [activeProgram, setActiveProgram] = useState(createDefaultProgramVersion);
-    const [programVersions, setProgramVersions] = useState(() => [createDefaultProgramVersion()]);
+    const [activeProgram, setActiveProgram] = useState(() => snap.activeProgram || createDefaultProgramVersion());
+    const [programVersions, setProgramVersions] = useState(() => Array.isArray(snap.programVersions) && snap.programVersions.length > 0 ? snap.programVersions : [createDefaultProgramVersion()]);
     const [deloadProposalModalVisible, setDeloadProposalModalVisible] = useState(false);
     const [proposedDeloadPlan, setProposedDeloadPlan] = useState(null);
 
@@ -414,41 +418,65 @@ export default function ProgressScreen({ navigation, route }) {
     useFocusEffect(useCallback(() => { load(); }, []));
 
     const load = async () => {
-        const [stats, prs, hist, strk, bw, s, readHist, prog, vers] = await Promise.all([
-            getBodyStats(),
-            getPRRecords(),
-            getWorkoutHistory(),
-            getStreak(),
-            getLatestUserBodyweight(),
-            getSettings(),
-            getDailyReadiness(60),
-            getActiveProgram(),
-            getProgramVersions(),
-        ]);
-        setBodyStats(Array.isArray(stats) ? stats : []);
-        setPRRecords(prs && typeof prs === "object" ? prs : {});
-        setHistory(Array.isArray(hist) ? hist : []);
-        setStreak(strk || 0);
-        setUserBodyweight(bw);
-        setSettings(s || { weightUnit: "kg" });
-        setReadinessHistory(Array.isArray(readHist) ? readHist : []);
-        setActiveProgram(prog || createDefaultProgramVersion());
-        setProgramVersions(Array.isArray(vers) && vers.length > 0 ? vers : [createDefaultProgramVersion()]);
+        try {
+            const [stats, prs, hist, strk, bw, s, readHist, prog, vers] = await Promise.all([
+                getBodyStatsLocal(),
+                getPRRecordsLocal(),
+                getWorkoutHistoryLocal(),
+                getStreakLocal(),
+                getLatestUserBodyweightLocal(),
+                getSettings(),
+                getDailyReadinessLocal(60),
+                getActiveProgramLocal(),
+                getProgramVersionsLocal(),
+            ]);
+            setBodyStats(Array.isArray(stats) ? stats : []);
+            setPRRecords(prs && typeof prs === "object" ? prs : {});
+            setHistory(Array.isArray(hist) ? hist : []);
+            setStreak(strk || 0);
+            setUserBodyweight(bw);
+            setSettings(s || { weightUnit: "kg" });
+            setReadinessHistory(Array.isArray(readHist) ? readHist : []);
+            setActiveProgram(prog || createDefaultProgramVersion());
+            setProgramVersions(Array.isArray(vers) && vers.length > 0 ? vers : [createDefaultProgramVersion()]);
 
-        if (stats && stats.length > 0) {
-            const latest = stats[0];
-            setForm({
-                weightKg: latest.weightKg != null ? String(latest.weightKg) : "",
-                chest: latest.chest != null ? String(latest.chest) : "",
-                shoulders: latest.shoulders != null ? String(latest.shoulders) : "",
-                waist: latest.waist != null ? String(latest.waist) : "",
-                hips: latest.hips != null ? String(latest.hips) : "",
-                arms: latest.arms != null ? String(latest.arms) : "",
-                forearms: latest.forearms != null ? String(latest.forearms) : "",
-                thighs: latest.thighs != null ? String(latest.thighs) : "",
-                calves: latest.calves != null ? String(latest.calves) : "",
-            });
+            if (stats && stats.length > 0) {
+                const latest = stats[0];
+                setForm({
+                    weightKg: latest.weightKg != null ? String(latest.weightKg) : "",
+                    chest: latest.chest != null ? String(latest.chest) : "",
+                    shoulders: latest.shoulders != null ? String(latest.shoulders) : "",
+                    waist: latest.waist != null ? String(latest.waist) : "",
+                    hips: latest.hips != null ? String(latest.hips) : "",
+                    arms: latest.arms != null ? String(latest.arms) : "",
+                    forearms: latest.forearms != null ? String(latest.forearms) : "",
+                    thighs: latest.thighs != null ? String(latest.thighs) : "",
+                    calves: latest.calves != null ? String(latest.calves) : "",
+                });
+            }
+        } catch (e) {
+            console.warn("ProgressScreen local load error", e);
         }
+
+        // Background cloud sync (non-blocking)
+        (async () => {
+            try {
+                const [cStats, cPrs, cHist, cStrk, cBw] = await Promise.all([
+                    getBodyStats(),
+                    getPRRecords(),
+                    getWorkoutHistory(),
+                    getStreak(),
+                    getLatestUserBodyweight(),
+                ]);
+                setBodyStats(Array.isArray(cStats) ? cStats : []);
+                setPRRecords(cPrs && typeof cPrs === "object" ? cPrs : {});
+                setHistory(Array.isArray(cHist) ? cHist : []);
+                setStreak(cStrk || 0);
+                setUserBodyweight(cBw);
+            } catch (e) {
+                console.warn("ProgressScreen background cloud sync error", e);
+            }
+        })();
     };
 
     const handleSaveStats = async () => {

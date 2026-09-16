@@ -44,25 +44,79 @@ export const KEYS = {
 
 const hasCloudSession = () => !!auth.currentUser;
 
+// ─────────────────────────────────────────────────────────
+// IN-MEMORY ZERO-LATENCY CACHE
+// Eliminates AsyncStorage & Firestore latency on screen load
+// ─────────────────────────────────────────────────────────
+const _memCache = {
+    history: null,
+    streak: null,
+    totalWorkouts: null,
+    prRecords: null,
+    bodyStats: null,
+    latestBW: null,
+    activeProgram: null,
+    programVersions: null,
+    readiness: null,
+    xp: null,
+    recordStreak: null,
+    lastFreezeDate: null,
+    previousFreezeDate: null,
+    dismissedAlerts: null,
+    isHydrated: false,
+};
+
+export const isMemCacheHydrated = () => _memCache.isHydrated;
+
+export const getMemCacheSnapshot = () => ({
+    streak: _memCache.streak,
+    total: _memCache.totalWorkouts,
+    xp: _memCache.xp,
+    recordStreak: _memCache.recordStreak,
+    history: _memCache.history,
+    bodyStats: _memCache.bodyStats,
+    prRecords: _memCache.prRecords,
+    latestBodyweight: _memCache.latestBW,
+    readinessHistory: _memCache.readiness,
+    activeProgram: _memCache.activeProgram,
+    programVersions: _memCache.programVersions,
+    lastFreezeDate: _memCache.lastFreezeDate,
+    previousFreezeDate: _memCache.previousFreezeDate,
+    dismissedAlerts: _memCache.dismissedAlerts,
+    isHydrated: _memCache.isHydrated,
+});
+
 const readLocalHistory = async () => {
+    if (_memCache.history !== null) return _memCache.history;
     try {
         const data = await AsyncStorage.getItem(KEYS.HISTORY);
-        if (!data) return [];
+        if (!data) {
+            _memCache.history = [];
+            return [];
+        }
         const parsed = JSON.parse(data);
-        return Array.isArray(parsed) ? parsed : [];
+        const res = Array.isArray(parsed) ? parsed : [];
+        _memCache.history = res;
+        return res;
     } catch {
         return [];
     }
 };
 
 const readLocalStreak = async () => {
+    if (typeof _memCache.streak === "number") return _memCache.streak;
     const streak = await AsyncStorage.getItem(KEYS.STREAK);
-    return streak ? parseInt(streak) : 0;
+    const parsed = streak ? parseInt(streak, 10) : 0;
+    _memCache.streak = parsed;
+    return parsed;
 };
 
 const readLocalTotalWorkouts = async () => {
+    if (typeof _memCache.totalWorkouts === "number") return _memCache.totalWorkouts;
     const total = await AsyncStorage.getItem(KEYS.TOTAL_WORKOUTS);
-    return total ? parseInt(total) : 0;
+    const parsed = total ? parseInt(total, 10) : 0;
+    _memCache.totalWorkouts = parsed;
+    return parsed;
 };
 
 const readLocalLastWorkoutDate = async () => {
@@ -174,6 +228,12 @@ const saveWorkoutCompleteLocal = async (day, target, durationSec, exercises = []
         recordStreak = streak;
         await AsyncStorage.setItem(KEYS.RECORD_STREAK, String(recordStreak));
     }
+
+    _memCache.history = updated;
+    _memCache.streak = streak;
+    _memCache.totalWorkouts = total;
+    _memCache.xp = totalXP;
+    _memCache.recordStreak = recordStreak;
 
     triggerAutoSync();
     return { streak, total, xpGained, totalXP, recordStreak };
@@ -324,6 +384,12 @@ const saveManualWorkoutLocal = async ({
         await AsyncStorage.setItem(KEYS.RECORD_STREAK, String(recordStreak));
     }
 
+    _memCache.history = updatedHistory;
+    _memCache.streak = streak;
+    _memCache.totalWorkouts = total;
+    _memCache.xp = totalXP;
+    _memCache.recordStreak = recordStreak;
+
     // PR Check for all logged exercises
     const prsBroken = [];
     if (Array.isArray(exercises)) {
@@ -376,9 +442,12 @@ export const getWorkoutHistory = async () => {
             try {
                 const cloudHistory = await fsGetWorkoutHistory();
                 if (cloudHistory && cloudHistory.length > 0) {
+                    _memCache.history = cloudHistory;
                     await AsyncStorage.setItem(KEYS.HISTORY, JSON.stringify(cloudHistory));
                 }
-                return cloudHistory.length >= localHistory.length ? cloudHistory : localHistory;
+                const chosen = cloudHistory && cloudHistory.length >= localHistory.length ? cloudHistory : localHistory;
+                _memCache.history = chosen;
+                return chosen;
             } catch (e) {
                 console.warn("[Storage] Cloud history fetch failed. Falling back to local storage.", e?.message);
             }
@@ -414,6 +483,7 @@ export const checkAndCleanStreak = async () => {
             if (!allExcused) {
                 // Streak is broken!
                 await AsyncStorage.setItem(KEYS.STREAK, "0");
+                _memCache.streak = 0;
                 if (hasCloudSession()) {
                     await fsUpdateStreak(0);
                 }
@@ -444,12 +514,14 @@ export const getStreak = async () => {
                         await AsyncStorage.setItem(KEYS.LAST_WORKOUT_DATE, cloudLastDate);
                     }
                 }
+                _memCache.streak = finalStreak;
                 return finalStreak;
             } catch (e) {
                 console.warn("[Storage] Cloud streak fetch failed. Falling back to local storage.", e?.message);
             }
         }
 
+        _memCache.streak = localStreak;
         return localStreak;
     } catch {
         return 0;
@@ -463,15 +535,19 @@ export const getTotalWorkouts = async () => {
             try {
                 const cloudTotal = await fsGetTotalWorkouts();
                 if (cloudTotal > localTotal) {
+                    _memCache.totalWorkouts = cloudTotal;
                     await AsyncStorage.setItem(KEYS.TOTAL_WORKOUTS, String(cloudTotal));
                     return cloudTotal;
                 }
-                return Math.max(localTotal, cloudTotal);
+                const maxTotal = Math.max(localTotal, cloudTotal);
+                _memCache.totalWorkouts = maxTotal;
+                return maxTotal;
             } catch (e) {
                 console.warn("[Storage] Cloud total fetch failed. Falling back to local storage.", e?.message);
             }
         }
 
+        _memCache.totalWorkouts = localTotal;
         return localTotal;
     } catch {
         return 0;
@@ -507,6 +583,13 @@ export const formatDuration = (seconds) => {
 /** Clears all session history, streak, and total count. Settings are kept. */
 export const clearHistory = async () => {
     try {
+        _memCache.history = [];
+        _memCache.streak = 0;
+        _memCache.totalWorkouts = 0;
+        _memCache.prRecords = {};
+        _memCache.lastFreezeDate = null;
+        _memCache.previousFreezeDate = null;
+
         if (hasCloudSession()) {
             try {
                 await fsClearHistory();
@@ -531,6 +614,21 @@ export const clearHistory = async () => {
 /** Wipes every key in AsyncStorage — full factory reset. */
 export const clearAllData = async () => {
     try {
+        _memCache.history = [];
+        _memCache.streak = 0;
+        _memCache.totalWorkouts = 0;
+        _memCache.prRecords = {};
+        _memCache.bodyStats = [];
+        _memCache.latestBW = null;
+        _memCache.readiness = [];
+        _memCache.xp = 0;
+        _memCache.recordStreak = 0;
+        _memCache.lastFreezeDate = null;
+        _memCache.previousFreezeDate = null;
+        _memCache.dismissedAlerts = {};
+        _memCache.activeProgram = createDefaultProgramVersion();
+        _memCache.programVersions = [createDefaultProgramVersion()];
+        _memCache.isHydrated = false;
         await AsyncStorage.clear();
     } catch (e) {
         console.error("clearAllData error", e);
@@ -542,12 +640,26 @@ export const clearAllData = async () => {
 // Structure: { [exerciseName]: { weightKg, reps, date, category, bestFreeWeight, bestMachine, bestWeightedBW, bestBodyweightReps, bestAssisted, bestTimedDurationSec } }
 // ─────────────────────────────────────────────────────────
 
+export const getPRRecordsLocal = async () => {
+    if (_memCache.prRecords !== null) return _memCache.prRecords;
+    try {
+        const data = await AsyncStorage.getItem(KEYS.PR_RECORDS);
+        const parsed = data ? JSON.parse(data) : {};
+        const res = parsed && typeof parsed === "object" ? parsed : {};
+        _memCache.prRecords = res;
+        return res;
+    } catch {
+        return {};
+    }
+};
+
 export const getPRRecords = async () => {
     try {
         if (hasCloudSession()) {
             try {
                 const cloudPRs = await fsGetPRRecords();
                 if (cloudPRs && Object.keys(cloudPRs).length > 0) {
+                    _memCache.prRecords = cloudPRs;
                     await AsyncStorage.setItem(KEYS.PR_RECORDS, JSON.stringify(cloudPRs));
                 }
                 return cloudPRs;
@@ -556,8 +668,7 @@ export const getPRRecords = async () => {
             }
         }
 
-        const data = await AsyncStorage.getItem(KEYS.PR_RECORDS);
-        return data ? JSON.parse(data) : {};
+        return await getPRRecordsLocal();
     } catch {
         return {};
     }
@@ -579,7 +690,7 @@ export const tryUpdatePR = async (exerciseName, weightKg, reps, options = {}) =>
             }
         }
 
-        const records = await getPRRecords();
+        const records = await getPRRecordsLocal();
         const prev = records[exerciseName] || null;
         const today = new Date().toISOString();
         const { loadType, bodyweightKg, durationSec } = options;
@@ -659,6 +770,7 @@ export const tryUpdatePR = async (exerciseName, weightKg, reps, options = {}) =>
 
         if (isNewPR) {
             records[exerciseName] = updatedRecord;
+            _memCache.prRecords = records;
             await AsyncStorage.setItem(KEYS.PR_RECORDS, JSON.stringify(records));
             triggerAutoSync();
             return { isNewPR: true, prev, next: updatedRecord };
@@ -676,12 +788,27 @@ export const tryUpdatePR = async (exerciseName, weightKg, reps, options = {}) =>
 // Each entry: { date, weightKg, chest, waist, hips, arms, thighs }
 // ─────────────────────────────────────────────────────────
 
+export const getBodyStatsLocal = async () => {
+    if (_memCache.bodyStats !== null) return _memCache.bodyStats;
+    try {
+        const data = await AsyncStorage.getItem(KEYS.BODY_STATS);
+        const parsed = data ? JSON.parse(data) : [];
+        const res = Array.isArray(parsed) ? parsed : [];
+        _memCache.bodyStats = res;
+        return res;
+    } catch {
+        return [];
+    }
+};
+
 export const getBodyStats = async () => {
     try {
         if (hasCloudSession()) {
             try {
                 const cloudStats = await fsGetBodyStats();
                 if (cloudStats && cloudStats.length > 0) {
+                    _memCache.bodyStats = cloudStats;
+                    _memCache.latestBW = null;
                     await AsyncStorage.setItem(KEYS.BODY_STATS, JSON.stringify(cloudStats));
                 }
                 return cloudStats;
@@ -690,10 +817,30 @@ export const getBodyStats = async () => {
             }
         }
 
-        const data = await AsyncStorage.getItem(KEYS.BODY_STATS);
-        return data ? JSON.parse(data) : [];
+        return await getBodyStatsLocal();
     } catch {
         return [];
+    }
+};
+
+/**
+ * Returns the most recently recorded bodyweight in kg from local cache, or null if unrecorded.
+ * NEVER fabricates or invents a fallback bodyweight.
+ */
+export const getLatestUserBodyweightLocal = async () => {
+    if (typeof _memCache.latestBW === "number") return _memCache.latestBW;
+    try {
+        const stats = await getBodyStatsLocal();
+        if (Array.isArray(stats) && stats.length > 0) {
+            const latest = stats.find(s => s && typeof s.weightKg === "number" && s.weightKg > 0);
+            if (latest && typeof latest.weightKg === "number") {
+                _memCache.latestBW = latest.weightKg;
+                return latest.weightKg;
+            }
+        }
+        return null;
+    } catch {
+        return null;
     }
 };
 
@@ -707,6 +854,7 @@ export const getLatestUserBodyweight = async () => {
         if (Array.isArray(stats) && stats.length > 0) {
             const latest = stats.find(s => s && typeof s.weightKg === "number" && s.weightKg > 0);
             if (latest && typeof latest.weightKg === "number") {
+                _memCache.latestBW = latest.weightKg;
                 return latest.weightKg;
             }
         }
@@ -853,20 +1001,20 @@ export const saveBodyStat = async (entry) => {
         const entryDate = entry?.date || new Date().toISOString().split("T")[0];
         const normalizedEntry = { ...entry, date: entryDate };
 
-        if (hasCloudSession()) {
-            try {
-                await fsSaveBodyStat(normalizedEntry);
-                return await fsGetBodyStats();
-            } catch (e) {
-                console.warn("[Storage] Cloud body stat save failed. Falling back to local storage.", e?.message);
-            }
-        }
-
-        const stats = await getBodyStats();
+        const stats = await getBodyStatsLocal();
         // Replace same-date entry or prepend
         const filtered = stats.filter(s => s.date !== entryDate);
         const updated = [normalizedEntry, ...filtered].slice(0, 365);
+        _memCache.bodyStats = updated;
+        _memCache.latestBW = null;
         await AsyncStorage.setItem(KEYS.BODY_STATS, JSON.stringify(updated));
+
+        if (hasCloudSession()) {
+            fsSaveBodyStat(normalizedEntry).catch((e) => {
+                console.warn("[Storage] Cloud body stat save failed. Falling back to local storage.", e?.message);
+            });
+        }
+
         triggerAutoSync();
         return updated;
     } catch (e) {
@@ -879,18 +1027,16 @@ export const saveBodyStat = async (entry) => {
  * Manually freeze the streak for TODAY. 
  * This treats today as a "protected" day so missing it doesn't break the streak tomorrow.
  */
-/** 
- * Manually freeze the streak for TODAY. 
- * This treats today as a "protected" day so missing it doesn't break the streak tomorrow.
- */
 export const applyStreakFreeze = async () => {
     try {
         const today = new Date().toISOString().split("T")[0];
         const currentLast = await AsyncStorage.getItem(KEYS.LAST_FREEZE_DATE);
         if (currentLast && currentLast !== today) {
             await AsyncStorage.setItem(KEYS.PREVIOUS_FREEZE_DATE, currentLast);
+            _memCache.previousFreezeDate = currentLast;
         }
         await AsyncStorage.setItem(KEYS.LAST_FREEZE_DATE, today);
+        _memCache.lastFreezeDate = today;
         triggerAutoSync();
         return true;
     } catch {
@@ -908,8 +1054,11 @@ export const withdrawStreakFreeze = async () => {
         if (prev) {
             await AsyncStorage.setItem(KEYS.LAST_FREEZE_DATE, prev);
             await AsyncStorage.removeItem(KEYS.PREVIOUS_FREEZE_DATE);
+            _memCache.lastFreezeDate = prev;
+            _memCache.previousFreezeDate = null;
         } else {
             await AsyncStorage.removeItem(KEYS.LAST_FREEZE_DATE);
+            _memCache.lastFreezeDate = null;
         }
         triggerAutoSync();
         return true;
@@ -919,25 +1068,28 @@ export const withdrawStreakFreeze = async () => {
 };
 
 export const getLastFreezeDate = async () => {
+    if (_memCache.lastFreezeDate !== null) return _memCache.lastFreezeDate;
     try {
-        return await AsyncStorage.getItem(KEYS.LAST_FREEZE_DATE);
+        const val = await AsyncStorage.getItem(KEYS.LAST_FREEZE_DATE);
+        _memCache.lastFreezeDate = val;
+        return val;
     } catch {
         return null;
     }
 };
 
 export const getPreviousFreezeDate = async () => {
+    if (_memCache.previousFreezeDate !== null) return _memCache.previousFreezeDate;
     try {
-        return await AsyncStorage.getItem(KEYS.PREVIOUS_FREEZE_DATE);
+        const val = await AsyncStorage.getItem(KEYS.PREVIOUS_FREEZE_DATE);
+        _memCache.previousFreezeDate = val;
+        return val;
     } catch {
         return null;
     }
 };
 
 export const getStreakLocal = async () => {
-    try {
-        await checkAndCleanStreak();
-    } catch {}
     return await readLocalStreak();
 };
 
@@ -950,9 +1102,12 @@ export const getWorkoutHistoryLocal = async () => {
 };
 
 export const getXPLocal = async () => {
+    if (typeof _memCache.xp === "number") return _memCache.xp;
     try {
         const xp = await AsyncStorage.getItem(KEYS.XP);
-        return xp ? parseInt(xp) : 0;
+        const parsed = xp ? parseInt(xp, 10) : 0;
+        _memCache.xp = parsed;
+        return parsed;
     } catch {
         return 0;
     }
@@ -965,10 +1120,13 @@ export const getXP = async () => {
             try {
                 const cloudXP = await fsGetXP();
                 if (cloudXP > localXP) {
+                    _memCache.xp = cloudXP;
                     await AsyncStorage.setItem(KEYS.XP, String(cloudXP));
                     return cloudXP;
                 }
-                return Math.max(localXP, cloudXP);
+                const maxXP = Math.max(localXP, cloudXP);
+                _memCache.xp = maxXP;
+                return maxXP;
             } catch (e) {
                 console.warn("[Storage] Cloud XP fetch failed. Falling back to local storage.", e?.message);
             }
@@ -980,9 +1138,12 @@ export const getXP = async () => {
 };
 
 export const getRecordStreakLocal = async () => {
+    if (typeof _memCache.recordStreak === "number") return _memCache.recordStreak;
     try {
         const record = await AsyncStorage.getItem(KEYS.RECORD_STREAK);
-        return record ? parseInt(record) : 0;
+        const parsed = record ? parseInt(record, 10) : 0;
+        _memCache.recordStreak = parsed;
+        return parsed;
     } catch {
         return 0;
     }
@@ -995,10 +1156,13 @@ export const getRecordStreak = async () => {
             try {
                 const cloudRecord = await fsGetRecordStreak();
                 if (cloudRecord > localRecord) {
+                    _memCache.recordStreak = cloudRecord;
                     await AsyncStorage.setItem(KEYS.RECORD_STREAK, String(cloudRecord));
                     return cloudRecord;
                 }
-                return Math.max(localRecord, cloudRecord);
+                const maxRec = Math.max(localRecord, cloudRecord);
+                _memCache.recordStreak = maxRec;
+                return maxRec;
             } catch (e) {
                 console.warn("[Storage] Cloud record streak fetch failed. Falling back to local storage.", e?.message);
             }
@@ -1061,17 +1225,31 @@ export const clearActiveWorkoutSession = async () => {
  * Retrieves daily self-reported readiness logs.
  * Stored in an isolated key without altering workout history.
  */
-export const getDailyReadiness = async (limit = 60) => {
+export const getDailyReadinessLocal = async (limit = 60) => {
+    if (_memCache.readiness !== null) {
+        return _memCache.readiness.slice(0, limit);
+    }
     try {
         const raw = await AsyncStorage.getItem(KEYS.READINESS);
-        if (!raw) return [];
+        if (!raw) {
+            _memCache.readiness = [];
+            return [];
+        }
         const parsed = JSON.parse(raw);
-        if (!Array.isArray(parsed)) return [];
+        if (!Array.isArray(parsed)) {
+            _memCache.readiness = [];
+            return [];
+        }
+        _memCache.readiness = parsed;
         return parsed.slice(0, limit);
     } catch (e) {
-        console.warn("[Storage] getDailyReadiness error", e);
+        console.warn("[Storage] getDailyReadinessLocal error", e);
         return [];
     }
+};
+
+export const getDailyReadiness = async (limit = 60) => {
+    return await getDailyReadinessLocal(limit);
 };
 
 /**
@@ -1098,10 +1276,11 @@ export const saveDailyReadiness = async (entry) => {
             loggedAt: new Date().toISOString(),
         };
 
-        const existing = await getDailyReadiness(120);
+        const existing = await getDailyReadinessLocal(120);
         const filtered = existing.filter(r => r.date !== entryDate);
         const updated = [normalized, ...filtered].slice(0, 120);
 
+        _memCache.readiness = updated;
         await AsyncStorage.setItem(KEYS.READINESS, JSON.stringify(updated));
         triggerAutoSync();
         return updated;
@@ -1114,15 +1293,19 @@ export const saveDailyReadiness = async (entry) => {
 /**
  * Returns today's logged readiness entry if recorded, otherwise null.
  */
-export const getTodayReadiness = async () => {
+export const getTodayReadinessLocal = async () => {
     try {
         const todayStr = new Date().toISOString().split("T")[0];
-        const logs = await getDailyReadiness(7);
+        const logs = await getDailyReadinessLocal(7);
         const match = logs.find(r => r.date === todayStr);
         return match || null;
     } catch {
         return null;
     }
+};
+
+export const getTodayReadiness = async () => {
+    return await getTodayReadinessLocal();
 };
 
 /* ── Program Versioning & Adaptation Storage ──────────────── */
@@ -1148,57 +1331,82 @@ export const createDefaultProgramVersion = () => {
 };
 
 /**
- * Retrieves the current active program version.
+ * Retrieves the current active program version from local cache.
  * If active version is an expired temporary deload, automatically restores its sourceVersionId.
  */
-export const getActiveProgram = async () => {
+export const getActiveProgramLocal = async () => {
+    if (_memCache.activeProgram !== null) return _memCache.activeProgram;
     try {
         const raw = await AsyncStorage.getItem(KEYS.ACTIVE_PROGRAM);
         if (!raw) {
-            return createDefaultProgramVersion();
+            const def = createDefaultProgramVersion();
+            _memCache.activeProgram = def;
+            return def;
         }
         const parsed = JSON.parse(raw);
         if (!parsed || !Array.isArray(parsed.days) || parsed.days.length === 0) {
-            return createDefaultProgramVersion();
+            const def = createDefaultProgramVersion();
+            _memCache.activeProgram = def;
+            return def;
         }
 
         // Check if active program is an expired temporary deload
         if (parsed.isTemporaryDeload && parsed.expiresAt) {
             const isExpired = new Date(parsed.expiresAt).getTime() <= Date.now();
             if (isExpired && parsed.sourceVersionId) {
-                const versions = await getProgramVersions();
+                const versions = await getProgramVersionsLocal();
                 const sourceVersion = versions.find(v => v.id === parsed.sourceVersionId);
                 const restored = sourceVersion || createDefaultProgramVersion();
                 await saveActiveProgram(restored, false);
+                _memCache.activeProgram = restored;
                 return restored;
             }
         }
 
+        _memCache.activeProgram = parsed;
         return parsed;
     } catch (e) {
-        console.warn("[Storage] getActiveProgram error", e);
-        return createDefaultProgramVersion();
+        console.warn("[Storage] getActiveProgramLocal error", e);
+        const def = createDefaultProgramVersion();
+        _memCache.activeProgram = def;
+        return def;
     }
 };
 
+export const getActiveProgram = async () => {
+    return await getActiveProgramLocal();
+};
+
 /**
- * Retrieves full history of program version snapshots.
+ * Retrieves full history of program version snapshots from local cache.
  */
-export const getProgramVersions = async () => {
+export const getProgramVersionsLocal = async () => {
+    if (_memCache.programVersions !== null) return _memCache.programVersions;
     try {
         const raw = await AsyncStorage.getItem(KEYS.PROGRAM_VERSIONS);
         if (!raw) {
-            return [createDefaultProgramVersion()];
+            const defs = [createDefaultProgramVersion()];
+            _memCache.programVersions = defs;
+            return defs;
         }
         const parsed = JSON.parse(raw);
         if (!Array.isArray(parsed) || parsed.length === 0) {
-            return [createDefaultProgramVersion()];
+            const defs = [createDefaultProgramVersion()];
+            _memCache.programVersions = defs;
+            return defs;
         }
+        _memCache.programVersions = parsed;
         return parsed;
     } catch (e) {
-        console.warn("[Storage] getProgramVersions error", e);
-        return [createDefaultProgramVersion()];
+        console.warn("[Storage] getProgramVersionsLocal error", e);
+        const defs = [createDefaultProgramVersion()];
+        _memCache.programVersions = defs;
+        return defs;
     }
+};
+
+export const getProgramVersions = async () => {
+    return await getProgramVersionsLocal();
 };
 
 /**
@@ -1216,9 +1424,10 @@ export const saveActiveProgram = async (programVersion, appendToHistory = true) 
         };
 
         await AsyncStorage.setItem(KEYS.ACTIVE_PROGRAM, JSON.stringify(normalized));
+        _memCache.activeProgram = normalized;
 
         if (appendToHistory) {
-            const currentVersions = await getProgramVersions();
+            const currentVersions = await getProgramVersionsLocal();
             const existingIndex = currentVersions.findIndex(v => v.id === normalized.id);
             let updatedVersions = [];
             if (existingIndex >= 0) {
@@ -1226,7 +1435,9 @@ export const saveActiveProgram = async (programVersion, appendToHistory = true) 
             } else {
                 updatedVersions = [normalized, ...currentVersions.map(v => ({ ...v, active: false }))];
             }
-            await AsyncStorage.setItem(KEYS.PROGRAM_VERSIONS, JSON.stringify(updatedVersions.slice(0, 50)));
+            const sliced = updatedVersions.slice(0, 50);
+            _memCache.programVersions = sliced;
+            await AsyncStorage.setItem(KEYS.PROGRAM_VERSIONS, JSON.stringify(sliced));
         }
 
         triggerAutoSync();
@@ -1255,6 +1466,7 @@ export const dismissAdaptiveRecommendation = async (recId, durationDays = 7) => 
         const existing = raw ? JSON.parse(raw) : {};
         const expiresAt = Date.now() + (durationDays * 24 * 60 * 60 * 1000);
         existing[recId] = expiresAt;
+        _memCache.dismissedAlerts = existing;
         await AsyncStorage.setItem(KEYS.DISMISSED_ALERTS, JSON.stringify(existing));
         return existing;
     } catch (e) {
@@ -1267,9 +1479,13 @@ export const dismissAdaptiveRecommendation = async (recId, durationDays = 7) => 
  * Returns currently active alert suppressions.
  */
 export const getDismissedRecommendations = async () => {
+    if (_memCache.dismissedAlerts !== null) return _memCache.dismissedAlerts;
     try {
         const raw = await AsyncStorage.getItem(KEYS.DISMISSED_ALERTS);
-        if (!raw) return {};
+        if (!raw) {
+            _memCache.dismissedAlerts = {};
+            return {};
+        }
         const parsed = JSON.parse(raw);
         const now = Date.now();
         const valid = {};
@@ -1278,9 +1494,39 @@ export const getDismissedRecommendations = async () => {
                 valid[k] = parsed[k];
             }
         });
+        _memCache.dismissedAlerts = valid;
         return valid;
     } catch {
         return {};
+    }
+};
+
+/**
+ * Pre-warms the in-memory cache directly from AsyncStorage.
+ * Called concurrently during app boot / splash screen loading so that
+ * all screens render on frame 1 without I/O or network waiting.
+ */
+export const preloadLocalCache = async () => {
+    try {
+        await Promise.all([
+            getStreakLocal(),
+            getTotalWorkoutsLocal(),
+            getXPLocal(),
+            getRecordStreakLocal(),
+            getWorkoutHistoryLocal(),
+            getBodyStatsLocal(),
+            getPRRecordsLocal(),
+            getLatestUserBodyweightLocal(),
+            getActiveProgramLocal(),
+            getProgramVersionsLocal(),
+            getDailyReadinessLocal(60),
+            getLastFreezeDate(),
+            getPreviousFreezeDate(),
+            getDismissedRecommendations(),
+        ]);
+        _memCache.isHydrated = true;
+    } catch (e) {
+        console.warn("[Storage] preloadLocalCache failed", e);
     }
 };
 

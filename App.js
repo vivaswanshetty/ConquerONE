@@ -78,6 +78,7 @@ import ErrorBoundary from "./src/components/ErrorBoundary";
 
 import { AuthProvider, useAuth } from "./src/context/AuthContext";
 import { NotificationProvider } from "./src/context/NotificationContext";
+import { preloadLocalCache } from "./src/utils/storage";
 
 SplashScreen.preventAutoHideAsync().catch(() => { });
 
@@ -205,13 +206,16 @@ export default function App() {
   const [isDownloadingUpdate, setIsDownloadingUpdate] = useState(false);
   const splashHidden = useRef(false);
 
-  // ── Step 1: Load only the 3 critical fonts (blocks splash) ──
+  // ── Step 1: Load only critical fonts & pre-warm cache (blocks splash) ──
   useEffect(() => {
     (async () => {
       try {
-        await Font.loadAsync(CRITICAL_FONTS);
+        await Promise.all([
+          Font.loadAsync(CRITICAL_FONTS),
+          preloadLocalCache(),
+        ]);
       } catch (e) {
-        console.warn("Critical font load failed", e);
+        console.warn("Critical font / cache load failed", e);
       } finally {
         setFontsLoaded(true);
       }
