@@ -120,9 +120,9 @@ export default function DailyDecisionCard({
 
     return (
         <View style={styles.cardContainer}>
-            {/* Deep Carbon Surface & Subtle Top Accent Ambient Glow */}
+            {/* True Black Surface & Subtle Top Accent Ambient Glow */}
             <LinearGradient
-                colors={["#161619", "#111114"]}
+                colors={["#08080A", "#020203"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
                 style={StyleSheet.absoluteFillObject}
@@ -253,8 +253,8 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         borderRadius: 18,
         borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.08)",
-        backgroundColor: "#131316",
+        borderColor: "rgba(255, 255, 255, 0.11)",
+        backgroundColor: "#050507",
         overflow: "hidden",
         alignSelf: "stretch",
     },
