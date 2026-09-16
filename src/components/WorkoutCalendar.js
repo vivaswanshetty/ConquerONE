@@ -9,7 +9,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
-import { COLORS, FAMILY, RADIUS, getMuscleColor } from "../utils/theme";
+import { COLORS, FAMILY, RADIUS, GRADIENTS, getMuscleColor } from "../utils/theme";
 import { formatDuration } from "../utils/storage";
 
 const { width } = Dimensions.get("window");
@@ -267,7 +267,7 @@ export default function WorkoutCalendar({ history = [], style, onLogWorkoutForDa
             {/* Monthly Stats Bar */}
             <View style={styles.statsBar}>
                 <LinearGradient
-                    colors={["rgba(255, 255, 255, 0.04)", "rgba(5, 5, 5, 0.8)"]}
+                    colors={GRADIENTS.subtleCard}
                     style={StyleSheet.absoluteFill}
                 />
                 <View style={styles.statItem}>
@@ -634,12 +634,13 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-around",
-        backgroundColor: COLORS.bg,
+        backgroundColor: "#050507",
         borderRadius: RADIUS.md,
         borderWidth: 1,
-        borderColor: COLORS.border,
+        borderColor: "rgba(255, 255, 255, 0.11)",
         paddingVertical: 12,
         marginBottom: 16,
+        overflow: "hidden",
     },
     statItem: {
         alignItems: "center",
@@ -903,12 +904,12 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     exerciseChip: {
-        backgroundColor: "rgba(255, 255, 255, 0.04)",
+        backgroundColor: "#0A0A0D",
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: RADIUS.sm,
         borderWidth: 1,
-        borderColor: COLORS.border,
+        borderColor: "rgba(255, 255, 255, 0.08)",
         maxWidth: 160,
     },
     exerciseChipMore: {

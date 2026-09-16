@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-import { COLORS, FAMILY, SPACING, RADIUS } from "../utils/theme";
+import { COLORS, FAMILY, SPACING, RADIUS, GRADIENTS } from "../utils/theme";
 
 export default function WeeklyRecapCard({
     recap,
@@ -20,7 +20,7 @@ export default function WeeklyRecapCard({
     return (
         <View style={styles.container}>
             <LinearGradient
-                colors={["rgba(255, 255, 255, 0.04)", "rgba(255, 255, 255, 0.008)"]}
+                colors={GRADIENTS.subtleCard}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
                 style={StyleSheet.absoluteFillObject}
@@ -109,14 +109,14 @@ const styles = StyleSheet.create({
         letterSpacing: 0.8,
     },
     adherencePill: {
-        backgroundColor: "rgba(255, 255, 255, 0.04)",
+        backgroundColor: "#0A0A0D",
         paddingHorizontal: 7,
         height: 20,
         justifyContent: "center",
         alignItems: "center",
         borderRadius: RADIUS.xs,
         borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.06)",
+        borderColor: "rgba(255, 255, 255, 0.09)",
     },
     adherencePillText: {
         fontSize: 9,
@@ -133,12 +133,12 @@ const styles = StyleSheet.create({
     },
     metricCell: {
         flex: 1,
-        backgroundColor: "rgba(255, 255, 255, 0.02)",
+        backgroundColor: "#0A0A0D",
         paddingVertical: 8,
         paddingHorizontal: 6,
         borderRadius: RADIUS.xs,
         borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.04)",
+        borderColor: "rgba(255, 255, 255, 0.09)",
         alignItems: "center",
     },
     metricLabel: {

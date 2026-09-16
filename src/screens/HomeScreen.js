@@ -1518,9 +1518,9 @@ export default function HomeScreen({ navigation, route }) {
                             }}
                         >
                             <LinearGradient
-                                colors={[COLORS.bgCard, COLORS.bgRaised]}
+                                colors={GRADIENTS.subtleCard}
                                 start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 1 }}
+                                end={{ x: 0, y: 1 }}
                                 style={StyleSheet.absoluteFillObject}
                                 pointerEvents="none"
                             />

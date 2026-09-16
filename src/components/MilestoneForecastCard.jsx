@@ -1,7 +1,8 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-import { COLORS, FONTS, SPACING, RADIUS, FAMILY } from "../utils/theme";
+import { COLORS, FONTS, SPACING, RADIUS, FAMILY, GRADIENTS } from "../utils/theme";
 
 export default function MilestoneForecastCard({ milestoneData }) {
     if (!milestoneData) return null;
@@ -22,6 +23,13 @@ export default function MilestoneForecastCard({ milestoneData }) {
     if (status === "HORIZON_UNAVAILABLE" || !milestoneTarget) {
         return (
             <View style={styles.card}>
+                <LinearGradient
+                    colors={GRADIENTS.subtleCard}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 0, y: 1 }}
+                    style={StyleSheet.absoluteFillObject}
+                    pointerEvents="none"
+                />
                 <View style={styles.header}>
                     <View style={styles.titleWrap}>
                         <Text style={styles.exerciseName} numberOfLines={1}>{exerciseName}</Text>
@@ -43,6 +51,13 @@ export default function MilestoneForecastCard({ milestoneData }) {
 
     return (
         <View style={styles.card}>
+            <LinearGradient
+                colors={GRADIENTS.subtleCard}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                style={StyleSheet.absoluteFillObject}
+                pointerEvents="none"
+            />
             {/* Header */}
             <View style={styles.header}>
                 <View style={styles.titleWrap}>
@@ -102,6 +117,7 @@ const styles = StyleSheet.create({
         borderColor: "rgba(255, 255, 255, 0.11)",
         padding: 14,
         marginBottom: 10,
+        overflow: "hidden",
     },
     header: {
         flexDirection: "row",

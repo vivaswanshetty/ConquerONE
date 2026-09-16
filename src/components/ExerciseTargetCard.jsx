@@ -1,7 +1,8 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-import { COLORS, RADIUS, FAMILY, SPACING } from "../utils/theme";
+import { COLORS, RADIUS, FAMILY, SPACING, GRADIENTS } from "../utils/theme";
 
 /**
  * ExerciseTargetCard
@@ -105,6 +106,13 @@ export default function ExerciseTargetCard({ targetInfo, compact = false }) {
 
     return (
         <View style={[styles.container, compact && styles.containerCompact]}>
+            <LinearGradient
+                colors={GRADIENTS.subtleCard}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                style={StyleSheet.absoluteFillObject}
+                pointerEvents="none"
+            />
             {/* Header / Badge Row */}
             <View style={styles.headerRow}>
                 <View style={styles.actionHeader}>
@@ -162,6 +170,7 @@ const styles = StyleSheet.create({
         padding: SPACING.sm + 2,
         marginTop: SPACING.xs,
         marginBottom: SPACING.xs,
+        overflow: "hidden",
     },
     containerCompact: {
         padding: SPACING.xs + 2,
@@ -201,10 +210,12 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        backgroundColor: "#0D0D0F",
+        backgroundColor: "#0A0A0D",
         borderRadius: RADIUS.sm,
         paddingHorizontal: SPACING.sm,
         paddingVertical: 6,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.08)",
     },
     metricColumn: {
         flex: 1,

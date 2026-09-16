@@ -10,7 +10,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
-import { COLORS, FONTS, SPACING, RADIUS, FAMILY } from "../utils/theme";
+import { COLORS, FONTS, SPACING, RADIUS, FAMILY, GRADIENTS } from "../utils/theme";
 import {
     getBodyStats, getBodyStatsLocal, saveBodyStat, getPRRecords, getPRRecordsLocal,
     getWorkoutHistory, getWorkoutHistoryLocal, getStreak, getStreakLocal,
@@ -745,7 +745,7 @@ export default function ProgressScreen({ navigation, route }) {
 
                                 <View style={styles.card}>
                                     <LinearGradient
-                                        colors={['rgba(255, 255, 255, 0.04)', 'transparent']}
+                                        colors={GRADIENTS.subtleCard}
                                         start={{ x: 0, y: 0 }}
                                         end={{ x: 0, y: 1 }}
                                         style={StyleSheet.absoluteFill}
@@ -809,7 +809,7 @@ export default function ProgressScreen({ navigation, route }) {
 
                                 <View style={styles.card}>
                                     <LinearGradient
-                                        colors={['rgba(255, 255, 255, 0.04)', 'transparent']}
+                                        colors={GRADIENTS.subtleCard}
                                         start={{ x: 0, y: 0 }}
                                         end={{ x: 0, y: 1 }}
                                         style={StyleSheet.absoluteFill}
@@ -939,7 +939,7 @@ export default function ProgressScreen({ navigation, route }) {
 
                         <View style={styles.card}>
                             <LinearGradient
-                                colors={['rgba(255, 255, 255, 0.04)', 'transparent']}
+                                colors={GRADIENTS.subtleCard}
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 0, y: 1 }}
                                 style={StyleSheet.absoluteFill}
@@ -964,24 +964,39 @@ export default function ProgressScreen({ navigation, route }) {
                             {/* Load Metrics 3-Col Grid */}
                             <View style={styles.loadGrid}>
                                 <View style={styles.loadGridCol}>
-                                    <Text style={styles.loadGridVal}>{trainingLoad.currentWeekTonnageKg > 0 ? `${trainingLoad.currentWeekTonnageKg.toLocaleString()} kg` : "—"}</Text>
-                                    <Text style={styles.loadGridLabel}>CURRENT (7D)</Text>
+                                    <View style={styles.metricValBox}>
+                                        <Text style={styles.loadGridVal} numberOfLines={1}>
+                                            {trainingLoad.currentWeekTonnageKg > 0 ? trainingLoad.currentWeekTonnageKg.toLocaleString() : "—"}{" "}
+                                            <Text style={styles.loadGridUnit}>kg</Text>
+                                        </Text>
+                                    </View>
+                                    <Text style={styles.loadGridLabel} numberOfLines={1}>CURRENT (7D)</Text>
                                 </View>
-                                <View style={styles.summaryMetricDivider} />
+                                <View style={styles.profileMetricDivider} />
                                 <View style={styles.loadGridCol}>
-                                    <Text style={styles.loadGridVal}>{trainingLoad.chronicBaselineTonnageKg > 0 ? `${trainingLoad.chronicBaselineTonnageKg.toLocaleString()} kg` : "—"}</Text>
-                                    <Text style={styles.loadGridLabel}>4-WK BASELINE</Text>
+                                    <View style={styles.metricValBox}>
+                                        <Text style={styles.loadGridVal} numberOfLines={1}>
+                                            {trainingLoad.chronicBaselineTonnageKg > 0 ? trainingLoad.chronicBaselineTonnageKg.toLocaleString() : "—"}{" "}
+                                            <Text style={styles.loadGridUnit}>kg</Text>
+                                        </Text>
+                                    </View>
+                                    <Text style={styles.loadGridLabel} numberOfLines={1}>4-WK BASELINE</Text>
                                 </View>
-                                <View style={styles.summaryMetricDivider} />
+                                <View style={styles.profileMetricDivider} />
                                 <View style={styles.loadGridCol}>
-                                    <Text style={[styles.loadGridVal, { color: trainingLoad.trendColor }]}>
-                                        {trainingLoad.workloadRatio > 1 ? `+${Math.round((trainingLoad.workloadRatio - 1) * 100)}%` : trainingLoad.workloadRatio < 1 ? `-${Math.round((1 - trainingLoad.workloadRatio) * 100)}%` : "0%"}
-                                    </Text>
-                                    <Text style={styles.loadGridLabel}>STIMULUS DELTA</Text>
+                                    <View style={styles.metricValBox}>
+                                        <Text style={[styles.loadGridVal, { color: trainingLoad.trendColor }]} numberOfLines={1}>
+                                            {trainingLoad.workloadRatio > 1 ? `+${Math.round((trainingLoad.workloadRatio - 1) * 100)}%` : trainingLoad.workloadRatio < 1 ? `-${Math.round((1 - trainingLoad.workloadRatio) * 100)}%` : "0%"}
+                                        </Text>
+                                    </View>
+                                    <Text style={styles.loadGridLabel} numberOfLines={1}>STIMULUS DELTA</Text>
                                 </View>
                             </View>
 
-                            <Text style={styles.loadSummaryText}>{trainingLoad.summaryMessage}</Text>
+                            <View style={styles.loadSummaryBox}>
+                                <Ionicons name="information-circle-outline" size={13} color={COLORS.textMuted} style={{ marginTop: 1 }} />
+                                <Text style={styles.loadSummaryText}>{trainingLoad.summaryMessage}</Text>
+                            </View>
 
                             {/* Deload / Fatigue Advisory Box (rendered when active deload is advised) */}
                             {deloadRecommendation.status !== "NORMAL" && (
@@ -1068,7 +1083,7 @@ export default function ProgressScreen({ navigation, route }) {
 
                         <View style={styles.card}>
                             <LinearGradient
-                                colors={['rgba(255, 255, 255, 0.04)', 'transparent']}
+                                colors={GRADIENTS.subtleCard}
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 0, y: 1 }}
                                 style={StyleSheet.absoluteFill}
@@ -1150,7 +1165,7 @@ export default function ProgressScreen({ navigation, route }) {
 
                         <View style={styles.card}>
                             <LinearGradient
-                                colors={['rgba(255, 255, 255, 0.04)', 'transparent']}
+                                colors={GRADIENTS.subtleCard}
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 0, y: 1 }}
                                 style={StyleSheet.absoluteFill}
@@ -1863,8 +1878,18 @@ const styles = StyleSheet.create({
     loadGridCol: { flex: 1, alignItems: "center" },
     loadGridVal: { fontSize: 15, fontFamily: FAMILY.monoBold, color: "#FFFFFF", fontVariant: ["tabular-nums"], includeFontPadding: false },
     loadGridUnit: { fontSize: 9.5, fontFamily: FAMILY.mono, color: COLORS.textMuted, includeFontPadding: false },
-    loadGridLabel: { fontSize: 8.5, fontFamily: FAMILY.monoBold, color: COLORS.textMuted, letterSpacing: 0.5, marginTop: 4, includeFontPadding: false },
-    loadSummaryText: { fontSize: 11, fontFamily: FAMILY.body, color: "#8A8A8E", lineHeight: 16, marginTop: 10, includeFontPadding: false },
+    loadSummaryBox: {
+        flexDirection: "row",
+        alignItems: "flex-start",
+        gap: 6,
+        backgroundColor: "#0A0A0D",
+        borderRadius: RADIUS.xs,
+        padding: 10,
+        marginTop: 10,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+    },
+    loadSummaryText: { flex: 1, fontSize: 11, fontFamily: FAMILY.body, color: "#8A8A8E", lineHeight: 16, includeFontPadding: false },
 
     deloadAlertBox: { borderRadius: RADIUS.sm, padding: 12, borderWidth: 1 },
     deloadAlertTitle: { fontSize: 10, fontFamily: FAMILY.monoBold, letterSpacing: 0.5 },

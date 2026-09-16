@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-import { COLORS, SPACING, RADIUS, FAMILY } from "../utils/theme";
+import { COLORS, SPACING, RADIUS, FAMILY, GRADIENTS } from "../utils/theme";
 import * as Haptics from "expo-haptics";
 
 export default function AdaptiveRecommendationCard({
@@ -66,7 +66,7 @@ export default function AdaptiveRecommendationCard({
     return (
         <View style={styles.card}>
             <LinearGradient
-                colors={["rgba(255, 255, 255, 0.04)", "rgba(255, 255, 255, 0.008)"]}
+                colors={GRADIENTS.subtleCard}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
                 style={StyleSheet.absoluteFillObject}
@@ -178,7 +178,9 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     recBox: {
-        backgroundColor: "rgba(255, 255, 255, 0.025)",
+        backgroundColor: "#0A0A0D",
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.08)",
         borderLeftWidth: 3,
         borderRadius: RADIUS.xs,
         padding: 10,
@@ -220,9 +222,9 @@ const styles = StyleSheet.create({
         letterSpacing: 0.8,
     },
     reviewBtn: {
-        backgroundColor: "rgba(255, 255, 255, 0.04)",
+        backgroundColor: "#0A0A0D",
         borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.08)",
+        borderColor: "rgba(255, 255, 255, 0.09)",
         paddingHorizontal: 16,
     },
     reviewBtnText: {

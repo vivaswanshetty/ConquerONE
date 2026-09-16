@@ -1,8 +1,9 @@
 import React from "react";
 import { View, Text, StyleSheet, Dimensions } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Polyline, Circle, Path, Defs, LinearGradient as SvgGradient, Stop, Line } from "react-native-svg";
 import { Ionicons } from "@expo/vector-icons";
-import { COLORS, FONTS, SPACING, RADIUS, FAMILY } from "../utils/theme";
+import { COLORS, FONTS, SPACING, RADIUS, FAMILY, GRADIENTS } from "../utils/theme";
 
 const { width } = Dimensions.get("window");
 const CARD_W = width - 40;
@@ -150,6 +151,13 @@ export default function PerformanceTrajectoryCard({ trajectoryData }) {
 
     return (
         <View style={styles.card}>
+            <LinearGradient
+                colors={GRADIENTS.subtleCard}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                style={StyleSheet.absoluteFillObject}
+                pointerEvents="none"
+            />
             {/* Header */}
             <View style={styles.headerRow}>
                 <View style={styles.titleWrap}>
@@ -208,6 +216,7 @@ const styles = StyleSheet.create({
         borderColor: "rgba(255, 255, 255, 0.11)",
         padding: 14,
         marginBottom: 12,
+        overflow: "hidden",
     },
     headerRow: {
         flexDirection: "row",
@@ -250,11 +259,11 @@ const styles = StyleSheet.create({
     },
     statsRow: {
         flexDirection: "row",
-        backgroundColor: "rgba(255, 255, 255, 0.02)",
+        backgroundColor: "#0A0A0D",
         borderRadius: RADIUS.sm,
         padding: 10,
         borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.04)",
+        borderColor: "rgba(255, 255, 255, 0.09)",
     },
     statCol: {
         flex: 1,

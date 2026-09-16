@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-import { COLORS, SPACING, RADIUS, FAMILY } from "../utils/theme";
+import { COLORS, SPACING, RADIUS, FAMILY, GRADIENTS } from "../utils/theme";
 import * as Haptics from "expo-haptics";
 
 export default function ProgramStatusCard({
@@ -34,7 +34,7 @@ export default function ProgramStatusCard({
     return (
         <View style={styles.card}>
             <LinearGradient
-                colors={["rgba(255, 255, 255, 0.04)", "rgba(255, 255, 255, 0.008)"]}
+                colors={GRADIENTS.subtleCard}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
                 style={StyleSheet.absoluteFillObject}
@@ -178,12 +178,12 @@ const styles = StyleSheet.create({
     metricsGrid: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "rgba(255, 255, 255, 0.02)",
+        backgroundColor: "#0A0A0D",
         borderRadius: RADIUS.sm,
         paddingVertical: 10,
         paddingHorizontal: 4,
         borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.05)",
+        borderColor: "rgba(255, 255, 255, 0.09)",
     },
     metricCell: {
         flex: 1,

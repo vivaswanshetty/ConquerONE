@@ -1,7 +1,8 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-import { COLORS, FONTS, SPACING, RADIUS, FAMILY } from "../utils/theme";
+import { COLORS, FONTS, SPACING, RADIUS, FAMILY, GRADIENTS } from "../utils/theme";
 
 export default function PlateauRiskCard({ riskData }) {
     if (!riskData) return null;
@@ -33,6 +34,13 @@ export default function PlateauRiskCard({ riskData }) {
 
     return (
         <View style={styles.card}>
+            <LinearGradient
+                colors={GRADIENTS.subtleCard}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                style={StyleSheet.absoluteFillObject}
+                pointerEvents="none"
+            />
             {/* Header */}
             <View style={styles.header}>
                 <View style={styles.titleWrap}>
@@ -86,6 +94,7 @@ const styles = StyleSheet.create({
         borderColor: "rgba(255, 255, 255, 0.11)",
         padding: 14,
         marginBottom: 10,
+        overflow: "hidden",
     },
     header: {
         flexDirection: "row",
@@ -139,12 +148,12 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     factorPill: {
-        backgroundColor: "rgba(255, 255, 255, 0.025)",
+        backgroundColor: "#0A0A0D",
         borderRadius: RADIUS.xs,
         paddingHorizontal: 7,
         paddingVertical: 3,
         borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.05)",
+        borderColor: "rgba(255, 255, 255, 0.09)",
         alignItems: "center",
         justifyContent: "center",
     },
@@ -164,9 +173,11 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "flex-start",
         gap: 6,
-        backgroundColor: "rgba(255, 255, 255, 0.025)",
+        backgroundColor: "#0A0A0D",
         borderRadius: RADIUS.xs,
         padding: 9,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.07)",
     },
     recText: {
         fontFamily: FAMILY.body,
