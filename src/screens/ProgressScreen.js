@@ -414,8 +414,25 @@ export default function ProgressScreen({ navigation, route }) {
     });
     const [saving, setSaving] = useState(false);
     const flashAnim = useRef(new Animated.Value(0)).current;
+    const tabFadeAnim = useRef(new Animated.Value(0)).current;
 
-    useFocusEffect(useCallback(() => { load(); }, []));
+    const animateTabEntrance = () => {
+        tabFadeAnim.setValue(0);
+        Animated.timing(tabFadeAnim, {
+            toValue: 1,
+            duration: 350,
+            useNativeDriver: true,
+        }).start();
+    };
+
+    useFocusEffect(useCallback(() => {
+        load();
+        animateTabEntrance();
+    }, []));
+
+    useEffect(() => {
+        animateTabEntrance();
+    }, [tab]);
 
     const load = async () => {
         try {
@@ -671,7 +688,16 @@ export default function ProgressScreen({ navigation, route }) {
                     ))}
                 </View>
 
-                {tab === 0 ? (
+                <Animated.View
+                    style={{
+                        flex: 1,
+                        opacity: tabFadeAnim,
+                        transform: [{
+                            translateY: tabFadeAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] })
+                        }],
+                    }}
+                >
+                    {tab === 0 ? (
                     /* ══════════════════════════════════════════════════════════ */
                     /* PERFORMANCE HUB TAB                                       */
                     /* ══════════════════════════════════════════════════════════ */
@@ -1585,6 +1611,7 @@ export default function ProgressScreen({ navigation, route }) {
                         <View style={{ height: 40 }} />
                     </ScrollView>
                 )}
+                </Animated.View>
 
                 {/* Structured Deload Proposal Modal */}
                 <DeloadProposalModal

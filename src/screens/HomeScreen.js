@@ -559,8 +559,9 @@ export default function HomeScreen({ navigation, route }) {
     const [whyModalVisible, setWhyModalVisible] = useState(false);
 
     const greetingAnim = useRef(new Animated.Value(0)).current;
-    const navAnim = useRef(new Animated.Value(0)).current;
+    const decisionAnim = useRef(new Animated.Value(0)).current;
     const heroAnim = useRef(new Animated.Value(0)).current;
+    const cardsAnim = useRef(new Animated.Value(0)).current;
 
     // Animations
     const avatarGlow = useRef(new Animated.Value(0.3)).current;
@@ -804,10 +805,11 @@ export default function HomeScreen({ navigation, route }) {
         });
 
         Animated.parallel([
-            Animated.stagger(120, [
+            Animated.stagger(100, [
                 Animated.timing(greetingAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
-                Animated.timing(navAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
+                Animated.timing(decisionAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
                 Animated.timing(heroAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
+                Animated.timing(cardsAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
             ]),
             ...animations
         ]).start();
@@ -1144,25 +1146,34 @@ export default function HomeScreen({ navigation, route }) {
                     <Animated.View style={{ opacity: contentFadeAnim }}>
                         {/* ── 1. Phase 6 Athlete Command Center Hero Decision Card ── */}
                         {dailyAthleteCommand && (
-                            <DailyDecisionCard
-                                command={dailyAthleteCommand}
-                                isCompletedToday={isTodayFinished}
-                                indexedSessions={indexedSessions}
-                                todayWorkout={todayWorkout}
-                                headerImage={todayWorkout?.headerImage}
-                                onStartWorkout={() => {
-                                    if (activeSession && activeSession.day) {
-                                        navigation.navigate("ActiveWorkout", { day: activeSession.day, resume: true });
-                                    } else if (todayWorkout) {
-                                        navigation.navigate("WorkoutDetail", { day: todayWorkout });
-                                    } else {
-                                        navigation.navigate("RestDay");
-                                    }
+                            <Animated.View
+                                style={{
+                                    opacity: decisionAnim,
+                                    transform: [{
+                                        translateY: decisionAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] })
+                                    }],
                                 }}
-                                onOpenWhy={() => setWhyModalVisible(true)}
-                                onOpenReadiness={() => setReadinessModalVisible(true)}
-                                activeSession={activeSession}
-                            />
+                            >
+                                <DailyDecisionCard
+                                    command={dailyAthleteCommand}
+                                    isCompletedToday={isTodayFinished}
+                                    indexedSessions={indexedSessions}
+                                    todayWorkout={todayWorkout}
+                                    headerImage={todayWorkout?.headerImage}
+                                    onStartWorkout={() => {
+                                        if (activeSession && activeSession.day) {
+                                            navigation.navigate("ActiveWorkout", { day: activeSession.day, resume: true });
+                                        } else if (todayWorkout) {
+                                            navigation.navigate("WorkoutDetail", { day: todayWorkout });
+                                        } else {
+                                            navigation.navigate("RestDay");
+                                        }
+                                    }}
+                                    onOpenWhy={() => setWhyModalVisible(true)}
+                                    onOpenReadiness={() => setReadinessModalVisible(true)}
+                                    activeSession={activeSession}
+                                />
+                            </Animated.View>
                         )}
 
                         {/* ── 2. Today's Workout Hero Card (Primary Action) ── */}
@@ -1288,7 +1299,17 @@ export default function HomeScreen({ navigation, route }) {
                         </Animated.View>
 
                         {/* ── 3. Quick Actions Grid (Instant Navigation Hub) ── */}
-                        <View style={styles.quickActionsContainer}>
+                        <Animated.View
+                            style={[
+                                styles.quickActionsContainer,
+                                {
+                                    opacity: cardsAnim,
+                                    transform: [{
+                                        translateY: cardsAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] })
+                                    }],
+                                }
+                            ]}
+                        >
                             <View style={styles.quickActionRow}>
                                 <TouchableOpacity
                                     style={styles.quickActionCard}
@@ -1364,25 +1385,43 @@ export default function HomeScreen({ navigation, route }) {
                                     </View>
                                 </TouchableOpacity>
                             </View>
-                        </View>
+                        </Animated.View>
 
                         {/* ── 4. Active Program Status (Chapter 2) ── */}
                         {activeProgram && programPerformanceSummary && (
-                            <View style={{ marginTop: 24, marginBottom: 4 }}>
+                            <Animated.View
+                                style={{
+                                    marginTop: 24,
+                                    marginBottom: 4,
+                                    opacity: cardsAnim,
+                                    transform: [{
+                                        translateY: cardsAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] })
+                                    }],
+                                }}
+                            >
                                 <ProgramStatusCard
                                     summary={programPerformanceSummary}
                                     activeProgram={activeProgram}
                                     onPressVersion={() => navigation.navigate("Progress", { initialTab: 0 })}
                                     onPressReview={() => navigation.navigate("Progress", { initialTab: 0 })}
                                 />
-                            </View>
+                            </Animated.View>
                         )}
 
                         {/* ── 5. Attention & Advisories (Chapter 3 — only rendered when active) ── */}
                         {((adaptiveRecommendation && adaptiveRecommendation.status !== "CURRENT_PROGRAM") ||
                           missedWorkoutAdvisory?.hasMissedWorkout ||
                           athleteAlerts.length > 0) && (
-                            <View style={{ marginTop: 20, gap: 12 }}>
+                            <Animated.View
+                                style={{
+                                    marginTop: 20,
+                                    gap: 12,
+                                    opacity: cardsAnim,
+                                    transform: [{
+                                        translateY: cardsAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] })
+                                    }],
+                                }}
+                            >
                                 {adaptiveRecommendation && adaptiveRecommendation.status !== "CURRENT_PROGRAM" && (
                                     <AdaptiveRecommendationCard
                                         recommendation={adaptiveRecommendation}
@@ -1439,21 +1478,37 @@ export default function HomeScreen({ navigation, route }) {
                                         }}
                                     />
                                 ))}
-                            </View>
+                            </Animated.View>
                         )}
 
                         {/* ── 6. Week in Review (Chapter 4) ── */}
-                        <View style={{ marginTop: 24 }}>
+                        <Animated.View
+                            style={{
+                                marginTop: 24,
+                                opacity: cardsAnim,
+                                transform: [{
+                                    translateY: cardsAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] })
+                                }],
+                            }}
+                        >
                             {weeklyAthleteRecap && (
                                 <WeeklyRecapCard
                                     recap={weeklyAthleteRecap}
                                     onPressDetails={() => navigation.navigate("Progress", { initialTab: 0 })}
                                 />
                             )}
-                        </View>
+                        </Animated.View>
 
                         {/* ── 7. Consistency Grid ── */}
-                        <View style={{ marginTop: 20 }}>
+                        <Animated.View
+                            style={{
+                                marginTop: 20,
+                                opacity: cardsAnim,
+                                transform: [{
+                                    translateY: cardsAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] })
+                                }],
+                            }}
+                        >
                             <TouchableOpacity
                                 style={styles.consistencyCard}
                                 activeOpacity={0.88}
@@ -1537,7 +1592,7 @@ export default function HomeScreen({ navigation, route }) {
                                 })}
                             </View>
                         </TouchableOpacity>
-                        </View>
+                        </Animated.View>
                     </Animated.View>
                 )}
 
