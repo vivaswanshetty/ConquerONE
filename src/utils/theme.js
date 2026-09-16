@@ -7,19 +7,19 @@
 export const COLORS = {
     // ── Surfaces (Warm Matte Carbon Stack) ────────────────────
     bg: "#0A0A0B",
-    bgRaised: "#111113",
-    bgCard: "#151516",
-    bgSurface: "#1E1E20",
-    bgMuted: "#26262A",
+    bgRaised: "#0D0D0F",
+    bgCard: "#050507",
+    bgSurface: "#121214",
+    bgMuted: "#1C1C1F",
 
     // Aliases for component consistency
-    card: "#151516",
-    cardBorder: "#1E1E20",
+    card: "#050507",
+    cardBorder: "rgba(255, 255, 255, 0.11)",
 
     // ── Structural lines (1px Hairline, No Glow) ──────────────
-    border: "#1E1E20",
-    borderMid: "#28282C",
-    borderLight: "#35353A",
+    border: "rgba(255, 255, 255, 0.10)",
+    borderMid: "rgba(255, 255, 255, 0.14)",
+    borderLight: "rgba(255, 255, 255, 0.18)",
 
     // ── Text hierarchy ────────────────────────────────────────
     text: "#FFFFFF",
@@ -52,8 +52,8 @@ export const COLORS = {
     timerRestDim: "rgba(38, 38, 42, 0.50)",
 
     // ── Clean Flat Surfaces (No resting blur/glow) ─────────────
-    glassBg: "#151516",
-    glassBorder: "#1E1E20",
+    glassBg: "#050507",
+    glassBorder: "rgba(255, 255, 255, 0.11)",
     glowRed: "rgba(227, 30, 36, 0.45)",
     liveGlow: "rgba(122, 46, 34, 0.35)",
 };
@@ -64,7 +64,7 @@ export const GRADIENTS = {
     diamond: ["#EDEAE3", "#E0DDD6", "#C5C2BB"],
     dark: ["rgba(255,255,255,0.03)", "transparent"],
     hero: ["rgba(10,10,11,0.2)", "rgba(10,10,11,0.95)"],
-    subtleCard: ["#171719", "#151516"],
+    subtleCard: ["#08080A", "#020203"],
 };
 
 export const FONTS = {

@@ -155,10 +155,10 @@ export default function ExerciseTargetCard({ targetInfo, compact = false }) {
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: "#131316",
+        backgroundColor: "#050507",
         borderRadius: RADIUS.md,
         borderWidth: 1,
-        borderColor: "#222226",
+        borderColor: "rgba(255, 255, 255, 0.11)",
         padding: SPACING.sm + 2,
         marginTop: SPACING.xs,
         marginBottom: SPACING.xs,

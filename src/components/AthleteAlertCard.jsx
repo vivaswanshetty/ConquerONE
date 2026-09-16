@@ -55,10 +55,10 @@ const styles = StyleSheet.create({
     container: {
         marginHorizontal: 16,
         marginVertical: 4,
-        backgroundColor: "#131316",
+        backgroundColor: "#050507",
         borderRadius: 14,
         borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.08)",
+        borderColor: "rgba(255, 255, 255, 0.11)",
         padding: 14,
     },
     headerRow: {

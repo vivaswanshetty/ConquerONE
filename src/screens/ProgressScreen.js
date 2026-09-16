@@ -1606,8 +1606,8 @@ const styles = StyleSheet.create({
     // Insights Cards
     insightsWrap: { marginHorizontal: 16, gap: 10 },
     insightCard: {
-        backgroundColor: "#131316", borderRadius: 14,
-        borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.08)", padding: 14, overflow: "hidden",
+        backgroundColor: "#050507", borderRadius: 14,
+        borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.11)", padding: 14, overflow: "hidden",
     },
     insightHeaderRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 },
     insightIconBox: { width: 22, height: 22, borderRadius: RADIUS.xs, alignItems: "center", justifyContent: "center" },
@@ -1629,8 +1629,8 @@ const styles = StyleSheet.create({
         marginHorizontal: 16, flexDirection: "row", flexWrap: "wrap", gap: 8,
     },
     physiqueCard: {
-        width: (width - 40) / 2, backgroundColor: "#131316",
-        borderRadius: 14, borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.08)",
+        width: (width - 40) / 2, backgroundColor: "#050507",
+        borderRadius: 14, borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.11)",
         padding: 12,
     },
     physiqueLabel: { fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.textMuted, letterSpacing: 0.5 },
@@ -1655,8 +1655,8 @@ const styles = StyleSheet.create({
     infoPillText: { fontSize: 9, fontFamily: FAMILY.mono, color: COLORS.textSub },
 
     card: {
-        marginHorizontal: 16, backgroundColor: "#131316",
-        borderRadius: 18, borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.08)",
+        marginHorizontal: 16, backgroundColor: "#050507",
+        borderRadius: 18, borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.11)",
         padding: 16, overflow: "hidden", marginBottom: 14,
     },
 
@@ -1719,8 +1719,8 @@ const styles = StyleSheet.create({
 
     prListWrap: { marginHorizontal: 16, gap: 10 },
     emptyPRCard: {
-        marginHorizontal: 16, backgroundColor: "#131316", borderRadius: 14,
-        borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.08)", padding: 28, alignItems: "center", justifyContent: "center",
+        marginHorizontal: 16, backgroundColor: "#050507", borderRadius: 14,
+        borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.11)", padding: 28, alignItems: "center", justifyContent: "center",
     },
 
     saveBtn: {
