@@ -224,23 +224,29 @@ const styles = StyleSheet.create({
         fontSize: 14.5,
         color: "#FFFFFF",
         letterSpacing: 0.3,
+        includeFontPadding: false,
     },
     subTitle: {
         fontFamily: FAMILY.mono,
         fontSize: 9.5,
         color: COLORS.textMuted,
         marginTop: 2,
+        includeFontPadding: false,
     },
     trajBadge: {
         paddingHorizontal: 7,
         paddingVertical: 3,
         borderRadius: RADIUS.xs,
         borderWidth: 1,
+        alignItems: "center",
+        justifyContent: "center",
     },
     trajText: {
         fontFamily: FAMILY.monoBold,
         fontSize: 9,
         letterSpacing: 0.5,
+        includeFontPadding: false,
+        textAlignVertical: "center",
     },
     statsRow: {
         flexDirection: "row",
@@ -259,17 +265,20 @@ const styles = StyleSheet.create({
         color: COLORS.textMuted,
         letterSpacing: 0.5,
         marginBottom: 2,
+        includeFontPadding: false,
     },
     statValue: {
         fontFamily: FAMILY.monoBold,
         fontSize: 14,
         color: "#FFFFFF",
         fontVariant: ["tabular-nums"],
+        includeFontPadding: false,
     },
     statUnit: {
         fontFamily: FAMILY.mono,
         fontSize: 9,
         color: COLORS.textMuted,
+        includeFontPadding: false,
     },
     confidencePill: {
         flexDirection: "row",
@@ -280,6 +289,8 @@ const styles = StyleSheet.create({
     confidenceText: {
         fontFamily: FAMILY.monoBold,
         fontSize: 9.5,
+        includeFontPadding: false,
+        textAlignVertical: "center",
     },
     chartContainer: {
         marginTop: 10,
@@ -296,5 +307,6 @@ const styles = StyleSheet.create({
         fontFamily: FAMILY.mono,
         fontSize: 9,
         color: COLORS.textMuted,
+        includeFontPadding: false,
     },
 });

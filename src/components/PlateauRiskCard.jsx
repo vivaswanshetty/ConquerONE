@@ -101,16 +101,19 @@ const styles = StyleSheet.create({
         fontFamily: FAMILY.chakraBold,
         fontSize: 14,
         color: "#FFFFFF",
+        includeFontPadding: false,
     },
     subText: {
         fontFamily: FAMILY.mono,
         fontSize: 9,
         color: COLORS.textMuted,
         marginTop: 2,
+        includeFontPadding: false,
     },
     riskBadge: {
         flexDirection: "row",
         alignItems: "center",
+        justifyContent: "center",
         gap: 5,
         paddingHorizontal: 7,
         paddingVertical: 3,
@@ -126,6 +129,8 @@ const styles = StyleSheet.create({
         fontFamily: FAMILY.monoBold,
         fontSize: 9,
         letterSpacing: 0.5,
+        includeFontPadding: false,
+        textAlignVertical: "center",
     },
     factorsRow: {
         flexDirection: "row",
@@ -140,6 +145,8 @@ const styles = StyleSheet.create({
         paddingVertical: 3,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.05)",
+        alignItems: "center",
+        justifyContent: "center",
     },
     factorPillActive: {
         backgroundColor: "rgba(227, 30, 36, 0.08)",
@@ -150,6 +157,8 @@ const styles = StyleSheet.create({
         fontSize: 8.5,
         color: COLORS.textMuted,
         letterSpacing: 0.3,
+        includeFontPadding: false,
+        textAlignVertical: "center",
     },
     recBox: {
         flexDirection: "row",
@@ -165,5 +174,6 @@ const styles = StyleSheet.create({
         color: COLORS.textSub,
         flex: 1,
         lineHeight: 15.5,
+        includeFontPadding: false,
     },
 });

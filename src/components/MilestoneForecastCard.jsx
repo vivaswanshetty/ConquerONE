@@ -64,7 +64,9 @@ export default function MilestoneForecastCard({ milestoneData }) {
                     </Text>
                 </View>
 
-                <Ionicons name="arrow-forward" size={16} color={COLORS.textMuted} style={{ marginTop: 16 }} />
+                <View style={styles.arrowWrap}>
+                    <Ionicons name="arrow-forward" size={14} color={COLORS.textMuted} />
+                </View>
 
                 <View style={[styles.numberBlock, { alignItems: "flex-end" }]}>
                     <Text style={styles.numberLabel}>NEXT TARGET</Text>
@@ -115,16 +117,19 @@ const styles = StyleSheet.create({
         fontFamily: FAMILY.chakraBold,
         fontSize: 14,
         color: "#FFFFFF",
+        includeFontPadding: false,
     },
     subText: {
         fontFamily: FAMILY.mono,
         fontSize: 9,
         color: COLORS.textMuted,
         marginTop: 2,
+        includeFontPadding: false,
     },
     horizonBadge: {
         flexDirection: "row",
         alignItems: "center",
+        justifyContent: "center",
         gap: 3,
         paddingHorizontal: 7,
         paddingVertical: 3,
@@ -135,24 +140,36 @@ const styles = StyleSheet.create({
         fontFamily: FAMILY.monoBold,
         fontSize: 9,
         color: "#30D158",
+        includeFontPadding: false,
+        textAlignVertical: "center",
     },
     statusBadge: {
         paddingHorizontal: 7,
         paddingVertical: 3,
         borderRadius: RADIUS.xs,
+        alignItems: "center",
+        justifyContent: "center",
     },
     statusText: {
         fontFamily: FAMILY.monoBold,
         fontSize: 9,
+        includeFontPadding: false,
+        textAlignVertical: "center",
     },
     numbersRow: {
         flexDirection: "row",
         justifyContent: "space-between",
-        alignItems: "center",
+        alignItems: "flex-start",
         marginBottom: 8,
     },
     numberBlock: {
         flex: 1,
+    },
+    arrowWrap: {
+        alignItems: "center",
+        justifyContent: "center",
+        paddingTop: 15,
+        paddingHorizontal: 8,
     },
     numberLabel: {
         fontFamily: FAMILY.monoBold,
@@ -160,23 +177,27 @@ const styles = StyleSheet.create({
         color: COLORS.textMuted,
         letterSpacing: 0.5,
         marginBottom: 2,
+        includeFontPadding: false,
     },
     currentVal: {
         fontFamily: FAMILY.monoBold,
         fontSize: 15,
         color: "#FFFFFF",
         fontVariant: ["tabular-nums"],
+        includeFontPadding: false,
     },
     targetVal: {
         fontFamily: FAMILY.monoBold,
         fontSize: 15,
         color: "#30D158",
         fontVariant: ["tabular-nums"],
+        includeFontPadding: false,
     },
     unitText: {
         fontFamily: FAMILY.mono,
         fontSize: 9,
         color: COLORS.textMuted,
+        includeFontPadding: false,
     },
     progressBarTrack: {
         height: 4,
@@ -202,6 +223,7 @@ const styles = StyleSheet.create({
         flex: 1,
         marginRight: 8,
         lineHeight: 15,
+        includeFontPadding: false,
     },
     confWrap: {
         alignSelf: "flex-end",
@@ -210,5 +232,6 @@ const styles = StyleSheet.create({
         fontFamily: FAMILY.monoBold,
         fontSize: 8.5,
         letterSpacing: 0.4,
+        includeFontPadding: false,
     },
 });

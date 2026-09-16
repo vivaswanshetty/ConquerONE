@@ -1264,10 +1264,10 @@ export default function ProgressScreen({ navigation, route }) {
                         <View style={[styles.sectionHeaderRow, { marginTop: 14 }]}>
                             <View style={styles.sectionTitleGroup}>
                                 <Ionicons name="trending-up" size={15} color={COLORS.primary} />
-                                <Text style={styles.sectionLabel}>PERFORMANCE TRAJECTORY</Text>
+                                <Text style={styles.sectionLabel} numberOfLines={1}>PERFORMANCE TRAJECTORY</Text>
                             </View>
                             <View style={styles.infoPill}>
-                                <Text style={styles.infoPillText}>Theil-Sen Robust Slope</Text>
+                                <Text style={styles.infoPillText}>THEIL-SEN SLOPE</Text>
                             </View>
                         </View>
 
@@ -1305,10 +1305,10 @@ export default function ProgressScreen({ navigation, route }) {
                         <View style={[styles.sectionHeaderRow, { marginTop: 28 }]}>
                             <View style={styles.sectionTitleGroup}>
                                 <Ionicons name="flag-outline" size={15} color={COLORS.primary} />
-                                <Text style={styles.sectionLabel}>UPCOMING MILESTONES</Text>
+                                <Text style={styles.sectionLabel} numberOfLines={1}>UPCOMING MILESTONES</Text>
                             </View>
                             <View style={styles.infoPill}>
-                                <Text style={styles.infoPillText}>Velocity Horizon</Text>
+                                <Text style={styles.infoPillText}>VELOCITY HORIZON</Text>
                             </View>
                         </View>
 
@@ -1318,7 +1318,7 @@ export default function ProgressScreen({ navigation, route }) {
                                     <MilestoneForecastCard key={`${m.exerciseName}_${idx}`} milestoneData={m} />
                                 ))
                             ) : (
-                                <View style={styles.emptyPRCard}>
+                                <View style={[styles.emptyPRCard, { marginHorizontal: 0 }]}>
                                     <Ionicons name="flag-outline" size={24} color={COLORS.textMuted} style={{ marginBottom: 8 }} />
                                     <Text style={styles.emptyTitle}>Building Milestone Horizons</Text>
                                     <Text style={styles.emptySub}>Maintain consistent progressive overload across workouts to project milestones.</Text>
@@ -1371,7 +1371,7 @@ export default function ProgressScreen({ navigation, route }) {
                                 <Text style={styles.sectionLabel} numberOfLines={1}>MUSCLE GROUP RESPONSE</Text>
                             </View>
                             <View style={styles.infoPill}>
-                                <Text style={styles.infoPillText}>28-Day Slope</Text>
+                                <Text style={styles.infoPillText}>28-DAY SLOPE</Text>
                             </View>
                         </View>
 
@@ -1397,7 +1397,7 @@ export default function ProgressScreen({ navigation, route }) {
                                 <View style={styles.loadGridCol}>
                                     <Text style={[styles.loadGridVal, { color: predictiveSummary.bodyweightCorrelation.bodyweightVelocityKgPerWeek >= 0 ? "#FF9500" : "#38BDF8" }]}>
                                         {predictiveSummary.bodyweightCorrelation.bodyweightVelocityKgPerWeek >= 0 ? "+" : ""}
-                                        {predictiveSummary.bodyweightCorrelation.bodyweightVelocityKgPerWeek} kg/wk
+                                        {predictiveSummary.bodyweightCorrelation.bodyweightVelocityKgPerWeek} <Text style={styles.loadGridUnit}>kg/wk</Text>
                                     </Text>
                                     <Text style={styles.loadGridLabel}>BW VELOCITY</Text>
                                     <Text style={styles.profileSubMini}>7-day rolling</Text>
@@ -1406,13 +1406,13 @@ export default function ProgressScreen({ navigation, route }) {
                                 <View style={styles.loadGridCol}>
                                     <Text style={[styles.loadGridVal, { color: predictiveSummary.bodyweightCorrelation.strengthVelocityAvg >= 0 ? "#30D158" : COLORS.primary }]}>
                                         {predictiveSummary.bodyweightCorrelation.strengthVelocityAvg >= 0 ? "+" : ""}
-                                        {predictiveSummary.bodyweightCorrelation.strengthVelocityAvg} kg/wk
+                                        {predictiveSummary.bodyweightCorrelation.strengthVelocityAvg} <Text style={styles.loadGridUnit}>kg/wk</Text>
                                     </Text>
                                     <Text style={styles.loadGridLabel}>COMPOUND VELOCITY</Text>
                                     <Text style={styles.profileSubMini}>Key barbell lifts</Text>
                                 </View>
                             </View>
-                            <Text style={[styles.loadSummaryText, { marginTop: 8 }]}>
+                            <Text style={[styles.loadSummaryText, { marginTop: 10 }]}>
                                 {predictiveSummary.bodyweightCorrelation.explanation}
                             </Text>
                         </View>
@@ -1582,9 +1582,9 @@ const styles = StyleSheet.create({
         width: 36, height: 36, borderRadius: RADIUS.pill, backgroundColor: COLORS.bgCard,
         alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: COLORS.border,
     },
-    headerTitle: { fontSize: 16, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 0.8 },
+    headerTitle: { fontSize: 16, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 0.8, includeFontPadding: false },
     savedBadge: { backgroundColor: "rgba(255, 255, 255, 0.06)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.border },
-    savedText: { fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.text },
+    savedText: { fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.text, includeFontPadding: false },
 
     tabs: {
         flexDirection: "row", paddingHorizontal: 16,
@@ -1592,8 +1592,8 @@ const styles = StyleSheet.create({
     },
     tab: { paddingVertical: 12 },
     tabActive: { borderBottomWidth: 2, borderBottomColor: COLORS.primary },
-    tabText: { fontSize: 12, fontFamily: FAMILY.medium, color: COLORS.textMuted, letterSpacing: 0.5 },
-    tabTextActive: { color: COLORS.text, fontFamily: FAMILY.bold },
+    tabText: { fontSize: 12, fontFamily: FAMILY.medium, color: COLORS.textMuted, letterSpacing: 0.5, includeFontPadding: false },
+    tabTextActive: { color: COLORS.text, fontFamily: FAMILY.bold, includeFontPadding: false },
 
     sectionHeader: { paddingHorizontal: 16, marginTop: 24, marginBottom: 10 },
     sectionHeaderRow: {
@@ -1601,7 +1601,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16, marginTop: 20, marginBottom: 10,
     },
     sectionTitleGroup: { flexDirection: "row", alignItems: "center", gap: 6, flexShrink: 1, marginRight: 8 },
-    sectionLabel: { fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1.0, flexShrink: 1 },
+    sectionLabel: { fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1.0, flexShrink: 1, includeFontPadding: false },
 
     // Insights Cards
     insightsWrap: { marginHorizontal: 16, gap: 10 },
@@ -1650,9 +1650,23 @@ const styles = StyleSheet.create({
 
     infoPill: {
         backgroundColor: "rgba(255, 255, 255, 0.04)", paddingHorizontal: 8, paddingVertical: 3,
-        borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLORS.border,
+        borderRadius: RADIUS.xs, borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.08)",
+        alignItems: "center", justifyContent: "center",
     },
-    infoPillText: { fontSize: 9, fontFamily: FAMILY.mono, color: COLORS.textSub },
+    infoPillText: {
+        fontSize: 8.5, fontFamily: FAMILY.monoBold, color: COLORS.textSub, letterSpacing: 0.5,
+        includeFontPadding: false, textAlignVertical: "center",
+    },
+
+    exPillsScroll: { paddingHorizontal: 16, gap: 8 },
+    exPill: {
+        paddingHorizontal: 12, paddingVertical: 6, borderRadius: RADIUS.pill,
+        backgroundColor: "#050507", borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.11)",
+        alignItems: "center", justifyContent: "center",
+    },
+    exPillActive: { backgroundColor: "rgba(227, 30, 36, 0.15)", borderColor: COLORS.primary },
+    exPillText: { fontSize: 11, fontFamily: FAMILY.medium, color: COLORS.textSub, includeFontPadding: false, textAlignVertical: "center" },
+    exPillTextActive: { color: "#FFFFFF", fontFamily: FAMILY.bold, includeFontPadding: false, textAlignVertical: "center" },
 
     card: {
         marginHorizontal: 16, backgroundColor: "#050507",
@@ -1737,12 +1751,18 @@ const styles = StyleSheet.create({
     tableDateCell: { flex: 1.4, color: COLORS.textSub, fontFamily: FAMILY.mono, fontSize: 10 },
     tableValueCell: { flex: 1, fontSize: 12, fontFamily: FAMILY.monoBold, color: COLORS.text, textAlign: "center" },
 
-    emptyTitle: { fontSize: 14, fontFamily: FAMILY.bold, color: COLORS.text, marginBottom: 4 },
-    emptySub: { fontSize: 11, color: COLORS.textMuted, textAlign: "center", fontFamily: FAMILY.regular },
+    emptyTitle: { fontSize: 14, fontFamily: FAMILY.bold, color: COLORS.text, marginBottom: 4, includeFontPadding: false },
+    emptySub: { fontSize: 11, color: COLORS.textMuted, textAlign: "center", fontFamily: FAMILY.regular, lineHeight: 16, includeFontPadding: false },
 
     // Phase 3 Intelligence Styles
-    statusBadgeSmall: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.xs, borderWidth: 1 },
-    statusBadgeSmallText: { fontSize: 8.5, fontFamily: FAMILY.monoBold, letterSpacing: 0.5 },
+    statusBadgeSmall: {
+        paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.xs, borderWidth: 1,
+        alignItems: "center", justifyContent: "center",
+    },
+    statusBadgeSmallText: {
+        fontSize: 8.5, fontFamily: FAMILY.monoBold, letterSpacing: 0.5,
+        includeFontPadding: false, textAlignVertical: "center",
+    },
 
     loadHeaderRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 },
     loadSubLabel: { fontSize: 8.5, fontFamily: FAMILY.monoBold, color: COLORS.textMuted, letterSpacing: 0.8 },
@@ -1757,26 +1777,29 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        paddingVertical: 10,
-        marginVertical: 4,
-        borderTopWidth: 1,
+        paddingBottom: 12,
         borderBottomWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.06)",
+        borderBottomColor: "rgba(255, 255, 255, 0.06)",
     },
     loadGridCol: { flex: 1, alignItems: "center" },
-    loadGridVal: { fontSize: 13.5, fontFamily: FAMILY.monoBold, color: "#FFFFFF", fontVariant: ["tabular-nums"] },
-    loadGridLabel: { fontSize: 8.5, fontFamily: FAMILY.monoBold, color: COLORS.textMuted, letterSpacing: 0.5, marginTop: 3 },
-    loadSummaryText: { fontSize: 11, fontFamily: FAMILY.body, color: "#B0B0B8", lineHeight: 16, marginTop: 10 },
+    loadGridVal: { fontSize: 15, fontFamily: FAMILY.monoBold, color: "#FFFFFF", fontVariant: ["tabular-nums"], includeFontPadding: false },
+    loadGridUnit: { fontSize: 9.5, fontFamily: FAMILY.mono, color: COLORS.textMuted, includeFontPadding: false },
+    loadGridLabel: { fontSize: 8.5, fontFamily: FAMILY.monoBold, color: COLORS.textMuted, letterSpacing: 0.5, marginTop: 4, includeFontPadding: false },
+    loadSummaryText: { fontSize: 11, fontFamily: FAMILY.body, color: "#8A8A8E", lineHeight: 16, marginTop: 10, includeFontPadding: false },
 
     deloadAlertBox: { borderRadius: RADIUS.sm, padding: 12, borderWidth: 1 },
     deloadAlertTitle: { fontSize: 10, fontFamily: FAMILY.monoBold, letterSpacing: 0.5 },
     deloadAlertReason: { fontSize: 11, fontFamily: FAMILY.body, color: COLORS.textSub, lineHeight: 15 },
     deloadObsBullet: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.textMuted },
 
-    stallNominalRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 4 },
+    stallNominalRow: {
+        flexDirection: "row", alignItems: "center", gap: 12, padding: 14,
+        backgroundColor: "#050507", borderRadius: 14, borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.11)", marginBottom: 10,
+    },
     stallNominalIconBox: { width: 36, height: 36, borderRadius: RADIUS.sm, backgroundColor: "rgba(48, 209, 88, 0.12)", alignItems: "center", justifyContent: "center" },
-    stallNominalTitle: { fontSize: 12, fontFamily: FAMILY.monoBold, color: "#30D158", letterSpacing: 0.5 },
-    stallNominalSub: { fontSize: 11, fontFamily: FAMILY.regular, color: COLORS.textMuted, marginTop: 3, lineHeight: 15 },
+    stallNominalTitle: { fontSize: 12, fontFamily: FAMILY.monoBold, color: "#30D158", letterSpacing: 0.5, includeFontPadding: false },
+    stallNominalSub: { fontSize: 11, fontFamily: FAMILY.regular, color: COLORS.textMuted, marginTop: 3, lineHeight: 15, includeFontPadding: false },
 
     stallCard: { backgroundColor: COLORS.bgCard, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, padding: 14 },
     stallCardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 },
@@ -1873,6 +1896,7 @@ const styles = StyleSheet.create({
         fontFamily: FAMILY.mono,
         color: "rgba(255, 255, 255, 0.4)",
         marginTop: 2,
+        includeFontPadding: false,
     },
     taxonomyRatesGrid: {
         flexDirection: "row",

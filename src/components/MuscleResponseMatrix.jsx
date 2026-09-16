@@ -1,7 +1,11 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Dimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, FONTS, SPACING, RADIUS, FAMILY } from "../utils/theme";
+
+const { width } = Dimensions.get("window");
+// Container has marginHorizontal: 16 (32px total horizontal margin), gap between columns is 8px
+const ITEM_WIDTH = Math.floor((width - 32 - 8) / 2);
 
 export default function MuscleResponseMatrix({ responseData = [] }) {
     if (!Array.isArray(responseData) || responseData.length === 0) return null;
@@ -29,7 +33,7 @@ export default function MuscleResponseMatrix({ responseData = [] }) {
                     return (
                         <View key={item.muscleGroup} style={styles.gridItem}>
                             <View style={styles.itemHeader}>
-                                <Text style={styles.muscleName}>{item.muscleGroup}</Text>
+                                <Text style={styles.muscleName} numberOfLines={1}>{item.muscleGroup}</Text>
                                 <Ionicons name={badge.icon} size={12} color={badge.color} />
                             </View>
 
@@ -41,7 +45,7 @@ export default function MuscleResponseMatrix({ responseData = [] }) {
                             </View>
 
                             <View style={[styles.statusPill, { backgroundColor: `${badge.color}15`, borderColor: `${badge.color}30` }]}>
-                                <Text style={[styles.statusText, { color: badge.color }]}>
+                                <Text style={[styles.statusText, { color: badge.color }]} numberOfLines={1}>
                                     {badge.label}
                                 </Text>
                             </View>
@@ -63,11 +67,11 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     gridItem: {
-        width: "48.5%",
-        backgroundColor: "#141416",
+        width: ITEM_WIDTH,
+        backgroundColor: "#050507",
         borderRadius: RADIUS.sm,
         borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.08)",
+        borderColor: "rgba(255, 255, 255, 0.11)",
         padding: 10,
     },
     itemHeader: {
@@ -81,21 +85,27 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: "#FFFFFF",
         letterSpacing: 0.3,
+        includeFontPadding: false,
+        flex: 1,
+        marginRight: 4,
     },
     metricsRow: {
         flexDirection: "row",
         justifyContent: "space-between",
+        alignItems: "center",
         marginBottom: 6,
     },
     volumeText: {
         fontFamily: FAMILY.mono,
         fontSize: 9,
         color: COLORS.textMuted,
+        includeFontPadding: false,
     },
     slopeText: {
         fontFamily: FAMILY.monoBold,
         fontSize: 9.5,
         fontVariant: ["tabular-nums"],
+        includeFontPadding: false,
     },
     statusPill: {
         paddingHorizontal: 6,
@@ -103,10 +113,13 @@ const styles = StyleSheet.create({
         borderRadius: RADIUS.xs,
         borderWidth: 1,
         alignItems: "center",
+        justifyContent: "center",
     },
     statusText: {
         fontFamily: FAMILY.monoBold,
         fontSize: 8.5,
         letterSpacing: 0.3,
+        includeFontPadding: false,
+        textAlignVertical: "center",
     },
 });
