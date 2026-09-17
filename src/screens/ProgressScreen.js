@@ -952,61 +952,64 @@ export default function ProgressScreen({ navigation, route }) {
                                 pointerEvents="none"
                             />
                             <View style={styles.loadHeaderRow}>
-                                <View>
+                                <View style={{ justifyContent: "center" }}>
                                     <Text style={styles.loadSubLabel}>ACUTE : CHRONIC WORKLOAD RATIO</Text>
-                                    <Text style={styles.loadRatioValue}>
-                                        {trainingLoad.workloadRatio.toFixed(2)}<Text style={styles.loadRatioUnit}>x</Text>
-                                    </Text>
+                                    <View style={{ flexDirection: "row", alignItems: "baseline", gap: 3, marginTop: 3 }}>
+                                        <Text style={[styles.loadRatioValue, { color: trainingLoad.trendColor }]}>
+                                            {trainingLoad.workloadRatio.toFixed(2)}
+                                        </Text>
+                                        <Text style={styles.loadRatioUnit}>x</Text>
+                                    </View>
                                 </View>
-                                <View style={styles.loadTonnageBreakdown}>
-                                    <Text style={styles.loadTonnageLabel}>7-DAY ACUTE LOAD</Text>
-                                    <Text style={styles.loadTonnageVal}>
-                                        {trainingLoad.currentWeekTonnageKg.toLocaleString()} <Text style={{ fontSize: 10.5, fontFamily: FAMILY.mono, color: COLORS.textMuted }}>kg tonnage</Text>
-                                    </Text>
-                                    <Text style={styles.loadBWCount}>+ {trainingLoad.currentWeekSets} completed sets</Text>
+
+                                <View style={styles.loadHeaderBadgeBox}>
+                                    <View style={styles.loadHeaderBadgeRow}>
+                                        <Ionicons name="barbell-outline" size={13} color={COLORS.primary} />
+                                        <Text style={styles.loadHeaderBadgeSets}>
+                                            {trainingLoad.currentWeekSets} <Text style={styles.loadHeaderBadgeSetsSub}>SETS</Text>
+                                        </Text>
+                                    </View>
+                                    <Text style={styles.loadHeaderBadgeRange}>SWEET SPOT 0.8–1.3x</Text>
                                 </View>
                             </View>
 
-                            {/* Load Metrics 3-Col Grid */}
-                            <View style={styles.loadGrid}>
-                                <View style={styles.loadGridCol}>
-                                    <View style={styles.metricValBox}>
-                                        <Text style={styles.loadGridVal} numberOfLines={1} adjustsFontSizeToFit>
+                            {/* Discrete 3-Tile Telemetry Row */}
+                            <View style={styles.loadTilesRow}>
+                                <View style={styles.loadTile}>
+                                    <Text style={styles.loadTileLabel} numberOfLines={1}>CURRENT (7D)</Text>
+                                    <View style={styles.loadTileValBox}>
+                                        <Text style={styles.loadTileVal} numberOfLines={1} adjustsFontSizeToFit>
                                             {trainingLoad.currentWeekTonnageKg > 0 ? trainingLoad.currentWeekTonnageKg.toLocaleString() : "—"}{" "}
-                                            <Text style={styles.loadGridUnit}>kg</Text>
+                                            <Text style={styles.loadTileUnit}>kg</Text>
                                         </Text>
                                     </View>
-                                    <Text style={styles.loadGridLabel} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
-                                        CURRENT (7D)
-                                    </Text>
+                                    <Text style={styles.loadTileSub} numberOfLines={1}>Acute tonnage</Text>
                                 </View>
-                                <View style={styles.profileMetricDivider} />
-                                <View style={styles.loadGridCol}>
-                                    <View style={styles.metricValBox}>
-                                        <Text style={styles.loadGridVal} numberOfLines={1} adjustsFontSizeToFit>
+
+                                <View style={styles.loadTile}>
+                                    <Text style={styles.loadTileLabel} numberOfLines={1}>4-WK BASELINE</Text>
+                                    <View style={styles.loadTileValBox}>
+                                        <Text style={styles.loadTileVal} numberOfLines={1} adjustsFontSizeToFit>
                                             {trainingLoad.chronicBaselineTonnageKg > 0 ? trainingLoad.chronicBaselineTonnageKg.toLocaleString() : "—"}{" "}
-                                            <Text style={styles.loadGridUnit}>kg</Text>
+                                            <Text style={styles.loadTileUnit}>kg</Text>
                                         </Text>
                                     </View>
-                                    <Text style={styles.loadGridLabel} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
-                                        4-WK BASELINE
-                                    </Text>
+                                    <Text style={styles.loadTileSub} numberOfLines={1}>Chronic tonnage</Text>
                                 </View>
-                                <View style={styles.profileMetricDivider} />
-                                <View style={styles.loadGridCol}>
-                                    <View style={styles.metricValBox}>
-                                        <Text style={[styles.loadGridVal, { color: trainingLoad.trendColor }]} numberOfLines={1} adjustsFontSizeToFit>
+
+                                <View style={styles.loadTile}>
+                                    <Text style={styles.loadTileLabel} numberOfLines={1}>STIMULUS DELTA</Text>
+                                    <View style={styles.loadTileValBox}>
+                                        <Text style={[styles.loadTileVal, { color: trainingLoad.trendColor }]} numberOfLines={1} adjustsFontSizeToFit>
                                             {trainingLoad.workloadRatio > 1 ? `+${Math.round((trainingLoad.workloadRatio - 1) * 100)}%` : trainingLoad.workloadRatio < 1 ? `-${Math.round((1 - trainingLoad.workloadRatio) * 100)}%` : "0%"}
                                         </Text>
                                     </View>
-                                    <Text style={styles.loadGridLabel} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
-                                        STIMULUS DELTA
-                                    </Text>
+                                    <Text style={styles.loadTileSub} numberOfLines={1}>vs baseline</Text>
                                 </View>
                             </View>
 
                             <View style={styles.loadSummaryBox}>
-                                <Ionicons name="information-circle-outline" size={13} color={COLORS.textMuted} style={{ marginTop: 1 }} />
+                                <Ionicons name="information-circle-outline" size={14} color={COLORS.textMuted} />
                                 <Text style={styles.loadSummaryText}>{trainingLoad.summaryMessage}</Text>
                             </View>
 
@@ -1874,14 +1877,119 @@ const styles = StyleSheet.create({
         includeFontPadding: false, textAlignVertical: "center",
     },
 
-    loadHeaderRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 },
-    loadSubLabel: { fontSize: 8.5, fontFamily: FAMILY.monoBold, color: COLORS.textMuted, letterSpacing: 0.8 },
-    loadRatioValue: { fontSize: 26, fontFamily: FAMILY.monoBold, color: "#FFFFFF", marginTop: 2, fontVariant: ["tabular-nums"] },
-    loadRatioUnit: { fontSize: 14, fontFamily: FAMILY.monoBold, color: COLORS.textMuted },
-    loadTonnageBreakdown: { alignItems: "flex-end" },
-    loadTonnageLabel: { fontSize: 8.5, fontFamily: FAMILY.monoBold, color: COLORS.textMuted, letterSpacing: 0.5 },
-    loadTonnageVal: { fontSize: 13.5, fontFamily: FAMILY.monoBold, color: "#FFFFFF", marginTop: 2, fontVariant: ["tabular-nums"] },
-    loadBWCount: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.textMuted, marginTop: 2 },
+    loadHeaderRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 2,
+    },
+    loadSubLabel: {
+        fontSize: 8.5,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textMuted,
+        letterSpacing: 0.8,
+        includeFontPadding: false,
+    },
+    loadRatioValue: {
+        fontSize: 28,
+        fontFamily: FAMILY.monoBold,
+        fontVariant: ["tabular-nums"],
+        includeFontPadding: false,
+    },
+    loadRatioUnit: {
+        fontSize: 15,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textMuted,
+        includeFontPadding: false,
+    },
+    loadHeaderBadgeBox: {
+        backgroundColor: "#0A0A0D",
+        paddingVertical: 7,
+        paddingHorizontal: 10,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+        alignItems: "flex-end",
+    },
+    loadHeaderBadgeRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 5,
+    },
+    loadHeaderBadgeSets: {
+        fontSize: 12,
+        fontFamily: FAMILY.monoBold,
+        color: "#FFFFFF",
+        fontVariant: ["tabular-nums"],
+        includeFontPadding: false,
+    },
+    loadHeaderBadgeSetsSub: {
+        fontSize: 9,
+        fontFamily: FAMILY.mono,
+        color: COLORS.textMuted,
+        includeFontPadding: false,
+    },
+    loadHeaderBadgeRange: {
+        fontSize: 8,
+        fontFamily: FAMILY.mono,
+        color: "rgba(255, 255, 255, 0.45)",
+        marginTop: 2,
+        letterSpacing: 0.3,
+        includeFontPadding: false,
+    },
+
+    loadTilesRow: {
+        flexDirection: "row",
+        gap: 8,
+        marginVertical: 12,
+    },
+    loadTile: {
+        flex: 1,
+        backgroundColor: "#0A0A0D",
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.08)",
+        paddingVertical: 10,
+        paddingHorizontal: 6,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    loadTileLabel: {
+        fontSize: 8,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textMuted,
+        letterSpacing: 0.4,
+        marginBottom: 4,
+        textAlign: "center",
+        includeFontPadding: false,
+    },
+    loadTileValBox: {
+        height: 22,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    loadTileVal: {
+        fontSize: 13.5,
+        fontFamily: FAMILY.monoBold,
+        color: "#FFFFFF",
+        fontVariant: ["tabular-nums"],
+        includeFontPadding: false,
+        textAlign: "center",
+    },
+    loadTileUnit: {
+        fontSize: 9,
+        fontFamily: FAMILY.mono,
+        color: COLORS.textMuted,
+        includeFontPadding: false,
+    },
+    loadTileSub: {
+        fontSize: 8.5,
+        fontFamily: FAMILY.mono,
+        color: "rgba(255, 255, 255, 0.4)",
+        marginTop: 3,
+        textAlign: "center",
+        includeFontPadding: false,
+    },
 
     loadGrid: {
         flexDirection: "row",
@@ -1905,16 +2013,23 @@ const styles = StyleSheet.create({
     },
     loadSummaryBox: {
         flexDirection: "row",
-        alignItems: "flex-start",
-        gap: 6,
-        backgroundColor: "#0A0A0D",
-        borderRadius: RADIUS.xs,
-        padding: 10,
-        marginTop: 10,
+        alignItems: "center",
+        gap: 8,
+        backgroundColor: "#08080B",
+        borderRadius: 12,
+        paddingVertical: 10,
+        paddingHorizontal: 12,
         borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.08)",
+        borderColor: "rgba(255, 255, 255, 0.07)",
     },
-    loadSummaryText: { flex: 1, fontSize: 11, fontFamily: FAMILY.body, color: "#8A8A8E", lineHeight: 16, includeFontPadding: false },
+    loadSummaryText: {
+        flex: 1,
+        fontSize: 11,
+        fontFamily: FAMILY.regular,
+        color: "#9A9AA0",
+        lineHeight: 16,
+        includeFontPadding: false,
+    },
 
     deloadAlertBox: { borderRadius: RADIUS.sm, padding: 12, borderWidth: 1 },
     deloadAlertTitle: { fontSize: 10, fontFamily: FAMILY.monoBold, letterSpacing: 0.5 },
