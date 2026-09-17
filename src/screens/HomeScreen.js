@@ -1279,16 +1279,14 @@ export default function HomeScreen({ navigation, route }) {
 
                             return (
                                 <Animated.View
-                                    style={[
-                                        styles.dashboardCard,
-                                        {
-                                            opacity: dashboardAnim,
-                                            transform: [{
-                                                translateY: dashboardAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] })
-                                            }],
-                                        }
-                                    ]}
+                                    style={{
+                                        opacity: dashboardAnim,
+                                        transform: [{
+                                            translateY: dashboardAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] })
+                                        }],
+                                    }}
                                 >
+                                    <View style={styles.dashboardCard}>
                                     <LinearGradient
                                         colors={["#16161C", "#0D0D10"]}
                                         start={{ x: 0, y: 0 }}
@@ -1407,6 +1405,7 @@ export default function HomeScreen({ navigation, route }) {
                                                 {currentRank?.title || "RECRUIT"}
                                             </Text>
                                         </TouchableOpacity>
+                                    </View>
                                     </View>
                                 </Animated.View>
                             );
