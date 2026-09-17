@@ -1335,7 +1335,13 @@ export const createDefaultProgramVersion = () => {
  * If active version is an expired temporary deload, automatically restores its sourceVersionId.
  */
 export const getActiveProgramLocal = async () => {
-    if (_memCache.activeProgram !== null) return _memCache.activeProgram;
+    if (_memCache.activeProgram !== null) {
+        const cached = _memCache.activeProgram;
+        const isExpiredDeload = cached.isTemporaryDeload && cached.expiresAt && new Date(cached.expiresAt).getTime() <= Date.now();
+        if (!isExpiredDeload) {
+            return cached;
+        }
+    }
     try {
         const raw = await AsyncStorage.getItem(KEYS.ACTIVE_PROGRAM);
         if (!raw) {

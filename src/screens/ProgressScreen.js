@@ -822,7 +822,9 @@ export default function ProgressScreen({ navigation, route }) {
                                                     {(longTermProfile.volumeResponseTier || "OPTIMAL").replace(/\s*RESPONSE/i, "").trim()}
                                                 </Text>
                                             </View>
-                                            <Text style={styles.loadGridLabel} numberOfLines={1}>VOLUME RESPONSE</Text>
+                                            <Text style={styles.loadGridLabel} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
+                                                VOLUME RESPONSE
+                                            </Text>
                                             <Text style={styles.profileSubMini} numberOfLines={1}>{longTermProfile.meanWeeklySets ?? 0} sets/wk</Text>
                                         </View>
                                         <View style={styles.profileMetricDivider} />
@@ -832,7 +834,9 @@ export default function ProgressScreen({ navigation, route }) {
                                                     {longTermProfile.progressionRatePercent ?? 0}%
                                                 </Text>
                                             </View>
-                                            <Text style={styles.loadGridLabel} numberOfLines={1}>PROGRESSION RATE</Text>
+                                            <Text style={styles.loadGridLabel} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
+                                                PROGRESSION RATE
+                                            </Text>
                                             <Text style={styles.profileSubMini} numberOfLines={1}>Across load types</Text>
                                         </View>
                                         <View style={styles.profileMetricDivider} />
@@ -842,7 +846,9 @@ export default function ProgressScreen({ navigation, route }) {
                                                     {longTermProfile.consistencyTier || "HIGH"}
                                                 </Text>
                                             </View>
-                                            <Text style={styles.loadGridLabel} numberOfLines={1}>CONSISTENCY</Text>
+                                            <Text style={styles.loadGridLabel} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
+                                                CONSISTENCY
+                                            </Text>
                                             <Text style={styles.profileSubMini} numberOfLines={1}>{longTermProfile.meanWeeklyWorkouts ?? 0} workouts/wk</Text>
                                         </View>
                                     </View>
@@ -855,7 +861,7 @@ export default function ProgressScreen({ navigation, route }) {
                                         {Object.entries(longTermProfile.loadTypeProgressionRates || {}).map(([type, stats]) => (
                                             <View key={type} style={styles.taxRateItem}>
                                                 <LinearGradient
-                                                    colors={["rgba(255, 255, 255, 0.03)", "transparent"]}
+                                                    colors={GRADIENTS.subtleCard}
                                                     start={{ x: 0, y: 0 }}
                                                     end={{ x: 0, y: 1 }}
                                                     style={StyleSheet.absoluteFill}
@@ -965,31 +971,37 @@ export default function ProgressScreen({ navigation, route }) {
                             <View style={styles.loadGrid}>
                                 <View style={styles.loadGridCol}>
                                     <View style={styles.metricValBox}>
-                                        <Text style={styles.loadGridVal} numberOfLines={1}>
+                                        <Text style={styles.loadGridVal} numberOfLines={1} adjustsFontSizeToFit>
                                             {trainingLoad.currentWeekTonnageKg > 0 ? trainingLoad.currentWeekTonnageKg.toLocaleString() : "—"}{" "}
                                             <Text style={styles.loadGridUnit}>kg</Text>
                                         </Text>
                                     </View>
-                                    <Text style={styles.loadGridLabel} numberOfLines={1}>CURRENT (7D)</Text>
+                                    <Text style={styles.loadGridLabel} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
+                                        CURRENT (7D)
+                                    </Text>
                                 </View>
                                 <View style={styles.profileMetricDivider} />
                                 <View style={styles.loadGridCol}>
                                     <View style={styles.metricValBox}>
-                                        <Text style={styles.loadGridVal} numberOfLines={1}>
+                                        <Text style={styles.loadGridVal} numberOfLines={1} adjustsFontSizeToFit>
                                             {trainingLoad.chronicBaselineTonnageKg > 0 ? trainingLoad.chronicBaselineTonnageKg.toLocaleString() : "—"}{" "}
                                             <Text style={styles.loadGridUnit}>kg</Text>
                                         </Text>
                                     </View>
-                                    <Text style={styles.loadGridLabel} numberOfLines={1}>4-WK BASELINE</Text>
+                                    <Text style={styles.loadGridLabel} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
+                                        4-WK BASELINE
+                                    </Text>
                                 </View>
                                 <View style={styles.profileMetricDivider} />
                                 <View style={styles.loadGridCol}>
                                     <View style={styles.metricValBox}>
-                                        <Text style={[styles.loadGridVal, { color: trainingLoad.trendColor }]} numberOfLines={1}>
+                                        <Text style={[styles.loadGridVal, { color: trainingLoad.trendColor }]} numberOfLines={1} adjustsFontSizeToFit>
                                             {trainingLoad.workloadRatio > 1 ? `+${Math.round((trainingLoad.workloadRatio - 1) * 100)}%` : trainingLoad.workloadRatio < 1 ? `-${Math.round((1 - trainingLoad.workloadRatio) * 100)}%` : "0%"}
                                         </Text>
                                     </View>
-                                    <Text style={styles.loadGridLabel} numberOfLines={1}>STIMULUS DELTA</Text>
+                                    <Text style={styles.loadGridLabel} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
+                                        STIMULUS DELTA
+                                    </Text>
                                 </View>
                             </View>
 
@@ -1492,7 +1504,9 @@ export default function ProgressScreen({ navigation, route }) {
                                         {predictiveSummary.bodyweightCorrelation.bodyweightVelocityKgPerWeek >= 0 ? "+" : ""}
                                         {predictiveSummary.bodyweightCorrelation.bodyweightVelocityKgPerWeek} <Text style={styles.loadGridUnit}>kg/wk</Text>
                                     </Text>
-                                    <Text style={styles.loadGridLabel}>BW VELOCITY</Text>
+                                    <Text style={styles.loadGridLabel} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
+                                        BW VELOCITY
+                                    </Text>
                                     <Text style={styles.profileSubMini}>7-day rolling</Text>
                                 </View>
                                 <View style={styles.summaryMetricDivider} />
@@ -1501,7 +1515,9 @@ export default function ProgressScreen({ navigation, route }) {
                                         {predictiveSummary.bodyweightCorrelation.strengthVelocityAvg >= 0 ? "+" : ""}
                                         {predictiveSummary.bodyweightCorrelation.strengthVelocityAvg} <Text style={styles.loadGridUnit}>kg/wk</Text>
                                     </Text>
-                                    <Text style={styles.loadGridLabel}>COMPOUND VELOCITY</Text>
+                                    <Text style={styles.loadGridLabel} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
+                                        COMPOUND VELOCITY
+                                    </Text>
                                     <Text style={styles.profileSubMini}>Key barbell lifts</Text>
                                 </View>
                             </View>
@@ -1878,6 +1894,15 @@ const styles = StyleSheet.create({
     loadGridCol: { flex: 1, alignItems: "center" },
     loadGridVal: { fontSize: 15, fontFamily: FAMILY.monoBold, color: "#FFFFFF", fontVariant: ["tabular-nums"], includeFontPadding: false },
     loadGridUnit: { fontSize: 9.5, fontFamily: FAMILY.mono, color: COLORS.textMuted, includeFontPadding: false },
+    loadGridLabel: {
+        fontSize: 8.5,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textMuted,
+        letterSpacing: 0.4,
+        marginTop: 4,
+        textAlign: "center",
+        includeFontPadding: false,
+    },
     loadSummaryBox: {
         flexDirection: "row",
         alignItems: "flex-start",

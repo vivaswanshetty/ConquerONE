@@ -2076,12 +2076,15 @@ export const getAthleteProgressionProfile = (history = [], prRecords = {}, lates
             const latest = sessions[sessions.length - 1];
             if (latest.maxWeight > 0 && first.maxWeight > 0) {
                 const diff = latest.maxWeight - first.maxWeight;
-                const pct = ((diff / first.maxWeight) * 100);
+                const isBW = latest.category === "weighted_bodyweight" || isBodyweightMovement(sessions[0].exerciseName);
+                const userBw = parseFloat(latestBodyweight) || 75;
+                const baseWeight = isBW ? (userBw + first.maxWeight) : first.maxWeight;
+                const pct = ((diff / baseWeight) * 100);
                 if (diff > 0) {
                     progressionRates.push({
                         name: sessions[0].exerciseName,
                         weightDelta: parseFloat(diff.toFixed(1)),
-                        percentGain: parseFloat(pct.toFixed(1)),
+                        percentGain: parseFloat(Math.min(pct, 150).toFixed(1)),
                         category: latest.category,
                     });
                 }
@@ -3043,6 +3046,7 @@ export const getAthleteLongTermProfile = (
     // Progression rates across load taxonomies
     const indexedCache = getPreIndexedExerciseSessions(history, bodyweight);
     const loadTypeMap = {};
+    const athleteBw = parseFloat(bodyweight) || 75;
 
     Object.keys(indexedCache).forEach((exName) => {
         const sessions = indexedCache[exName];
@@ -3054,11 +3058,49 @@ export const getAthleteLongTermProfile = (
                 loadTypeMap[loadType] = { total: 0, progressed: 0, gainSum: 0 };
             }
             loadTypeMap[loadType].total += 1;
-            const diff = (latest.maxWeight - first.maxWeight) || (latest.maxReps - first.maxReps);
-            if (diff > 0) {
+
+            let diff = 0;
+            let base = 1;
+
+            if (loadType === "timed") {
+                diff = (latest.maxDurationSec || 0) - (first.maxDurationSec || 0);
+                base = (first.maxDurationSec && first.maxDurationSec > 0) ? first.maxDurationSec : 30;
+            } else if (loadType === "weighted_bodyweight") {
+                diff = (latest.maxWeight || 0) - (first.maxWeight || 0);
+                if (diff !== 0) {
+                    base = athleteBw + (first.maxWeight || 0);
+                } else {
+                    diff = (latest.maxReps || 0) - (first.maxReps || 0);
+                    base = (first.maxReps && first.maxReps > 0) ? first.maxReps : 5;
+                }
+            } else if (loadType === "assisted_bodyweight") {
+                diff = (first.maxWeight || 0) - (latest.maxWeight || 0);
+                if (diff !== 0) {
+                    base = Math.max(10, athleteBw - (first.maxWeight || 0));
+                } else {
+                    diff = (latest.maxReps || 0) - (first.maxReps || 0);
+                    base = (first.maxReps && first.maxReps > 0) ? first.maxReps : 5;
+                }
+            } else if (loadType === "bodyweight") {
+                diff = (latest.maxReps || 0) - (first.maxReps || 0);
+                base = (first.maxReps && first.maxReps > 0) ? first.maxReps : 5;
+            } else {
+                // free_weight, machine, cable
+                const firstE1RM = first.bestEstimated1RM || first.maxWeight;
+                const latestE1RM = latest.bestEstimated1RM || latest.maxWeight;
+                diff = latestE1RM - firstE1RM;
+                if (diff === 0) {
+                    diff = (latest.maxReps || 0) - (first.maxReps || 0);
+                    base = (first.maxReps && first.maxReps > 0) ? first.maxReps : 5;
+                } else {
+                    base = firstE1RM > 0 ? firstE1RM : 1;
+                }
+            }
+
+            if (diff > 0 && base > 0) {
                 loadTypeMap[loadType].progressed += 1;
-                const base = first.maxWeight > 0 ? first.maxWeight : (first.maxReps > 0 ? first.maxReps : 1);
-                loadTypeMap[loadType].gainSum += (diff / base) * 100;
+                const pctGain = Math.min(Math.max(0, (diff / base) * 100), 150);
+                loadTypeMap[loadType].gainSum += pctGain;
             }
         }
     });
