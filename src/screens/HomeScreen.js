@@ -745,7 +745,7 @@ export default function HomeScreen({ navigation, route }) {
             setInitialLoading(false);
             Animated.timing(contentFadeAnim, {
                 toValue: 1,
-                duration: 200,
+                duration: 400,
                 useNativeDriver: true,
             }).start();
         } else {
