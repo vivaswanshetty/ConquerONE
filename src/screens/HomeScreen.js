@@ -807,8 +807,8 @@ export default function HomeScreen({ navigation, route }) {
         Animated.parallel([
             Animated.stagger(100, [
                 Animated.timing(greetingAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
-                Animated.timing(decisionAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
                 Animated.timing(heroAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
+                Animated.timing(decisionAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
                 Animated.timing(cardsAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
             ]),
             ...animations
@@ -1144,39 +1144,7 @@ export default function HomeScreen({ navigation, route }) {
                     </View>
                 ) : (
                     <Animated.View style={{ opacity: contentFadeAnim }}>
-                        {/* ── 1. Phase 6 Athlete Command Center Hero Decision Card ── */}
-                        {dailyAthleteCommand && (
-                            <Animated.View
-                                style={{
-                                    opacity: decisionAnim,
-                                    transform: [{
-                                        translateY: decisionAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] })
-                                    }],
-                                }}
-                            >
-                                <DailyDecisionCard
-                                    command={dailyAthleteCommand}
-                                    isCompletedToday={isTodayFinished}
-                                    indexedSessions={indexedSessions}
-                                    todayWorkout={todayWorkout}
-                                    headerImage={todayWorkout?.headerImage}
-                                    onStartWorkout={() => {
-                                        if (activeSession && activeSession.day) {
-                                            navigation.navigate("ActiveWorkout", { day: activeSession.day, resume: true });
-                                        } else if (todayWorkout) {
-                                            navigation.navigate("WorkoutDetail", { day: todayWorkout });
-                                        } else {
-                                            navigation.navigate("RestDay");
-                                        }
-                                    }}
-                                    onOpenWhy={() => setWhyModalVisible(true)}
-                                    onOpenReadiness={() => setReadinessModalVisible(true)}
-                                    activeSession={activeSession}
-                                />
-                            </Animated.View>
-                        )}
-
-                        {/* ── 2. Today's Workout Hero Card (Primary Action) ── */}
+                        {/* ── 1. Today's Workout Hero Card (Primary Action) ── */}
                         <Animated.View
                             style={{
                                 opacity: heroAnim,
@@ -1297,6 +1265,38 @@ export default function HomeScreen({ navigation, route }) {
                                 <RestDayCard navigation={navigation} />
                             )}
                         </Animated.View>
+
+                        {/* ── 2. Phase 6 Athlete Command Center Hero Decision Card ── */}
+                        {dailyAthleteCommand && (
+                            <Animated.View
+                                style={{
+                                    opacity: decisionAnim,
+                                    transform: [{
+                                        translateY: decisionAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] })
+                                    }],
+                                }}
+                            >
+                                <DailyDecisionCard
+                                    command={dailyAthleteCommand}
+                                    isCompletedToday={isTodayFinished}
+                                    indexedSessions={indexedSessions}
+                                    todayWorkout={todayWorkout}
+                                    headerImage={todayWorkout?.headerImage}
+                                    onStartWorkout={() => {
+                                        if (activeSession && activeSession.day) {
+                                            navigation.navigate("ActiveWorkout", { day: activeSession.day, resume: true });
+                                        } else if (todayWorkout) {
+                                            navigation.navigate("WorkoutDetail", { day: todayWorkout });
+                                        } else {
+                                            navigation.navigate("RestDay");
+                                        }
+                                    }}
+                                    onOpenWhy={() => setWhyModalVisible(true)}
+                                    onOpenReadiness={() => setReadinessModalVisible(true)}
+                                    activeSession={activeSession}
+                                />
+                            </Animated.View>
+                        )}
 
                         {/* ── 3. Quick Actions Grid (Instant Navigation Hub) ── */}
                         <Animated.View
@@ -2931,6 +2931,8 @@ const styles = StyleSheet.create({
     // Hero Card
     heroCard: {
         marginHorizontal: 16,
+        marginTop: 6,
+        marginBottom: 4,
         height: 228,
         backgroundColor: "#050507",
         overflow: "hidden",
@@ -3749,8 +3751,8 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: COLORS.border,
         backgroundColor: COLORS.bgCard,
-        marginBottom: 20,
-        marginTop: 4,
+        marginBottom: 4,
+        marginTop: 6,
     },
     restCardBg: {
         width: "100%",
