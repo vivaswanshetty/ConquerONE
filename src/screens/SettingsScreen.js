@@ -507,8 +507,20 @@ export default function SettingsScreen({ navigation, route }) {
                 <View style={styles.card}>
                     <InfoRow
                         label="App Version"
-                        value={__DEV__ ? "DEV" : updateId ? updateId.slice(0, 8).toUpperCase() : "1.0.0"}
+                        value={APP_VERSION || "1.0.0"}
                         icon="layers-outline"
+                    />
+                    <Divider />
+                    <InfoRow
+                        label="Channel"
+                        value={__DEV__ ? "development" : (Updates.channel || "production")}
+                        icon="git-branch-outline"
+                    />
+                    <Divider />
+                    <InfoRow
+                        label="Running Update ID"
+                        value={__DEV__ ? "DEV" : (updateId ? updateId.slice(0, 8).toUpperCase() : "EMBEDDED")}
+                        icon="finger-print-outline"
                     />
                     <Divider />
                     <TouchableOpacity
