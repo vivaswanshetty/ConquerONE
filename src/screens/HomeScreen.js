@@ -559,8 +559,9 @@ export default function HomeScreen({ navigation, route }) {
     const [whyModalVisible, setWhyModalVisible] = useState(false);
 
     const greetingAnim = useRef(new Animated.Value(0)).current;
-    const decisionAnim = useRef(new Animated.Value(0)).current;
     const heroAnim = useRef(new Animated.Value(0)).current;
+    const dashboardAnim = useRef(new Animated.Value(0)).current;
+    const decisionAnim = useRef(new Animated.Value(0)).current;
     const cardsAnim = useRef(new Animated.Value(0)).current;
 
     // Animations
@@ -808,6 +809,7 @@ export default function HomeScreen({ navigation, route }) {
             Animated.stagger(100, [
                 Animated.timing(greetingAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
                 Animated.timing(heroAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
+                Animated.timing(dashboardAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
                 Animated.timing(decisionAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
                 Animated.timing(cardsAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
             ]),
@@ -1276,7 +1278,17 @@ export default function HomeScreen({ navigation, route }) {
                             const currentRank = getRankData(total);
 
                             return (
-                                <View style={styles.dashboardCard}>
+                                <Animated.View
+                                    style={[
+                                        styles.dashboardCard,
+                                        {
+                                            opacity: dashboardAnim,
+                                            transform: [{
+                                                translateY: dashboardAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] })
+                                            }],
+                                        }
+                                    ]}
+                                >
                                     <LinearGradient
                                         colors={["#16161C", "#0D0D10"]}
                                         start={{ x: 0, y: 0 }}
@@ -1396,7 +1408,7 @@ export default function HomeScreen({ navigation, route }) {
                                             </Text>
                                         </TouchableOpacity>
                                     </View>
-                                </View>
+                                </Animated.View>
                             );
                         })()}
 
