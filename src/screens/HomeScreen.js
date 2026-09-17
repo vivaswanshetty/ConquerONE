@@ -1822,7 +1822,7 @@ export default function HomeScreen({ navigation, route }) {
                     </Animated.View>
                 )}
 
-                <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+                <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
                     <View style={styles.footerDivider} />
                     <Text style={styles.footerVersion}>CONQUER ONE · {APP_VERSION}</Text>
                     <Text style={styles.footerAuthor}>BUILT FOR PERFORMANCE BY <Text style={{ color: COLORS.primary, fontFamily: FAMILY.bold }}>VIVASWAN SHETTY</Text></Text>
@@ -4459,9 +4459,9 @@ const styles = StyleSheet.create({
     unfreezeLinkText: { fontSize: 11, fontFamily: FAMILY.semibold, color: 'rgba(255, 255, 255, 0.45)', letterSpacing: 0.8 },
 
     // Footer
-    footer: { alignItems: "center", marginTop: 20, paddingHorizontal: SPACING.base },
-    footerDivider: { width: 28, height: 1, backgroundColor: "rgba(255, 255, 255, 0.08)", marginBottom: 10 },
-    footerVersion: { fontSize: 9.5, fontFamily: FAMILY.mono, color: COLORS.textMuted, marginBottom: 3 },
+    footer: { alignItems: "center", marginTop: 6, paddingHorizontal: SPACING.base },
+    footerDivider: { width: 32, height: 1, backgroundColor: "rgba(255, 255, 255, 0.10)", marginBottom: 8, borderRadius: 1 },
+    footerVersion: { fontSize: 9, fontFamily: FAMILY.mono, color: COLORS.textMuted, letterSpacing: 0.8, marginBottom: 3 },
     footerAuthor: { fontSize: 8.5, fontFamily: FAMILY.medium, color: COLORS.textMuted, letterSpacing: 0.4 },
 
     // Streak Reset Modal Styles

@@ -701,7 +701,7 @@ export default function ProgressScreen({ navigation, route }) {
                     /* ══════════════════════════════════════════════════════════ */
                     /* PERFORMANCE HUB TAB                                       */
                     /* ══════════════════════════════════════════════════════════ */
-                    <ScrollView showsVerticalScrollIndicator={false} overScrollMode="never" contentContainerStyle={styles.scrollContent}>
+                    <ScrollView showsVerticalScrollIndicator={false} overScrollMode="never" contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 12 }]}>
                         {/* ── 0. Active Adaptive Program & Versions ── */}
                         {activeProgram && programPerformanceSummary && (
                             <View style={{ marginTop: 14, marginBottom: 8 }}>
@@ -952,14 +952,25 @@ export default function ProgressScreen({ navigation, route }) {
                                 pointerEvents="none"
                             />
                             <View style={styles.loadHeaderRow}>
-                                <View style={{ justifyContent: "center" }}>
-                                    <Text style={styles.loadSubLabel}>ACUTE : CHRONIC WORKLOAD RATIO</Text>
-                                    <View style={{ flexDirection: "row", alignItems: "baseline", gap: 3, marginTop: 3 }}>
-                                        <Text style={[styles.loadRatioValue, { color: trainingLoad.trendColor }]}>
+                                <View style={styles.loadRatioContainer}>
+                                    <Text style={styles.loadSubLabel}>A:C WORKLOAD RATIO</Text>
+                                    <View style={styles.loadRatioValueRow}>
+                                        <Text style={styles.loadRatioValue}>
                                             {trainingLoad.workloadRatio.toFixed(2)}
                                         </Text>
                                         <Text style={styles.loadRatioUnit}>x</Text>
+                                        <View style={[styles.loadRatioPill, { backgroundColor: `${trainingLoad.trendColor}18`, borderColor: `${trainingLoad.trendColor}40` }]}>
+                                            <View style={[styles.loadRatioDot, { backgroundColor: trainingLoad.trendColor }]} />
+                                            <Text style={[styles.loadRatioPillText, { color: trainingLoad.trendColor }]}>
+                                                {trainingLoad.workloadRatio >= 0.8 && trainingLoad.workloadRatio <= 1.3
+                                                    ? "SWEET SPOT"
+                                                    : trainingLoad.workloadRatio < 0.8
+                                                    ? "DELOAD"
+                                                    : "HIGH LOAD"}
+                                            </Text>
+                                        </View>
                                     </View>
+                                    <Text style={styles.loadRatioTarget}>Optimal sweet spot: 0.80–1.30x</Text>
                                 </View>
 
                                 <View style={styles.loadHeaderBadgeBox}>
@@ -969,7 +980,7 @@ export default function ProgressScreen({ navigation, route }) {
                                             {trainingLoad.currentWeekSets} <Text style={styles.loadHeaderBadgeSetsSub}>SETS</Text>
                                         </Text>
                                     </View>
-                                    <Text style={styles.loadHeaderBadgeRange}>SWEET SPOT 0.8–1.3x</Text>
+                                    <Text style={styles.loadHeaderBadgeRange}>7-DAY VOLUME</Text>
                                 </View>
                             </View>
 
@@ -1361,13 +1372,12 @@ export default function ProgressScreen({ navigation, route }) {
                             </View>
                         )}
 
-                        <View style={{ height: 40 }} />
                     </ScrollView>
                 ) : tab === 1 ? (
                     /* ══════════════════════════════════════════════════════════ */
                     /* PREDICTIVE TAB (PHASE 5)                                   */
                     /* ══════════════════════════════════════════════════════════ */
-                    <ScrollView showsVerticalScrollIndicator={false} overScrollMode="never" contentContainerStyle={styles.scrollContent}>
+                    <ScrollView showsVerticalScrollIndicator={false} overScrollMode="never" contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 12 }]}>
                         {/* ── 1. Performance Trajectory & Velocity Deck ── */}
                         <View style={[styles.sectionHeaderRow, { marginTop: 14 }]}>
                             <View style={styles.sectionTitleGroup}>
@@ -1529,13 +1539,12 @@ export default function ProgressScreen({ navigation, route }) {
                             </Text>
                         </View>
 
-                        <View style={{ height: 40 }} />
                     </ScrollView>
                 ) : (
                     /* ══════════════════════════════════════════════════════════ */
                     /* BODY STATS & PHYSIQUE TAB                                  */
                     /* ══════════════════════════════════════════════════════════ */
-                    <ScrollView showsVerticalScrollIndicator={false} overScrollMode="never" contentContainerStyle={styles.scrollContent}>
+                    <ScrollView showsVerticalScrollIndicator={false} overScrollMode="never" contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 12 }]}>
                         {/* ── 1. 7-Day Rolling Average Bodyweight Card ── */}
                         <View style={styles.sectionHeader}>
                             <Text style={styles.sectionLabel}>BODYWEIGHT PROGRESSION</Text>
@@ -1666,7 +1675,6 @@ export default function ProgressScreen({ navigation, route }) {
                                 </View>
                             </>
                         )}
-                        <View style={{ height: 40 }} />
                     </ScrollView>
                 )}
                 </Animated.View>
@@ -1686,7 +1694,7 @@ export default function ProgressScreen({ navigation, route }) {
 /* ── STYLES ─────────────────────────────────────────────────────── */
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: COLORS.bg },
-    scrollContent: { paddingBottom: 60 },
+    scrollContent: { paddingBottom: 0 },
     header: {
         flexDirection: "row", alignItems: "center", justifyContent: "space-between",
         paddingHorizontal: 16, paddingBottom: 16, paddingTop: 8,
@@ -1880,27 +1888,67 @@ const styles = StyleSheet.create({
     loadHeaderRow: {
         flexDirection: "row",
         justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 2,
+        alignItems: "flex-start",
+        marginBottom: 4,
+    },
+    loadRatioContainer: {
+        justifyContent: "center",
     },
     loadSubLabel: {
-        fontSize: 8.5,
+        fontSize: 9.5,
         fontFamily: FAMILY.monoBold,
-        color: COLORS.textMuted,
+        color: COLORS.textSub,
         letterSpacing: 0.8,
         includeFontPadding: false,
+    },
+    loadRatioValueRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        marginTop: 4,
+        marginBottom: 3,
     },
     loadRatioValue: {
         fontSize: 28,
         fontFamily: FAMILY.monoBold,
+        color: "#FFFFFF",
         fontVariant: ["tabular-nums"],
         includeFontPadding: false,
+        lineHeight: 32,
     },
     loadRatioUnit: {
-        fontSize: 15,
+        fontSize: 16,
         fontFamily: FAMILY.monoBold,
         color: COLORS.textMuted,
         includeFontPadding: false,
+        marginLeft: -2,
+    },
+    loadRatioPill: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        paddingHorizontal: 7,
+        paddingVertical: 2.5,
+        borderRadius: RADIUS.xs,
+        borderWidth: 1,
+    },
+    loadRatioDot: {
+        width: 5,
+        height: 5,
+        borderRadius: 2.5,
+    },
+    loadRatioPillText: {
+        fontSize: 8.5,
+        fontFamily: FAMILY.monoBold,
+        letterSpacing: 0.4,
+        includeFontPadding: false,
+    },
+    loadRatioTarget: {
+        fontSize: 8.5,
+        fontFamily: FAMILY.mono,
+        color: COLORS.textMuted,
+        includeFontPadding: false,
+        letterSpacing: 0.2,
     },
     loadHeaderBadgeBox: {
         backgroundColor: "#0A0A0D",

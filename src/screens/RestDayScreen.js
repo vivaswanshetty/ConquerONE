@@ -106,7 +106,7 @@ export default function RestDayScreen({ navigation }) {
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 overScrollMode="never"
-                contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
+                contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 16) + 74 }}
             >
                 {/* ── Hero Section ── */}
                 <View style={styles.hero}>

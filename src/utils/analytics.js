@@ -1808,7 +1808,7 @@ export const getTrainingLoadTrend = (history = [], latestBodyweight = null) => {
     } else if (workloadRatio < 0.75 && chronicBaselineTonnage > 0) {
         trendClassification = "REDUCED_WORKLOAD";
         trendLabel = "Reduced Load";
-        trendColor = "#8E8E93";
+        trendColor = "#38BDF8";
         summaryMessage = "Training volume is reduced compared to baseline (deload / recovery window).";
     }
 

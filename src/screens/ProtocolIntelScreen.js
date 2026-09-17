@@ -74,7 +74,7 @@ export default function ProtocolIntelScreen({ navigation }) {
             </View>
 
             {/* Content Scroll View */}
-            <ScrollView showsVerticalScrollIndicator={false} overScrollMode="never" contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}>
+            <ScrollView showsVerticalScrollIndicator={false} overScrollMode="never" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 16) + 16 }}>
                 <Animated.View style={[styles.contentAnim, { opacity: fadeAnim }]}>
                     {activeTab === 0 && <ScienceTab />}
                     {activeTab === 1 && <ForearmsTab />}

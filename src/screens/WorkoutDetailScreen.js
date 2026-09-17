@@ -125,7 +125,7 @@ export default function WorkoutDetailScreen({ navigation, route }) {
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor="#000" translucent />
-            <ScrollView showsVerticalScrollIndicator={false} overScrollMode="never" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 20) + 30 }}>
+            <ScrollView showsVerticalScrollIndicator={false} overScrollMode="never" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 16) + 16 }}>
 
                 {/* ── 1. Hero Section ── */}
                 <View style={styles.hero}>

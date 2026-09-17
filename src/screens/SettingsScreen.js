@@ -225,7 +225,7 @@ export default function SettingsScreen({ navigation, route }) {
                 ref={scrollRef}
                 showsVerticalScrollIndicator={false}
                 overScrollMode="never"
-                contentContainerStyle={{ paddingBottom: 60 }}
+                contentContainerStyle={{ paddingBottom: 0 }}
                 style={{ opacity: contentFade, transform: [{ translateY: contentFade.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }}
             >
 

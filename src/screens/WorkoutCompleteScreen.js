@@ -214,7 +214,7 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
                 />
             </ImageBackground>
 
-            <ScrollView contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 40 }]} showsVerticalScrollIndicator={false} overScrollMode="never">
+            <ScrollView contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 20, paddingBottom: Math.max(insets.bottom, 16) + 16 }]} showsVerticalScrollIndicator={false} overScrollMode="never">
                 <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }]}>
 
                     <View style={styles.checkmarkContainer}>
