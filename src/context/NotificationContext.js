@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useRef, useEffect } from "react";
-import { View, Text, StyleSheet, Modal, TouchableOpacity, Animated, Platform } from "react-native";
+import React, { createContext, useContext, useState, useRef, useEffect, useMemo } from "react";
+import { View, Text, StyleSheet, Modal, TouchableOpacity, Animated, Platform, PanResponder } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -15,6 +15,7 @@ export function NotificationProvider({ children }) {
     const toastTimer = useRef(null);
     const toastOpacity = useRef(new Animated.Value(0)).current;
     const toastSlide = useRef(new Animated.Value(-15)).current;
+    const panX = useRef(new Animated.Value(0)).current;
     const [toastRendered, setToastRendered] = useState(false);
 
     // Dialog State
@@ -38,6 +39,62 @@ export function NotificationProvider({ children }) {
     const hideToast = () => {
         setToast(prev => ({ ...prev, visible: false }));
     };
+
+    const panResponder = useMemo(
+        () =>
+            PanResponder.create({
+                onStartShouldSetPanResponder: () => false,
+                onMoveShouldSetPanResponder: (_, gestureState) => {
+                    return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.2;
+                },
+                onMoveShouldSetPanResponderCapture: (_, gestureState) => {
+                    return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.2;
+                },
+                onPanResponderGrant: () => {
+                    clearTimeout(toastTimer.current);
+                },
+                onPanResponderMove: (_, gestureState) => {
+                    panX.setValue(gestureState.dx);
+                },
+                onPanResponderTerminationRequest: () => false,
+                onPanResponderRelease: (_, gestureState) => {
+                    if (Math.abs(gestureState.dx) > 40 || Math.abs(gestureState.vx) > 0.3) {
+                        const targetX = Math.abs(gestureState.vx) > 0.3 ? (gestureState.vx > 0 ? 450 : -450) : (gestureState.dx > 0 ? 450 : -450);
+                        Animated.timing(panX, {
+                            toValue: targetX,
+                            duration: 160,
+                            useNativeDriver: false,
+                        }).start(() => {
+                            hideToast();
+                        });
+                    } else {
+                        Animated.spring(panX, {
+                            toValue: 0,
+                            bounciness: 6,
+                            speed: 16,
+                            useNativeDriver: false,
+                        }).start();
+                        toastTimer.current = setTimeout(hideToast, 2500);
+                    }
+                },
+                onPanResponderTerminate: () => {
+                    Animated.spring(panX, {
+                        toValue: 0,
+                        bounciness: 6,
+                        speed: 16,
+                        useNativeDriver: false,
+                    }).start();
+                    toastTimer.current = setTimeout(hideToast, 2500);
+                },
+            }),
+        []
+    );
+
+    const swipeOpacity = panX.interpolate({
+        inputRange: [-180, 0, 180],
+        outputRange: [0, 1, 0],
+        extrapolate: "clamp",
+    });
 
     const showDialog = (options) => {
         setDialog({
@@ -63,10 +120,11 @@ export function NotificationProvider({ children }) {
     // Toast Animation Lifecycle
     useEffect(() => {
         if (toast.visible) {
+            panX.setValue(0);
             setToastRendered(true);
             Animated.parallel([
-                Animated.timing(toastOpacity, { toValue: 1, duration: 250, useNativeDriver: true }),
-                Animated.timing(toastSlide, { toValue: 0, duration: 250, useNativeDriver: true }),
+                Animated.timing(toastOpacity, { toValue: 1, duration: 250, useNativeDriver: false }),
+                Animated.timing(toastSlide, { toValue: 0, duration: 250, useNativeDriver: false }),
             ]).start();
 
             toastTimer.current = setTimeout(() => {
@@ -74,8 +132,8 @@ export function NotificationProvider({ children }) {
             }, 3000);
         } else {
             Animated.parallel([
-                Animated.timing(toastOpacity, { toValue: 0, duration: 200, useNativeDriver: true }),
-                Animated.timing(toastSlide, { toValue: -15, duration: 200, useNativeDriver: true }),
+                Animated.timing(toastOpacity, { toValue: 0, duration: 200, useNativeDriver: false }),
+                Animated.timing(toastSlide, { toValue: -15, duration: 200, useNativeDriver: false }),
             ]).start(({ finished }) => {
                 if (finished) setToastRendered(false);
             });
@@ -93,15 +151,18 @@ export function NotificationProvider({ children }) {
 
             {/* Global Custom Toast */}
             {toastRendered && (
-                <Animated.View style={[
-                    styles.customToast,
-                    {
-                        top: insets.top + 60,
-                        opacity: toastOpacity,
-                        transform: [{ translateY: toastSlide }],
-                        borderColor: `${accentColor}40`,
-                    }
-                ]}>
+                <Animated.View
+                    {...panResponder.panHandlers}
+                    style={[
+                        styles.customToast,
+                        {
+                            top: Math.max(insets?.top || 0, 16) + 8,
+                            opacity: Animated.multiply(toastOpacity, swipeOpacity),
+                            transform: [{ translateY: toastSlide }, { translateX: panX }],
+                            borderColor: `${accentColor}40`,
+                        }
+                    ]}
+                >
                     <LinearGradient
                         colors={["rgba(15, 15, 15, 0.98)", "rgba(5, 5, 5, 0.99)"]}
                         style={StyleSheet.absoluteFill}

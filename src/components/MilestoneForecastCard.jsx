@@ -111,7 +111,7 @@ export default function MilestoneForecastCard({ milestoneData }) {
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: "#050507",
+        backgroundColor: COLORS.bgCard,
         borderRadius: RADIUS.lg,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.11)",

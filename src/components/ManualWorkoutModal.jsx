@@ -1589,7 +1589,7 @@ export default function ManualWorkoutModal({
                             >
                                 <View style={styles.shareCardContainer}>
                                     <LinearGradient
-                                        colors={["#16161D", "#0C0C0F", "#050507"]}
+                                        colors={["#16161D", "#0C0C0F", "#0D0D10"]}
                                         start={{ x: 0, y: 0 }}
                                         end={{ x: 0.3, y: 1 }}
                                         style={StyleSheet.absoluteFill}

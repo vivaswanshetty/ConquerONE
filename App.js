@@ -104,7 +104,7 @@ const transition = ({ current }) => ({
 
 const screenOptions = {
   headerShown: false,
-  cardStyle: { backgroundColor: "#0A0A0B" },
+  cardStyle: { backgroundColor: "#000000" },
   gestureEnabled: true,
   cardStyleInterpolator: transition,
 };
@@ -145,7 +145,7 @@ function AppStack() {
 function RootNavigator({ fontsLoaded }) {
   const { user, loading } = useAuth();
 
-  if (loading || !fontsLoaded) return <View style={{ flex: 1, backgroundColor: "#0A0A0B" }} />;
+  if (loading || !fontsLoaded) return <View style={{ flex: 1, backgroundColor: "#000000" }} />;
 
   return user ? <AppStack /> : <AuthStack />;
 }
@@ -323,7 +323,19 @@ export default function App() {
               {isDownloadingUpdate ? (
                 <UpdateScreen />
               ) : (
-                <NavigationContainer>
+                <NavigationContainer
+                  theme={{
+                    dark: true,
+                    colors: {
+                      background: "#000000",
+                      card: "#000000",
+                      text: "#FFFFFF",
+                      border: "transparent",
+                      primary: "#E31E24",
+                      notification: "#E31E24",
+                    },
+                  }}
+                >
                   <RootNavigator fontsLoaded={fontsLoaded} />
                 </NavigationContainer>
               )}

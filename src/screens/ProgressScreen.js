@@ -1719,7 +1719,7 @@ const styles = StyleSheet.create({
     // Insights Cards
     insightsWrap: { marginHorizontal: 16, gap: 10 },
     insightCard: {
-        backgroundColor: "#050507", borderRadius: 14,
+        backgroundColor: COLORS.bgCard, borderRadius: 14,
         borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.11)", padding: 14, overflow: "hidden",
     },
     insightHeaderRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 },
@@ -1742,7 +1742,7 @@ const styles = StyleSheet.create({
         marginHorizontal: 16, flexDirection: "row", flexWrap: "wrap", gap: 8,
     },
     physiqueCard: {
-        width: (width - 40) / 2, backgroundColor: "#050507",
+        width: (width - 40) / 2, backgroundColor: COLORS.bgCard,
         borderRadius: 14, borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.11)",
         padding: 12,
     },
@@ -1774,7 +1774,7 @@ const styles = StyleSheet.create({
     exPillsScroll: { paddingHorizontal: 16, gap: 8 },
     exPill: {
         paddingHorizontal: 12, paddingVertical: 6, borderRadius: RADIUS.pill,
-        backgroundColor: "#050507", borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.11)",
+        backgroundColor: COLORS.bgCard, borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.11)",
         alignItems: "center", justifyContent: "center",
     },
     exPillActive: { backgroundColor: "rgba(227, 30, 36, 0.15)", borderColor: COLORS.primary },
@@ -1782,7 +1782,7 @@ const styles = StyleSheet.create({
     exPillTextActive: { color: "#FFFFFF", fontFamily: FAMILY.bold, includeFontPadding: false, textAlignVertical: "center" },
 
     card: {
-        marginHorizontal: 16, backgroundColor: "#050507",
+        marginHorizontal: 16, backgroundColor: COLORS.bgCard,
         borderRadius: 18, borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.11)",
         padding: 16, overflow: "hidden", marginBottom: 14,
     },
@@ -1846,7 +1846,7 @@ const styles = StyleSheet.create({
 
     prListWrap: { marginHorizontal: 16, gap: 10 },
     emptyPRCard: {
-        marginHorizontal: 16, backgroundColor: "#050507", borderRadius: 14,
+        marginHorizontal: 16, backgroundColor: COLORS.bgCard, borderRadius: 14,
         borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.11)", padding: 28, alignItems: "center", justifyContent: "center",
     },
 
@@ -2038,7 +2038,7 @@ const styles = StyleSheet.create({
 
     stallNominalRow: {
         flexDirection: "row", alignItems: "center", gap: 12, padding: 14,
-        backgroundColor: "#050507", borderRadius: 14, borderWidth: 1,
+        backgroundColor: COLORS.bgCard, borderRadius: 14, borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.11)", marginBottom: 10,
     },
     stallNominalIconBox: { width: 36, height: 36, borderRadius: RADIUS.sm, backgroundColor: "rgba(48, 209, 88, 0.12)", alignItems: "center", justifyContent: "center" },

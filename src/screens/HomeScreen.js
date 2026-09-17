@@ -1266,6 +1266,140 @@ export default function HomeScreen({ navigation, route }) {
                             )}
                         </Animated.View>
 
+                        {/* ── Unified Dashboard Card (XP Progress Ring, Streak, Sessions, Rank) ── */}
+                        {(() => {
+                            const progressPercent = xp % 100;
+                            const radius = 36;
+                            const strokeWidth = 4.5;
+                            const circumference = 2 * Math.PI * radius; // ~226.19
+                            const strokeDashoffset = circumference - (circumference * progressPercent) / 100;
+                            const currentRank = getRankData(total);
+
+                            return (
+                                <View style={styles.dashboardCard}>
+                                    <LinearGradient
+                                        colors={["#16161C", "#0D0D10"]}
+                                        start={{ x: 0, y: 0 }}
+                                        end={{ x: 0, y: 1 }}
+                                        style={StyleSheet.absoluteFillObject}
+                                        pointerEvents="none"
+                                    />
+                                    <LinearGradient
+                                        colors={["rgba(255, 255, 255, 0.12)", "rgba(255, 255, 255, 0.01)"]}
+                                        start={{ x: 0, y: 0 }}
+                                        end={{ x: 1, y: 0 }}
+                                        style={styles.dashboardCardHighlight}
+                                        pointerEvents="none"
+                                    />
+                                    {/* Left: SVG XP Progress Ring */}
+                                    <TouchableOpacity
+                                        style={styles.dashboardRingWrapper}
+                                        activeOpacity={0.85}
+                                        onPress={() => {
+                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                            navigation.navigate("Rank");
+                                        }}
+                                    >
+                                        <View style={styles.dashboardRingGlow} pointerEvents="none" />
+                                        <Svg width={86} height={86} style={{ transform: [{ rotate: "-90deg" }] }}>
+                                            <Defs>
+                                                <SvgGradient id="dashboardXpGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                    <Stop offset="0%" stopColor="#FF4D4D" />
+                                                    <Stop offset="100%" stopColor="#E31E24" />
+                                                </SvgGradient>
+                                            </Defs>
+                                            <Circle
+                                                cx={43}
+                                                cy={43}
+                                                r={radius}
+                                                stroke="rgba(255, 255, 255, 0.06)"
+                                                strokeWidth={strokeWidth}
+                                                fill="none"
+                                            />
+                                            <Circle
+                                                cx={43}
+                                                cy={43}
+                                                r={radius}
+                                                stroke="url(#dashboardXpGrad)"
+                                                strokeWidth={strokeWidth}
+                                                fill="none"
+                                                strokeDasharray={circumference}
+                                                strokeDashoffset={strokeDashoffset}
+                                                strokeLinecap="round"
+                                            />
+                                        </Svg>
+                                        <View style={styles.dashboardRingTextContainer} pointerEvents="none">
+                                            <Text style={styles.dashboardRingPercent}>{progressPercent}%</Text>
+                                            <Text style={styles.dashboardRingLabel}>PROGRESS</Text>
+                                        </View>
+                                    </TouchableOpacity>
+
+                                    {/* Right: 3 Stats Cells */}
+                                    <View style={styles.dashboardStatsRow}>
+                                        {/* Streak Cell */}
+                                        <TouchableOpacity
+                                            style={styles.dashboardStatCellStreak}
+                                            activeOpacity={0.8}
+                                            onPress={() => {
+                                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                                setStreakAnalyticsVisible(true);
+                                            }}
+                                        >
+                                            <Text style={styles.dashboardStatLabel}>STREAK</Text>
+                                            <Text
+                                                style={[
+                                                    styles.dashboardStatValue,
+                                                    { color: streak > 0 ? "#FF9500" : COLORS.textSub }
+                                                ]}
+                                                numberOfLines={1}
+                                            >
+                                                {streak}D
+                                            </Text>
+                                        </TouchableOpacity>
+
+                                        <View style={styles.dashboardStatDivider} />
+
+                                        {/* Sessions Cell */}
+                                        <View style={styles.dashboardStatCellSessions}>
+                                            <Text style={styles.dashboardStatLabel}>SESSIONS</Text>
+                                            <Text
+                                                style={[styles.dashboardStatValue, { color: "#FFFFFF" }]}
+                                                numberOfLines={1}
+                                            >
+                                                {total}
+                                            </Text>
+                                        </View>
+
+                                        <View style={styles.dashboardStatDivider} />
+
+                                        {/* Rank Cell */}
+                                        <TouchableOpacity
+                                            style={styles.dashboardStatCellRank}
+                                            activeOpacity={0.8}
+                                            onPress={() => {
+                                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                                navigation.navigate("Rank");
+                                            }}
+                                        >
+                                            <Text style={styles.dashboardStatLabel}>RANK</Text>
+                                            <Text
+                                                style={[
+                                                    styles.dashboardStatValue,
+                                                    styles.dashboardRankValue,
+                                                    { color: currentRank?.color || "#FF9500" }
+                                                ]}
+                                                numberOfLines={1}
+                                                adjustsFontSizeToFit
+                                                minimumFontScale={0.75}
+                                            >
+                                                {currentRank?.title || "RECRUIT"}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+                            );
+                        })()}
+
                         {/* ── 2. Phase 6 Athlete Command Center Hero Decision Card ── */}
                         {dailyAthleteCommand && (
                             <Animated.View
@@ -1387,122 +1521,10 @@ export default function HomeScreen({ navigation, route }) {
                             </View>
                         </Animated.View>
 
-                        {/* ── 4. Active Program Status (Chapter 2) ── */}
-                        {activeProgram && programPerformanceSummary && (
-                            <Animated.View
-                                style={{
-                                    marginTop: 24,
-                                    marginBottom: 4,
-                                    opacity: cardsAnim,
-                                    transform: [{
-                                        translateY: cardsAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] })
-                                    }],
-                                }}
-                            >
-                                <ProgramStatusCard
-                                    summary={programPerformanceSummary}
-                                    activeProgram={activeProgram}
-                                    onPressVersion={() => navigation.navigate("Progress", { initialTab: 0 })}
-                                    onPressReview={() => navigation.navigate("Progress", { initialTab: 0 })}
-                                />
-                            </Animated.View>
-                        )}
-
-                        {/* ── 5. Attention & Advisories (Chapter 3 — only rendered when active) ── */}
-                        {((adaptiveRecommendation && adaptiveRecommendation.status !== "CURRENT_PROGRAM") ||
-                          missedWorkoutAdvisory?.hasMissedWorkout ||
-                          athleteAlerts.length > 0) && (
-                            <Animated.View
-                                style={{
-                                    marginTop: 20,
-                                    gap: 12,
-                                    opacity: cardsAnim,
-                                    transform: [{
-                                        translateY: cardsAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] })
-                                    }],
-                                }}
-                            >
-                                {adaptiveRecommendation && adaptiveRecommendation.status !== "CURRENT_PROGRAM" && (
-                                    <AdaptiveRecommendationCard
-                                        recommendation={adaptiveRecommendation}
-                                        onAccept={handleAcceptAdaptiveRec}
-                                        onDismiss={handleDismissAdaptiveRec}
-                                        onReview={(rec) => {
-                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                            if (rec?.status === "REVIEW_PROGRAM" || !rec?.exerciseName) {
-                                                navigation.navigate("Progress", { initialTab: 1 });
-                                            } else {
-                                                navigation.navigate("Progress", { initialTab: 0, selectedExercise: rec.exerciseName });
-                                            }
-                                        }}
-                                    />
-                                )}
-
-                                {missedWorkoutAdvisory?.hasMissedWorkout && (
-                                    <TouchableOpacity
-                                        style={styles.missedAdvisoryBanner}
-                                        onPress={() => {
-                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                            setMissedWorkoutModalVisible(true);
-                                        }}
-                                        activeOpacity={0.8}
-                                    >
-                                        <View style={styles.missedIconBox}>
-                                            <Ionicons name="calendar-outline" size={14} color="#FF9F0A" />
-                                        </View>
-                                        <View style={{ flex: 1 }}>
-                                            <Text style={styles.missedBannerTitle}>MISSED SESSION DETECTED</Text>
-                                            <Text style={styles.missedBannerSub}>
-                                                Day 0{missedWorkoutAdvisory.missedDay} ({missedWorkoutAdvisory.missedTarget}) • Tap for recovery options
-                                            </Text>
-                                        </View>
-                                        <Ionicons name="chevron-forward" size={14} color="rgba(255, 255, 255, 0.4)" />
-                                    </TouchableOpacity>
-                                )}
-
-                                {athleteAlerts.map((alert, idx) => (
-                                    <AthleteAlertCard
-                                        key={alert.id || idx}
-                                        alert={alert}
-                                        onPress={() => {
-                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                            if (alert.type === "progression") {
-                                                navigation.navigate("Progress", { initialTab: 0, selectedExercise: alert.exerciseName });
-                                            } else if (alert.type === "warning" || alert.id?.includes("stall") || alert.id?.includes("plateau")) {
-                                                navigation.navigate("Progress", { initialTab: 1, selectedExercise: alert.exerciseName });
-                                            } else if (alert.id === "deload_review") {
-                                                setReadinessModalVisible(true);
-                                            } else {
-                                                navigation.navigate("Progress", { initialTab: 0 });
-                                            }
-                                        }}
-                                    />
-                                ))}
-                            </Animated.View>
-                        )}
-
-                        {/* ── 6. Week in Review (Chapter 4) ── */}
+                        {/* ── 4. Consistency Grid (Weekly Overview) ── */}
                         <Animated.View
                             style={{
-                                marginTop: 24,
-                                opacity: cardsAnim,
-                                transform: [{
-                                    translateY: cardsAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] })
-                                }],
-                            }}
-                        >
-                            {weeklyAthleteRecap && (
-                                <WeeklyRecapCard
-                                    recap={weeklyAthleteRecap}
-                                    onPressDetails={() => navigation.navigate("Progress", { initialTab: 0 })}
-                                />
-                            )}
-                        </Animated.View>
-
-                        {/* ── 7. Consistency Grid ── */}
-                        <Animated.View
-                            style={{
-                                marginTop: 20,
+                                marginTop: 12,
                                 opacity: cardsAnim,
                                 transform: [{
                                     translateY: cardsAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] })
@@ -1512,169 +1534,293 @@ export default function HomeScreen({ navigation, route }) {
                             <TouchableOpacity
                                 style={styles.consistencyCard}
                                 activeOpacity={0.88}
-                            onPress={() => {
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                setStreakAnalyticsVisible(true);
-                            }}
-                        >
-                            <LinearGradient
-                                colors={GRADIENTS.subtleCard}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 0, y: 1 }}
-                                style={StyleSheet.absoluteFillObject}
-                                pointerEvents="none"
-                            />
-                            <View style={styles.consistencyHeader}>
-                                <View>
-                                    <Text style={styles.consistencyTitle}>WEEKLY OVERVIEW</Text>
-                                    <Text style={styles.consistencySubtitle}>{weeklySummary.totalWorkingSets} working sets · {Math.round(weeklySummary.totalDurationSec / 60)}m training</Text>
-                                </View>
-                                <View style={styles.consistencyBadge}>
-                                    <Text style={styles.consistencyBadgeText}>
-                                        <Text style={{ fontFamily: FAMILY.monoBold, color: total === 0 ? COLORS.textMuted : COLORS.text }}>
-                                            {completedDays.length}
-                                        </Text>/6 SESSIONS
-                                    </Text>
-                                </View>
-                            </View>
-
-                            <View style={styles.consistencyGridContainer}>
-                                {DAY_LABELS.map((label, index) => {
-                                    const dayNum = index + 1;
-                                    const isCompleted = total > 0 && completedDays.includes(dayNum);
-                                    const isDayFrozen = total > 0 && freezeDays.includes(dayNum);
-                                    const isToday = total > 0 && todayDay === dayNum;
-                                    const isSunday = dayNum === 7;
-                                    const dayTarget = isSunday ? "Active Recovery" : (completedTargets[dayNum] || (WORKOUT_PLAN.find(d => d.day === dayNum)?.target));
-                                    const muscleColor = isSunday ? "#30D158" : getMuscleColor(dayTarget);
-
-                                    return (
-                                        <View key={label} style={styles.gridCellWrapper}>
-                                            <Text style={[
-                                                styles.gridCellDayLabel,
-                                                isToday && { color: muscleColor, fontFamily: FAMILY.bold },
-                                                isCompleted && { color: COLORS.text, fontFamily: FAMILY.bold }
-                                            ]}>
-                                                {label[0]}
-                                            </Text>
-                                            <View
-                                                style={[
-                                                    styles.gridCircle,
-                                                    isCompleted && {
-                                                        backgroundColor: muscleColor,
-                                                        borderColor: "rgba(255, 255, 255, 0.25)",
-                                                    },
-                                                    isToday && !isCompleted && {
-                                                        borderColor: isSunday ? "rgba(48, 209, 88, 0.6)" : muscleColor,
-                                                        borderWidth: 2,
-                                                        backgroundColor: isSunday ? "rgba(48, 209, 88, 0.12)" : `${muscleColor}1F`,
-                                                    },
-                                                    isDayFrozen && styles.gridCircleFrozen,
-                                                    !isCompleted && !isDayFrozen && !isToday && styles.gridCircleInactive,
-                                                ]}
-                                            >
-                                                {isCompleted ? (
-                                                    <Ionicons name="flash" size={13} color="#FFFFFF" />
-                                                ) : isDayFrozen ? (
-                                                    <Ionicons name="snow" size={12} color="#30B0C7" />
-                                                ) : isToday ? (
-                                                    isSunday ? (
-                                                        <Ionicons name="moon" size={12} color="#30D158" />
-                                                    ) : (
-                                                        <View style={[styles.gridCircleTodayDot, { backgroundColor: muscleColor }]} />
-                                                    )
-                                                ) : isSunday ? (
-                                                    <Ionicons name="moon-outline" size={11} color="rgba(255, 255, 255, 0.15)" />
-                                                ) : null}
-                                            </View>
-                                        </View>
-                                    );
-                                })}
-                            </View>
-                        </TouchableOpacity>
-                        </Animated.View>
-                    </Animated.View>
-                )}
-
-                {/* ── Moments & Milestones ── */}
-                <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionLabel}>MOMENTS & MILESTONES</Text>
-                </View>
-                <MomentsGallery streak={streak} total={total} profile={profile} />
-
-                {/* ── Workout Library ── */}
-                <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionLabel}>WORKOUT LIBRARY</Text>
-                </View>
-
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.libraryScroll}
-                >
-                    {LIBRARY_DAYS.map((day) => {
-                        const color = day.isRest ? COLORS.success : getMuscleColor(day.target);
-                        return (
-                            <TouchableOpacity
-                                key={day.day}
-                                style={styles.libraryCard}
                                 onPress={() => {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                    if (day.isRest || day.day === 7) {
-                                        navigation.navigate("RestDay");
-                                    } else {
-                                        navigation.navigate("WorkoutDetail", { day });
-                                    }
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                    setStreakAnalyticsVisible(true);
                                 }}
-                                activeOpacity={0.75}
                             >
                                 <LinearGradient
-                                    colors={[`${color}18`, "transparent"]}
-                                    start={{ x: 0, y: 0.5 }}
-                                    end={{ x: 0.85, y: 0.5 }}
+                                    colors={GRADIENTS.subtleCard}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 1 }}
                                     style={StyleSheet.absoluteFillObject}
                                     pointerEvents="none"
                                 />
-                                <View style={[styles.libraryCardSpine, { backgroundColor: color }]} />
-                                <View>
-                                    <Text style={styles.libraryDayText}>{getLibraryDayCode(day)}</Text>
-                                    <Text style={styles.libraryTitleText}>{getLibraryTitle(day)}</Text>
+                                <View style={styles.consistencyHeader}>
+                                    <View>
+                                        <Text style={styles.consistencyTitle}>WEEKLY OVERVIEW</Text>
+                                        <Text style={styles.consistencySubtitle}>{weeklySummary.totalWorkingSets} working sets · {Math.round(weeklySummary.totalDurationSec / 60)}m training</Text>
+                                    </View>
+                                    <View style={styles.consistencyBadge}>
+                                        <Text style={styles.consistencyBadgeText}>
+                                            <Text style={{ fontFamily: FAMILY.monoBold, color: total === 0 ? COLORS.textMuted : COLORS.text }}>
+                                                {completedDays.length}
+                                            </Text>/6 SESSIONS
+                                        </Text>
+                                    </View>
+                                </View>
+
+                                <View style={styles.consistencyGridContainer}>
+                                    {DAY_LABELS.map((label, index) => {
+                                        const dayNum = index + 1;
+                                        const isCompleted = total > 0 && completedDays.includes(dayNum);
+                                        const isDayFrozen = total > 0 && freezeDays.includes(dayNum);
+                                        const isToday = total > 0 && todayDay === dayNum;
+                                        const isSunday = dayNum === 7;
+                                        const dayTarget = isSunday ? "Active Recovery" : (completedTargets[dayNum] || (WORKOUT_PLAN.find(d => d.day === dayNum)?.target));
+                                        const muscleColor = isSunday ? "#30D158" : getMuscleColor(dayTarget);
+
+                                        return (
+                                            <View key={label} style={styles.gridCellWrapper}>
+                                                <Text style={[
+                                                    styles.gridCellDayLabel,
+                                                    isToday && { color: muscleColor, fontFamily: FAMILY.bold },
+                                                    isCompleted && { color: COLORS.text, fontFamily: FAMILY.bold }
+                                                ]}>
+                                                    {label[0]}
+                                                </Text>
+                                                <View
+                                                    style={[
+                                                        styles.gridCircle,
+                                                        isCompleted && {
+                                                            backgroundColor: muscleColor,
+                                                            borderColor: "rgba(255, 255, 255, 0.25)",
+                                                        },
+                                                        isToday && !isCompleted && {
+                                                            borderColor: isSunday ? "rgba(48, 209, 88, 0.6)" : muscleColor,
+                                                            borderWidth: 2,
+                                                            backgroundColor: isSunday ? "rgba(48, 209, 88, 0.12)" : `${muscleColor}1F`,
+                                                        },
+                                                        isDayFrozen && styles.gridCircleFrozen,
+                                                        !isCompleted && !isDayFrozen && !isToday && styles.gridCircleInactive,
+                                                    ]}
+                                                >
+                                                    {isCompleted ? (
+                                                        <Ionicons name="flash" size={13} color="#FFFFFF" />
+                                                    ) : isDayFrozen ? (
+                                                        <Ionicons name="snow" size={12} color="#30B0C7" />
+                                                    ) : isToday ? (
+                                                        isSunday ? (
+                                                            <Ionicons name="moon" size={12} color="#30D158" />
+                                                        ) : (
+                                                            <View style={[styles.gridCircleTodayDot, { backgroundColor: muscleColor }]} />
+                                                        )
+                                                    ) : isSunday ? (
+                                                        <Ionicons name="moon-outline" size={11} color="rgba(255, 255, 255, 0.15)" />
+                                                    ) : null}
+                                                </View>
+                                            </View>
+                                        );
+                                    })}
                                 </View>
                             </TouchableOpacity>
-                        );
-                    })}
-                </ScrollView>
+                        </Animated.View>
 
-                <TouchableOpacity
-                    style={[styles.customCard, { marginTop: 10 }]}
-                    onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        navigation.navigate("ProtocolIntel");
-                    }}
-                    activeOpacity={0.8}
-                >
-                    <View style={{ flex: 1 }}>
-                        <Text style={styles.customTitle}>Program Guide</Text>
-                        <Text style={styles.customSub}>The Science · Principles · 12-Week System</Text>
-                    </View>
-                    <View style={styles.customIconWrap}>
-                        <Ionicons name="book-outline" size={18} color={COLORS.text} />
-                    </View>
-                </TouchableOpacity>
+                        {/* ── 5. Moments & Milestones ── */}
+                        <View style={styles.sectionHeader}>
+                            <Text style={styles.sectionLabel}>MOMENTS & MILESTONES</Text>
+                        </View>
+                        <MomentsGallery streak={streak} total={total} profile={profile} />
 
-                <TouchableOpacity
-                    style={[styles.customCard, { marginTop: 10 }]}
-                    onPress={() => navigation.navigate("CustomWorkout")}
-                    activeOpacity={0.8}
-                >
-                    <View style={{ flex: 1 }}>
-                        <Text style={styles.customTitle}>Craft Session</Text>
-                        <Text style={styles.customSub}>Design and log your bespoke workout</Text>
-                    </View>
-                    <View style={styles.customIconWrap}>
-                        <Ionicons name="flash-outline" size={18} color={COLORS.text} />
-                    </View>
-                </TouchableOpacity>
+                        {/* ── 6. Workout Library ── */}
+                        <View style={styles.sectionHeader}>
+                            <Text style={styles.sectionLabel}>WORKOUT LIBRARY</Text>
+                        </View>
+
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.libraryScroll}
+                        >
+                            {LIBRARY_DAYS.map((day) => {
+                                const color = day.isRest ? COLORS.success : getMuscleColor(day.target);
+                                return (
+                                    <TouchableOpacity
+                                        key={day.day}
+                                        style={styles.libraryCard}
+                                        onPress={() => {
+                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                            if (day.isRest || day.day === 7) {
+                                                navigation.navigate("RestDay");
+                                            } else {
+                                                navigation.navigate("WorkoutDetail", { day });
+                                            }
+                                        }}
+                                        activeOpacity={0.75}
+                                    >
+                                        <LinearGradient
+                                            colors={[`${color}18`, "transparent"]}
+                                            start={{ x: 0, y: 0.5 }}
+                                            end={{ x: 0.85, y: 0.5 }}
+                                            style={StyleSheet.absoluteFillObject}
+                                            pointerEvents="none"
+                                        />
+                                        <View style={[styles.libraryCardSpine, { backgroundColor: color }]} />
+                                        <View>
+                                            <Text style={styles.libraryDayText}>{getLibraryDayCode(day)}</Text>
+                                            <Text style={styles.libraryTitleText}>{getLibraryTitle(day)}</Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </ScrollView>
+
+                        <TouchableOpacity
+                            style={[styles.customCard, { marginTop: 10 }]}
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                navigation.navigate("ProtocolIntel");
+                            }}
+                            activeOpacity={0.8}
+                        >
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.customTitle}>Program Guide</Text>
+                                <Text style={styles.customSub}>The Science · Principles · 12-Week System</Text>
+                            </View>
+                            <View style={styles.customIconWrap}>
+                                <Ionicons name="book-outline" size={18} color={COLORS.text} />
+                            </View>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.customCard, { marginTop: 10 }]}
+                            onPress={() => navigation.navigate("CustomWorkout")}
+                            activeOpacity={0.8}
+                        >
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.customTitle}>Craft Session</Text>
+                                <Text style={styles.customSub}>Design and log your bespoke workout</Text>
+                            </View>
+                            <View style={styles.customIconWrap}>
+                                <Ionicons name="flash-outline" size={18} color={COLORS.text} />
+                            </View>
+                        </TouchableOpacity>
+
+                        {/* ── 7. Athlete Intelligence (Recently Added Cards at Bottom) ── */}
+                        {((activeProgram && programPerformanceSummary) ||
+                          (adaptiveRecommendation && adaptiveRecommendation.status !== "CURRENT_PROGRAM") ||
+                          missedWorkoutAdvisory?.hasMissedWorkout ||
+                          athleteAlerts.length > 0 ||
+                          weeklyAthleteRecap) && (
+                            <>
+                                <View style={styles.sectionHeader}>
+                                    <Text style={styles.sectionLabel}>ATHLETE INTELLIGENCE</Text>
+                                </View>
+
+                                {/* Active Program Status */}
+                                {activeProgram && programPerformanceSummary && (
+                                    <Animated.View
+                                        style={{
+                                            marginBottom: 12,
+                                            opacity: cardsAnim,
+                                            transform: [{
+                                                translateY: cardsAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] })
+                                            }],
+                                        }}
+                                    >
+                                        <ProgramStatusCard
+                                            summary={programPerformanceSummary}
+                                            activeProgram={activeProgram}
+                                            onPressVersion={() => navigation.navigate("Progress", { initialTab: 0 })}
+                                            onPressReview={() => navigation.navigate("Progress", { initialTab: 0 })}
+                                        />
+                                    </Animated.View>
+                                )}
+
+                                {/* Attention & Advisories */}
+                                {((adaptiveRecommendation && adaptiveRecommendation.status !== "CURRENT_PROGRAM") ||
+                                  missedWorkoutAdvisory?.hasMissedWorkout ||
+                                  athleteAlerts.length > 0) && (
+                                    <Animated.View
+                                        style={{
+                                            marginBottom: 12,
+                                            gap: 12,
+                                            opacity: cardsAnim,
+                                            transform: [{
+                                                translateY: cardsAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] })
+                                            }],
+                                        }}
+                                    >
+                                        {adaptiveRecommendation && adaptiveRecommendation.status !== "CURRENT_PROGRAM" && (
+                                            <AdaptiveRecommendationCard
+                                                recommendation={adaptiveRecommendation}
+                                                onAccept={handleAcceptAdaptiveRec}
+                                                onDismiss={handleDismissAdaptiveRec}
+                                                onReview={(rec) => {
+                                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                                    if (rec?.status === "REVIEW_PROGRAM" || !rec?.exerciseName) {
+                                                        navigation.navigate("Progress", { initialTab: 1 });
+                                                    } else {
+                                                        navigation.navigate("Progress", { initialTab: 0, selectedExercise: rec.exerciseName });
+                                                    }
+                                                }}
+                                            />
+                                        )}
+
+                                        {missedWorkoutAdvisory?.hasMissedWorkout && (
+                                            <TouchableOpacity
+                                                style={styles.missedAdvisoryBanner}
+                                                onPress={() => {
+                                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                                    setMissedWorkoutModalVisible(true);
+                                                }}
+                                                activeOpacity={0.8}
+                                            >
+                                                <View style={styles.missedIconBox}>
+                                                    <Ionicons name="calendar-outline" size={14} color="#FF9F0A" />
+                                                </View>
+                                                <View style={{ flex: 1 }}>
+                                                    <Text style={styles.missedBannerTitle}>MISSED SESSION DETECTED</Text>
+                                                    <Text style={styles.missedBannerSub}>
+                                                        Day 0{missedWorkoutAdvisory.missedDay} ({missedWorkoutAdvisory.missedTarget}) • Tap for recovery options
+                                                    </Text>
+                                                </View>
+                                                <Ionicons name="chevron-forward" size={14} color="rgba(255, 255, 255, 0.4)" />
+                                            </TouchableOpacity>
+                                        )}
+
+                                        {athleteAlerts.map((alert, idx) => (
+                                            <AthleteAlertCard
+                                                key={alert.id || idx}
+                                                alert={alert}
+                                                onPress={() => {
+                                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                                    if (alert.type === "progression") {
+                                                        navigation.navigate("Progress", { initialTab: 0, selectedExercise: alert.exerciseName });
+                                                    } else if (alert.type === "warning" || alert.id?.includes("stall") || alert.id?.includes("plateau")) {
+                                                        navigation.navigate("Progress", { initialTab: 1, selectedExercise: alert.exerciseName });
+                                                    } else if (alert.id === "deload_review") {
+                                                        setReadinessModalVisible(true);
+                                                    } else {
+                                                        navigation.navigate("Progress", { initialTab: 0 });
+                                                    }
+                                                }}
+                                            />
+                                        ))}
+                                    </Animated.View>
+                                )}
+
+                                {/* Week in Review */}
+                                {weeklyAthleteRecap && (
+                                    <Animated.View
+                                        style={{
+                                            marginBottom: 12,
+                                            opacity: cardsAnim,
+                                            transform: [{
+                                                translateY: cardsAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] })
+                                            }],
+                                        }}
+                                    >
+                                        <WeeklyRecapCard
+                                            recap={weeklyAthleteRecap}
+                                            onPressDetails={() => navigation.navigate("Progress", { initialTab: 0 })}
+                                        />
+                                    </Animated.View>
+                                )}
+                            </>
+                        )}
+                    </Animated.View>
+                )}
 
                 <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
                     <View style={styles.footerDivider} />
@@ -2932,9 +3078,9 @@ const styles = StyleSheet.create({
     heroCard: {
         marginHorizontal: 16,
         marginTop: 6,
-        marginBottom: 4,
+        marginBottom: 0,
         height: 228,
-        backgroundColor: "#050507",
+        backgroundColor: COLORS.bgCard,
         overflow: "hidden",
         borderRadius: 18,
         borderWidth: 1,
@@ -3042,16 +3188,26 @@ const styles = StyleSheet.create({
 
     // Unified Horizontal Dashboard Card
     dashboardCard: {
-        marginHorizontal: SPACING.base,
-        marginTop: 14,
-        borderRadius: 18,
+        marginHorizontal: 16,
+        marginTop: 12,
+        marginBottom: 0,
+        borderRadius: 20,
         borderWidth: 1,
-        borderColor: COLORS.border,
-        padding: 16,
+        borderColor: "rgba(255, 255, 255, 0.09)",
+        backgroundColor: "#0D0D10",
+        paddingVertical: 14,
+        paddingHorizontal: 16,
         flexDirection: "row",
         alignItems: "center",
         position: "relative",
         overflow: "hidden",
+    },
+    dashboardCardHighlight: {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 1,
     },
     dashboardRingWrapper: {
         width: 86,
@@ -3059,6 +3215,14 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         marginRight: 14,
+        position: "relative",
+    },
+    dashboardRingGlow: {
+        position: "absolute",
+        width: 58,
+        height: 58,
+        borderRadius: 29,
+        backgroundColor: "rgba(227, 30, 36, 0.12)",
     },
     dashboardRingTextContainer: {
         ...StyleSheet.absoluteFillObject,
@@ -3070,14 +3234,15 @@ const styles = StyleSheet.create({
         fontFamily: FAMILY.bold,
         color: "#FFFFFF",
         lineHeight: 22,
+        letterSpacing: -0.5,
         includeFontPadding: false,
         textAlign: "center",
     },
     dashboardRingLabel: {
         fontSize: 8,
-        fontFamily: FAMILY.mono,
+        fontFamily: FAMILY.monoBold,
         letterSpacing: 1.2,
-        color: COLORS.textSub,
+        color: COLORS.textMuted,
         lineHeight: 10,
         includeFontPadding: false,
         marginTop: 2,
@@ -3089,33 +3254,51 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "space-between",
     },
-    dashboardStatCell: {
-        flex: 1,
+    dashboardStatCellStreak: {
+        flex: 0.95,
         alignItems: "center",
         justifyContent: "center",
+        paddingVertical: 2,
+    },
+    dashboardStatCellSessions: {
+        flex: 1.0,
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: 2,
+    },
+    dashboardStatCellRank: {
+        flex: 1.15,
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: 2,
     },
     dashboardStatLabel: {
         fontSize: 9,
         fontFamily: FAMILY.regular,
         color: COLORS.textSub,
+        letterSpacing: 0.8,
         textTransform: "uppercase",
-        letterSpacing: 1,
         marginBottom: 4,
+        textAlign: "center",
+        includeFontPadding: false,
     },
     dashboardStatValue: {
         fontSize: 22,
         fontFamily: FAMILY.monoBold,
         textAlign: "center",
+        includeFontPadding: false,
+        lineHeight: 26,
     },
     dashboardRankValue: {
-        fontSize: 13,
+        fontSize: 15,
         fontFamily: FAMILY.bold,
-        letterSpacing: 0.3,
+        letterSpacing: 0.5,
+        lineHeight: 26,
     },
     dashboardStatDivider: {
         width: 1,
-        height: 32,
-        backgroundColor: COLORS.border,
+        height: 30,
+        backgroundColor: "rgba(255, 255, 255, 0.10)",
     },
 
     // ── ATHLETE PERFORMANCE SNAPSHOT CARD ──
@@ -3295,7 +3478,7 @@ const styles = StyleSheet.create({
 
     // ── QUICK ACTIONS 2X2 GRID ──
     quickActionsContainer: {
-        marginHorizontal: SPACING.base,
+        marginHorizontal: 16,
         marginTop: 12,
         gap: 8,
     },
@@ -3350,11 +3533,11 @@ const styles = StyleSheet.create({
     // 7-Day Consistency Card
     consistencyCard: {
         marginHorizontal: 16,
-        marginVertical: 6,
+        marginVertical: 0,
         borderRadius: 18,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.11)",
-        backgroundColor: "#050507",
+        backgroundColor: COLORS.bgCard,
         padding: 16,
         overflow: "hidden",
     },
@@ -3745,13 +3928,13 @@ const styles = StyleSheet.create({
 
     // Rest Card
     restCard: {
-        marginHorizontal: SPACING.base,
+        marginHorizontal: 16,
         borderRadius: RADIUS.lg,
         overflow: "hidden",
         borderWidth: 1,
         borderColor: COLORS.border,
         backgroundColor: COLORS.bgCard,
-        marginBottom: 4,
+        marginBottom: 0,
         marginTop: 6,
     },
     restCardBg: {
@@ -3948,7 +4131,7 @@ const styles = StyleSheet.create({
     },
 
     customCard: {
-        marginHorizontal: SPACING.base, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.md,
+        marginHorizontal: 16, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.md,
         borderWidth: 1, borderColor: COLORS.border,
         padding: 20,
         flexDirection: "row", justifyContent: "space-between", alignItems: "center",

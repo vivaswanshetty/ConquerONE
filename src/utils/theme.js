@@ -5,21 +5,21 @@
  */
 
 export const COLORS = {
-    // ── Surfaces (Warm Matte Carbon Stack) ────────────────────
-    bg: "#0A0A0B",
-    bgRaised: "#0D0D0F",
-    bgCard: "#050507",
-    bgSurface: "#121214",
-    bgMuted: "#1C1C1F",
+    // ── Surfaces (Flipped OLED Matte Carbon Stack) ───────────
+    bg: "#000000",
+    bgRaised: "#141418",
+    bgCard: "#0D0D10",
+    bgSurface: "#18181D",
+    bgMuted: "#222228",
 
     // Aliases for component consistency
-    card: "#050507",
-    cardBorder: "rgba(255, 255, 255, 0.11)",
+    card: "#0D0D10",
+    cardBorder: "rgba(255, 255, 255, 0.09)",
 
     // ── Structural lines (1px Hairline, No Glow) ──────────────
-    border: "rgba(255, 255, 255, 0.10)",
-    borderMid: "rgba(255, 255, 255, 0.14)",
-    borderLight: "rgba(255, 255, 255, 0.18)",
+    border: "rgba(255, 255, 255, 0.08)",
+    borderMid: "rgba(255, 255, 255, 0.12)",
+    borderLight: "rgba(255, 255, 255, 0.16)",
 
     // ── Text hierarchy ────────────────────────────────────────
     text: "#FFFFFF",
@@ -52,8 +52,8 @@ export const COLORS = {
     timerRestDim: "rgba(38, 38, 42, 0.50)",
 
     // ── Clean Flat Surfaces (No resting blur/glow) ─────────────
-    glassBg: "#050507",
-    glassBorder: "rgba(255, 255, 255, 0.11)",
+    glassBg: "#0D0D10",
+    glassBorder: "rgba(255, 255, 255, 0.09)",
     glowRed: "rgba(227, 30, 36, 0.45)",
     liveGlow: "rgba(122, 46, 34, 0.35)",
 };
@@ -63,8 +63,8 @@ export const GRADIENTS = {
     silver: ["#EDEAE3", "#D1CEC7", "#8A8A8E"],
     diamond: ["#EDEAE3", "#E0DDD6", "#C5C2BB"],
     dark: ["rgba(255,255,255,0.03)", "transparent"],
-    hero: ["rgba(10,10,11,0.2)", "rgba(10,10,11,0.95)"],
-    subtleCard: ["#08080A", "#020203"],
+    hero: ["rgba(0,0,0,0.1)", "rgba(0,0,0,0.95)"],
+    subtleCard: ["#141418", "#0D0D10"],
 };
 
 export const FONTS = {

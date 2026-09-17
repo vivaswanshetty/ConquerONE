@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
     container: {
         marginHorizontal: 16,
         marginVertical: 4,
-        backgroundColor: "#050507",
+        backgroundColor: COLORS.bgCard,
         borderRadius: 14,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.11)",

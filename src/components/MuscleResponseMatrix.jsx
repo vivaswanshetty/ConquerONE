@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     },
     gridItem: {
         width: ITEM_WIDTH,
-        backgroundColor: "#050507",
+        backgroundColor: COLORS.bgCard,
         borderRadius: RADIUS.sm,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.11)",

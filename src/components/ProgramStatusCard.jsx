@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
         borderRadius: 18,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.11)",
-        backgroundColor: "#050507",
+        backgroundColor: COLORS.bgCard,
         padding: 16,
         overflow: "hidden",
     },

@@ -163,7 +163,7 @@ export default function ExerciseTargetCard({ targetInfo, compact = false }) {
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: "#050507",
+        backgroundColor: COLORS.bgCard,
         borderRadius: RADIUS.md,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.11)",

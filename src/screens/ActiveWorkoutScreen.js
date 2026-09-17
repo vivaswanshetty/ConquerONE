@@ -3,7 +3,7 @@ import {
     View, Text, TouchableOpacity, StyleSheet, Image,
     Dimensions, StatusBar, ScrollView, Animated,
     Modal, TextInput, KeyboardAvoidingView, Platform, AppState,
-    ActivityIndicator,
+    ActivityIndicator, PanResponder,
 } from "react-native";
 import { useNotification } from "../context/NotificationContext";
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from "react-native-svg";
@@ -12,7 +12,7 @@ import { activateKeepAwakeAsync, deactivateKeepAwake } from "expo-keep-awake";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { COLORS, FONTS, SPACING, RADIUS, FAMILY } from "../utils/theme";
+import { COLORS, FONTS, SPACING, RADIUS, FAMILY, GRADIENTS } from "../utils/theme";
 import { saveWorkoutComplete, formatDuration, tryUpdatePR, getPRRecords, getWorkoutHistory, saveActiveWorkoutSession, getActiveWorkoutSession, clearActiveWorkoutSession, getLatestUserBodyweight, getActiveProgram } from "../utils/storage";
 import { getWorkoutDayTargets, evaluateCompletedSetFeedback } from "../utils/analytics";
 import { syncAndroidWidget } from "../utils/widgetSync";
@@ -334,7 +334,7 @@ function PRModal({ visible, exerciseName, onClose, onSave, onSkip, weightUnit = 
                                                     {targetInfo.badgeText || "TARGET"}
                                                 </Text>
                                             </View>
-                                            <Text style={pm.targetCardDesc} numberOfLines={1}>
+                                            <Text style={pm.targetCardDesc}>
                                                 {targetInfo.targetSetSummary || targetInfo.reason || ""}
                                             </Text>
                                         </View>
@@ -514,13 +514,14 @@ const pm = StyleSheet.create({
         backgroundColor: "rgba(255,255,255,0.2)", marginBottom: 24,
     },
     headerRow: {
-        flexDirection: "row", alignItems: "center", gap: 16,
-        width: "100%", marginBottom: 20,
+        flexDirection: "row", alignItems: "flex-start", gap: 16,
+        width: "100%", marginBottom: 18,
     },
     trophyBadge: {
         width: 48, height: 48, borderRadius: RADIUS.pill,
         backgroundColor: "rgba(255,255,255,0.06)", borderWidth: 1.2, borderColor: "rgba(255,255,255,0.12)",
         alignItems: "center", justifyContent: "center",
+        marginTop: 2,
     },
     title: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 1.5 },
     categoryBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: RADIUS.pill },
@@ -532,8 +533,8 @@ const pm = StyleSheet.create({
         backgroundColor: "rgba(255, 255, 255, 0.04)",
         borderRadius: 12,
         paddingHorizontal: 10,
-        paddingVertical: 6,
-        marginTop: 6,
+        paddingVertical: 8,
+        marginTop: 8,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.08)",
     },
@@ -544,10 +545,11 @@ const pm = StyleSheet.create({
         textTransform: "uppercase",
     },
     targetCardDesc: {
-        fontSize: 10.5,
+        fontSize: 11,
         fontFamily: FAMILY.mono,
         color: "#D0D0D8",
-        marginTop: 2,
+        marginTop: 3,
+        lineHeight: 16,
     },
     
     bwToggleContainer: {
@@ -640,26 +642,101 @@ const pm = StyleSheet.create({
 });
 
 /* ── PR Toast ─────────────────────────────────────────────── */
-function PRToast({ visible, exerciseName, weightKg, reps, weightUnit }) {
-    const slideAnim = useRef(new Animated.Value(-90)).current;
+function PRToast({ visible, exerciseName, weightKg, reps, weightUnit, onDismiss, onPauseTimer, onResumeTimer, topOffset = 8 }) {
+    const insets = useSafeAreaInsets();
+    const slideAnim = useRef(new Animated.Value(-120)).current;
     const opacityAnim = useRef(new Animated.Value(0)).current;
+    const panX = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
         if (visible) {
+            panX.setValue(0);
             Animated.parallel([
-                Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, tension: 80, friction: 10 }),
-                Animated.timing(opacityAnim, { toValue: 1, duration: 220, useNativeDriver: true }),
+                Animated.spring(slideAnim, { toValue: 0, useNativeDriver: false, tension: 75, friction: 9 }),
+                Animated.timing(opacityAnim, { toValue: 1, duration: 220, useNativeDriver: false }),
             ]).start();
         } else {
             Animated.parallel([
-                Animated.timing(slideAnim, { toValue: -90, duration: 280, useNativeDriver: true }),
-                Animated.timing(opacityAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
+                Animated.timing(slideAnim, { toValue: -120, duration: 240, useNativeDriver: false }),
+                Animated.timing(opacityAnim, { toValue: 0, duration: 180, useNativeDriver: false }),
             ]).start();
         }
     }, [visible]);
 
+    const panResponder = useMemo(
+        () =>
+            PanResponder.create({
+                onStartShouldSetPanResponder: () => false,
+                onMoveShouldSetPanResponder: (_, gestureState) => {
+                    return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.2;
+                },
+                onMoveShouldSetPanResponderCapture: (_, gestureState) => {
+                    return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.2;
+                },
+                onPanResponderGrant: () => {
+                    onPauseTimer?.();
+                },
+                onPanResponderMove: (_, gestureState) => {
+                    panX.setValue(gestureState.dx);
+                },
+                onPanResponderTerminationRequest: () => false,
+                onPanResponderRelease: (_, gestureState) => {
+                    if (Math.abs(gestureState.dx) > 40 || Math.abs(gestureState.vx) > 0.3) {
+                        const targetX = Math.abs(gestureState.vx) > 0.3 ? (gestureState.vx > 0 ? 500 : -500) : (gestureState.dx > 0 ? 500 : -500);
+                        Animated.timing(panX, {
+                            toValue: targetX,
+                            duration: 160,
+                            useNativeDriver: false,
+                        }).start(() => {
+                            if (onDismiss) onDismiss();
+                        });
+                    } else {
+                        Animated.spring(panX, {
+                            toValue: 0,
+                            bounciness: 6,
+                            speed: 16,
+                            useNativeDriver: false,
+                        }).start();
+                        onResumeTimer?.();
+                    }
+                },
+                onPanResponderTerminate: () => {
+                    Animated.spring(panX, {
+                        toValue: 0,
+                        bounciness: 6,
+                        speed: 16,
+                        useNativeDriver: false,
+                    }).start();
+                    onResumeTimer?.();
+                },
+            }),
+        [onDismiss, onPauseTimer, onResumeTimer]
+    );
+
+    const swipeOpacity = panX.interpolate({
+        inputRange: [-200, 0, 200],
+        outputRange: [0, 1, 0],
+        extrapolate: "clamp",
+    });
+
+    const safeTop = Math.max(insets?.top || 0, 16) + topOffset;
+
     return (
-        <Animated.View style={[pt.toast, { opacity: opacityAnim, transform: [{ translateY: slideAnim }] }]}>
+        <Animated.View
+            {...panResponder.panHandlers}
+            pointerEvents={visible ? "auto" : "none"}
+            style={[
+                pt.toast,
+                {
+                    top: safeTop,
+                    opacity: Animated.multiply(opacityAnim, swipeOpacity),
+                    transform: [
+                        { translateY: slideAnim },
+                        { translateX: panX },
+                    ],
+                },
+            ]}
+        >
             <LinearGradient
                 colors={["rgba(227, 30, 36, 0.25)", "rgba(13, 13, 13, 0.98)"]}
                 style={StyleSheet.absoluteFill}
@@ -670,7 +747,7 @@ function PRToast({ visible, exerciseName, weightKg, reps, weightUnit }) {
             </View>
             <View style={pt.info}>
                 <Text style={pt.label}>NEW PERFORMANCE RECORD</Text>
-                <Text style={pt.name} numberOfLines={1}>{exerciseName.toUpperCase()}</Text>
+                <Text style={pt.name} numberOfLines={1}>{(exerciseName || "EXERCISE").toUpperCase()}</Text>
             </View>
             <View style={pt.valBox}>
                 <Text style={pt.val}>{displayWeight(weightKg, weightUnit)}</Text>
@@ -680,9 +757,110 @@ function PRToast({ visible, exerciseName, weightKg, reps, weightUnit }) {
     );
 }
 
+/* ── Workout Logged / Feedback Toast ─────────────────────── */
+function FeedbackToast({ text, onDismiss, onPauseTimer, onResumeTimer, topOffset = 8 }) {
+    const insets = useSafeAreaInsets();
+    const slideAnim = useRef(new Animated.Value(-60)).current;
+    const opacityAnim = useRef(new Animated.Value(0)).current;
+    const panX = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        panX.setValue(0);
+        Animated.parallel([
+            Animated.spring(slideAnim, { toValue: 0, useNativeDriver: false, tension: 85, friction: 9 }),
+            Animated.timing(opacityAnim, { toValue: 1, duration: 200, useNativeDriver: false }),
+        ]).start();
+    }, [text]);
+
+    const panResponder = useMemo(
+        () =>
+            PanResponder.create({
+                onStartShouldSetPanResponder: () => false,
+                onMoveShouldSetPanResponder: (_, gestureState) => {
+                    return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.2;
+                },
+                onMoveShouldSetPanResponderCapture: (_, gestureState) => {
+                    return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.2;
+                },
+                onPanResponderGrant: () => {
+                    onPauseTimer?.();
+                },
+                onPanResponderMove: (_, gestureState) => {
+                    panX.setValue(gestureState.dx);
+                },
+                onPanResponderTerminationRequest: () => false,
+                onPanResponderRelease: (_, gestureState) => {
+                    if (Math.abs(gestureState.dx) > 40 || Math.abs(gestureState.vx) > 0.3) {
+                        const targetX = Math.abs(gestureState.vx) > 0.3 ? (gestureState.vx > 0 ? 450 : -450) : (gestureState.dx > 0 ? 450 : -450);
+                        Animated.timing(panX, {
+                            toValue: targetX,
+                            duration: 160,
+                            useNativeDriver: false,
+                        }).start(() => {
+                            if (onDismiss) onDismiss();
+                        });
+                    } else {
+                        Animated.spring(panX, {
+                            toValue: 0,
+                            bounciness: 6,
+                            speed: 16,
+                            useNativeDriver: false,
+                        }).start();
+                        onResumeTimer?.();
+                    }
+                },
+                onPanResponderTerminate: () => {
+                    Animated.spring(panX, {
+                        toValue: 0,
+                        bounciness: 6,
+                        speed: 16,
+                        useNativeDriver: false,
+                    }).start();
+                    onResumeTimer?.();
+                },
+            }),
+        [onDismiss, onPauseTimer, onResumeTimer]
+    );
+
+    const swipeOpacity = panX.interpolate({
+        inputRange: [-180, 0, 180],
+        outputRange: [0, 1, 0],
+        extrapolate: "clamp",
+    });
+
+    const safeTop = Math.max(insets?.top || 0, 16) + topOffset;
+
+    return (
+        <Animated.View
+            {...panResponder.panHandlers}
+            style={[
+                styles.feedbackToastContainer,
+                {
+                    top: safeTop,
+                    opacity: Animated.multiply(opacityAnim, swipeOpacity),
+                    transform: [
+                        { translateY: slideAnim },
+                        { translateX: panX },
+                    ],
+                },
+            ]}
+        >
+            <LinearGradient
+                colors={["#1C1C22", "#0E0E12"]}
+                style={styles.feedbackToastGradient}
+            >
+                <View style={styles.feedbackToastIconBox}>
+                    <Ionicons name="sparkles" size={13} color="#00C853" />
+                </View>
+                <Text style={styles.feedbackToastText}>{text}</Text>
+            </LinearGradient>
+        </Animated.View>
+    );
+}
+
 const pt = StyleSheet.create({
     toast: {
-        position: "absolute", top: 16, left: 16, right: 16,
+        position: "absolute", left: 16, right: 16,
         backgroundColor: "#0D0D0D", borderRadius: 22,
         flexDirection: "row", alignItems: "center", gap: 16,
         padding: 16, borderWidth: 1.5, borderColor: "rgba(227, 30, 36, 0.45)",
@@ -967,6 +1145,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
     const hasStartedTimerRef = useRef(false);
     const fadeAnim = useRef(new Animated.Value(1)).current;
     const toastTimer = useRef(null);
+    const feedbackTimer = useRef(null);
     const setLoggingRef = useRef(true);
     const autoStartRef = useRef(true);   // mirrors settings.autoStartRest
     const settingsRef = useRef(settings);
@@ -1151,6 +1330,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
             clearInterval(intervalRef.current);
             clearInterval(elapsedRef.current);
             clearTimeout(toastTimer.current);
+            clearTimeout(feedbackTimer.current);
             if (restNotifIdRef.current) cancelNotification(restNotifIdRef.current);
             try { deactivateKeepAwake(); } catch { }
         };
@@ -1322,11 +1502,45 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
     }, []);
 
     const showPRToast = useCallback((exerciseName, weightKg, reps) => {
+        clearTimeout(feedbackTimer.current);
+        setFeedbackToast(null);
         setPRToast({ visible: true, exerciseName, weightKg, reps });
         clearTimeout(toastTimer.current);
         toastTimer.current = setTimeout(() => {
             setPRToast(t => ({ ...t, visible: false }));
-        }, 3500);
+        }, 3800);
+    }, []);
+
+    const handlePRToastDismiss = useCallback(() => {
+        clearTimeout(toastTimer.current);
+        setPRToast(t => ({ ...t, visible: false }));
+    }, []);
+
+    const pausePRTimer = useCallback(() => {
+        clearTimeout(toastTimer.current);
+    }, []);
+
+    const resumePRTimer = useCallback(() => {
+        clearTimeout(toastTimer.current);
+        toastTimer.current = setTimeout(() => {
+            setPRToast(t => ({ ...t, visible: false }));
+        }, 2800);
+    }, []);
+
+    const handleFeedbackDismiss = useCallback(() => {
+        clearTimeout(feedbackTimer.current);
+        setFeedbackToast(null);
+    }, []);
+
+    const pauseFeedbackTimer = useCallback(() => {
+        clearTimeout(feedbackTimer.current);
+    }, []);
+
+    const resumeFeedbackTimer = useCallback(() => {
+        clearTimeout(feedbackTimer.current);
+        feedbackTimer.current = setTimeout(() => {
+            setFeedbackToast(null);
+        }, 2800);
     }, []);
 
     const fadeTransition = useCallback(() => {
@@ -1642,6 +1856,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
             });
         }
 
+        let isNewPRFound = false;
         if ((weightKg && weightKg > 0) || (reps && reps > 0) || (durationSec && durationSec > 0)) {
             const result = await tryUpdatePR(exerciseName, weightKg, reps, {
                 loadType,
@@ -1651,6 +1866,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                 durationSec,
             });
             if (result.isNewPR) {
+                isNewPRFound = true;
                 hapticNotify();
                 setNewPRsFound(prev => [...prev, { name: exerciseName, weightKg, reps, loadType }]);
                 showPRToast(exerciseName, weightKg, reps);
@@ -1660,14 +1876,20 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
             }
         }
 
-        // Evaluate instantaneous micro-feedback vs target
-        const currentTarget = workoutDayTargets?.exercises?.find(t => t.name === exerciseName)?.progression || workoutDayTargets?.exerciseTargets?.find(t => t.exerciseName === exerciseName);
-        const microFeedback = evaluateCompletedSetFeedback(payload, currentTarget, null);
-        if (microFeedback) {
-            setFeedbackToast({ text: microFeedback, id: Date.now() });
-            setTimeout(() => {
-                setFeedbackToast(null);
-            }, 3500);
+        // Only evaluate instantaneous micro-feedback if this set was NOT a new PR (prevent dual overlapping banners)
+        if (!isNewPRFound) {
+            const currentTarget = workoutDayTargets?.exercises?.find(t => t.name === exerciseName)?.progression || workoutDayTargets?.exerciseTargets?.find(t => t.exerciseName === exerciseName);
+            const microFeedback = evaluateCompletedSetFeedback(payload, currentTarget, null);
+            if (microFeedback) {
+                clearTimeout(toastTimer.current);
+                setPRToast(t => ({ ...t, visible: false }));
+
+                setFeedbackToast({ text: microFeedback, id: Date.now() });
+                clearTimeout(feedbackTimer.current);
+                feedbackTimer.current = setTimeout(() => {
+                    setFeedbackToast(null);
+                }, 3800);
+            }
         }
     };
 
@@ -1753,15 +1975,13 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
 
             {/* Real-time Target Feedback Toast */}
             {feedbackToast && (
-                <View style={styles.feedbackToastContainer} pointerEvents="none">
-                    <LinearGradient
-                        colors={["#1C1C20", "#121215"]}
-                        style={styles.feedbackToastGradient}
-                    >
-                        <Ionicons name="sparkles" size={13} color="#00C853" />
-                        <Text style={styles.feedbackToastText}>{feedbackToast.text}</Text>
-                    </LinearGradient>
-                </View>
+                <FeedbackToast
+                    text={feedbackToast.text}
+                    onDismiss={handleFeedbackDismiss}
+                    onPauseTimer={pauseFeedbackTimer}
+                    onResumeTimer={resumeFeedbackTimer}
+                    topOffset={8}
+                />
             )}
 
             {/* PR Toast */}
@@ -1771,6 +1991,10 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                 weightKg={prToast.weightKg}
                 reps={prToast.reps}
                 weightUnit={settings.weightUnit}
+                onDismiss={handlePRToastDismiss}
+                onPauseTimer={pausePRTimer}
+                onResumeTimer={resumePRTimer}
+                topOffset={8}
             />
 
             {/* PR Log Modal */}
@@ -1920,11 +2144,17 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                             </View>
                         ) : (
                             <View style={styles.workInfoPanel}>
+                                <LinearGradient
+                                    colors={GRADIENTS.subtleCard}
+                                    style={StyleSheet.absoluteFill}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 0.2, y: 1 }}
+                                />
                                 <Text style={styles.infoPanelTitle}>{ex.primaryTarget || "Target Muscle"}</Text>
                                 <ScrollView
                                     horizontal
                                     showsHorizontalScrollIndicator={false}
-                                    style={{ width: "100%" }}
+                                    style={styles.infoPanelScroll}
                                     contentContainerStyle={styles.infoPanelBadgeRow}
                                 >
                                     <View style={styles.infoPanelBadge}>
@@ -2108,7 +2338,6 @@ const styles = StyleSheet.create({
 
     feedbackToastContainer: {
         position: "absolute",
-        top: 110,
         left: 20,
         right: 20,
         alignItems: "center",
@@ -2117,18 +2346,26 @@ const styles = StyleSheet.create({
     feedbackToastGradient: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 8,
+        gap: 10,
         paddingHorizontal: 16,
         paddingVertical: 10,
         borderRadius: RADIUS.pill,
         borderWidth: 1,
-        borderColor: "rgba(0, 200, 83, 0.5)",
+        borderColor: "rgba(0, 200, 83, 0.4)",
         backgroundColor: "#16161A",
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.5,
         shadowRadius: 10,
         elevation: 10,
+    },
+    feedbackToastIconBox: {
+        width: 22,
+        height: 22,
+        borderRadius: 11,
+        backgroundColor: "rgba(0, 200, 83, 0.15)",
+        alignItems: "center",
+        justifyContent: "center",
     },
     feedbackToastText: {
         fontFamily: FAMILY.monoBold,
@@ -2257,29 +2494,33 @@ const styles = StyleSheet.create({
     },
     workImg: { width: "100%", height: "100%" },
     workInfoPanel: {
-        width: width - 40, marginHorizontal: 20, height: 160, borderRadius: 24,
+        width: width - 40, marginHorizontal: 20, height: 144, borderRadius: 24,
         backgroundColor: COLORS.bgCard,
         marginTop: 28, overflow: "hidden",
         borderWidth: 1, borderColor: COLORS.border,
-        alignItems: "center", justifyContent: "center", padding: 18,
-    },
-    infoPanelLabel: {
-        fontSize: 9, fontFamily: FAMILY.semibold, color: COLORS.textMuted, letterSpacing: 1.5, marginBottom: 6,
+        alignItems: "center", justifyContent: "space-evenly",
     },
     infoPanelTitle: {
-        fontSize: 18, fontFamily: FAMILY.bold, color: COLORS.text, textAlign: "center", marginBottom: 14, letterSpacing: -0.3, lineHeight: 22,
+        fontSize: 19, fontFamily: FAMILY.bold, color: COLORS.text, textAlign: "center",
+        textAlignVertical: "center", letterSpacing: 0.2, lineHeight: 24,
+        includeFontPadding: false, margin: 0, padding: 0,
+    },
+    infoPanelScroll: {
+        width: "100%",
+        flexGrow: 0,
+        height: 36,
     },
     infoPanelBadgeRow: {
         flexDirection: "row", gap: 8, justifyContent: "center", alignItems: "center",
-        flexGrow: 1, paddingHorizontal: 12,
+        paddingHorizontal: 16, minWidth: "100%", minHeight: 36,
     },
     infoPanelBadge: {
         flexDirection: "row", alignItems: "center", gap: 6,
         paddingHorizontal: 12, paddingVertical: 6, borderRadius: RADIUS.pill,
-        borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bg,
+        borderWidth: 1, borderColor: COLORS.border, backgroundColor: "rgba(255, 255, 255, 0.03)",
     },
     infoPanelBadgeText: {
-        fontSize: 10, fontFamily: FAMILY.medium, color: COLORS.textSub,
+        fontSize: 10.5, fontFamily: FAMILY.medium, color: COLORS.textSub, letterSpacing: 0.2,
     },
     jumpBtn: {
         width: 36, height: 36, borderRadius: RADIUS.pill,

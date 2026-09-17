@@ -1440,17 +1440,17 @@ export default function HistoryScreen({ navigation }) {
                                     {/* 1. Heaviest Lift */}
                                     <View style={styles.hofCard}>
                                         <LinearGradient
-                                            colors={["rgba(227, 30, 36, 0.08)", "transparent"]}
+                                            colors={["rgba(10, 132, 255, 0.08)", "transparent"]}
                                             style={StyleSheet.absoluteFillObject}
                                             pointerEvents="none"
                                         />
                                         <View style={styles.hofTop}>
-                                            <View style={styles.hofIconBox}>
-                                                <Ionicons name="barbell" size={14} color={COLORS.primary} />
+                                            <View style={[styles.hofIconBox, { backgroundColor: "rgba(10, 132, 255, 0.12)", borderColor: "rgba(10, 132, 255, 0.3)" }]}>
+                                                <Ionicons name="barbell" size={14} color="#0A84FF" />
                                             </View>
                                             <Text style={styles.hofTag}>MAX WEIGHT</Text>
                                         </View>
-                                        <Text style={styles.hofValue}>
+                                        <Text style={[styles.hofValue, { color: "#0A84FF" }]}>
                                             {hallOfFame.heaviestLift ? `${hallOfFame.heaviestLift.weightKg}` : "0"}
                                             <Text style={styles.hofUnit}> KG</Text>
                                         </Text>
@@ -1585,33 +1585,19 @@ export default function HistoryScreen({ navigation }) {
                             <View>
                                 <View style={styles.logsHeaderRow}>
                                     <SectionLabel text={`LOGGED SESSIONS (${history.length})`} />
-                                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                                    {history.length > 0 && (
                                         <TouchableOpacity
-                                            style={styles.manualLogPillBtn}
+                                            style={styles.exportPillBtn}
                                             onPress={() => {
                                                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                                setManualModalInitialDate(null);
-                                                setManualModalVisible(true);
+                                                setExportModalVisible(true);
                                             }}
                                             activeOpacity={0.7}
                                         >
-                                            <Ionicons name="add" size={13} color="#FFF" style={{ marginRight: 2 }} />
-                                            <Text style={styles.manualLogPillText}>LOG</Text>
+                                            <Ionicons name="download-outline" size={13} color={COLORS.primary} />
+                                            <Text style={styles.exportPillText}>EXPORT</Text>
                                         </TouchableOpacity>
-                                        {history.length > 0 && (
-                                            <TouchableOpacity
-                                                style={styles.exportPillBtn}
-                                                onPress={() => {
-                                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                                    setExportModalVisible(true);
-                                                }}
-                                                activeOpacity={0.7}
-                                            >
-                                                <Ionicons name="download-outline" size={13} color={COLORS.primary} />
-                                                <Text style={styles.exportPillText}>EXPORT</Text>
-                                            </TouchableOpacity>
-                                        )}
-                                    </View>
+                                    )}
                                 </View>
 
                                 {history.length === 0 ? (
@@ -2136,19 +2122,20 @@ const styles = StyleSheet.create({
     hofTag: {
         fontSize: 8,
         fontFamily: FAMILY.bold,
-        color: COLORS.textMuted,
+        color: COLORS.textSub,
         letterSpacing: 0.8,
     },
     hofValue: {
         fontSize: 19,
         fontFamily: FAMILY.monoBold,
+        color: COLORS.text,
         letterSpacing: -0.5,
         marginBottom: 2,
     },
     hofUnit: {
         fontSize: 10,
         fontFamily: FAMILY.mono,
-        color: COLORS.textMuted,
+        color: COLORS.textSub,
     },
     hofSub: {
         fontSize: 9.5,

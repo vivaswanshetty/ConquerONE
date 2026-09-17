@@ -249,12 +249,12 @@ export default function DailyDecisionCard({
 const styles = StyleSheet.create({
     cardContainer: {
         marginHorizontal: 16,
-        marginTop: 6,
-        marginBottom: 10,
+        marginTop: 12,
+        marginBottom: 0,
         borderRadius: 18,
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.11)",
-        backgroundColor: "#050507",
+        backgroundColor: COLORS.bgCard,
         overflow: "hidden",
         alignSelf: "stretch",
     },
