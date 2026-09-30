@@ -1067,6 +1067,13 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
     const initialQueue = useMemo(() => rawDay?.exercises ? buildQueue(rawDay.exercises) : [], [rawDay]);
     const initialPhases = useMemo(() => initialQueue.length > 0 ? buildPhases(initialQueue, 0) : [], [initialQueue]);
 
+    // Compute workout queue dynamically whenever activeDay updates (or fallback to rawDay)
+    const workoutQueue = useMemo(() => {
+        const exs = activeDay?.exercises || rawDay?.exercises;
+        if (!Array.isArray(exs)) return [];
+        return buildQueue(exs);
+    }, [activeDay, rawDay]);
+
     const insets = useSafeAreaInsets();
     const { showDialog } = useNotification();
     const [settings, setSettings] = useState({
@@ -1779,16 +1786,27 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
     };
 
     const jumpToExercise = (idx) => {
+        if (idx < 0 || idx >= phases.length) return;
         clearInterval(intervalRef.current);
         fadeTransition();
         setPhaseIdx(idx);
         phaseIdxRef.current = idx;
-        setTimeLeft(phases[idx].duration);
-        phaseTimeRef.current = phases[idx].duration;
+        const targetPhase = phases[idx];
+        const dur = targetPhase?.duration || 45;
+        setTimeLeft(dur);
+        phaseTimeRef.current = dur;
+        phaseStartTimeRef.current = Date.now();
+        hasAnnouncedRef.current = false;
         setJumpModal(false);
         if (running && !paused) {
-            if (!(phases[idx].type === "active" && phases[idx].isReps)) {
-                startInterval(phases[idx].duration, phases, idx);
+            if (!(targetPhase?.type === "active" && targetPhase?.isReps)) {
+                startInterval(dur, phases, idx);
+            }
+            if (targetPhase?.type === "active") {
+                if (targetPhase?.exercise?.side) announceSide(targetPhase.exercise.side);
+                else announceWorkStart();
+            } else {
+                announceSetDone();
             }
         }
     };
@@ -2050,7 +2068,7 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
 
             {/* REST phase */}
             {isRest ? (
-                <Animated.View style={[styles.restContainer, { opacity: fadeAnim }]}>
+                <Animated.View style={[styles.restContainer, { opacity: fadeAnim, paddingBottom: Math.max(insets.bottom, 16) + 12 }]}>
                     <View style={styles.restContent}>
                         <RestOverlay
                             phase={currentPhase}
@@ -2066,14 +2084,16 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                             onPress={handlePrev} disabled={phaseIdx === 0} activeOpacity={0.7}>
                             <Ionicons name="play-skip-back" size={20} color={COLORS.text} />
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.ctrlMain} onPress={handlePlayPause} activeOpacity={0.85}>
-                            <View style={[styles.ctrlMainInner, { backgroundColor: COLORS.primary }]}>
-                                <Ionicons
-                                    name={!running ? "play" : paused ? "play" : "pause"}
-                                    size={28} color="#EDEAE3"
-                                />
-                            </View>
-                        </TouchableOpacity>
+                        <View style={styles.ctrlCenterSlot}>
+                            <TouchableOpacity style={styles.ctrlMain} onPress={handlePlayPause} activeOpacity={0.85}>
+                                <View style={[styles.ctrlMainInner, { backgroundColor: COLORS.primary }]}>
+                                    <Ionicons
+                                        name={!running ? "play" : paused ? "play" : "pause"}
+                                        size={28} color="#EDEAE3"
+                                    />
+                                </View>
+                            </TouchableOpacity>
+                        </View>
                         <TouchableOpacity style={styles.ctrlSec} onPress={handleSkip} activeOpacity={0.7}>
                             <Ionicons name="play-skip-forward" size={20} color={COLORS.text} />
                         </TouchableOpacity>
@@ -2193,14 +2213,16 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                                     </View>
                                 </TouchableOpacity>
                             ) : (
-                                <TouchableOpacity style={styles.ctrlMain} onPress={handlePlayPause} activeOpacity={0.85}>
-                                    <View style={[styles.ctrlMainInner, { backgroundColor: COLORS.primary }]}>
-                                        <Ionicons
-                                            name={!running ? "play" : paused ? "play" : "pause"}
-                                            size={28} color="#EDEAE3"
-                                        />
-                                    </View>
-                                </TouchableOpacity>
+                                <View style={styles.ctrlCenterSlot}>
+                                    <TouchableOpacity style={styles.ctrlMain} onPress={handlePlayPause} activeOpacity={0.85}>
+                                        <View style={[styles.ctrlMainInner, { backgroundColor: COLORS.primary }]}>
+                                            <Ionicons
+                                                name={!running ? "play" : paused ? "play" : "pause"}
+                                                size={28} color="#EDEAE3"
+                                            />
+                                        </View>
+                                    </TouchableOpacity>
+                                </View>
                             )}
 
                             <TouchableOpacity style={styles.ctrlSec} onPress={handleSkip} activeOpacity={0.7}>
@@ -2300,26 +2322,77 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                                 <Ionicons name="close" size={22} color={COLORS.text} />
                             </TouchableOpacity>
                         </View>
-                        <ScrollView showsVerticalScrollIndicator={false}>
-                            {(activeDay?.exercises || []).map((ex, i) => {
-                                const isCurrent = currentPhase.exIdx === i;
+                        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 14 }}>
+                            {workoutQueue.map((item, qIdx) => {
+                                const isCurrent = currentPhase?.exIdx === qIdx;
+                                const isDone = !isCurrent && (
+                                    qIdx < (currentPhase?.exIdx ?? 0) ||
+                                    (loggedExercises[qIdx]?.loggedSets?.length > 0 &&
+                                        loggedExercises[qIdx].loggedSets.every(s => s.completed))
+                                );
+
+                                let metaText = `${item.sets} SETS · ${item.type === 'reps' ? (item.repRange || '10-12') + ' REPS' : (item.activeTimeSec || 45) + ' SEC'}`;
+                                if (isCurrent) {
+                                    metaText = `SET ${currentPhase?.set || 1} OF ${item.sets} · ${currentPhase?.type === 'active' ? (currentPhase?.isReps ? 'WORKING' : 'TIMED') : 'REST'}`;
+                                } else if (isDone) {
+                                    metaText = `COMPLETED · ${item.sets} SETS`;
+                                }
+
                                 return (
                                     <TouchableOpacity
-                                        key={i}
-                                        style={[styles.jumpItem, isCurrent && styles.jumpItemActive]}
+                                        key={`${item.name}-${item.side || 'both'}-${qIdx}`}
+                                        style={[
+                                            styles.jumpItem,
+                                            isCurrent && styles.jumpItemActive,
+                                            isDone && styles.jumpItemDone
+                                        ]}
                                         onPress={() => {
-                                            const firstPhase = phases.findIndex(p => p.exIdx === i);
-                                            if (firstPhase !== -1) jumpToExercise(firstPhase);
+                                            const activePhase = phases.findIndex(p => p.exIdx === qIdx && p.type === 'active');
+                                            const targetPhase = activePhase !== -1 ? activePhase : phases.findIndex(p => p.exIdx === qIdx);
+                                            if (targetPhase !== -1) jumpToExercise(targetPhase);
                                         }}
+                                        activeOpacity={0.7}
                                     >
-                                        <View style={styles.jumpIndex}>
-                                            <Text style={styles.jumpIndexText}>{i + 1}</Text>
+                                        <View style={[
+                                            styles.jumpIndex,
+                                            isDone && styles.jumpIndexDone,
+                                            isCurrent && styles.jumpIndexActive
+                                        ]}>
+                                            {isDone ? (
+                                                <Ionicons name="checkmark" size={13} color="#10B981" />
+                                            ) : (
+                                                <Text style={[styles.jumpIndexText, isCurrent && styles.jumpIndexTextActive]}>
+                                                    {qIdx + 1}
+                                                </Text>
+                                            )}
                                         </View>
                                         <View style={{ flex: 1 }}>
-                                            <Text style={[styles.jumpName, isCurrent && { color: COLORS.primary }]}>{ex.name.toUpperCase()}</Text>
-                                            <Text style={styles.jumpMeta}>{ex.sets} SETS · {ex.type === 'reps' ? ex.repRange + ' REPS' : ex.activeTimeSec + ' SEC'}</Text>
+                                            <View style={{ flexDirection: "row", alignItems: "center", flexWrap: "wrap" }}>
+                                                <Text
+                                                    style={[styles.jumpName, isCurrent && { color: COLORS.primary }]}
+                                                    numberOfLines={1}
+                                                >
+                                                    {item.name.toUpperCase()}
+                                                </Text>
+                                                {item.side && (
+                                                    <View style={styles.jumpSideBadge}>
+                                                        <Text style={styles.jumpSideBadgeText}>{item.side}</Text>
+                                                    </View>
+                                                )}
+                                            </View>
+                                            <Text style={[styles.jumpMeta, isCurrent && styles.jumpMetaActive]}>
+                                                {metaText}
+                                            </Text>
                                         </View>
-                                        {isCurrent && <Ionicons name="play" size={16} color={COLORS.primary} />}
+                                        {isCurrent && (
+                                            <View style={styles.jumpActivePill}>
+                                                <Ionicons name="play" size={10} color={COLORS.primary} />
+                                                <Text style={styles.jumpActivePillText}>NOW</Text>
+                                            </View>
+                                        )}
+                                        {isDone && (
+                                            <Ionicons name="checkmark-circle" size={16} color="#10B981" />
+                                        )}
                                     </TouchableOpacity>
                                 );
                             })}
@@ -2436,30 +2509,52 @@ const styles = StyleSheet.create({
     timerUnit: { fontSize: 9, fontFamily: FAMILY.mono, color: COLORS.textSub, letterSpacing: 2, marginTop: -2 },
 
     controls: {
-        flexDirection: "row", alignItems: "center", justifyContent: "center",
-        gap: 28, marginTop: 16, paddingBottom: 8,
+        width: "100%",
+        maxWidth: 420,
+        alignSelf: "center",
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: 24,
+        marginTop: 20,
+        marginBottom: 8,
+    },
+    ctrlCenterSlot: {
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
     },
     ctrlMain: {
-        width: 80, height: 80, borderRadius: 40,
+        width: 76, height: 76, borderRadius: 38,
         alignItems: "center", justifyContent: "center",
     },
     ctrlMainInner: {
-        width: 68, height: 68, borderRadius: 34,
+        width: 66, height: 66, borderRadius: 33,
         alignItems: "center", justifyContent: "center",
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.35,
+        shadowRadius: 8,
+        elevation: 4,
     },
     ctrlMainWide: {
-        flex: 1, height: 64, marginHorizontal: 16,
+        flex: 1, height: 56, marginHorizontal: 14,
     },
     ctrlMainWideInner: {
-        flex: 1, borderRadius: 24, flexDirection: "row",
+        flex: 1, borderRadius: 28, flexDirection: "row",
         alignItems: "center", justifyContent: "center", gap: 10,
         backgroundColor: COLORS.primary,
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.35,
+        shadowRadius: 8,
+        elevation: 4,
     },
     ctrlMainWideText: {
         fontSize: 14, fontFamily: FAMILY.semibold, color: COLORS.text, letterSpacing: 0.5,
     },
     ctrlSec: {
-        width: 44, height: 44, borderRadius: RADIUS.pill,
+        width: 48, height: 48, borderRadius: 24,
         backgroundColor: COLORS.bgCard, borderWidth: 1, borderColor: COLORS.border,
         alignItems: "center", justifyContent: "center",
     },
@@ -2529,21 +2624,38 @@ const styles = StyleSheet.create({
     },
     modalBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.85)", justifyContent: "center", alignItems: "center", padding: 20 },
     jumpModal: {
-        width: "100%", maxWidth: 380, maxHeight: "70%", backgroundColor: "rgba(22, 22, 26, 0.95)",
-        borderRadius: 28, padding: 24, borderWidth: 1.2, borderColor: "rgba(255, 255, 255, 0.16)",
+        width: "100%", maxWidth: 380, maxHeight: "75%", backgroundColor: "rgba(22, 22, 26, 0.96)",
+        borderRadius: 28, padding: 22, borderWidth: 1.2, borderColor: "rgba(255, 255, 255, 0.16)",
         overflow: "hidden",
     },
-    jumpHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
+    jumpHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 18 },
     jumpTitle: { fontSize: 13, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 1 },
     jumpItem: {
-        flexDirection: "row", alignItems: "center", paddingVertical: 14, paddingHorizontal: 12, borderBottomWidth: 1,
-        borderBottomColor: "rgba(255,255,255,0.06)", gap: 14, borderRadius: 14,
+        flexDirection: "row", alignItems: "center", paddingVertical: 12, paddingHorizontal: 12, borderBottomWidth: 1,
+        borderBottomColor: "rgba(255,255,255,0.06)", gap: 12, borderRadius: 14,
     },
-    jumpItemActive: { backgroundColor: "rgba(227, 30, 36, 0.12)", borderRadius: 14 },
-    jumpIndex: { width: 28, height: 28, borderRadius: 10, backgroundColor: "rgba(255,255,255,0.05)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" },
+    jumpItemActive: { backgroundColor: "rgba(227, 30, 36, 0.12)", borderWidth: 1, borderColor: "rgba(227, 30, 36, 0.35)" },
+    jumpItemDone: { opacity: 0.8 },
+    jumpIndex: { width: 30, height: 30, borderRadius: 10, backgroundColor: "rgba(255,255,255,0.05)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" },
+    jumpIndexActive: { backgroundColor: "rgba(227, 30, 36, 0.2)", borderColor: COLORS.primary },
+    jumpIndexDone: { backgroundColor: "rgba(16, 185, 129, 0.12)", borderColor: "rgba(16, 185, 129, 0.35)" },
     jumpIndexText: { fontSize: 11, fontFamily: FAMILY.monoBold, color: COLORS.textSub },
-    jumpName: { fontSize: 14, fontFamily: FAMILY.semibold, color: COLORS.text },
+    jumpIndexTextActive: { color: COLORS.primary },
+    jumpName: { fontSize: 13.5, fontFamily: FAMILY.semibold, color: COLORS.text },
+    jumpSideBadge: {
+        paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6,
+        backgroundColor: "rgba(227, 30, 36, 0.18)", borderWidth: 1, borderColor: "rgba(227, 30, 36, 0.35)",
+        marginLeft: 6,
+    },
+    jumpSideBadgeText: { fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.primary, letterSpacing: 0.5 },
     jumpMeta: { fontSize: 10, fontFamily: FAMILY.mono, color: COLORS.textMuted, marginTop: 2 },
+    jumpMetaActive: { color: COLORS.primary },
+    jumpActivePill: {
+        flexDirection: "row", alignItems: "center", gap: 4,
+        paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(227, 30, 36, 0.2)", borderWidth: 1, borderColor: COLORS.primary,
+    },
+    jumpActivePillText: { fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.primary, letterSpacing: 0.5 },
     recentLogsCard: {
         backgroundColor: COLORS.bgCard, marginTop: 28, marginHorizontal: 20,
         borderRadius: 24, padding: 20,
