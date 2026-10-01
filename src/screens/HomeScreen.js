@@ -3231,7 +3231,7 @@ const styles = StyleSheet.create({
         height: 86,
         alignItems: "center",
         justifyContent: "center",
-        marginRight: 14,
+        marginRight: 8,
         position: "relative",
     },
     dashboardRingGlow: {
@@ -3272,24 +3272,23 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
     },
     dashboardStatCellStreak: {
-        flex: 0.85,
+        flex: 1,
         alignItems: "center",
         justifyContent: "center",
         paddingVertical: 2,
     },
     dashboardStatCellSessions: {
-        flex: 0.85,
+        flex: 1,
         alignItems: "center",
         justifyContent: "center",
         paddingVertical: 2,
     },
     dashboardStatCellRank: {
-        flex: 1.35,
+        flex: 1,
         alignItems: "center",
         justifyContent: "center",
         paddingVertical: 2,
-        paddingLeft: 8,
-        paddingRight: 4,
+        paddingHorizontal: 2,
     },
     dashboardStatLabel: {
         fontSize: 9,
@@ -3309,15 +3308,14 @@ const styles = StyleSheet.create({
         lineHeight: 26,
     },
     dashboardRankValue: {
-        fontSize: 13.5,
+        fontSize: 13,
         fontFamily: FAMILY.bold,
         letterSpacing: 0.3,
         lineHeight: 26,
     },
     dashboardStatDivider: {
         width: 1,
-        height: 26,
-        marginHorizontal: 2,
+        height: 28,
         backgroundColor: "rgba(255, 255, 255, 0.10)",
     },
 

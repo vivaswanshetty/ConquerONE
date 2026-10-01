@@ -415,6 +415,7 @@ export default function ProgressScreen({ navigation, route }) {
     const [saving, setSaving] = useState(false);
     const flashAnim = useRef(new Animated.Value(0)).current;
     const tabFadeAnim = useRef(new Animated.Value(0)).current;
+    const tabScrollRef = useRef(null);
 
     const animateTabEntrance = () => {
         tabFadeAnim.setValue(0);
@@ -431,6 +432,7 @@ export default function ProgressScreen({ navigation, route }) {
     }, []));
 
     useEffect(() => {
+        tabScrollRef.current?.scrollTo({ y: 0, animated: false });
         animateTabEntrance();
     }, [tab]);
 
@@ -676,6 +678,10 @@ export default function ProgressScreen({ navigation, route }) {
                             key={t}
                             style={[styles.tab, tab === i && styles.tabActive]}
                             onPress={() => {
+                                if (tab === i) {
+                                    tabScrollRef.current?.scrollTo({ y: 0, animated: true });
+                                    return;
+                                }
                                 Haptics.selectionAsync();
                                 setTab(i);
                             }}
@@ -701,7 +707,13 @@ export default function ProgressScreen({ navigation, route }) {
                     /* ══════════════════════════════════════════════════════════ */
                     /* PERFORMANCE HUB TAB                                       */
                     /* ══════════════════════════════════════════════════════════ */
-                    <ScrollView showsVerticalScrollIndicator={false} overScrollMode="never" contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 12 }]}>
+                    <ScrollView
+                        ref={tabScrollRef}
+                        key="tab_scroll_perf"
+                        showsVerticalScrollIndicator={false}
+                        overScrollMode="never"
+                        contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 12 }]}
+                    >
                         {/* ── 0. Active Adaptive Program & Versions ── */}
                         {activeProgram && programPerformanceSummary && (
                             <View style={{ marginTop: 14, marginBottom: 8 }}>
@@ -1378,7 +1390,13 @@ export default function ProgressScreen({ navigation, route }) {
                     /* ══════════════════════════════════════════════════════════ */
                     /* PREDICTIVE TAB (PHASE 5)                                   */
                     /* ══════════════════════════════════════════════════════════ */
-                    <ScrollView showsVerticalScrollIndicator={false} overScrollMode="never" contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 12 }]}>
+                    <ScrollView
+                        ref={tabScrollRef}
+                        key="tab_scroll_pred"
+                        showsVerticalScrollIndicator={false}
+                        overScrollMode="never"
+                        contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 12 }]}
+                    >
                         {/* ── 1. Performance Trajectory & Velocity Deck ── */}
                         <View style={[styles.sectionHeaderRow, { marginTop: 14 }]}>
                             <View style={styles.sectionTitleGroup}>
@@ -1545,7 +1563,13 @@ export default function ProgressScreen({ navigation, route }) {
                     /* ══════════════════════════════════════════════════════════ */
                     /* BODY STATS & PHYSIQUE TAB                                  */
                     /* ══════════════════════════════════════════════════════════ */
-                    <ScrollView showsVerticalScrollIndicator={false} overScrollMode="never" contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 12 }]}>
+                    <ScrollView
+                        ref={tabScrollRef}
+                        key="tab_scroll_body"
+                        showsVerticalScrollIndicator={false}
+                        overScrollMode="never"
+                        contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 12 }]}
+                    >
                         {/* ── 1. 7-Day Rolling Average Bodyweight Card ── */}
                         <View style={styles.sectionHeader}>
                             <Text style={styles.sectionLabel}>BODYWEIGHT PROGRESSION</Text>
