@@ -38,13 +38,41 @@ const liveCalories = (elapsedSec, bodyKg = 75) =>
 
 // Motivational rest cues
 const REST_MINDSET = [
-    "Recovery is part of the work. 💪",
-    "Breathe. Your muscles are rebuilding.",
+    "Recovery is part of the work.",
+    "Breathe deep. Your muscles are rebuilding.",
     "Rest hard. Train harder.",
-    "Consistency beats intensity. Stay.",
+    "Consistency beats intensity. Stay focused.",
     "You showed up. That's already a win.",
     "One more set. You've got this.",
-    "Champions rest too.",
+    "Champions rest with purpose.",
+    "The next set earns the physique.",
+    "Reset your mind. Lock in your form.",
+    "Control your breathing. Dominate your heart rate.",
+    "Iron never lies. 200 pounds is always 200 pounds.",
+    "Discipline is choosing what you want most over what you want now.",
+    "Every rep brings you closer to your absolute best.",
+    "Fatigue is temporary. The standard is permanent.",
+    "Breathe in oxygen, exhale doubt.",
+    "You didn't come this far just to come this far.",
+    "Small daily disciplines compound into massive results.",
+    "The weights don't get lighter. You get stronger.",
+    "Stay locked in. Your future self is watching.",
+    "Earn the rest, then conquer the next set.",
+    "Consistency is the ultimate secret weapon.",
+    "Leave nothing on the table today.",
+    "Focus on execution. The results will follow.",
+    "Every drop of sweat is an investment in power.",
+    "Choose the pain of discipline over the pain of regret.",
+    "Stay present. Win this next set.",
+    "Heavy loads build unbreakable character.",
+    "Eyes on the standard, not the finish line.",
+    "Recenter. Finish what you started.",
+    "Strength is forged in resistance.",
+    "Show up for yourself on every single rep.",
+    "No shortcuts. Just hard, honest work.",
+    "Greatness is built in the reps that hurt.",
+    "Embrace the discomfort. That's where you grow.",
+    "Lock in. The next set defines today.",
 ];
 
 function buildQueue(exercises) {
@@ -902,6 +930,57 @@ function RestOverlay({ phase, timeLeft, onSkip, settings, mindsetTip }) {
 
     const isSetRest = phase?.type === "set_rest";
 
+    // Dynamic, continuously rotating motivational quotes
+    const [tipText, setTipText] = useState(() => {
+        if (mindsetTip) return mindsetTip;
+        const rand = Math.floor(Math.random() * REST_MINDSET.length);
+        return REST_MINDSET[rand];
+    });
+    const tipOpacity = useRef(new Animated.Value(1)).current;
+    const tipTextRef = useRef(tipText);
+    tipTextRef.current = tipText;
+
+    const cycleQuote = useCallback(() => {
+        Animated.timing(tipOpacity, {
+            toValue: 0,
+            duration: 220,
+            useNativeDriver: true,
+        }).start(() => {
+            let nextQuote = tipTextRef.current;
+            if (REST_MINDSET.length > 1) {
+                while (nextQuote === tipTextRef.current) {
+                    const idx = Math.floor(Math.random() * REST_MINDSET.length);
+                    nextQuote = REST_MINDSET[idx];
+                }
+            }
+            setTipText(nextQuote);
+            Animated.timing(tipOpacity, {
+                toValue: 1,
+                duration: 320,
+                useNativeDriver: true,
+            }).start();
+        });
+    }, [tipOpacity]);
+
+    // Rotate quote whenever set or phase changes
+    const phaseKey = phase ? `${phase.exIdx}-${phase.set}-${phase.type}` : null;
+    useEffect(() => {
+        cycleQuote();
+    }, [phaseKey]);
+
+    // Rotate continuously every 6.5 seconds during rest
+    useEffect(() => {
+        const timer = setInterval(() => {
+            cycleQuote();
+        }, 6500);
+        return () => clearInterval(timer);
+    }, [cycleQuote]);
+
+    const handleTipPress = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        cycleQuote();
+    };
+
     return (
         <ScrollView
             showsVerticalScrollIndicator={false}
@@ -916,7 +995,7 @@ function RestOverlay({ phase, timeLeft, onSkip, settings, mindsetTip }) {
                             {isSetRest ? "RESTING" : "NEXT EXERCISE"}
                         </Text>
                     </View>
-                    <TouchableOpacity onPress={onSkip} style={ro.skipBtn} activeOpacity={0.7}>
+                    <TouchableOpacity onPress={onSkip} style={ro.skipBtn} activeOpacity={0.7} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
                         <Text style={[ro.skipText, { color: COLORS.primary }]}>SKIP REST</Text>
                         <Ionicons name="chevron-forward" size={12} color={COLORS.primary} />
                     </TouchableOpacity>
@@ -981,10 +1060,16 @@ function RestOverlay({ phase, timeLeft, onSkip, settings, mindsetTip }) {
                 )}
             </View>
 
-            {settings?.restMindset && mindsetTip ? (
-                <View style={ro.tipCard}>
-                    <Text style={ro.tipText}>“{mindsetTip.toUpperCase().replace(/ 💪|🔥|✅|⚡️/g, "")}”</Text>
-                </View>
+            {settings?.restMindset && tipText ? (
+                <TouchableOpacity
+                    onPress={handleTipPress}
+                    activeOpacity={0.75}
+                    style={ro.tipCard}
+                >
+                    <Animated.View style={{ opacity: tipOpacity, width: "100%", alignItems: "center" }}>
+                        <Text style={ro.tipText}>“{tipText.toUpperCase().replace(/ 💪|🔥|✅|⚡️/g, "")}”</Text>
+                    </Animated.View>
+                </TouchableOpacity>
             ) : null}
         </ScrollView>
     );
@@ -992,8 +1077,8 @@ function RestOverlay({ phase, timeLeft, onSkip, settings, mindsetTip }) {
 
 const ro = StyleSheet.create({
     container: {
-        width: "100%", flex: 1, paddingHorizontal: SPACING.base,
-        paddingTop: SPACING.lg,
+        width: "100%", flex: 1, paddingHorizontal: 24,
+        paddingTop: SPACING.base,
     },
     scrollContent: {
         flexGrow: 1,
@@ -1014,6 +1099,7 @@ const ro = StyleSheet.create({
     badgeText: { fontSize: 10, fontFamily: FAMILY.semibold, color: COLORS.textSub, letterSpacing: 2 },
     skipBtn: {
         flexDirection: "row", alignItems: "center", gap: 4,
+        paddingVertical: 4, paddingHorizontal: 6,
     },
     skipText: { fontSize: 9, fontFamily: FAMILY.medium, color: COLORS.textMuted, letterSpacing: 1.5 },
     timer: {
@@ -1032,7 +1118,7 @@ const ro = StyleSheet.create({
     nextImgBox: { width: "100%", height: 140, borderRadius: 20, overflow: "hidden", backgroundColor: "rgba(255,255,255,0.03)" },
     nextImg: { width: "100%", height: "100%", opacity: 0.5 },
     tipCard: {
-        width: "100%", minHeight: 54, alignItems: "center", justifyContent: "center",
+        width: "100%", minHeight: 58, alignItems: "center", justifyContent: "center",
         paddingHorizontal: 20, paddingVertical: 14, marginTop: 12,
         backgroundColor: "rgba(255,255,255,0.02)", borderRadius: 18,
         borderWidth: 1, borderColor: COLORS.glassBorder,
@@ -2084,16 +2170,27 @@ export default function ActiveWorkoutScreen({ navigation, route }) {
                             onPress={handlePrev} disabled={phaseIdx === 0} activeOpacity={0.7}>
                             <Ionicons name="play-skip-back" size={20} color={COLORS.text} />
                         </TouchableOpacity>
-                        <View style={styles.ctrlCenterSlot}>
-                            <TouchableOpacity style={styles.ctrlMain} onPress={handlePlayPause} activeOpacity={0.85}>
-                                <View style={[styles.ctrlMainInner, { backgroundColor: COLORS.primary }]}>
-                                    <Ionicons
-                                        name={!running ? "play" : paused ? "play" : "pause"}
-                                        size={28} color="#EDEAE3"
-                                    />
+
+                        {running && !paused ? (
+                            <TouchableOpacity style={styles.ctrlMainWide} onPress={handleSkip} activeOpacity={0.85}>
+                                <View style={styles.ctrlMainWideInner}>
+                                    <Text style={styles.ctrlMainWideText}>Skip Rest</Text>
+                                    <Ionicons name="play-skip-forward" size={18} color="#EDEAE3" />
                                 </View>
                             </TouchableOpacity>
-                        </View>
+                        ) : (
+                            <View style={styles.ctrlCenterSlot}>
+                                <TouchableOpacity style={styles.ctrlMain} onPress={handlePlayPause} activeOpacity={0.85}>
+                                    <View style={[styles.ctrlMainInner, { backgroundColor: COLORS.primary }]}>
+                                        <Ionicons
+                                            name={!running ? "play" : paused ? "play" : "pause"}
+                                            size={28} color="#EDEAE3"
+                                        />
+                                    </View>
+                                </TouchableOpacity>
+                            </View>
+                        )}
+
                         <TouchableOpacity style={styles.ctrlSec} onPress={handleSkip} activeOpacity={0.7}>
                             <Ionicons name="play-skip-forward" size={20} color={COLORS.text} />
                         </TouchableOpacity>
