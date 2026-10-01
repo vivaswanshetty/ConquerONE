@@ -814,7 +814,7 @@ export default function AICoachScreen({ navigation }) {
                     <Ionicons name="chevron-back" size={20} color={COLORS.text} />
                 </TouchableOpacity>
                 <View style={styles.headerCenter}>
-                    <Text style={styles.headerTitle}>AI Coach</Text>
+                    <Text style={styles.headerTitle}>AI COACH</Text>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 2 }}>
                         <View style={styles.statusDot} />
                         <Text style={styles.headerSub}>ONLINE · INTELLIGENCE</Text>
@@ -989,7 +989,7 @@ const styles = StyleSheet.create({
     },
     headerCenter: { flex: 1 },
     headerSub: { fontSize: 8.5, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1.5 },
-    headerTitle: { fontSize: 18, fontFamily: FAMILY.bold, color: "#fff", letterSpacing: 0.5 },
+    headerTitle: { fontSize: 18, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 0.5 },
     headerActions: { flexDirection: 'row', gap: 8 },
     headerBtn: {
         width: 38,

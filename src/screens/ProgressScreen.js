@@ -1073,7 +1073,7 @@ export default function ProgressScreen({ navigation, route }) {
                                 </View>
                             </View>
                         ) : (
-                            <View style={{ marginHorizontal: 16, gap: 10 }}>
+                            <View style={{ marginHorizontal: SPACING.base, gap: 10 }}>
                                 {stallRegistry.map((item, idx) => (
                                     <View key={item.name || idx} style={styles.stallCard}>
                                         <View style={styles.stallCardHeader}>
@@ -1415,7 +1415,7 @@ export default function ProgressScreen({ navigation, route }) {
                             })}
                         </ScrollView>
 
-                        <View style={{ marginHorizontal: 16 }}>
+                        <View style={{ marginHorizontal: SPACING.base }}>
                             <PerformanceTrajectoryCard trajectoryData={selectedTrajectory} />
                         </View>
 
@@ -1430,7 +1430,7 @@ export default function ProgressScreen({ navigation, route }) {
                             </View>
                         </View>
 
-                        <View style={{ marginHorizontal: 16 }}>
+                        <View style={{ marginHorizontal: SPACING.base }}>
                             {predictiveSummary.upcomingMilestones.length > 0 ? (
                                 predictiveSummary.upcomingMilestones.map((m, idx) => (
                                     <MilestoneForecastCard key={`${m.exerciseName}_${idx}`} milestoneData={m} />
@@ -1462,7 +1462,7 @@ export default function ProgressScreen({ navigation, route }) {
                             </View>
                         </View>
 
-                        <View style={{ marginHorizontal: 16 }}>
+                        <View style={{ marginHorizontal: SPACING.base }}>
                             {predictiveSummary.plateauRiskMovements.length > 0 ? (
                                 predictiveSummary.plateauRiskMovements.map((r, idx) => (
                                     <PlateauRiskCard key={`${r.exerciseName}_${idx}`} riskData={r} />
@@ -1493,7 +1493,7 @@ export default function ProgressScreen({ navigation, route }) {
                             </View>
                         </View>
 
-                        <View style={{ marginHorizontal: 16 }}>
+                        <View style={{ marginHorizontal: SPACING.base }}>
                             <MuscleResponseMatrix responseData={predictiveSummary.muscleResponseMatrix} />
                         </View>
 
@@ -1697,18 +1697,18 @@ const styles = StyleSheet.create({
     scrollContent: { paddingBottom: 0 },
     header: {
         flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-        paddingHorizontal: 16, paddingBottom: 16, paddingTop: 8,
+        paddingHorizontal: SPACING.base, paddingBottom: 16, paddingTop: 8,
     },
     backBtn: {
         width: 36, height: 36, borderRadius: RADIUS.pill, backgroundColor: COLORS.bgCard,
         alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: COLORS.border,
     },
-    headerTitle: { fontSize: 16, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 0.8, includeFontPadding: false },
+    headerTitle: { fontSize: 18, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 0.5, includeFontPadding: false },
     savedBadge: { backgroundColor: "rgba(255, 255, 255, 0.06)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.border },
     savedText: { fontSize: 9, fontFamily: FAMILY.monoBold, color: COLORS.text, includeFontPadding: false },
 
     tabs: {
-        flexDirection: "row", paddingHorizontal: 16,
+        flexDirection: "row", paddingHorizontal: SPACING.base,
         gap: 20, borderBottomWidth: 1, borderBottomColor: COLORS.border,
     },
     tab: { paddingVertical: 12 },
@@ -1716,16 +1716,16 @@ const styles = StyleSheet.create({
     tabText: { fontSize: 12, fontFamily: FAMILY.medium, color: COLORS.textMuted, letterSpacing: 0.5, includeFontPadding: false },
     tabTextActive: { color: COLORS.text, fontFamily: FAMILY.bold, includeFontPadding: false },
 
-    sectionHeader: { paddingHorizontal: 16, marginTop: 24, marginBottom: 10 },
+    sectionHeader: { paddingHorizontal: SPACING.base, marginTop: 24, marginBottom: 10 },
     sectionHeaderRow: {
         flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-        paddingHorizontal: 16, marginTop: 20, marginBottom: 10,
+        paddingHorizontal: SPACING.base, marginTop: 20, marginBottom: 10,
     },
     sectionTitleGroup: { flexDirection: "row", alignItems: "center", gap: 6, flexShrink: 1, marginRight: 8 },
-    sectionLabel: { fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.textMuted, letterSpacing: 1.0, flexShrink: 1, includeFontPadding: false },
+    sectionLabel: { fontSize: 11, fontFamily: FAMILY.bold, color: COLORS.textSub, letterSpacing: 1.0, flexShrink: 1, includeFontPadding: false },
 
     // Insights Cards
-    insightsWrap: { marginHorizontal: 16, gap: 10 },
+    insightsWrap: { marginHorizontal: SPACING.base, gap: 10 },
     insightCard: {
         backgroundColor: COLORS.bgCard, borderRadius: 14,
         borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.11)", padding: 14, overflow: "hidden",
@@ -1747,10 +1747,10 @@ const styles = StyleSheet.create({
 
     // Physique Grid
     physiqueGrid: {
-        marginHorizontal: 16, flexDirection: "row", flexWrap: "wrap", gap: 8,
+        marginHorizontal: SPACING.base, flexDirection: "row", flexWrap: "wrap", gap: 8,
     },
     physiqueCard: {
-        width: (width - 40) / 2, backgroundColor: COLORS.bgCard,
+        width: (width - SPACING.base * 2 - 8) / 2, backgroundColor: COLORS.bgCard,
         borderRadius: 14, borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.11)",
         padding: 12,
     },
@@ -1779,7 +1779,7 @@ const styles = StyleSheet.create({
         includeFontPadding: false, textAlignVertical: "center",
     },
 
-    exPillsScroll: { paddingHorizontal: 16, gap: 8 },
+    exPillsScroll: { paddingHorizontal: SPACING.base, gap: 8 },
     exPill: {
         paddingHorizontal: 12, paddingVertical: 6, borderRadius: RADIUS.pill,
         backgroundColor: COLORS.bgCard, borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.11)",
@@ -1790,7 +1790,7 @@ const styles = StyleSheet.create({
     exPillTextActive: { color: "#FFFFFF", fontFamily: FAMILY.bold, includeFontPadding: false, textAlignVertical: "center" },
 
     card: {
-        marginHorizontal: 16, backgroundColor: COLORS.bgCard,
+        marginHorizontal: SPACING.base, backgroundColor: COLORS.bgCard,
         borderRadius: 18, borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.11)",
         padding: 16, overflow: "hidden", marginBottom: 14,
     },
@@ -1852,9 +1852,9 @@ const styles = StyleSheet.create({
     prFilterPillText: { fontSize: 10, fontFamily: FAMILY.medium, color: COLORS.textMuted },
     prFilterPillTextActive: { color: "#FFF", fontFamily: FAMILY.bold },
 
-    prListWrap: { marginHorizontal: 16, gap: 10 },
+    prListWrap: { marginHorizontal: SPACING.base, gap: 10 },
     emptyPRCard: {
-        marginHorizontal: 16, backgroundColor: COLORS.bgCard, borderRadius: 14,
+        marginHorizontal: SPACING.base, backgroundColor: COLORS.bgCard, borderRadius: 14,
         borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.11)", padding: 28, alignItems: "center", justifyContent: "center",
     },
 

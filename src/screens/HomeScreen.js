@@ -1268,14 +1268,18 @@ export default function HomeScreen({ navigation, route }) {
                             )}
                         </Animated.View>
 
-                        {/* ── Unified Dashboard Card (XP Progress Ring, Streak, Sessions, Rank) ── */}
+                        {/* ── Unified Dashboard Card (Rank Progress Ring, Streak, Sessions, Rank) ── */}
                         {(() => {
-                            const progressPercent = xp % 100;
+                            const currentRank = getRankData(total);
+                            const nextRank = currentRank.index < RANKS.length - 1 ? RANKS[currentRank.index + 1] : null;
+                            const progressInRank = nextRank
+                                ? Math.min((total - currentRank.min) / (nextRank.min - currentRank.min), 1)
+                                : 1;
+                            const progressPercent = total === 0 ? 0 : Math.round(progressInRank * 100);
                             const radius = 36;
                             const strokeWidth = 4.5;
                             const circumference = 2 * Math.PI * radius; // ~226.19
                             const strokeDashoffset = circumference - (circumference * progressPercent) / 100;
-                            const currentRank = getRankData(total);
 
                             return (
                                 <Animated.View
@@ -1301,7 +1305,7 @@ export default function HomeScreen({ navigation, route }) {
                                         style={styles.dashboardCardHighlight}
                                         pointerEvents="none"
                                     />
-                                    {/* Left: SVG XP Progress Ring */}
+                                    {/* Left: SVG Rank Progress Ring */}
                                     <TouchableOpacity
                                         style={styles.dashboardRingWrapper}
                                         activeOpacity={0.85}
@@ -1314,8 +1318,8 @@ export default function HomeScreen({ navigation, route }) {
                                         <Svg width={86} height={86} style={{ transform: [{ rotate: "-90deg" }] }}>
                                             <Defs>
                                                 <SvgGradient id="dashboardXpGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                                    <Stop offset="0%" stopColor="#FF4D4D" />
-                                                    <Stop offset="100%" stopColor="#E31E24" />
+                                                    <Stop offset="0%" stopColor={nextRank ? nextRank.color : "#FF4D4D"} />
+                                                    <Stop offset="100%" stopColor={currentRank.color || "#E31E24"} />
                                                 </SvgGradient>
                                             </Defs>
                                             <Circle
@@ -1340,7 +1344,9 @@ export default function HomeScreen({ navigation, route }) {
                                         </Svg>
                                         <View style={styles.dashboardRingTextContainer} pointerEvents="none">
                                             <Text style={styles.dashboardRingPercent}>{progressPercent}%</Text>
-                                            <Text style={styles.dashboardRingLabel}>PROGRESS</Text>
+                                            <Text style={styles.dashboardRingLabel} numberOfLines={1}>
+                                                {nextRank ? `TO ${nextRank.title}` : "MAX RANK"}
+                                            </Text>
                                         </View>
                                     </TouchableOpacity>
 
@@ -3087,7 +3093,7 @@ const styles = StyleSheet.create({
 
     // Hero Card
     heroCard: {
-        marginHorizontal: 16,
+        marginHorizontal: SPACING.base,
         marginTop: 6,
         marginBottom: 0,
         height: 228,
@@ -3199,7 +3205,7 @@ const styles = StyleSheet.create({
 
     // Unified Horizontal Dashboard Card
     dashboardCard: {
-        marginHorizontal: 16,
+        marginHorizontal: SPACING.base,
         marginTop: 12,
         marginBottom: 0,
         borderRadius: 20,
@@ -3489,7 +3495,7 @@ const styles = StyleSheet.create({
 
     // ── QUICK ACTIONS 2X2 GRID ──
     quickActionsContainer: {
-        marginHorizontal: 16,
+        marginHorizontal: SPACING.base,
         marginTop: 12,
         gap: 8,
     },
@@ -3543,7 +3549,7 @@ const styles = StyleSheet.create({
 
     // 7-Day Consistency Card
     consistencyCard: {
-        marginHorizontal: 16,
+        marginHorizontal: SPACING.base,
         marginVertical: 0,
         borderRadius: 18,
         borderWidth: 1,
@@ -3939,8 +3945,8 @@ const styles = StyleSheet.create({
 
     // Rest Card
     restCard: {
-        marginHorizontal: 16,
-        borderRadius: RADIUS.lg,
+        marginHorizontal: SPACING.base,
+        borderRadius: 18,
         overflow: "hidden",
         borderWidth: 1,
         borderColor: COLORS.border,
@@ -4142,7 +4148,7 @@ const styles = StyleSheet.create({
     },
 
     customCard: {
-        marginHorizontal: 16, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.md,
+        marginHorizontal: SPACING.base, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.card,
         borderWidth: 1, borderColor: COLORS.border,
         padding: 20,
         flexDirection: "row", justifyContent: "space-between", alignItems: "center",
@@ -4534,7 +4540,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         backgroundColor: "rgba(255, 149, 0, 0.08)",
-        marginHorizontal: 16,
+        marginHorizontal: SPACING.base,
         marginVertical: 4,
         borderRadius: 14,
         borderWidth: 1,

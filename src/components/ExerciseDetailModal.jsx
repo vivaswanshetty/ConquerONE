@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
     overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.75)", justifyContent: "flex-end" },
     sheetContainer: {
         width: MODAL_W, maxHeight: height * 0.88,
-        backgroundColor: COLORS.bg, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+        backgroundColor: COLORS.bg, borderTopLeftRadius: 28, borderTopRightRadius: 28,
         borderWidth: 1, borderColor: COLORS.borderLight, overflow: "hidden",
     },
     dragHandle: {

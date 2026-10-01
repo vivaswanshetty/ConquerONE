@@ -132,6 +132,9 @@ export default function ReadinessModal({ visible, onClose, onSaved }) {
                         style={StyleSheet.absoluteFillObject}
                     />
 
+                    {/* Drag Handle */}
+                    <View style={styles.dragHandle} />
+
                     {/* Header */}
                     <View style={styles.headerRow}>
                         <View>
@@ -251,14 +254,22 @@ const styles = StyleSheet.create({
         width: "100%",
         maxHeight: "85%",
         backgroundColor: "#161618",
-        borderTopLeftRadius: RADIUS.xl,
-        borderTopRightRadius: RADIUS.xl,
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
         borderWidth: 1,
         borderColor: COLORS.border,
-        paddingTop: 20,
+        paddingTop: 12,
         paddingHorizontal: SPACING.base,
         paddingBottom: 30,
         overflow: "hidden",
+    },
+    dragHandle: {
+        width: 36,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: "rgba(255, 255, 255, 0.2)",
+        alignSelf: "center",
+        marginBottom: 14,
     },
     headerRow: {
         flexDirection: "row",

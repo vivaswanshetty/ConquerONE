@@ -81,7 +81,7 @@ export default function RankScreen({ navigation }) {
                 >
                     <Ionicons name="chevron-back" size={20} color={COLORS.text} />
                 </TouchableOpacity>
-                <Text style={s.headerTitle}>Rank & Progression</Text>
+                <Text style={s.headerTitle}>RANK & PROGRESSION</Text>
                 <View style={{ width: 36 }} />
             </View>
 
@@ -259,7 +259,7 @@ const s = StyleSheet.create({
         alignItems: 'center', justifyContent: 'center',
         borderWidth: 1, borderColor: COLORS.border,
     },
-    headerTitle: { fontSize: 24, fontFamily: FAMILY.header, color: COLORS.text, letterSpacing: -0.5 },
+    headerTitle: { fontSize: 18, fontFamily: FAMILY.bold, color: COLORS.text, letterSpacing: 0.5 },
 
     // Hero Card
     heroCard: {
