@@ -433,7 +433,17 @@ export default function ProgressScreen({ navigation, route }) {
 
     useEffect(() => {
         tabScrollRef.current?.scrollTo({ y: 0, animated: false });
+        const raf = requestAnimationFrame(() => {
+            tabScrollRef.current?.scrollTo({ y: 0, animated: false });
+        });
+        const timer = setTimeout(() => {
+            tabScrollRef.current?.scrollTo({ y: 0, animated: false });
+        }, 50);
         animateTabEntrance();
+        return () => {
+            cancelAnimationFrame(raf);
+            clearTimeout(timer);
+        };
     }, [tab]);
 
     const load = async () => {
@@ -683,6 +693,7 @@ export default function ProgressScreen({ navigation, route }) {
                                     return;
                                 }
                                 Haptics.selectionAsync();
+                                tabScrollRef.current?.scrollTo({ y: 0, animated: false });
                                 setTab(i);
                             }}
                             activeOpacity={0.7}
@@ -710,6 +721,7 @@ export default function ProgressScreen({ navigation, route }) {
                     <ScrollView
                         ref={tabScrollRef}
                         key="tab_scroll_perf"
+                        contentOffset={{ x: 0, y: 0 }}
                         showsVerticalScrollIndicator={false}
                         overScrollMode="never"
                         contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 12 }]}
@@ -1393,6 +1405,7 @@ export default function ProgressScreen({ navigation, route }) {
                     <ScrollView
                         ref={tabScrollRef}
                         key="tab_scroll_pred"
+                        contentOffset={{ x: 0, y: 0 }}
                         showsVerticalScrollIndicator={false}
                         overScrollMode="never"
                         contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 12 }]}
@@ -1566,6 +1579,7 @@ export default function ProgressScreen({ navigation, route }) {
                     <ScrollView
                         ref={tabScrollRef}
                         key="tab_scroll_body"
+                        contentOffset={{ x: 0, y: 0 }}
                         showsVerticalScrollIndicator={false}
                         overScrollMode="never"
                         contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 12 }]}

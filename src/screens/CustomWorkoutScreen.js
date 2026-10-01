@@ -233,6 +233,21 @@ export default function CustomWorkoutScreen({ navigation }) {
     const [routineTitle, setRoutineTitle] = useState("");
     const [statusBanner, setStatusBanner] = useState(null);
 
+    // Reset vertical scroll to top on tab or muscle filter change
+    useEffect(() => {
+        scrollRef.current?.scrollTo({ y: 0, animated: false });
+        const raf = requestAnimationFrame(() => {
+            scrollRef.current?.scrollTo({ y: 0, animated: false });
+        });
+        const timer = setTimeout(() => {
+            scrollRef.current?.scrollTo({ y: 0, animated: false });
+        }, 50);
+        return () => {
+            cancelAnimationFrame(raf);
+            clearTimeout(timer);
+        };
+    }, [activeTab, muscleFilter]);
+
     // ── Load Favorites, Routines & PRs ──
     useEffect(() => {
         (async () => {
@@ -534,7 +549,12 @@ export default function CustomWorkoutScreen({ navigation }) {
                                     key={tab.key}
                                     style={[styles.tabChip, isActive && styles.tabChipActive]}
                                     onPress={() => {
+                                        if (activeTab === tab.key) {
+                                            scrollRef.current?.scrollTo({ y: 0, animated: true });
+                                            return;
+                                        }
                                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        scrollRef.current?.scrollTo({ y: 0, animated: false });
                                         setActiveTab(tab.key);
                                     }}
                                     activeOpacity={0.75}
@@ -572,7 +592,12 @@ export default function CustomWorkoutScreen({ navigation }) {
                                         key={m}
                                         style={[styles.muscleChip, isSelected && styles.muscleChipActive]}
                                         onPress={() => {
+                                            if (muscleFilter === m) {
+                                                scrollRef.current?.scrollTo({ y: 0, animated: true });
+                                                return;
+                                            }
                                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                            scrollRef.current?.scrollTo({ y: 0, animated: false });
                                             setMuscleFilter(m);
                                         }}
                                         activeOpacity={0.75}
@@ -591,6 +616,8 @@ export default function CustomWorkoutScreen({ navigation }) {
             {/* ── 2. Dedicated Vertical ScrollView ── */}
             <ScrollView
                 ref={scrollRef}
+                key={`custom_scroll_${activeTab}_${muscleFilter}`}
+                contentOffset={{ x: 0, y: 0 }}
                 showsVerticalScrollIndicator={true}
                 keyboardShouldPersistTaps="handled"
                 overScrollMode="never"

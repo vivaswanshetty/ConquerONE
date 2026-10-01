@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef } from "react";
+import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import {
     View, Text, ScrollView, StyleSheet, TouchableOpacity, StatusBar, Dimensions, Share, Animated, Modal, Image,
 } from "react-native";
@@ -1009,6 +1009,21 @@ export default function HistoryScreen({ navigation }) {
     const [manualModalVisible, setManualModalVisible] = useState(false);
     const [manualModalInitialDate, setManualModalInitialDate] = useState(null);
     const shareShotRef = useRef(null);
+    const scrollRef = useRef(null);
+
+    useEffect(() => {
+        scrollRef.current?.scrollTo({ y: 0, animated: false });
+        const raf = requestAnimationFrame(() => {
+            scrollRef.current?.scrollTo({ y: 0, animated: false });
+        });
+        const timer = setTimeout(() => {
+            scrollRef.current?.scrollTo({ y: 0, animated: false });
+        }, 50);
+        return () => {
+            cancelAnimationFrame(raf);
+            clearTimeout(timer);
+        };
+    }, [activeTab]);
 
     const [loading, setLoading] = useState(true);
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -1289,7 +1304,12 @@ export default function HistoryScreen({ navigation }) {
                     <TouchableOpacity
                         style={[styles.tabItem, activeTab === "analytics" && styles.tabItemActive]}
                         onPress={() => {
+                            if (activeTab === "analytics") {
+                                scrollRef.current?.scrollTo({ y: 0, animated: true });
+                                return;
+                            }
                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            scrollRef.current?.scrollTo({ y: 0, animated: false });
                             setActiveTab("analytics");
                         }}
                         activeOpacity={0.8}
@@ -1307,7 +1327,12 @@ export default function HistoryScreen({ navigation }) {
                     <TouchableOpacity
                         style={[styles.tabItem, activeTab === "logs" && styles.tabItemActive]}
                         onPress={() => {
+                            if (activeTab === "logs") {
+                                scrollRef.current?.scrollTo({ y: 0, animated: true });
+                                return;
+                            }
                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            scrollRef.current?.scrollTo({ y: 0, animated: false });
                             setActiveTab("logs");
                         }}
                         activeOpacity={0.8}
@@ -1332,7 +1357,12 @@ export default function HistoryScreen({ navigation }) {
                     <TouchableOpacity
                         style={[styles.tabItem, activeTab === "cards" && styles.tabItemActive]}
                         onPress={() => {
+                            if (activeTab === "cards") {
+                                scrollRef.current?.scrollTo({ y: 0, animated: true });
+                                return;
+                            }
                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            scrollRef.current?.scrollTo({ y: 0, animated: false });
                             setActiveTab("cards");
                         }}
                         activeOpacity={0.8}
@@ -1349,7 +1379,14 @@ export default function HistoryScreen({ navigation }) {
                 </View>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} overScrollMode="never" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 16) + 20 }}>
+            <ScrollView
+                ref={scrollRef}
+                key={`history_tab_${activeTab}`}
+                contentOffset={{ x: 0, y: 0 }}
+                showsVerticalScrollIndicator={false}
+                overScrollMode="never"
+                contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 16) + 20 }}
+            >
                 {loading ? (
                     <View style={{ width: "100%" }}>
                         {/* Skeleton */}

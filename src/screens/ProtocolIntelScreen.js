@@ -17,11 +17,30 @@ export default function ProtocolIntelScreen({ navigation }) {
     const insets = useSafeAreaInsets();
     const [activeTab, setActiveTab] = useState(0); // 0: Science, 1: Forearms, 2: Rules, 3: Progression, 4: Timeline
     const fadeAnim = useRef(new Animated.Value(1)).current;
+    const scrollRef = useRef(null);
 
     const TABS = ["SCIENCE", "FOREARMS", "RULES", "SYSTEM", "TIMELINE"];
 
+    useEffect(() => {
+        scrollRef.current?.scrollTo({ y: 0, animated: false });
+        const raf = requestAnimationFrame(() => {
+            scrollRef.current?.scrollTo({ y: 0, animated: false });
+        });
+        const timer = setTimeout(() => {
+            scrollRef.current?.scrollTo({ y: 0, animated: false });
+        }, 50);
+        return () => {
+            cancelAnimationFrame(raf);
+            clearTimeout(timer);
+        };
+    }, [activeTab]);
+
     const switchTab = (index) => {
-        if (index === activeTab) return;
+        if (index === activeTab) {
+            scrollRef.current?.scrollTo({ y: 0, animated: true });
+            return;
+        }
+        scrollRef.current?.scrollTo({ y: 0, animated: false });
         Animated.sequence([
             Animated.timing(fadeAnim, { toValue: 0, duration: 100, useNativeDriver: true }),
             Animated.timing(fadeAnim, { toValue: 1, duration: 250, useNativeDriver: true })
@@ -74,7 +93,14 @@ export default function ProtocolIntelScreen({ navigation }) {
             </View>
 
             {/* Content Scroll View */}
-            <ScrollView showsVerticalScrollIndicator={false} overScrollMode="never" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 16) + 16 }}>
+            <ScrollView
+                ref={scrollRef}
+                key={`protocol_tab_${activeTab}`}
+                contentOffset={{ x: 0, y: 0 }}
+                showsVerticalScrollIndicator={false}
+                overScrollMode="never"
+                contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 16) + 16 }}
+            >
                 <Animated.View style={[styles.contentAnim, { opacity: fadeAnim }]}>
                     {activeTab === 0 && <ScienceTab />}
                     {activeTab === 1 && <ForearmsTab />}

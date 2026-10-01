@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity, StyleSheet,
     Dimensions, StatusBar, ImageBackground,
@@ -69,6 +69,21 @@ const MINDFULNESS_TIPS = [
 export default function RestDayScreen({ navigation }) {
     const insets = useSafeAreaInsets();
     const [activeTab, setActiveTab] = useState(0); // 0: Protocol, 1: Mindfulness
+    const scrollRef = useRef(null);
+
+    useEffect(() => {
+        scrollRef.current?.scrollTo({ y: 0, animated: false });
+        const raf = requestAnimationFrame(() => {
+            scrollRef.current?.scrollTo({ y: 0, animated: false });
+        });
+        const timer = setTimeout(() => {
+            scrollRef.current?.scrollTo({ y: 0, animated: false });
+        }, 50);
+        return () => {
+            cancelAnimationFrame(raf);
+            clearTimeout(timer);
+        };
+    }, [activeTab]);
 
     return (
         <View style={styles.container}>
@@ -104,6 +119,9 @@ export default function RestDayScreen({ navigation }) {
             </View>
 
             <ScrollView
+                ref={scrollRef}
+                key={`rest_tab_${activeTab}`}
+                contentOffset={{ x: 0, y: 0 }}
                 showsVerticalScrollIndicator={false}
                 overScrollMode="never"
                 contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 16) + 74 }}
@@ -127,7 +145,12 @@ export default function RestDayScreen({ navigation }) {
                     <TouchableOpacity
                         style={[styles.zentab, activeTab === 0 && styles.zentabActive]}
                         onPress={() => {
+                            if (activeTab === 0) {
+                                scrollRef.current?.scrollTo({ y: 0, animated: true });
+                                return;
+                            }
                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            scrollRef.current?.scrollTo({ y: 0, animated: false });
                             setActiveTab(0);
                         }}
                         activeOpacity={0.8}
@@ -146,7 +169,12 @@ export default function RestDayScreen({ navigation }) {
                     <TouchableOpacity
                         style={[styles.zentab, activeTab === 1 && styles.zentabActive]}
                         onPress={() => {
+                            if (activeTab === 1) {
+                                scrollRef.current?.scrollTo({ y: 0, animated: true });
+                                return;
+                            }
                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            scrollRef.current?.scrollTo({ y: 0, animated: false });
                             setActiveTab(1);
                         }}
                         activeOpacity={0.8}
