@@ -3272,22 +3272,24 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
     },
     dashboardStatCellStreak: {
-        flex: 0.95,
+        flex: 0.85,
         alignItems: "center",
         justifyContent: "center",
         paddingVertical: 2,
     },
     dashboardStatCellSessions: {
-        flex: 1.0,
+        flex: 0.85,
         alignItems: "center",
         justifyContent: "center",
         paddingVertical: 2,
     },
     dashboardStatCellRank: {
-        flex: 1.15,
+        flex: 1.35,
         alignItems: "center",
         justifyContent: "center",
         paddingVertical: 2,
+        paddingLeft: 8,
+        paddingRight: 4,
     },
     dashboardStatLabel: {
         fontSize: 9,
@@ -3307,14 +3309,15 @@ const styles = StyleSheet.create({
         lineHeight: 26,
     },
     dashboardRankValue: {
-        fontSize: 15,
+        fontSize: 13.5,
         fontFamily: FAMILY.bold,
-        letterSpacing: 0.5,
+        letterSpacing: 0.3,
         lineHeight: 26,
     },
     dashboardStatDivider: {
         width: 1,
-        height: 30,
+        height: 26,
+        marginHorizontal: 2,
         backgroundColor: "rgba(255, 255, 255, 0.10)",
     },
 

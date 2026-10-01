@@ -10,6 +10,7 @@ export default function ProgramStatusCard({
     activeProgram = null,
     onPressVersion = null,
     onPressReview = null,
+    style = null,
 }) {
     if (!summary) return null;
 
@@ -32,7 +33,7 @@ export default function ProgramStatusCard({
     const progressingMvmts = summary.progressingMovementsCount || 0;
 
     return (
-        <View style={styles.card}>
+        <View style={[styles.card, style]}>
             <LinearGradient
                 colors={GRADIENTS.subtleCard}
                 start={{ x: 0, y: 0 }}
