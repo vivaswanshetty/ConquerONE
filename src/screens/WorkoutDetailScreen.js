@@ -16,6 +16,8 @@ import { getWorkoutHistoryLocal, getLatestUserBodyweight, getActiveProgram } fro
 import { getWorkoutDayTargets, getExerciseReviewStatus } from "../utils/analytics";
 import ExerciseDetailModal from "../components/ExerciseDetailModal";
 import ExerciseTargetCard from "../components/ExerciseTargetCard";
+import WorkoutStoryShareModal from "../components/WorkoutStoryShareModal";
+import { useAuth } from "../context/AuthContext";
 
 function totalTime(day) {
     let s = 0;
@@ -36,6 +38,8 @@ const estimateCalories = (durationMin) => {
 export default function WorkoutDetailScreen({ navigation, route }) {
     const { day: initialDay } = route.params;
     const insets = useSafeAreaInsets();
+    const { profile } = useAuth();
+    const [showStoryModal, setShowStoryModal] = useState(false);
     const [expanded, setExpanded] = useState(null);
     const [day, setDay] = useState(initialDay);
     const [editExercise, setEditExercise] = useState(null);
@@ -150,6 +154,18 @@ export default function WorkoutDetailScreen({ navigation, route }) {
                             activeOpacity={0.7}
                         >
                             <Ionicons name="chevron-back" size={20} color="#FFFFFF" />
+                        </TouchableOpacity>
+
+                        {/* Floating Glass Story Share Button */}
+                        <TouchableOpacity
+                            style={[styles.shareTopBtn, { top: insets.top + 10 }]}
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                setShowStoryModal(true);
+                            }}
+                            activeOpacity={0.7}
+                        >
+                            <Ionicons name="share-social-outline" size={19} color="#FFFFFF" />
                         </TouchableOpacity>
 
                         {/* Hero Text & Protocol Badges */}
@@ -296,6 +312,25 @@ export default function WorkoutDetailScreen({ navigation, route }) {
                 onClose={() => setSelectedDetailExercise(null)}
                 history={history}
                 userBodyweight={latestBodyweight}
+            />
+
+            {/* ── 9:16 Story Flex Share Modal ── */}
+            <WorkoutStoryShareModal
+                visible={showStoryModal}
+                onClose={() => setShowStoryModal(false)}
+                workoutData={{
+                    title: day?.target || "Workout Blueprint",
+                    target: day?.target || "Workout",
+                    durationSec: duration * 60,
+                    streak: 1,
+                    totalVolumeKg: 0,
+                    totalSets: (day?.exercises || []).reduce((acc, ex) => acc + (ex.sets || 0), 0),
+                    exercises: day?.exercises || [],
+                    newPRs: [],
+                    date: new Date().toISOString(),
+                }}
+                profile={profile}
+                rankTitle={profile?.rank || "WARRIOR"}
             />
         </View>
     );
@@ -656,6 +691,19 @@ const styles = StyleSheet.create({
     backBtn: {
         position: "absolute",
         left: SPACING.base,
+        width: 38,
+        height: 38,
+        borderRadius: RADIUS.pill,
+        backgroundColor: "rgba(22, 22, 28, 0.75)",
+        alignItems: "center",
+        justifyContent: "center",
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.15)",
+        zIndex: 10,
+    },
+    shareTopBtn: {
+        position: "absolute",
+        right: SPACING.base,
         width: 38,
         height: 38,
         borderRadius: RADIUS.pill,

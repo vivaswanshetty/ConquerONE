@@ -15,6 +15,9 @@ import { formatDuration } from "../utils/storage";
 import { sendMilestoneNotif } from "../utils/notifications";
 import { checkHealthConnectStatus } from "../utils/health";
 import { insertRecords } from 'react-native-health-connect';
+import { useAuth } from "../context/AuthContext";
+import WorkoutStoryShareModal from "../components/WorkoutStoryShareModal";
+import { getRankData } from "./RankScreen";
 
 const { width, height } = Dimensions.get("window");
 
@@ -22,9 +25,11 @@ const { width, height } = Dimensions.get("window");
 export default function WorkoutCompleteScreen({ navigation, route }) {
     const { day, durationSec, streak, total, newPRs = [], caloriesBurned = 0, showCalories = true, xpGained = 0, totalXP = 0 } = route.params;
     const insets = useSafeAreaInsets();
+    const { profile } = useAuth();
     const shotRef = useRef(null);
     const { showDialog } = useNotification();
     const [sharing, setSharing] = useState(false);
+    const [showStoryModal, setShowStoryModal] = useState(false);
 
     const scaleAnim = useRef(new Animated.Value(0.9)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -108,40 +113,9 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
         }
     };
 
-    const handleShare = async () => {
-        try {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => { });
-            const isAvailable = await Sharing.isAvailableAsync();
-            if (!isAvailable) {
-                showDialog({
-                    title: "SHARING UNAVAILABLE",
-                    message: "Sharing is not supported on this device.",
-                    confirmText: "CLOSE",
-                    singleButton: true,
-                });
-                return;
-            }
-
-            if (shotRef.current && shotRef.current.capture) {
-                setSharing(true);
-                const uri = await shotRef.current.capture();
-                setSharing(false);
-                await Sharing.shareAsync(uri, {
-                    mimeType: "image/png",
-                    dialogTitle: `CONQUER ONE - ${day?.target || "Workout Complete"}`,
-                    UTI: "public.png",
-                });
-            }
-        } catch (e) {
-            setSharing(false);
-            console.warn("Share session failed:", e);
-            showDialog({
-                title: "SHARE ERROR",
-                message: "Unable to generate workout card for sharing.",
-                confirmText: "CLOSE",
-                singleButton: true,
-            });
-        }
+    const handleShare = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => { });
+        setShowStoryModal(true);
     };
 
     const checkMilestones = () => {
@@ -198,6 +172,21 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
         inputRange: [1, 1.15],
         outputRange: [0.25, 0.05]
     });
+
+    const totalVolume = (day?.exercises || []).reduce((acc, ex) => {
+        const sets = ex.loggedSets || ex.sets || [];
+        if (Array.isArray(sets)) {
+            return acc + sets.reduce((sAcc, s) => sAcc + ((Number(s.weightKg) || 0) * (Number(s.reps) || 0)), 0);
+        }
+        return acc;
+    }, 0);
+
+    const totalSetsCount = (day?.exercises || []).reduce((acc, ex) => {
+        const sets = ex.loggedSets || ex.sets;
+        if (Array.isArray(sets)) return acc + sets.length;
+        if (typeof sets === 'number') return acc + sets;
+        return acc;
+    }, 0);
 
     return (
         <View style={styles.container}>
@@ -356,10 +345,9 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
                             style={styles.shareBtn}
                             onPress={handleShare}
                             activeOpacity={0.85}
-                            disabled={sharing}
                         >
-                            <Ionicons name="share-outline" size={18} color={COLORS.text} />
-                            <Text style={styles.shareBtnText}>{sharing ? "GENERATING CARD..." : "SHARE SESSION"}</Text>
+                            <Ionicons name="share-social-outline" size={18} color={COLORS.text} />
+                            <Text style={styles.shareBtnText}>SHARE SESSION</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
@@ -487,6 +475,25 @@ export default function WorkoutCompleteScreen({ navigation, route }) {
                     </View>
                 </ViewShot>
             </View>
+
+            {/* ── 9:16 Story Flex Share Modal ── */}
+            <WorkoutStoryShareModal
+                visible={showStoryModal}
+                onClose={() => setShowStoryModal(false)}
+                workoutData={{
+                    title: day?.target || "Workout Complete",
+                    target: day?.target || "Workout",
+                    durationSec: durationSec || 0,
+                    streak: streak || 1,
+                    totalVolumeKg: totalVolume,
+                    totalSets: totalSetsCount,
+                    exercises: day?.exercises || [],
+                    newPRs: newPRs || [],
+                    date: new Date().toISOString(),
+                }}
+                profile={profile}
+                rankTitle={rankUp?.title || getRankData(total)?.title || "WARRIOR"}
+            />
         </View>
     );
 }

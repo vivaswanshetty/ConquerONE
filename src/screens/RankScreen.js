@@ -8,7 +8,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
-import { getStreak, getTotalWorkouts } from "../utils/storage";
+import { getStreak, getTotalWorkouts, getPRRecordsLocal, getLatestUserBodyweight } from "../utils/storage";
+import { evaluateStrengthProfile, TIERS, COMPOUND_CATEGORIES } from "../utils/strengthStandards";
 import { COLORS, FAMILY, SPACING, RADIUS } from "../utils/theme";
 import { useAuth } from "../context/AuthContext";
 
@@ -33,16 +34,25 @@ export function getRankData(total) {
 export default function RankScreen({ navigation }) {
     const insets = useSafeAreaInsets();
     const { profile } = useAuth();
+    const [activeTab, setActiveTab] = useState("RANKS"); // "RANKS" | "STANDARDS"
     const [total, setTotal] = useState(0);
     const [streak, setStreak] = useState(0);
+    const [strengthProfile, setStrengthProfile] = useState(null);
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
     const displayName = profile?.fullName?.split(" ")[0] || "ATHLETE";
     const loadStats = useCallback(async () => {
-        const [t, s] = await Promise.all([getTotalWorkouts(), getStreak()]);
+        const [t, s, prs, bw] = await Promise.all([
+            getTotalWorkouts(),
+            getStreak(),
+            getPRRecordsLocal(),
+            getLatestUserBodyweight(),
+        ]);
         setTotal(t);
         setStreak(s);
+        const evalProfile = evaluateStrengthProfile(prs, bw);
+        setStrengthProfile(evalProfile);
     }, []);
 
     useEffect(() => {
@@ -85,139 +95,326 @@ export default function RankScreen({ navigation }) {
                 <View style={{ width: 36 }} />
             </View>
 
+            {/* ── Sub Navigation Tabs ── */}
+            <View style={s.tabSelector}>
+                <TouchableOpacity
+                    style={[s.tabBtn, activeTab === "RANKS" && s.tabBtnActive]}
+                    onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setActiveTab("RANKS");
+                    }}
+                    activeOpacity={0.8}
+                >
+                    <Ionicons
+                        name="shield-outline"
+                        size={13}
+                        color={activeTab === "RANKS" ? COLORS.primary : COLORS.textMuted}
+                        style={{ marginRight: 6 }}
+                    />
+                    <Text style={[s.tabBtnText, activeTab === "RANKS" && s.tabBtnTextActive]}>
+                        WARRIOR RANKS
+                    </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={[s.tabBtn, activeTab === "STANDARDS" && s.tabBtnActive]}
+                    onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setActiveTab("STANDARDS");
+                    }}
+                    activeOpacity={0.8}
+                >
+                    <Ionicons
+                        name="fitness-outline"
+                        size={13}
+                        color={activeTab === "STANDARDS" ? COLORS.primary : COLORS.textMuted}
+                        style={{ marginRight: 6 }}
+                    />
+                    <Text style={[s.tabBtnText, activeTab === "STANDARDS" && s.tabBtnTextActive]}>
+                        STRENGTH STANDARDS
+                    </Text>
+                </TouchableOpacity>
+            </View>
+
             <Animated.ScrollView
                 style={{ opacity: fadeAnim }}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 16) + 12 }}
             >
-                {/* ── Hero Card ── */}
-                <Animated.View style={[s.heroCard, { borderColor: `${activeRankColor}4D`, transform: [{ scale: scaleAnim }] }]}>
-                    <LinearGradient
-                        colors={[`${activeRankColor}20`, "transparent"]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={StyleSheet.absoluteFillObject}
-                        pointerEvents="none"
-                    />
+                {activeTab === "RANKS" ? (
+                    <>
+                        {/* ── Hero Card ── */}
+                        <Animated.View style={[s.heroCard, { borderColor: `${activeRankColor}4D`, transform: [{ scale: scaleAnim }] }]}>
+                            <LinearGradient
+                                colors={[`${activeRankColor}20`, "transparent"]}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                                style={StyleSheet.absoluteFillObject}
+                                pointerEvents="none"
+                            />
 
-                    <View style={s.heroBadgeRow}>
-                        <Text style={s.heroEyebrow}>CURRENT RANK</Text>
-                        <View style={[s.levelPill, { backgroundColor: `${activeRankColor}1F`, borderColor: `${activeRankColor}4D` }]}>
-                            <Text style={[s.levelPillText, { color: activeRankColor }]}>{total} SESSIONS</Text>
-                        </View>
-                    </View>
-
-                    <View style={s.heroIconRow}>
-                        <View style={[s.heroIconCircle, { borderColor: `${activeRankColor}66` }]}>
-                            <Ionicons name={current.icon} size={32} color={activeRankColor} />
-                        </View>
-                    </View>
-
-                    <Text style={s.heroTitle}>{current.title}</Text>
-                    <Text style={s.heroName}>{displayName}</Text>
-                    <Text style={s.heroDesc}>{current.desc}</Text>
-
-                    {/* Progress bar to next rank */}
-                    {nextRank && (
-                        <View style={s.progressSection}>
-                            <View style={s.progressBarBg}>
-                                <View style={[s.progressBarFill, { width: `${progressInRank * 100}%`, backgroundColor: activeRankColor }]} />
-                            </View>
-                            <View style={s.progressLabels}>
-                                <Text style={s.progressText}>{total} / {nextRank.min} SESSIONS</Text>
-                                <Text style={s.progressPercentText}>{Math.round(progressInRank * 100)}%</Text>
-                            </View>
-                        </View>
-                    )}
-                </Animated.View>
-
-                {/* ── Stats Row ── */}
-                <View style={s.statsRow}>
-                    <View style={s.statBox}>
-                        <Ionicons name="barbell-outline" size={16} color={COLORS.textSub} />
-                        <Text style={s.statVal}>{total}</Text>
-                        <Text style={s.statLbl}>SESSIONS</Text>
-                    </View>
-                    <View style={[s.statBox, s.statBoxMid]}>
-                        <Ionicons name="flame" size={16} color="#FF9500" />
-                        <Text style={[s.statVal, { color: "#FF9500" }]}>{streak}d</Text>
-                        <Text style={s.statLbl}>STREAK</Text>
-                    </View>
-                    <View style={s.statBox}>
-                        <Ionicons name="flash" size={16} color={activeRankColor} />
-                        <Text style={[s.statVal, { color: activeRankColor }]}>{sessionsToNext || "MAX"}</Text>
-                        <Text style={s.statLbl}>{nextRank ? "TO NEXT" : "REACHED"}</Text>
-                    </View>
-                </View>
-
-                {/* ── Next Rank Preview ── */}
-                {nextRank && (
-                    <View style={s.nextSection}>
-                        <Text style={s.sectionTitle}>NEXT RANK</Text>
-                        <View style={[s.nextCard, { borderColor: `${nextRank.color}33` }]}>
-                            <View style={[s.nextIcon, { borderColor: `${nextRank.color}4D`, backgroundColor: `${nextRank.color}15` }]}>
-                                <Ionicons name={nextRank.icon} size={20} color={nextRank.color} />
-                            </View>
-                            <View style={{ flex: 1 }}>
-                                <Text style={s.nextTitle}>{nextRank.title}</Text>
-                                <Text style={s.nextSub}>{sessionsToNext} more sessions to unlock</Text>
-                            </View>
-                            <View style={s.nextBadge}>
-                                <Ionicons name="lock-closed" size={14} color={COLORS.textMuted} />
-                            </View>
-                        </View>
-                    </View>
-                )}
-
-                {/* ── Rank Ladder ── */}
-                <View style={s.ladderSection}>
-                    <Text style={s.sectionTitle}>RANK LADDER</Text>
-                    {RANKS.map((rank) => {
-                        const isAchieved = total >= rank.min;
-                        const isCurrent = rank.title === current.title;
-
-                        return (
-                            <View
-                                key={rank.title}
-                                style={[
-                                    s.ladderRow,
-                                    isCurrent && { borderColor: `${rank.color}80`, backgroundColor: `${rank.color}0D` },
-                                ]}
-                            >
-                                {isCurrent && (
-                                    <View style={[s.ladderLeftSpine, { backgroundColor: rank.color }]} />
-                                )}
-                                <View style={[
-                                    s.ladderIcon,
-                                    isCurrent && { borderColor: `${rank.color}66` },
-                                    isAchieved && { backgroundColor: `${rank.color}15` },
-                                ]}>
-                                    <Ionicons
-                                        name={isAchieved ? rank.icon : "lock-closed-outline"}
-                                        size={16}
-                                        color={isAchieved ? rank.color : COLORS.textMuted}
-                                    />
+                            <View style={s.heroBadgeRow}>
+                                <Text style={s.heroEyebrow}>CURRENT RANK</Text>
+                                <View style={[s.levelPill, { backgroundColor: `${activeRankColor}1F`, borderColor: `${activeRankColor}4D` }]}>
+                                    <Text style={[s.levelPillText, { color: activeRankColor }]}>{total} SESSIONS</Text>
                                 </View>
-                                <View style={{ flex: 1 }}>
-                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                                        <Text style={[s.ladderTitle, { color: isAchieved ? COLORS.text : COLORS.textMuted }]}>{rank.title}</Text>
+                            </View>
+
+                            <View style={s.heroIconRow}>
+                                <View style={[s.heroIconCircle, { borderColor: `${activeRankColor}66` }]}>
+                                    <Ionicons name={current.icon} size={32} color={activeRankColor} />
+                                </View>
+                            </View>
+
+                            <Text style={s.heroTitle}>{current.title}</Text>
+                            <Text style={s.heroName}>{displayName}</Text>
+                            <Text style={s.heroDesc}>{current.desc}</Text>
+
+                            {/* Progress bar to next rank */}
+                            {nextRank && (
+                                <View style={s.progressSection}>
+                                    <View style={s.progressBarBg}>
+                                        <View style={[s.progressBarFill, { width: `${progressInRank * 100}%`, backgroundColor: activeRankColor }]} />
+                                    </View>
+                                    <View style={s.progressLabels}>
+                                        <Text style={s.progressText}>{total} / {nextRank.min} SESSIONS</Text>
+                                        <Text style={s.progressPercentText}>{Math.round(progressInRank * 100)}%</Text>
+                                    </View>
+                                </View>
+                            )}
+                        </Animated.View>
+
+                        {/* ── Stats Row ── */}
+                        <View style={s.statsRow}>
+                            <View style={s.statBox}>
+                                <Ionicons name="barbell-outline" size={16} color={COLORS.textSub} />
+                                <Text style={s.statVal}>{total}</Text>
+                                <Text style={s.statLbl}>SESSIONS</Text>
+                            </View>
+                            <View style={[s.statBox, s.statBoxMid]}>
+                                <Ionicons name="flame" size={16} color="#FF9500" />
+                                <Text style={[s.statVal, { color: "#FF9500" }]}>{streak}d</Text>
+                                <Text style={s.statLbl}>STREAK</Text>
+                            </View>
+                            <View style={s.statBox}>
+                                <Ionicons name="flash" size={16} color={activeRankColor} />
+                                <Text style={[s.statVal, { color: activeRankColor }]}>{sessionsToNext || "MAX"}</Text>
+                                <Text style={s.statLbl}>{nextRank ? "TO NEXT" : "REACHED"}</Text>
+                            </View>
+                        </View>
+
+                        {/* ── Next Rank Preview ── */}
+                        {nextRank && (
+                            <View style={s.nextSection}>
+                                <Text style={s.sectionTitle}>NEXT RANK</Text>
+                                <View style={[s.nextCard, { borderColor: `${nextRank.color}33` }]}>
+                                    <View style={[s.nextIcon, { borderColor: `${nextRank.color}4D`, backgroundColor: `${nextRank.color}15` }]}>
+                                        <Ionicons name={nextRank.icon} size={20} color={nextRank.color} />
+                                    </View>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={s.nextTitle}>{nextRank.title}</Text>
+                                        <Text style={s.nextSub}>{sessionsToNext} more sessions to unlock</Text>
+                                    </View>
+                                    <View style={s.nextBadge}>
+                                        <Ionicons name="lock-closed" size={14} color={COLORS.textMuted} />
+                                    </View>
+                                </View>
+                            </View>
+                        )}
+
+                        {/* ── Rank Ladder ── */}
+                        <View style={s.ladderSection}>
+                            <Text style={s.sectionTitle}>RANK LADDER</Text>
+                            {RANKS.map((rank) => {
+                                const isAchieved = total >= rank.min;
+                                const isCurrent = rank.title === current.title;
+
+                                return (
+                                    <View
+                                        key={rank.title}
+                                        style={[
+                                            s.ladderRow,
+                                            isCurrent && { borderColor: `${rank.color}80`, backgroundColor: `${rank.color}0D` },
+                                        ]}
+                                    >
                                         {isCurrent && (
-                                            <View style={[s.currentBadge, { backgroundColor: rank.color, borderColor: rank.color }]}>
-                                                <Text style={s.currentBadgeText}>YOU</Text>
+                                            <View style={[s.ladderLeftSpine, { backgroundColor: rank.color }]} />
+                                        )}
+                                        <View style={[
+                                            s.ladderIcon,
+                                            isCurrent && { borderColor: `${rank.color}66` },
+                                            isAchieved && { backgroundColor: `${rank.color}15` },
+                                        ]}>
+                                            <Ionicons
+                                                name={isAchieved ? rank.icon : "lock-closed-outline"}
+                                                size={16}
+                                                color={isAchieved ? rank.color : COLORS.textMuted}
+                                            />
+                                        </View>
+                                        <View style={{ flex: 1 }}>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                                <Text style={[s.ladderTitle, { color: isAchieved ? COLORS.text : COLORS.textMuted }]}>{rank.title}</Text>
+                                                {isCurrent && (
+                                                    <View style={[s.currentBadge, { backgroundColor: rank.color, borderColor: rank.color }]}>
+                                                        <Text style={s.currentBadgeText}>YOU</Text>
+                                                    </View>
+                                                )}
+                                            </View>
+                                            <Text style={[s.ladderSub, !isAchieved && { opacity: 0.5 }]}>
+                                                {rank.min}+ sessions · {rank.desc.split('.')[0]}
+                                            </Text>
+                                        </View>
+                                        {isAchieved && !isCurrent && (
+                                            <Ionicons name="checkmark-circle" size={16} color={rank.color} />
+                                        )}
+                                    </View>
+                                );
+                            })}
+                        </View>
+                    </>
+                ) : (
+                    <>
+                        {/* ── Strength Standards Hero Card ── */}
+                        <Animated.View style={[s.heroCard, { borderColor: `${strengthProfile?.overallTier?.color || COLORS.primary}4D`, transform: [{ scale: scaleAnim }] }]}>
+                            <LinearGradient
+                                colors={[`${strengthProfile?.overallTier?.color || COLORS.primary}20`, "transparent"]}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                                style={StyleSheet.absoluteFillObject}
+                                pointerEvents="none"
+                            />
+
+                            <View style={s.heroBadgeRow}>
+                                <Text style={s.heroEyebrow}>RELATIVE STRENGTH</Text>
+                                <View style={[s.levelPill, { backgroundColor: `${strengthProfile?.overallTier?.color || COLORS.primary}1F`, borderColor: `${strengthProfile?.overallTier?.color || COLORS.primary}4D` }]}>
+                                    <Text style={[s.levelPillText, { color: strengthProfile?.overallTier?.color || COLORS.primary }]}>
+                                        {(strengthProfile?.bodyweightKg || 75).toFixed(1)} KG BW
+                                    </Text>
+                                </View>
+                            </View>
+
+                            <View style={s.heroIconRow}>
+                                <View style={[s.heroIconCircle, { borderColor: `${strengthProfile?.overallTier?.color || COLORS.primary}66` }]}>
+                                    <Ionicons name="barbell" size={32} color={strengthProfile?.overallTier?.color || COLORS.primary} />
+                                </View>
+                            </View>
+
+                            <Text style={s.heroTitle}>{strengthProfile?.overallTier?.label || "NOVICE"}</Text>
+                            <Text style={s.heroName}>{displayName} · POUND-FOR-POUND</Text>
+                            <Text style={s.heroDesc}>
+                                Strength benchmarked against bodyweight multipliers across core compound movements.
+                            </Text>
+
+                            <View style={s.standardsSummaryRow}>
+                                <View style={s.standardsSummaryBox}>
+                                    <Text style={s.standardsSummaryVal}>{strengthProfile?.completedCount || 0}/5</Text>
+                                    <Text style={s.standardsSummaryLbl}>BENCHMARKS</Text>
+                                </View>
+                                <View style={s.standardsSummaryDivider} />
+                                <View style={s.standardsSummaryBox}>
+                                    <Text style={[s.standardsSummaryVal, { color: strengthProfile?.overallTier?.color || COLORS.text }]}>
+                                        {strengthProfile?.overallTier?.label || "NOVICE"}
+                                    </Text>
+                                    <Text style={s.standardsSummaryLbl}>TIER CLASS</Text>
+                                </View>
+                            </View>
+                        </Animated.View>
+
+                        {/* ── Compound Movement Standards Grid ── */}
+                        <View style={s.ladderSection}>
+                            <Text style={s.sectionTitle}>COMPOUND BENCHMARKS</Text>
+                            {(strengthProfile?.results || []).map((item) => {
+                                const catColor = item.category.color;
+                                const tierColor = item.currentTier.color;
+
+                                return (
+                                    <View key={item.category.id} style={s.standardCard}>
+                                        <View style={s.standardCardHeader}>
+                                            <View style={[s.standardIcon, { borderColor: `${catColor}4D`, backgroundColor: `${catColor}15` }]}>
+                                                <Ionicons name={item.category.icon} size={18} color={catColor} />
+                                            </View>
+                                            <View style={{ flex: 1 }}>
+                                                <Text style={s.standardName}>{item.category.name.toUpperCase()}</Text>
+                                                <Text style={s.standardTarget}>{item.category.targetGroup.toUpperCase()} COMPOUND</Text>
+                                            </View>
+                                            <View style={[s.tierPill, { borderColor: `${tierColor}55`, backgroundColor: `${tierColor}1A` }]}>
+                                                <Text style={[s.tierPillText, { color: tierColor }]}>{item.currentTier.label}</Text>
+                                            </View>
+                                        </View>
+
+                                        {item.hasData ? (
+                                            <View style={s.standardDataSection}>
+                                                <View style={s.standardStatsRow}>
+                                                    <View>
+                                                        <Text style={s.standardStatLabel}>ESTIMATED 1RM</Text>
+                                                        <Text style={s.standard1RMVal}>
+                                                            {item.best1RM} <Text style={s.standardUnit}>KG</Text>
+                                                        </Text>
+                                                    </View>
+                                                    <View style={s.standardRatioBadge}>
+                                                        <Text style={s.standardRatioText}>{item.ratio}× BW</Text>
+                                                    </View>
+                                                    {item.bestRecord && (
+                                                        <View style={{ alignItems: "flex-end" }}>
+                                                            <Text style={s.standardStatLabel}>BEST SET</Text>
+                                                            <Text style={s.standardBestSetText}>
+                                                                {item.bestRecord.weightKg}kg × {item.bestRecord.reps}
+                                                            </Text>
+                                                        </View>
+                                                    )}
+                                                </View>
+
+                                                {/* Progress Bar towards Next Tier */}
+                                                <View style={s.standardProgressSection}>
+                                                    <View style={s.standardProgressBarBg}>
+                                                        <View
+                                                            style={[
+                                                                s.standardProgressBarFill,
+                                                                {
+                                                                    width: `${Math.round(item.progressToNext * 100)}%`,
+                                                                    backgroundColor: tierColor,
+                                                                },
+                                                            ]}
+                                                        />
+                                                    </View>
+                                                    <View style={s.standardProgressLabels}>
+                                                        <Text style={s.standardProgressTarget}>
+                                                            {item.nextTier
+                                                                ? `+${item.kgNeeded} kg for ${item.nextTier.label}`
+                                                                : "MAX TIER ACHIEVED"}
+                                                        </Text>
+                                                        <Text style={s.standardProgressPercent}>
+                                                            {Math.round(item.progressToNext * 100)}%
+                                                        </Text>
+                                                    </View>
+                                                </View>
+                                            </View>
+                                        ) : (
+                                            <View style={s.standardEmptyBox}>
+                                                <Text style={s.standardEmptyText}>
+                                                    NO PR LOGGED YET · TARGET: {item.targetKgNext} KG FOR NOVICE
+                                                </Text>
                                             </View>
                                         )}
                                     </View>
-                                    <Text style={[s.ladderSub, !isAchieved && { opacity: 0.5 }]}>
-                                        {rank.min}+ sessions · {rank.desc.split('.')[0]}
-                                    </Text>
-                                </View>
-                                {isAchieved && !isCurrent && (
-                                    <Ionicons name="checkmark-circle" size={16} color={rank.color} />
-                                )}
+                                );
+                            })}
+                        </View>
+
+                        {/* ── Strength Tiers Legend ── */}
+                        <View style={s.tiersLegendBox}>
+                            <Text style={s.tiersLegendTitle}>STRENGTH DIVISIONS</Text>
+                            <View style={s.tiersLegendRow}>
+                                {TIERS.map((tier) => (
+                                    <View key={tier.key} style={s.tierLegendItem}>
+                                        <View style={[s.tierLegendDot, { backgroundColor: tier.color }]} />
+                                        <Text style={s.tierLegendText}>{tier.label}</Text>
+                                    </View>
+                                ))}
                             </View>
-                        );
-                    })}
-                </View>
+                        </View>
+                    </>
+                )}
 
                 {/* ── Primary CTA Button ── */}
                 <View style={s.ctaContainer}>
@@ -372,4 +569,247 @@ const s = StyleSheet.create({
     // Footer
     footer: { alignItems: 'center', paddingTop: 10, paddingBottom: 6, paddingHorizontal: 36 },
     footerText: { fontSize: 11.5, fontFamily: FAMILY.regular, color: COLORS.textMuted, textAlign: 'center', lineHeight: 17 },
+
+    // Tabs
+    tabSelector: {
+        flexDirection: 'row',
+        marginHorizontal: SPACING.base,
+        marginBottom: 14,
+        padding: 4,
+        borderRadius: RADIUS.md,
+        backgroundColor: COLORS.bgCard,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        gap: 6,
+    },
+    tabBtn: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 9,
+        borderRadius: RADIUS.sm,
+    },
+    tabBtnActive: {
+        backgroundColor: "rgba(227, 30, 36, 0.12)",
+        borderWidth: 1,
+        borderColor: "rgba(227, 30, 36, 0.4)",
+    },
+    tabBtnText: {
+        fontSize: 10,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textMuted,
+        letterSpacing: 0.6,
+    },
+    tabBtnTextActive: {
+        color: COLORS.text,
+    },
+
+    // Strength Standards Styles
+    standardsSummaryRow: {
+        flexDirection: 'row',
+        width: '100%',
+        marginTop: 14,
+        paddingTop: 14,
+        borderTopWidth: 1,
+        borderColor: COLORS.border,
+        alignItems: 'center',
+        justifyContent: 'space-around',
+    },
+    standardsSummaryBox: {
+        alignItems: 'center',
+        flex: 1,
+    },
+    standardsSummaryVal: {
+        fontSize: 15,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.text,
+    },
+    standardsSummaryLbl: {
+        fontSize: 8.5,
+        fontFamily: FAMILY.bold,
+        color: COLORS.textMuted,
+        letterSpacing: 0.8,
+        marginTop: 2,
+    },
+    standardsSummaryDivider: {
+        width: 1,
+        height: 20,
+        backgroundColor: COLORS.border,
+    },
+
+    standardCard: {
+        padding: 14,
+        marginBottom: 8,
+        borderRadius: RADIUS.md,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        backgroundColor: COLORS.bgCard,
+    },
+    standardCardHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+    },
+    standardIcon: {
+        width: 34,
+        height: 34,
+        borderRadius: RADIUS.pill,
+        borderWidth: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    standardName: {
+        fontSize: 13,
+        fontFamily: FAMILY.bold,
+        color: COLORS.text,
+        letterSpacing: 0.5,
+    },
+    standardTarget: {
+        fontSize: 9,
+        fontFamily: FAMILY.mono,
+        color: COLORS.textMuted,
+        marginTop: 1,
+    },
+    tierPill: {
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: RADIUS.sm,
+        borderWidth: 1,
+    },
+    tierPillText: {
+        fontSize: 9,
+        fontFamily: FAMILY.monoBold,
+        letterSpacing: 0.5,
+    },
+    standardDataSection: {
+        marginTop: 12,
+        paddingTop: 10,
+        borderTopWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.05)',
+    },
+    standardStatsRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 8,
+    },
+    standardStatLabel: {
+        fontSize: 8,
+        fontFamily: FAMILY.bold,
+        color: COLORS.textMuted,
+        letterSpacing: 0.6,
+        marginBottom: 2,
+    },
+    standard1RMVal: {
+        fontSize: 15,
+        fontFamily: FAMILY.monoBold,
+        color: '#FFFFFF',
+    },
+    standardUnit: {
+        fontSize: 9,
+        fontFamily: FAMILY.mono,
+        color: COLORS.textMuted,
+    },
+    standardRatioBadge: {
+        backgroundColor: 'rgba(255, 255, 255, 0.06)',
+        borderRadius: RADIUS.sm,
+        paddingHorizontal: 7,
+        paddingVertical: 3,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+    },
+    standardRatioText: {
+        fontSize: 10,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textSub,
+    },
+    standardBestSetText: {
+        fontSize: 12,
+        fontFamily: FAMILY.mono,
+        color: COLORS.textSub,
+    },
+    standardProgressSection: {
+        marginTop: 4,
+    },
+    standardProgressBarBg: {
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: COLORS.bg,
+        borderWidth: 0.5,
+        borderColor: COLORS.border,
+        overflow: 'hidden',
+    },
+    standardProgressBarFill: {
+        height: '100%',
+        borderRadius: 2,
+    },
+    standardProgressLabels: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 6,
+    },
+    standardProgressTarget: {
+        fontSize: 9,
+        fontFamily: FAMILY.regular,
+        color: COLORS.textMuted,
+    },
+    standardProgressPercent: {
+        fontSize: 9,
+        fontFamily: FAMILY.monoBold,
+        color: COLORS.textSub,
+    },
+    standardEmptyBox: {
+        marginTop: 10,
+        paddingVertical: 8,
+        paddingHorizontal: 10,
+        borderRadius: RADIUS.sm,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.06)',
+        borderStyle: 'dashed',
+        alignItems: 'center',
+    },
+    standardEmptyText: {
+        fontSize: 9,
+        fontFamily: FAMILY.mono,
+        color: COLORS.textMuted,
+        letterSpacing: 0.5,
+    },
+    tiersLegendBox: {
+        marginHorizontal: SPACING.base,
+        marginBottom: 20,
+        padding: 12,
+        borderRadius: RADIUS.md,
+        backgroundColor: 'rgba(255, 255, 255, 0.02)',
+        borderWidth: 1,
+        borderColor: COLORS.border,
+    },
+    tiersLegendTitle: {
+        fontSize: 9,
+        fontFamily: FAMILY.bold,
+        color: COLORS.textMuted,
+        letterSpacing: 1,
+        marginBottom: 8,
+    },
+    tiersLegendRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: 6,
+    },
+    tierLegendItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 5,
+    },
+    tierLegendDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+    },
+    tierLegendText: {
+        fontSize: 8.5,
+        fontFamily: FAMILY.mono,
+        color: COLORS.textSub,
+    },
 });
