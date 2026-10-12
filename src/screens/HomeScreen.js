@@ -25,6 +25,7 @@ import {
     getProgramVersions, getProgramVersionsLocal,
     dismissAdaptiveRecommendation, getDismissedRecommendations,
     createDefaultProgramVersion, getMemCacheSnapshot, isMemCacheHydrated,
+    getStreakFreezeLog, getStreakFreezeLogLocal,
 } from "../utils/storage";
 import {
     getRolling7DayAverageBodyweight,
@@ -50,6 +51,7 @@ import MaskedView from "@react-native-masked-view/masked-view";
 import * as Haptics from "expo-haptics";
 import Svg, { Circle, Path, Defs, LinearGradient as SvgGradient, Stop, Text as SvgText, Polygon, Line } from "react-native-svg";
 import WorkoutCalendar from "../components/WorkoutCalendar";
+import StreakFreezeModal from "../components/StreakFreezeModal";
 import ManualWorkoutModal from "../components/ManualWorkoutModal";
 import ExerciseDetailModal from "../components/ExerciseDetailModal";
 import ReadinessModal from "../components/ReadinessModal";
@@ -248,10 +250,11 @@ function LiveStatusStrip({ total, streak, xp }) {
     );
 }
 
-const getWeekStats = (history, lastFreezeDate) => {
+const getWeekStats = (history, lastFreezeDate, previousFreezeDate, freezeLog = [], isTodayFrozen = false) => {
     const today = new Date();
     const currentDay = today.getDay(); // 0 is Sunday, 1 is Monday
     const distanceToMonday = currentDay === 0 ? 6 : currentDay - 1;
+    const todayDayNum = currentDay === 0 ? 7 : currentDay;
 
     const monday = new Date(today);
     monday.setDate(today.getDate() - distanceToMonday);
@@ -261,37 +264,56 @@ const getWeekStats = (history, lastFreezeDate) => {
     const freezeDays = [];
     const completedTargets = {};
 
+    // Collect all freeze date strings normalized to YYYY-MM-DD
+    const allFreezeDateStrings = new Set();
+    if (lastFreezeDate) allFreezeDateStrings.add(String(lastFreezeDate).split("T")[0]);
+    if (previousFreezeDate) allFreezeDateStrings.add(String(previousFreezeDate).split("T")[0]);
+    (freezeLog || []).forEach(f => {
+        if (f?.date) allFreezeDateStrings.add(String(f.date).split("T")[0]);
+    });
+
+    // Check each day of the current week (Monday=1 to Sunday=7)
+    for (let d = 1; d <= 7; d++) {
+        const dayDate = new Date(monday);
+        dayDate.setDate(monday.getDate() + (d - 1));
+        const dayKey = `${dayDate.getFullYear()}-${String(dayDate.getMonth() + 1).padStart(2, "0")}-${String(dayDate.getDate()).padStart(2, "0")}`;
+
+        if (allFreezeDateStrings.has(dayKey)) {
+            if (!freezeDays.includes(d)) freezeDays.push(d);
+        }
+    }
+
+    if (isTodayFrozen && !freezeDays.includes(todayDayNum)) {
+        freezeDays.push(todayDayNum);
+    }
+
     if (history && Array.isArray(history)) {
         history.forEach(item => {
-            if (!item.date) return;
-            const itemDate = new Date(item.date);
-            itemDate.setHours(0, 0, 0, 0);
-            const diffTime = itemDate - monday;
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-            if (diffDays >= 0 && diffDays <= 6) {
-                const dayOfWeek = diffDays + 1; // 1 = Mon, 7 = Sun
-                if (!completedDays.includes(dayOfWeek)) {
-                    completedDays.push(dayOfWeek);
-                }
-                if (item.target) {
-                    completedTargets[dayOfWeek] = item.target;
-                } else if (item.day) {
-                    const wDay = WORKOUT_PLAN.find(d => d.day === item.day);
-                    if (wDay) completedTargets[dayOfWeek] = wDay.target;
+            if (!item.date && !item.completedAt) return;
+            const rawDate = item.date || item.completedAt;
+            let itemDateKey = null;
+            if (typeof rawDate === "string") {
+                itemDateKey = rawDate.split("T")[0];
+            } else {
+                const dt = new Date(rawDate);
+                itemDateKey = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+            }
+
+            for (let d = 1; d <= 7; d++) {
+                const dayDate = new Date(monday);
+                dayDate.setDate(monday.getDate() + (d - 1));
+                const dayKey = `${dayDate.getFullYear()}-${String(dayDate.getMonth() + 1).padStart(2, "0")}-${String(dayDate.getDate()).padStart(2, "0")}`;
+                if (itemDateKey === dayKey) {
+                    if (!completedDays.includes(d)) completedDays.push(d);
+                    if (item.target) {
+                        completedTargets[d] = item.target;
+                    } else if (item.day) {
+                        const wDay = WORKOUT_PLAN.find(x => x.day === item.day);
+                        if (wDay) completedTargets[d] = wDay.target;
+                    }
                 }
             }
         });
-    }
-
-    if (lastFreezeDate) {
-        const freezeDate = new Date(lastFreezeDate);
-        freezeDate.setHours(0, 0, 0, 0);
-        const diffTime = freezeDate - monday;
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-        if (diffDays >= 0 && diffDays <= 6) {
-            const dayOfWeek = diffDays + 1;
-            freezeDays.push(dayOfWeek);
-        }
     }
 
     return { completedDays, freezeDays, completedTargets };
@@ -527,6 +549,8 @@ export default function HomeScreen({ navigation, route }) {
     const [lastFreezeDate, setLastFreezeDate] = useState(() => cacheSnap.lastFreezeDate);
     const [previousFreezeDate, setPreviousFreezeDate] = useState(() => cacheSnap.previousFreezeDate);
     const [freezeModal, setFreezeModal] = useState(false);
+    const [freezeReasonModalVisible, setFreezeReasonModalVisible] = useState(false);
+    const [freezeLog, setFreezeLog] = useState(() => Array.isArray(cacheSnap.freezeLog) ? cacheSnap.freezeLog : []);
     const [streakResetModal, setStreakResetModal] = useState(false);
     const [prevStreak, setPrevStreak] = useState(0);
     const [xp, setXP] = useState(() => cacheSnap.xp || 0);
@@ -825,7 +849,7 @@ export default function HomeScreen({ navigation, route }) {
                 cachedHistory, cachedFreeze, cachedPrevFreeze,
                 cachedStats, cachedPRs, cachedBW, cachedReadiness,
                 cachedTodayReadiness, cachedActiveProgram, cachedVersions,
-                cachedDismissed
+                cachedDismissed, cachedFreezeLog
             ] = await Promise.all([
                 getStreakLocal(),
                 getTotalWorkoutsLocal(),
@@ -842,8 +866,10 @@ export default function HomeScreen({ navigation, route }) {
                 getActiveProgramLocal(),
                 getProgramVersionsLocal(),
                 getDismissedRecommendations(),
+                getStreakFreezeLogLocal(),
             ]);
 
+            const isTodayFrozenLocal = cachedFreeze === new Date().toISOString().split("T")[0];
             setStreak(cachedStreak || 0);
             setTotal(cachedTotal || 0);
             setXP(cachedXP || 0);
@@ -856,12 +882,19 @@ export default function HomeScreen({ navigation, route }) {
             setTodayReadiness(cachedTodayReadiness);
             setLastFreezeDate(cachedFreeze);
             setPreviousFreezeDate(cachedPrevFreeze);
-            setIsFrozen(cachedFreeze === new Date().toISOString().split("T")[0]);
+            setFreezeLog(Array.isArray(cachedFreezeLog) ? cachedFreezeLog : []);
+            setIsFrozen(isTodayFrozenLocal);
             setActiveProgram(cachedActiveProgram || createDefaultProgramVersion());
             setProgramVersions(Array.isArray(cachedVersions) && cachedVersions.length > 0 ? cachedVersions : [createDefaultProgramVersion()]);
             setDismissedAlerts(Array.isArray(cachedDismissed) ? cachedDismissed : []);
 
-            const { completedDays: localComp, freezeDays: localFrz, completedTargets: localTargets } = getWeekStats(Array.isArray(cachedHistory) ? cachedHistory : [], cachedFreeze);
+            const { completedDays: localComp, freezeDays: localFrz, completedTargets: localTargets } = getWeekStats(
+                Array.isArray(cachedHistory) ? cachedHistory : [],
+                cachedFreeze,
+                cachedPrevFreeze,
+                Array.isArray(cachedFreezeLog) ? cachedFreezeLog : [],
+                isTodayFrozenLocal
+            );
             setCompletedDays(localComp || []);
             setFreezeDays(localFrz || []);
             setCompletedTargets(localTargets || {});
@@ -893,7 +926,7 @@ export default function HomeScreen({ navigation, route }) {
                     nextRecord, nextHistory, nextPrevFreeze,
                     nextStats, nextPRs, nextBW, nextReadiness,
                     nextTodayReadiness, nextActiveProgram, nextVersions,
-                    nextDismissed
+                    nextDismissed, nextFreezeLog
                 ] = await Promise.all([
                     getStreak(),
                     getTotalWorkouts(),
@@ -910,12 +943,15 @@ export default function HomeScreen({ navigation, route }) {
                     getActiveProgram(),
                     getProgramVersions(),
                     getDismissedRecommendations(),
+                    getStreakFreezeLog(),
                 ]);
+                const isTodayFrozenSync = lastFreeze === new Date().toISOString().split("T")[0];
                 setStreak(nextStreak || 0);
                 setTotal(nextTotal || 0);
-                setIsFrozen(lastFreeze === new Date().toISOString().split("T")[0]);
+                setIsFrozen(isTodayFrozenSync);
                 setLastFreezeDate(lastFreeze);
                 setPreviousFreezeDate(nextPrevFreeze);
+                setFreezeLog(Array.isArray(nextFreezeLog) ? nextFreezeLog : []);
                 setXP(nextXP || 0);
                 setRecordStreak(nextRecord || 0);
                 setHistory(Array.isArray(nextHistory) ? nextHistory : []);
@@ -928,7 +964,13 @@ export default function HomeScreen({ navigation, route }) {
                 setProgramVersions(Array.isArray(nextVersions) && nextVersions.length > 0 ? nextVersions : [createDefaultProgramVersion()]);
                 setDismissedAlerts(Array.isArray(nextDismissed) ? nextDismissed : []);
 
-                const { completedDays: syncComp, freezeDays: syncFrz, completedTargets: syncTargets } = getWeekStats(Array.isArray(nextHistory) ? nextHistory : [], lastFreeze);
+                const { completedDays: syncComp, freezeDays: syncFrz, completedTargets: syncTargets } = getWeekStats(
+                    Array.isArray(nextHistory) ? nextHistory : [],
+                    lastFreeze,
+                    nextPrevFreeze,
+                    Array.isArray(nextFreezeLog) ? nextFreezeLog : [],
+                    isTodayFrozenSync
+                );
                 setCompletedDays(syncComp || []);
                 setFreezeDays(syncFrz || []);
                 setCompletedTargets(syncTargets || {});
@@ -963,12 +1005,17 @@ export default function HomeScreen({ navigation, route }) {
                 loadStats(true);
             }
         } else {
-            const success = await applyStreakFreeze();
-            if (success) {
-                setIsFrozen(true);
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => { });
-                loadStats(true);
-            }
+            setFreezeReasonModalVisible(true);
+        }
+    };
+
+    const handleConfirmFreezeReason = async ({ reason, note }) => {
+        const success = await applyStreakFreeze(reason, note);
+        if (success) {
+            setIsFrozen(true);
+            setFreezeReasonModalVisible(false);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => { });
+            loadStats(true);
         }
     };
 
@@ -1570,9 +1617,12 @@ export default function HomeScreen({ navigation, route }) {
                                     </View>
                                     <View style={styles.consistencyBadge}>
                                         <Text style={styles.consistencyBadgeText}>
-                                            <Text style={{ fontFamily: FAMILY.monoBold, color: total === 0 ? COLORS.textMuted : COLORS.text }}>
+                                            <Text style={{ fontFamily: FAMILY.monoBold, color: completedDays.length === 0 && freezeDays.length === 0 ? COLORS.textMuted : COLORS.text }}>
                                                 {completedDays.length}
                                             </Text>/6 SESSIONS
+                                            {freezeDays.length > 0 ? (
+                                                <Text style={{ color: "#60A5FA", fontFamily: FAMILY.monoBold }}> · {freezeDays.length} ❄️</Text>
+                                            ) : null}
                                         </Text>
                                     </View>
                                 </View>
@@ -1580,9 +1630,9 @@ export default function HomeScreen({ navigation, route }) {
                                 <View style={styles.consistencyGridContainer}>
                                     {DAY_LABELS.map((label, index) => {
                                         const dayNum = index + 1;
-                                        const isCompleted = total > 0 && completedDays.includes(dayNum);
-                                        const isDayFrozen = total > 0 && freezeDays.includes(dayNum);
-                                        const isToday = total > 0 && todayDay === dayNum;
+                                        const isCompleted = completedDays.includes(dayNum);
+                                        const isDayFrozen = freezeDays.includes(dayNum) || (isFrozen && todayDay === dayNum);
+                                        const isToday = todayDay === dayNum;
                                         const isSunday = dayNum === 7;
                                         const dayTarget = isSunday ? "Active Recovery" : (completedTargets[dayNum] || (WORKOUT_PLAN.find(d => d.day === dayNum)?.target));
                                         const muscleColor = isSunday ? "#30D158" : getMuscleColor(dayTarget);
@@ -1591,8 +1641,9 @@ export default function HomeScreen({ navigation, route }) {
                                             <View key={label} style={styles.gridCellWrapper}>
                                                 <Text style={[
                                                     styles.gridCellDayLabel,
-                                                    isToday && { color: muscleColor, fontFamily: FAMILY.bold },
-                                                    isCompleted && { color: COLORS.text, fontFamily: FAMILY.bold }
+                                                    isToday && { color: isDayFrozen ? "#60A5FA" : muscleColor, fontFamily: FAMILY.bold },
+                                                    isCompleted && { color: COLORS.text, fontFamily: FAMILY.bold },
+                                                    isDayFrozen && !isCompleted && { color: "#60A5FA", fontFamily: FAMILY.bold },
                                                 ]}>
                                                     {label[0]}
                                                 </Text>
@@ -1603,19 +1654,23 @@ export default function HomeScreen({ navigation, route }) {
                                                             backgroundColor: muscleColor,
                                                             borderColor: "rgba(255, 255, 255, 0.25)",
                                                         },
-                                                        isToday && !isCompleted && {
+                                                        isDayFrozen && !isCompleted && {
+                                                            borderColor: "#30B0C7",
+                                                            backgroundColor: "rgba(48, 176, 199, 0.22)",
+                                                            borderWidth: 1.5,
+                                                        },
+                                                        isToday && !isCompleted && !isDayFrozen && {
                                                             borderColor: isSunday ? "rgba(48, 209, 88, 0.6)" : muscleColor,
                                                             borderWidth: 2,
                                                             backgroundColor: isSunday ? "rgba(48, 209, 88, 0.12)" : `${muscleColor}1F`,
                                                         },
-                                                        isDayFrozen && styles.gridCircleFrozen,
                                                         !isCompleted && !isDayFrozen && !isToday && styles.gridCircleInactive,
                                                     ]}
                                                 >
                                                     {isCompleted ? (
                                                         <Ionicons name="flash" size={13} color="#FFFFFF" />
                                                     ) : isDayFrozen ? (
-                                                        <Ionicons name="snow" size={12} color="#30B0C7" />
+                                                        <Ionicons name="snow" size={12} color="#60A5FA" />
                                                     ) : isToday ? (
                                                         isSunday ? (
                                                             <Ionicons name="moon" size={12} color="#30D158" />
@@ -2223,7 +2278,7 @@ export default function HomeScreen({ navigation, route }) {
                             {/* Monthly Progress Calendar */}
                             <View style={{ marginVertical: 12 }}>
                                 <Text style={styles.modalSectionTitle}>MONTHLY PROGRESS CALENDAR</Text>
-                                <WorkoutCalendar history={history} style={{ marginTop: 8 }} />
+                                <WorkoutCalendar history={history} freezeLog={freezeLog} style={{ marginTop: 8 }} />
                             </View>
 
                             {/* Tiers Breakdown */}
@@ -2344,6 +2399,14 @@ export default function HomeScreen({ navigation, route }) {
                     </View>
                 </View>
             </Modal>
+
+            {/* Streak Freeze Reason Modal */}
+            <StreakFreezeModal
+                visible={freezeReasonModalVisible}
+                onClose={() => setFreezeReasonModalVisible(false)}
+                onConfirm={handleConfirmFreezeReason}
+                currentStreak={streak}
+            />
 
             {/* Manual Workout Log Modal */}
             <ManualWorkoutModal

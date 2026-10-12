@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
     View,
     Text,
@@ -10,7 +10,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import { COLORS, FAMILY, RADIUS, GRADIENTS, getMuscleColor } from "../utils/theme";
-import { formatDuration } from "../utils/storage";
+import { formatDuration, getStreakFreezeLogLocal } from "../utils/storage";
 
 const { width } = Dimensions.get("window");
 
@@ -39,9 +39,30 @@ function formatDateKey(date) {
     return `${y}-${m}-${d}`;
 }
 
-export default function WorkoutCalendar({ history = [], style, onLogWorkoutForDate = null }) {
+export default function WorkoutCalendar({ history = [], style, onLogWorkoutForDate = null, freezeLog = null }) {
     const today = useMemo(() => new Date(), []);
     const todayKey = useMemo(() => formatDateKey(today), [today]);
+    const [loadedFreezeLog, setLoadedFreezeLog] = useState([]);
+
+    useEffect(() => {
+        let isMounted = true;
+        (async () => {
+            try {
+                const logs = await getStreakFreezeLogLocal();
+                if (isMounted) setLoadedFreezeLog(Array.isArray(logs) ? logs : []);
+            } catch { }
+        })();
+        return () => { isMounted = false; };
+    }, []);
+
+    const activeFreezeLog = freezeLog || loadedFreezeLog;
+    const freezeByDate = useMemo(() => {
+        const map = {};
+        (activeFreezeLog || []).forEach((item) => {
+            if (item?.date) map[item.date] = item;
+        });
+        return map;
+    }, [activeFreezeLog]);
 
     // Currently viewed month/year
     const [viewDate, setViewDate] = useState(
@@ -180,6 +201,10 @@ export default function WorkoutCalendar({ history = [], style, onLogWorkoutForDa
         return historyByDate[selectedDateKey] || [];
     }, [historyByDate, selectedDateKey]);
 
+    const selectedDateFreezeRecord = useMemo(() => {
+        return freezeByDate[selectedDateKey] || null;
+    }, [freezeByDate, selectedDateKey]);
+
     // Analysis of currently selected date
     const selectedDateInfo = useMemo(() => {
         const [y, m, d] = selectedDateKey.split("-").map(Number);
@@ -301,11 +326,13 @@ export default function WorkoutCalendar({ history = [], style, onLogWorkoutForDa
                     const dayWorkouts = historyByDate[cell.dateKey] || [];
                     const hasWorkout = dayWorkouts.length > 0;
                     const isSelected = cell.dateKey === selectedDateKey;
+                    const freezeRecord = freezeByDate[cell.dateKey];
+                    const isFrozen = !!freezeRecord;
 
                     const [y, m, d] = cell.dateKey.split("-").map(Number);
                     const cellDate = new Date(y, m - 1, d);
                     const isSunday = cellDate.getDay() === 0;
-                    const isPastMissed = !cell.isFuture && !cell.isToday && !isSunday && !hasWorkout;
+                    const isPastMissed = !cell.isFuture && !cell.isToday && !isSunday && !hasWorkout && !isFrozen;
 
                     return (
                         <View key={cell.key} style={styles.cellWrapper}>
@@ -315,6 +342,7 @@ export default function WorkoutCalendar({ history = [], style, onLogWorkoutForDa
                                     !cell.isCurrentMonth && styles.cellOtherMonth,
                                     cell.isToday && styles.cellToday,
                                     hasWorkout && styles.cellWorkout,
+                                    isFrozen && !hasWorkout && styles.cellFrozen,
                                     isSelected && styles.cellSelected,
                                     isPastMissed && styles.cellMissed,
                                 ]}
@@ -333,6 +361,7 @@ export default function WorkoutCalendar({ history = [], style, onLogWorkoutForDa
                                         !cell.isCurrentMonth && styles.cellTextOtherMonth,
                                         cell.isToday && styles.cellTextToday,
                                         hasWorkout && styles.cellTextWorkout,
+                                        isFrozen && !hasWorkout && styles.cellTextFrozen,
                                         isSelected && styles.cellTextSelected,
                                         isPastMissed && styles.cellTextMissed,
                                     ]}
@@ -363,6 +392,10 @@ export default function WorkoutCalendar({ history = [], style, onLogWorkoutForDa
                                                 ]}
                                             />
                                         )}
+                                    </View>
+                                ) : isFrozen ? (
+                                    <View style={styles.freezeDotWrap}>
+                                        <Ionicons name="snow" size={8} color="#60A5FA" />
                                     </View>
                                 ) : isSunday && !cell.isFuture ? (
                                     <View style={styles.restDotWrap}>
@@ -397,6 +430,10 @@ export default function WorkoutCalendar({ history = [], style, onLogWorkoutForDa
                     <View style={[styles.legendDot, { backgroundColor: "#30D158" }]} />
                     <Text style={styles.legendText}>REST</Text>
                 </View>
+                <View style={styles.legendItem}>
+                    <Ionicons name="snow" size={9} color="#60A5FA" style={{ marginRight: 3 }} />
+                    <Text style={[styles.legendText, { color: "#60A5FA" }]}>FREEZE</Text>
+                </View>
             </View>
 
             {/* Inspector Card: Selected Day Details */}
@@ -417,15 +454,19 @@ export default function WorkoutCalendar({ history = [], style, onLogWorkoutForDa
                                 backgroundColor: "rgba(237, 234, 227, 0.08)",
                                 borderColor: COLORS.border,
                             },
-                            selectedDateWorkouts.length === 0 && selectedDateInfo.isToday && {
+                            selectedDateFreezeRecord && {
+                                backgroundColor: "rgba(96, 165, 250, 0.12)",
+                                borderColor: "rgba(96, 165, 250, 0.35)",
+                            },
+                            selectedDateWorkouts.length === 0 && !selectedDateFreezeRecord && selectedDateInfo.isToday && {
                                 backgroundColor: "rgba(237, 234, 227, 0.08)",
                                 borderColor: COLORS.border,
                             },
-                            selectedDateWorkouts.length === 0 && selectedDateInfo.isPast && !selectedDateInfo.isSunday && {
+                            selectedDateWorkouts.length === 0 && !selectedDateFreezeRecord && selectedDateInfo.isPast && !selectedDateInfo.isSunday && {
                                 backgroundColor: "rgba(255, 69, 58, 0.12)",
                                 borderColor: "rgba(255, 69, 58, 0.35)",
                             },
-                            selectedDateWorkouts.length === 0 && selectedDateInfo.isSunday && {
+                            selectedDateWorkouts.length === 0 && !selectedDateFreezeRecord && selectedDateInfo.isSunday && {
                                 backgroundColor: "rgba(255, 255, 255, 0.05)",
                                 borderColor: "rgba(255, 255, 255, 0.1)",
                             },
@@ -435,13 +476,16 @@ export default function WorkoutCalendar({ history = [], style, onLogWorkoutForDa
                             style={[
                                 styles.inspectorBadgeText,
                                 selectedDateWorkouts.length > 0 && { color: COLORS.text },
-                                selectedDateWorkouts.length === 0 && selectedDateInfo.isToday && { color: COLORS.text },
-                                selectedDateWorkouts.length === 0 && selectedDateInfo.isPast && !selectedDateInfo.isSunday && { color: "#FF453A" },
-                                selectedDateWorkouts.length === 0 && selectedDateInfo.isSunday && { color: "#8E8E93" },
+                                selectedDateFreezeRecord && { color: "#60A5FA" },
+                                selectedDateWorkouts.length === 0 && !selectedDateFreezeRecord && selectedDateInfo.isToday && { color: COLORS.text },
+                                selectedDateWorkouts.length === 0 && !selectedDateFreezeRecord && selectedDateInfo.isPast && !selectedDateInfo.isSunday && { color: "#FF453A" },
+                                selectedDateWorkouts.length === 0 && !selectedDateFreezeRecord && selectedDateInfo.isSunday && { color: "#8E8E93" },
                             ]}
                         >
                             {selectedDateWorkouts.length > 0
                                 ? `${selectedDateWorkouts.length} SESSION${selectedDateWorkouts.length > 1 ? "S" : ""}`
+                                : selectedDateFreezeRecord
+                                ? "STREAK FROZEN ❄️"
                                 : selectedDateInfo.isSunday
                                 ? "REST DAY"
                                 : selectedDateInfo.isToday
@@ -496,6 +540,33 @@ export default function WorkoutCalendar({ history = [], style, onLogWorkoutForDa
                                  </View>
                             );
                         })}
+                    </View>
+                ) : selectedDateFreezeRecord ? (
+                    <View style={styles.freezeInspectorCard}>
+                        <View style={styles.freezeInspectorHeader}>
+                            <Ionicons name="snow" size={18} color="#60A5FA" />
+                            <Text style={styles.freezeInspectorTitle}>STREAK SHIELD ACTIVE</Text>
+                        </View>
+                        <View style={styles.freezeReasonBox}>
+                            <Text style={styles.freezeReasonLabel}>RECORDED REASON</Text>
+                            <Text style={styles.freezeReasonText}>{selectedDateFreezeRecord.reason || "Rest & Recovery"}</Text>
+                            {selectedDateFreezeRecord.note ? (
+                                <Text style={styles.freezeNoteText}>"{selectedDateFreezeRecord.note}"</Text>
+                            ) : null}
+                        </View>
+                        <Text style={styles.emptyRestSub}>
+                            Streak protected. Excused from daily training requirements.
+                        </Text>
+                        {onLogWorkoutForDate && !selectedDateInfo.isFuture && (
+                            <TouchableOpacity
+                                style={[styles.calendarLogBtn, { backgroundColor: "rgba(96, 165, 250, 0.12)", borderColor: "rgba(96, 165, 250, 0.3)" }]}
+                                onPress={() => onLogWorkoutForDate(selectedDateKey)}
+                                activeOpacity={0.8}
+                            >
+                                <Ionicons name="add-circle-outline" size={14} color="#60A5FA" style={{ marginRight: 6 }} />
+                                <Text style={[styles.calendarLogBtnText, { color: "#60A5FA" }]}>LOG WORKOUT ANYWAY</Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
                 ) : selectedDateInfo.isSunday ? (
                     <View style={styles.emptyRestState}>
@@ -718,6 +789,10 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(255, 255, 255, 0.08)",
         borderColor: "rgba(255, 255, 255, 0.18)",
     },
+    cellFrozen: {
+        backgroundColor: "rgba(96, 165, 250, 0.12)",
+        borderColor: "rgba(96, 165, 250, 0.4)",
+    },
     cellSelected: {
         borderColor: COLORS.primary,
         borderWidth: 1.5,
@@ -752,12 +827,72 @@ const styles = StyleSheet.create({
         color: "#FFFFFF",
         fontFamily: FAMILY.monoBold,
     },
+    cellTextFrozen: {
+        color: "#60A5FA",
+        fontFamily: FAMILY.monoBold,
+    },
     cellTextSelected: {
         color: "#FFFFFF",
         fontFamily: FAMILY.monoBold,
     },
     cellTextMissed: {
         color: COLORS.textMuted,
+    },
+    freezeDotWrap: {
+        position: "absolute",
+        bottom: 3,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    freezeInspectorCard: {
+        backgroundColor: "rgba(96, 165, 250, 0.08)",
+        borderWidth: 1,
+        borderColor: "rgba(96, 165, 250, 0.25)",
+        borderRadius: RADIUS.md,
+        padding: 16,
+        alignItems: "center",
+        gap: 8,
+    },
+    freezeInspectorHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+    },
+    freezeInspectorTitle: {
+        fontFamily: FAMILY.bold,
+        fontSize: 12,
+        letterSpacing: 0.8,
+        color: "#60A5FA",
+    },
+    freezeReasonBox: {
+        backgroundColor: "rgba(0, 0, 0, 0.35)",
+        borderWidth: 1,
+        borderColor: "rgba(96, 165, 250, 0.2)",
+        borderRadius: RADIUS.sm,
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        alignItems: "center",
+        width: "100%",
+    },
+    freezeReasonLabel: {
+        fontFamily: FAMILY.bold,
+        fontSize: 9,
+        letterSpacing: 0.6,
+        color: COLORS.textMuted,
+        marginBottom: 2,
+    },
+    freezeReasonText: {
+        fontFamily: FAMILY.bold,
+        fontSize: 13,
+        color: "#FFFFFF",
+    },
+    freezeNoteText: {
+        fontFamily: FAMILY.regular,
+        fontSize: 11,
+        fontStyle: "italic",
+        color: "rgba(255, 255, 255, 0.8)",
+        marginTop: 4,
+        textAlign: "center",
     },
 
     workoutBadge: {

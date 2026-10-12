@@ -33,6 +33,7 @@ export const KEYS = {
     BODY_STATS: "body_stats",
     LAST_FREEZE_DATE: "last_freeze_date",
     PREVIOUS_FREEZE_DATE: "previous_freeze_date",
+    FREEZE_LOG: "streak_freeze_log",
     XP: "workout_xp",
     RECORD_STREAK: "record_streak",
     ACTIVE_WORKOUT: "active_workout_session",
@@ -62,6 +63,7 @@ const _memCache = {
     recordStreak: null,
     lastFreezeDate: null,
     previousFreezeDate: null,
+    freezeLog: null,
     dismissedAlerts: null,
     isHydrated: false,
 };
@@ -82,6 +84,7 @@ export const getMemCacheSnapshot = () => ({
     programVersions: _memCache.programVersions,
     lastFreezeDate: _memCache.lastFreezeDate,
     previousFreezeDate: _memCache.previousFreezeDate,
+    freezeLog: _memCache.freezeLog,
     dismissedAlerts: _memCache.dismissedAlerts,
     isHydrated: _memCache.isHydrated,
 });
@@ -1024,10 +1027,10 @@ export const saveBodyStat = async (entry) => {
 };
 
 /** 
- * Manually freeze the streak for TODAY. 
+ * Manually freeze the streak for TODAY with a specific reason. 
  * This treats today as a "protected" day so missing it doesn't break the streak tomorrow.
  */
-export const applyStreakFreeze = async () => {
+export const applyStreakFreeze = async (reason = "Rest & Recovery", note = "") => {
     try {
         const today = new Date().toISOString().split("T")[0];
         const currentLast = await AsyncStorage.getItem(KEYS.LAST_FREEZE_DATE);
@@ -1037,6 +1040,26 @@ export const applyStreakFreeze = async () => {
         }
         await AsyncStorage.setItem(KEYS.LAST_FREEZE_DATE, today);
         _memCache.lastFreezeDate = today;
+
+        // Persist rich freeze record with reason and note
+        let freezeLog = [];
+        try {
+            const raw = await AsyncStorage.getItem(KEYS.FREEZE_LOG);
+            if (raw) freezeLog = JSON.parse(raw);
+            if (!Array.isArray(freezeLog)) freezeLog = [];
+        } catch { }
+
+        freezeLog = freezeLog.filter(f => f.date !== today);
+        freezeLog.unshift({
+            date: today,
+            reason: reason || "Rest & Recovery",
+            note: note || "",
+            timestamp: new Date().toISOString(),
+        });
+
+        await AsyncStorage.setItem(KEYS.FREEZE_LOG, JSON.stringify(freezeLog));
+        _memCache.freezeLog = freezeLog;
+
         triggerAutoSync();
         return true;
     } catch {
@@ -1050,6 +1073,7 @@ export const applyStreakFreeze = async () => {
  */
 export const withdrawStreakFreeze = async () => {
     try {
+        const today = new Date().toISOString().split("T")[0];
         const prev = await AsyncStorage.getItem(KEYS.PREVIOUS_FREEZE_DATE);
         if (prev) {
             await AsyncStorage.setItem(KEYS.LAST_FREEZE_DATE, prev);
@@ -1060,11 +1084,41 @@ export const withdrawStreakFreeze = async () => {
             await AsyncStorage.removeItem(KEYS.LAST_FREEZE_DATE);
             _memCache.lastFreezeDate = null;
         }
+
+        try {
+            const raw = await AsyncStorage.getItem(KEYS.FREEZE_LOG);
+            let freezeLog = raw ? JSON.parse(raw) : [];
+            if (Array.isArray(freezeLog)) {
+                freezeLog = freezeLog.filter(f => f.date !== today);
+                await AsyncStorage.setItem(KEYS.FREEZE_LOG, JSON.stringify(freezeLog));
+                _memCache.freezeLog = freezeLog;
+            }
+        } catch { }
+
         triggerAutoSync();
         return true;
     } catch {
         return false;
     }
+};
+
+export const getStreakFreezeLog = async () => {
+    if (_memCache.freezeLog !== null && _memCache.freezeLog !== undefined) {
+        return _memCache.freezeLog;
+    }
+    try {
+        const raw = await AsyncStorage.getItem(KEYS.FREEZE_LOG);
+        const log = raw ? JSON.parse(raw) : [];
+        const result = Array.isArray(log) ? log : [];
+        _memCache.freezeLog = result;
+        return result;
+    } catch {
+        return [];
+    }
+};
+
+export const getStreakFreezeLogLocal = async () => {
+    return await getStreakFreezeLog();
 };
 
 export const getLastFreezeDate = async () => {

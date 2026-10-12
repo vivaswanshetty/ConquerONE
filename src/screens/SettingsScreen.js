@@ -18,12 +18,14 @@ import {
     clearHistory, clearAllData,
     getWorkoutHistory, getStreak,
     applyStreakFreeze, withdrawStreakFreeze, getLastFreezeDate,
+    getStreakFreezeLog,
 } from "../utils/storage";
 import {
     getReminderSettings, scheduleReminder, disableReminder,
     requestNotifPermission, sendStreakAtRiskNotif
 } from "../utils/notifications";
 import UpdateScreen from "./UpdateScreen";
+import StreakFreezeModal from "../components/StreakFreezeModal";
 import { useAuth } from "../context/AuthContext";
 import { useNotification } from "../context/NotificationContext";
 import { setAudioSettings, previewWorkoutVoice } from "../utils/audio";
@@ -90,6 +92,9 @@ export default function SettingsScreen({ navigation, route }) {
     const [saved, setSaved] = useState(false);
     const [reminder, setReminder] = useState({ enabled: false, hour: 18, minute: 0 });
     const [isFrozenToday, setIsFrozenToday] = useState(false);
+    const [freezeReasonModalVisible, setFreezeReasonModalVisible] = useState(false);
+    const [todayFreezeReason, setTodayFreezeReason] = useState("");
+    const [streakVal, setStreakVal] = useState(0);
     const [freezing, setFreezing] = useState(false);
     const [updateStatus, setUpdateStatus] = useState("idle");
     const [updateId, setUpdateId] = useState(null);
@@ -106,17 +111,28 @@ export default function SettingsScreen({ navigation, route }) {
     }, []);
 
     const loadInitial = async () => {
+        const todayStr = new Date().toISOString().split("T")[0];
         // Fetch all at once
-        const [s, r, lastFreeze] = await Promise.all([
+        const [s, r, lastFreeze, curStreak, freezeLog] = await Promise.all([
             getSettings(),
             getReminderSettings(),
-            getLastFreezeDate()
+            getLastFreezeDate(),
+            getStreak(),
+            getStreakFreezeLog()
         ]);
 
         setSettings(s);
         setReminder(r);
         setUpdateId(Updates.updateId);
-        setIsFrozenToday(lastFreeze === new Date().toISOString().split("T")[0]);
+        const frozen = lastFreeze === todayStr;
+        setIsFrozenToday(frozen);
+        setStreakVal(curStreak || 0);
+        if (frozen && Array.isArray(freezeLog)) {
+            const entry = freezeLog.find(e => e.date === todayStr);
+            if (entry) setTodayFreezeReason(entry.reason || "");
+        } else {
+            setTodayFreezeReason("");
+        }
         setLoaded(true);
         Animated.timing(contentFade, { toValue: 1, duration: 400, useNativeDriver: true }).start();
     };
@@ -159,11 +175,12 @@ export default function SettingsScreen({ navigation, route }) {
     };
 
     const handleManualFreeze = async () => {
-        setFreezing(true);
         if (isFrozenToday) {
+            setFreezing(true);
             const success = await withdrawStreakFreeze();
             if (success) {
                 setIsFrozenToday(false);
+                setTodayFreezeReason("");
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
                 showDialog({
                     title: "FREEZE WITHDRAWN",
@@ -172,18 +189,27 @@ export default function SettingsScreen({ navigation, route }) {
                     singleButton: true
                 });
             }
+            setFreezing(false);
+            flash();
         } else {
-            const success = await applyStreakFreeze();
-            if (success) {
-                setIsFrozenToday(true);
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                showDialog({
-                    title: "STREAK FROZEN",
-                    message: "Your streak is protected for today. Rest up!",
-                    confirmText: "CLOSE",
-                    singleButton: true
-                });
-            }
+            setFreezeReasonModalVisible(true);
+        }
+    };
+
+    const handleConfirmFreezeReason = async ({ reason, note }) => {
+        setFreezing(true);
+        const success = await applyStreakFreeze(reason, note);
+        if (success) {
+            setIsFrozenToday(true);
+            setTodayFreezeReason(reason || "");
+            setFreezeReasonModalVisible(false);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            showDialog({
+                title: "STREAK FROZEN",
+                message: "Your streak is protected for today. Rest up!",
+                confirmText: "CLOSE",
+                singleButton: true
+            });
         }
         setFreezing(false);
         flash();
@@ -410,7 +436,9 @@ export default function SettingsScreen({ navigation, route }) {
                                         {isFrozenToday ? "STREAK CURRENTLY FROZEN" : "ACTIVATE FREEZE FOR TODAY"}
                                     </Text>
                                     <Text style={styles.freezeActionSub}>
-                                        {isFrozenToday ? "Progress is protected until tomorrow." : "Use this if you can't work out today."}
+                                        {isFrozenToday
+                                            ? (todayFreezeReason ? `Protected for today • ${todayFreezeReason}` : "Progress is protected until tomorrow.")
+                                            : "Use this if you can't work out today."}
                                     </Text>
                                 </View>
                                 {isFrozenToday && (
@@ -772,6 +800,13 @@ export default function SettingsScreen({ navigation, route }) {
                     setShowVoiceModal(false);
                     flash();
                 }}
+            />
+
+            <StreakFreezeModal
+                visible={freezeReasonModalVisible}
+                onClose={() => setFreezeReasonModalVisible(false)}
+                onConfirm={handleConfirmFreezeReason}
+                currentStreak={streakVal}
             />
         </View>
     );
