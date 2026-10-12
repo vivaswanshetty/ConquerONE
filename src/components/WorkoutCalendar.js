@@ -395,7 +395,7 @@ export default function WorkoutCalendar({ history = [], style, onLogWorkoutForDa
                                     </View>
                                 ) : isFrozen ? (
                                     <View style={styles.freezeDotWrap}>
-                                        <Ionicons name="snow" size={8} color="#60A5FA" />
+                                        <Ionicons name="snow" size={7.5} color="#60A5FA" />
                                     </View>
                                 ) : isSunday && !cell.isFuture ? (
                                     <View style={styles.restDotWrap}>
@@ -830,6 +830,7 @@ const styles = StyleSheet.create({
     cellTextFrozen: {
         color: "#60A5FA",
         fontFamily: FAMILY.monoBold,
+        transform: [{ translateY: -2.5 }],
     },
     cellTextSelected: {
         color: "#FFFFFF",
@@ -840,7 +841,7 @@ const styles = StyleSheet.create({
     },
     freezeDotWrap: {
         position: "absolute",
-        bottom: 3,
+        bottom: 5,
         alignItems: "center",
         justifyContent: "center",
     },
