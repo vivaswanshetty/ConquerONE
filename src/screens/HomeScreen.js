@@ -905,14 +905,16 @@ export default function HomeScreen({ navigation, route }) {
             finishInitialLoading();
         }
 
-        // 2. checkAndCleanStreak (which resets streak if broken)
+        // 2. checkAndCleanStreak (which resets streak if broken, or reconciles streak)
         try {
-            const { wasReset, previousStreak } = await checkAndCleanStreak();
-            if (wasReset) {
-                setPrevStreak(previousStreak);
+            const cleanRes = await checkAndCleanStreak();
+            if (cleanRes?.wasReset) {
+                setPrevStreak(cleanRes.previousStreak);
                 setStreakResetModal(true);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => { });
                 setStreak(0); // update instantly to 0 in UI
+            } else if (typeof cleanRes?.streak === "number" && cleanRes.streak > 0) {
+                setStreak(cleanRes.streak);
             }
         } catch (e) {
             console.warn("checkAndCleanStreak failed in loadStats", e);

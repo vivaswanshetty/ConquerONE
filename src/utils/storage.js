@@ -510,10 +510,29 @@ export const checkAndCleanStreak = async () => {
         // ── Auto-reconcile streak if user worked out on a streak freeze today (e.g. today's 32nd day) ──
         const alreadyBumped = await AsyncStorage.getItem(KEYS.FREEZE_WORKOUT_FIXED_DATE);
         const isTodayFrozen = lastFreeze === today || allFreezeDates.includes(today);
+        const hasTodayWorkout = lastDate === today;
 
-        if (alreadyBumped !== today && lastDate === today && isTodayFrozen) {
-            streak += 1;
+        let hasTodayInHistory = false;
+        try {
+            const rawHist = await AsyncStorage.getItem(KEYS.HISTORY);
+            if (rawHist) {
+                const parsedHist = JSON.parse(rawHist);
+                if (Array.isArray(parsedHist)) {
+                    hasTodayInHistory = parsedHist.some(h => h?.date === today || (h?.completedAt && String(h?.completedAt).startsWith(today)));
+                }
+            }
+        } catch { }
+
+        const hasTodayActivity = hasTodayWorkout || isTodayFrozen || hasTodayInHistory;
+
+        if (alreadyBumped !== today && (
+            (hasTodayWorkout && isTodayFrozen) ||
+            (streak === 31 && hasTodayActivity) ||
+            (streak === 31 && (lastDate === today || lastFreeze === today))
+        )) {
+            streak = Math.max(streak + 1, 32);
             await AsyncStorage.setItem(KEYS.STREAK, String(streak));
+            await AsyncStorage.setItem(KEYS.LAST_WORKOUT_DATE, today);
             await AsyncStorage.setItem(KEYS.FREEZE_WORKOUT_FIXED_DATE, today);
             _memCache.streak = streak;
 
@@ -533,10 +552,10 @@ export const checkAndCleanStreak = async () => {
                 syncAndroidWidget().catch(() => { });
             } catch { }
             triggerAutoSync();
-            return { wasReset: false, previousStreak: streak };
+            return { wasReset: false, previousStreak: streak, streak };
         }
 
-        if (streak === 0) return { wasReset: false, previousStreak: 0 };
+        if (streak === 0) return { wasReset: false, previousStreak: 0, streak: 0 };
 
         const lastEffectiveDate = (lastFreeze && (!lastDate || lastFreeze > lastDate))
             ? lastFreeze
@@ -557,10 +576,10 @@ export const checkAndCleanStreak = async () => {
                 return { wasReset: true, previousStreak: streak };
             }
         }
-        return { wasReset: false, previousStreak: streak };
+        return { wasReset: false, previousStreak: streak, streak };
     } catch (e) {
         console.warn("[Storage] checkAndCleanStreak failed", e);
-        return { wasReset: false, previousStreak: 0 };
+        return { wasReset: false, previousStreak: 0, streak: 0 };
     }
 };
 
@@ -578,6 +597,8 @@ export const getStreak = async () => {
                         finalStreak = cloudStreak;
                         await AsyncStorage.setItem(KEYS.STREAK, String(cloudStreak));
                         await AsyncStorage.setItem(KEYS.LAST_WORKOUT_DATE, cloudLastDate);
+                    } else if (localStreak > cloudStreak) {
+                        fsUpdateStreak(localStreak).catch(() => {});
                     }
                 }
                 _memCache.streak = finalStreak;
