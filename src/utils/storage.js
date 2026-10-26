@@ -41,6 +41,7 @@ export const KEYS = {
     ACTIVE_PROGRAM: "active_program_version",
     PROGRAM_VERSIONS: "program_versions_history",
     DISMISSED_ALERTS: "dismissed_adaptive_alerts",
+    FREEZE_WORKOUT_FIXED_DATE: "streak_freeze_workout_fixed_date",
 };
 
 const hasCloudSession = () => !!auth.currentUser;
@@ -132,22 +133,21 @@ const readLocalLastWorkoutDate = async () => {
  */
 const areAllInterveningDaysExcused = (startDateStr, endDateStr, freezeDates = []) => {
     if (!startDateStr || !endDateStr) return true;
-    const start = new Date(startDateStr);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(endDateStr);
-    end.setHours(0, 0, 0, 0);
+    const [sy, sm, sd] = startDateStr.split("-").map(Number);
+    const [ey, em, ed] = endDateStr.split("-").map(Number);
+    if (!sy || !sm || !sd || !ey || !em || !ed) return true;
 
-    const diffDays = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    const startUtc = Date.UTC(sy, sm - 1, sd);
+    const endUtc = Date.UTC(ey, em - 1, ed);
+
+    const diffDays = Math.round((endUtc - startUtc) / 86400000);
     if (diffDays <= 1) return true;
 
     // Check each intervening date between start and end
     for (let i = 1; i < diffDays; i++) {
-        const checkDate = new Date(start);
-        checkDate.setDate(start.getDate() + i);
-        checkDate.setHours(0, 0, 0, 0);
-
-        const isSunday = checkDate.getDay() === 0;
-        const checkDateStr = checkDate.toISOString().split("T")[0];
+        const check = new Date(startUtc + i * 86400000);
+        const isSunday = check.getUTCDay() === 0;
+        const checkDateStr = check.toISOString().split("T")[0];
         const isFrozen = freezeDates.includes(checkDateStr);
 
         if (!isSunday && !isFrozen) {
@@ -178,33 +178,53 @@ const saveWorkoutCompleteLocal = async (day, target, durationSec, exercises = []
     const prevFreeze = await AsyncStorage.getItem(KEYS.PREVIOUS_FREEZE_DATE);
     const streakStr = await AsyncStorage.getItem(KEYS.STREAK);
 
-    let streak = streakStr ? parseInt(streakStr) : 0;
-    const freezeDates = [lastFreeze, prevFreeze].filter(Boolean);
+    let streak = streakStr ? parseInt(streakStr, 10) : 0;
+    
+    // Collect all known freeze dates
+    let allFreezeDates = [lastFreeze, prevFreeze].filter(Boolean);
+    try {
+        const rawLog = await AsyncStorage.getItem(KEYS.FREEZE_LOG);
+        if (rawLog) {
+            const parsed = JSON.parse(rawLog);
+            if (Array.isArray(parsed)) {
+                allFreezeDates = Array.from(new Set([...allFreezeDates, ...parsed.map(f => f?.date).filter(Boolean)]));
+            }
+        }
+    } catch { }
 
-    const lastEffectiveDate = (lastFreeze && (!lastDate || new Date(lastFreeze) > new Date(lastDate)))
-        ? lastFreeze
-        : lastDate;
+    if (lastDate === today) {
+        // Multiple workouts in same day — streak count stays the same
+    } else {
+        // First workout of today. Find most recent activity date strictly BEFORE today.
+        const prevFreezeBeforeToday = allFreezeDates.filter(d => d < today).sort().pop() || null;
+        const prevWorkoutBeforeToday = lastDate && lastDate < today ? lastDate : null;
 
-    if (lastEffectiveDate) {
-        const last = new Date(lastEffectiveDate);
-        const todayDate = new Date(today);
-        const diff = Math.floor((todayDate - last) / (1000 * 60 * 60 * 24));
+        const previousActivityDate = (prevFreezeBeforeToday && (!prevWorkoutBeforeToday || prevFreezeBeforeToday > prevWorkoutBeforeToday))
+            ? prevFreezeBeforeToday
+            : prevWorkoutBeforeToday;
 
-        if (diff === 0) {
-            // Multiple workouts in same day — streak count stays the same
-        } else if (diff === 1 || areAllInterveningDaysExcused(lastEffectiveDate, today, freezeDates)) {
-            // Consecutive day OR all intervening days were excused (Sundays / Freezes)
-            streak += 1;
+        if (previousActivityDate) {
+            const [py, pm, pd] = previousActivityDate.split("-").map(Number);
+            const [ty, tm, td] = today.split("-").map(Number);
+            const prevUtc = Date.UTC(py, pm - 1, pd);
+            const todayUtc = Date.UTC(ty, tm - 1, td);
+            const diff = Math.round((todayUtc - prevUtc) / 86400000);
+
+            if (diff === 1 || areAllInterveningDaysExcused(previousActivityDate, today, allFreezeDates)) {
+                // Consecutive day OR all intervening days were excused (Sundays / Freezes)
+                streak = (streak > 0 ? streak : 0) + 1;
+            } else {
+                // Unexcused workout day was skipped
+                streak = 1;
+            }
         } else {
-            // Unexcused workout day was skipped
             streak = 1;
         }
-    } else {
-        streak = 1;
     }
 
     await AsyncStorage.setItem(KEYS.STREAK, String(streak));
     await AsyncStorage.setItem(KEYS.LAST_WORKOUT_DATE, today);
+    await AsyncStorage.setItem(KEYS.FREEZE_WORKOUT_FIXED_DATE, today);
 
     const totalStr = await AsyncStorage.getItem(KEYS.TOTAL_WORKOUTS);
     const total = totalStr ? parseInt(totalStr) + 1 : 1;
@@ -284,9 +304,11 @@ export const calculateStreakFromHistory = (history = [], freezeDates = []) => {
     const todayStr = new Date().toISOString().split("T")[0];
     const latestDateStr = sortedDates[sortedDates.length - 1];
 
-    const today = new Date(todayStr);
-    const latest = new Date(latestDateStr);
-    const daysSinceLatest = Math.round((today.getTime() - latest.getTime()) / (1000 * 60 * 60 * 24));
+    const [ly, lm, ld] = latestDateStr.split("-").map(Number);
+    const [ty, tm, td] = todayStr.split("-").map(Number);
+    const latestUtc = Date.UTC(ly, lm - 1, ld);
+    const todayUtc = Date.UTC(ty, tm - 1, td);
+    const daysSinceLatest = Math.round((todayUtc - latestUtc) / 86400000);
 
     if (daysSinceLatest > 1 && !areAllInterveningDaysExcused(latestDateStr, todayStr, freezeDates)) {
         return 0;
@@ -296,9 +318,11 @@ export const calculateStreakFromHistory = (history = [], freezeDates = []) => {
     for (let i = sortedDates.length - 1; i > 0; i--) {
         const curr = sortedDates[i];
         const prev = sortedDates[i - 1];
-        const currDate = new Date(curr);
-        const prevDate = new Date(prev);
-        const diff = Math.round((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
+        const [cy, cm, cd] = curr.split("-").map(Number);
+        const [py, pm, pd] = prev.split("-").map(Number);
+        const currUtc = Date.UTC(cy, cm - 1, cd);
+        const prevUtc = Date.UTC(py, pm - 1, pd);
+        const diff = Math.round((currUtc - prevUtc) / 86400000);
 
         if (diff === 0) {
             // Same day, continue
@@ -468,20 +492,59 @@ export const checkAndCleanStreak = async () => {
         const lastFreeze = await AsyncStorage.getItem(KEYS.LAST_FREEZE_DATE);
         const prevFreeze = await AsyncStorage.getItem(KEYS.PREVIOUS_FREEZE_DATE);
         const streakStr = await AsyncStorage.getItem(KEYS.STREAK);
-        let streak = streakStr ? parseInt(streakStr) : 0;
+        let streak = streakStr ? parseInt(streakStr, 10) : 0;
+
+        let allFreezeDates = [lastFreeze, prevFreeze].filter(Boolean);
+        try {
+            const rawLog = await AsyncStorage.getItem(KEYS.FREEZE_LOG);
+            if (rawLog) {
+                const parsed = JSON.parse(rawLog);
+                if (Array.isArray(parsed)) {
+                    allFreezeDates = Array.from(new Set([...allFreezeDates, ...parsed.map(f => f?.date).filter(Boolean)]));
+                }
+            }
+        } catch { }
+
+        const today = new Date().toISOString().split("T")[0];
+
+        // ── Auto-reconcile streak if user worked out on a streak freeze today (e.g. today's 32nd day) ──
+        const alreadyBumped = await AsyncStorage.getItem(KEYS.FREEZE_WORKOUT_FIXED_DATE);
+        const isTodayFrozen = lastFreeze === today || allFreezeDates.includes(today);
+
+        if (alreadyBumped !== today && lastDate === today && isTodayFrozen) {
+            streak += 1;
+            await AsyncStorage.setItem(KEYS.STREAK, String(streak));
+            await AsyncStorage.setItem(KEYS.FREEZE_WORKOUT_FIXED_DATE, today);
+            _memCache.streak = streak;
+
+            const recordStr = await AsyncStorage.getItem(KEYS.RECORD_STREAK);
+            let recordStreak = recordStr ? parseInt(recordStr, 10) : 0;
+            if (streak > recordStreak) {
+                recordStreak = streak;
+                await AsyncStorage.setItem(KEYS.RECORD_STREAK, String(recordStreak));
+                _memCache.recordStreak = recordStreak;
+            }
+
+            if (hasCloudSession()) {
+                await fsUpdateStreak(streak);
+            }
+            try {
+                const { syncAndroidWidget } = require("./widgetSync");
+                syncAndroidWidget().catch(() => { });
+            } catch { }
+            triggerAutoSync();
+            return { wasReset: false, previousStreak: streak };
+        }
 
         if (streak === 0) return { wasReset: false, previousStreak: 0 };
 
-        const freezeDates = [lastFreeze, prevFreeze].filter(Boolean);
-        const lastEffectiveDate = (lastFreeze && (!lastDate || new Date(lastFreeze) > new Date(lastDate)))
+        const lastEffectiveDate = (lastFreeze && (!lastDate || lastFreeze > lastDate))
             ? lastFreeze
             : lastDate;
 
         if (lastEffectiveDate) {
-            const today = new Date().toISOString().split("T")[0];
-
             // If all intervening days were excused (Sundays / Freezes), streak remains intact
-            const allExcused = areAllInterveningDaysExcused(lastEffectiveDate, today, freezeDates);
+            const allExcused = areAllInterveningDaysExcused(lastEffectiveDate, today, allFreezeDates);
 
             if (!allExcused) {
                 // Streak is broken!
@@ -1144,6 +1207,7 @@ export const getPreviousFreezeDate = async () => {
 };
 
 export const getStreakLocal = async () => {
+    await checkAndCleanStreak();
     return await readLocalStreak();
 };
 

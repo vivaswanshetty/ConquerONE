@@ -35,21 +35,20 @@ const subCol = (name) => collection(db, "users", uid(), name);
 
 const areAllInterveningDaysExcused = (startDateStr, endDateStr, freezeDates = []) => {
     if (!startDateStr || !endDateStr) return true;
-    const start = new Date(startDateStr);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(endDateStr);
-    end.setHours(0, 0, 0, 0);
+    const [sy, sm, sd] = startDateStr.split("-").map(Number);
+    const [ey, em, ed] = endDateStr.split("-").map(Number);
+    if (!sy || !sm || !sd || !ey || !em || !ed) return true;
 
-    const diffDays = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    const startUtc = Date.UTC(sy, sm - 1, sd);
+    const endUtc = Date.UTC(ey, em - 1, ed);
+
+    const diffDays = Math.round((endUtc - startUtc) / 86400000);
     if (diffDays <= 1) return true;
 
     for (let i = 1; i < diffDays; i++) {
-        const checkDate = new Date(start);
-        checkDate.setDate(start.getDate() + i);
-        checkDate.setHours(0, 0, 0, 0);
-
-        const isSunday = checkDate.getDay() === 0;
-        const checkDateStr = checkDate.toISOString().split("T")[0];
+        const check = new Date(startUtc + i * 86400000);
+        const isSunday = check.getUTCDay() === 0;
+        const checkDateStr = check.toISOString().split("T")[0];
         const isFrozen = freezeDates.includes(checkDateStr);
 
         if (!isSunday && !isFrozen) {
@@ -82,9 +81,11 @@ export const calculateStreakFromHistory = (history = [], freezeDates = []) => {
     const todayStr = new Date().toISOString().split("T")[0];
     const latestDateStr = sortedDates[sortedDates.length - 1];
 
-    const today = new Date(todayStr);
-    const latest = new Date(latestDateStr);
-    const daysSinceLatest = Math.round((today.getTime() - latest.getTime()) / (1000 * 60 * 60 * 24));
+    const [ly, lm, ld] = latestDateStr.split("-").map(Number);
+    const [ty, tm, td] = todayStr.split("-").map(Number);
+    const latestUtc = Date.UTC(ly, lm - 1, ld);
+    const todayUtc = Date.UTC(ty, tm - 1, td);
+    const daysSinceLatest = Math.round((todayUtc - latestUtc) / 86400000);
 
     if (daysSinceLatest > 1 && !areAllInterveningDaysExcused(latestDateStr, todayStr, freezeDates)) {
         return 0;
@@ -94,9 +95,11 @@ export const calculateStreakFromHistory = (history = [], freezeDates = []) => {
     for (let i = sortedDates.length - 1; i > 0; i--) {
         const curr = sortedDates[i];
         const prev = sortedDates[i - 1];
-        const currDate = new Date(curr);
-        const prevDate = new Date(prev);
-        const diff = Math.round((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
+        const [cy, cm, cd] = curr.split("-").map(Number);
+        const [py, pm, pd] = prev.split("-").map(Number);
+        const currUtc = Date.UTC(cy, cm - 1, cd);
+        const prevUtc = Date.UTC(py, pm - 1, pd);
+        const diff = Math.round((currUtc - prevUtc) / 86400000);
 
         if (diff === 0) {
             // Same day, continue
@@ -136,23 +139,31 @@ export const fssaveWorkoutComplete = async (day, target, durationSec, exercises 
         let streak = data.streak || 0;
         const freezeDates = [lastFreeze].filter(Boolean);
 
-        const lastEffectiveDate = (lastFreeze && (!lastDate || new Date(lastFreeze) > new Date(lastDate)))
-            ? lastFreeze
-            : lastDate;
+        if (lastDate === today) {
+            // same day workout — keep current streak
+        } else {
+            const prevFreezeBeforeToday = lastFreeze && lastFreeze < today ? lastFreeze : null;
+            const prevWorkoutBeforeToday = lastDate && lastDate < today ? lastDate : null;
 
-        if (lastEffectiveDate) {
-            const last = new Date(lastEffectiveDate);
-            const todayDate = new Date(today);
-            const diff = Math.floor((todayDate - last) / (1000 * 60 * 60 * 24));
-            if (diff === 0) {
-                // same day, keep current streak
-            } else if (diff === 1 || areAllInterveningDaysExcused(lastEffectiveDate, today, freezeDates)) {
-                streak += 1;
+            const previousActivityDate = (prevFreezeBeforeToday && (!prevWorkoutBeforeToday || prevFreezeBeforeToday > prevWorkoutBeforeToday))
+                ? prevFreezeBeforeToday
+                : prevWorkoutBeforeToday;
+
+            if (previousActivityDate) {
+                const [py, pm, pd] = previousActivityDate.split("-").map(Number);
+                const [ty, tm, td] = today.split("-").map(Number);
+                const prevUtc = Date.UTC(py, pm - 1, pd);
+                const todayUtc = Date.UTC(ty, tm - 1, td);
+                const diff = Math.round((todayUtc - prevUtc) / 86400000);
+
+                if (diff === 1 || areAllInterveningDaysExcused(previousActivityDate, today, freezeDates)) {
+                    streak = (streak > 0 ? streak : 0) + 1;
+                } else {
+                    streak = 1;
+                }
             } else {
                 streak = 1;
             }
-        } else {
-            streak = 1;
         }
 
         let multiplier = 1.0;
